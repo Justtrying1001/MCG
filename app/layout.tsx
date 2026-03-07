@@ -4,12 +4,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MCG · Meme Card Game",
-  description: "Expérience TCG crypto premium : packs, collection, combats PvE et progression.",
+  description: "Premium crypto TCG experience: packs, collection management, PvE progression, and account growth.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

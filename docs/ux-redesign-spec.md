@@ -1,41 +1,41 @@
-# MCG UX Redesign — Product/UI Direction
+# MCG UX Redesign — Premium Product Direction
 
-## 1) Maquettes hi-fi (mapping pages)
-- **Home**: hero, valeur produit, CTA vers packs/collection, preuve sociale gameplay.
-- **Packs**: zone booster centrée, bouton ouverture, modal reveal 3 cartes.
-- **Collection**: filtres rapides (faction/recherche), grille responsive de cartes TCG.
-- **Combats PvE**: sélection d’équipe max 3 cartes, difficulté, log de combat, progression.
-- **Compte**: profil, historiques, jauge de progression.
+## 1) High-fidelity page structure
+- **Home**: cinematic hero, value proposition, conversion-focused CTAs, and product pillars.
+- **Packs**: opening ritual, reveal flow, and drop-value storytelling.
+- **Collection**: responsive card gallery with search/faction filters.
+- **PvE**: squad selection, difficulty choice, combat log, and run progression.
+- **Account**: player profile, opening history, and seasonal progression status.
 
-## 2) Design System
-### Palette
-- Background base: `#05050a`
-- Surface: `#0f1120`
-- Texte: `#edf1ff`
-- Accent cyan: `#19e4ff`
-- Accent magenta: `#fd40ff`
-- Accent acid green: `#9dff46`
+## 2) Design system
+### Color palette
+- Background: `#04050b` / `#090b16`
+- Surface: `rgba(11, 14, 28, 0.78)`
+- Text: `#ecf1ff`
+- Cyan accent: `#23e7ff`
+- Magenta accent: `#ff47e8`
+- Lime accent: `#b8ff46`
 
-### Typographie
-- Base: `Inter, ui-sans-serif, system-ui`
-- Titres: poids 700–800
-- Données gameplay/chips: 600
+### Typography
+- Family: `Inter, ui-sans-serif, system-ui`
+- Hero titles: `700–900`
+- Interface labels/chips: `600–700`
 
-### Langage visuel
-- Bords arrondis (`14–16px`) et bordures néon légères.
-- Textures discrètes (repeating-linear-gradient + radials).
-- Cartes avec zone art dédiée + rareté colorée + lueur holographique au hover.
+### Visual language
+- Premium dark surfaces with controlled neon edges.
+- TCG-inspired card composition (nameplate, art zone, stats zone, rarity treatment).
+- Subtle texture/noise and holographic glint instead of heavy motion overload.
 
-## 3) Spécifications d’animation
-- Hover carte: `180ms ease`, `translateY(-4px)`.
-- Lueur holo: apparition en `180ms ease`.
-- Progress bar PvE: `250ms ease-out`.
-- Pack opening: tilt 3D `600ms cubic-bezier(0.2, 0.9, 0.1, 1)`.
+## 3) Motion specs
+- Card hover lift: `180ms ease`.
+- Holo glint fade-in: `180ms ease`.
+- Progress fill animation: `250ms ease-out`.
+- Pack tilt reveal: `760ms cubic-bezier(0.2, 0.9, 0.1, 1)`.
 
-## 4) Découpage composants réutilisables
-- `SiteShell`: header persistant, navigation, footer, zone session/login.
-- `Button`: variantes primary/ghost/danger.
-- `CardFrame`: rendu carte TCG standardisé (stats, art, rareté, état sélection).
-- `Modal`: reveal de packs / overlays.
-- `ProgressBar`: progression PvE / compte.
-- `useSession`: hook de session partagé (`/api/me`).
+## 4) Reusable component map
+- `SiteShell`: global header/nav/account + footer framing.
+- `Button`: `primary`, `ghost`, `danger` variants.
+- `CardFrame`: reusable TCG card renderer.
+- `Modal`: pack reveal and overlay interactions.
+- `ProgressBar`: PvE/account progression.
+- `useSession`: shared session state (`/api/me`).

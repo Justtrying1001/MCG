@@ -24,24 +24,38 @@ export default function PacksPage() {
     const payload = await res.json();
     setResult(payload.pulledCards as BaseCard[]);
     await refresh();
-    setTimeout(() => setIsOpening(false), 650);
+    setTimeout(() => setIsOpening(false), 760);
   };
 
   return (
     <SiteShell>
       <section className="section-head">
         <h2>Packs</h2>
-        <p>Achetez des packs, déclenchez le reveal et enrichissez votre deck.</p>
-        <Button onClick={() => void openPack()} disabled={!me || isOpening}>
-          {isOpening ? "Ouverture…" : "Ouvrir un pack"}
-        </Button>
+        <p>Choose your risk profile, open boosters, and chase rare meme archetypes.</p>
+        <div className="inline-actions">
+          <Button onClick={() => void openPack()} disabled={!me || isOpening}>
+            {isOpening ? "Opening..." : "Open pack"}
+          </Button>
+          <span className="hint">Tip: each pack can unlock your next PvE-winning combo.</span>
+        </div>
       </section>
 
-      <div className={`pack-simulator ${isOpening ? "opening" : ""}`}>
-        <div className="pack-foil">MCG BOOSTER</div>
-      </div>
+      <section className={`pack-simulator ${isOpening ? "opening" : ""}`}>
+        <div className="pack-foil">GENESIS BOOSTER</div>
+      </section>
 
-      <Modal title="Résultat du pack" open={result.length > 0 && !isOpening} onClose={() => setResult([])}>
+      <section className="feature-grid">
+        <article className="feature-panel">
+          <h3>Drop design</h3>
+          <p>Weighted rarity keeps progression exciting while preserving long-term chase value.</p>
+        </article>
+        <article className="feature-panel">
+          <h3>Reveal ritual</h3>
+          <p>Foil animation + card-by-card reveal reinforces ownership and collection desire.</p>
+        </article>
+      </section>
+
+      <Modal title="Pack Reveal" open={result.length > 0 && !isOpening} onClose={() => setResult([])}>
         <div className="card-grid">
           {result.map((card) => (
             <CardFrame key={card.baseCardId} card={card} />

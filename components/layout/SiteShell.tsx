@@ -12,8 +12,8 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/packs", label: "Packs" },
   { href: "/collection", label: "Collection" },
-  { href: "/combats", label: "Combats PvE" },
-  { href: "/compte", label: "Compte" },
+  { href: "/combats", label: "PvE" },
+  { href: "/compte", label: "Account" },
 ];
 
 export function SiteShell({ children }: { children: ReactNode }) {
@@ -31,7 +31,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
     if (!res.ok) {
       const txt = await res.text();
-      alert(txt || "Auth failed");
+      alert(txt || "Authentication failed");
       return;
     }
 
@@ -46,12 +46,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="site-bg">
+      <div className="noise-layer" />
       <header className="site-header">
         <div className="logo-wrap">
           <div className="logo-badge">MCG</div>
           <div>
             <h1>Meme Card Game</h1>
-            <p>Crypto TCG · collect, build, battle.</p>
+            <p>Collect. Evolve. Dominate the memeverse.</p>
           </div>
         </div>
 
@@ -65,11 +66,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
         <div className="account-chip">
           {loading ? (
-            <span>Session…</span>
+            <span>Loading session...</span>
           ) : me ? (
             <>
-              <span>{me.user.username} · {me.user.points} pts</span>
-              <Button variant="ghost" onClick={logout}>Logout</Button>
+              <span className="player-badge">{me.user.username} · {me.user.points} XP</span>
+              <Button variant="ghost" onClick={logout}>
+                Logout
+              </Button>
             </>
           ) : (
             <>
@@ -84,8 +87,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={`Password min ${PASSWORD_MIN_LENGTH}`}
               />
-              <Button variant="ghost" onClick={() => void doAuth("/api/auth/login")}>Login</Button>
-              <Button onClick={() => void doAuth("/api/auth/register")}>Sign up</Button>
+              <Button variant="ghost" onClick={() => void doAuth("/api/auth/login")}>
+                Login
+              </Button>
+              <Button onClick={() => void doAuth("/api/auth/register")}>Create account</Button>
             </>
           )}
         </div>
@@ -94,8 +99,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <main className="page-shell">{children}</main>
 
       <footer className="site-footer">
-        <span>© MCG · Neon Memeverse</span>
-        <span>Packs · Collection · PvE · Shop (soon)</span>
+        <span>© MCG · Neon Memeverse Protocol</span>
+        <span>Packs · Collection · PvE · Shop (coming soon)</span>
       </footer>
     </div>
   );

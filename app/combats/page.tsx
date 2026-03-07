@@ -37,9 +37,9 @@ export default function CombatsPage() {
   return (
     <SiteShell>
       <section className="section-head">
-        <h2>Combat PvE</h2>
-        <p>Choisis jusqu&apos;à 3 cartes, ajuste la difficulté et tente de gagner des points.</p>
-        <ProgressBar value={team.length} max={3} label="Composition équipe" />
+        <h2>PvE Arena</h2>
+        <p>Select up to 3 cards, set encounter difficulty, and farm progression XP.</p>
+        <ProgressBar value={team.length} max={3} label="Squad capacity" />
       </section>
 
       <section className="filters">
@@ -48,7 +48,7 @@ export default function CombatsPage() {
           <option value="normal">Normal</option>
           <option value="hard">Hard</option>
         </select>
-        <Button onClick={() => void run()} disabled={team.length === 0}>Lancer le combat</Button>
+        <Button onClick={() => void run()} disabled={team.length === 0}>Start run</Button>
       </section>
 
       <section className="card-grid">

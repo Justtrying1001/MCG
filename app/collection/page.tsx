@@ -19,7 +19,7 @@ export default function CollectionPage() {
     if (!me) return [];
     return me.collection
       .filter((item) => !faction || item.card.faction === faction)
-      .filter((item) => `${item.card.name} ${item.card.symbol}`.toLowerCase().includes(search.toLowerCase()))
+      .filter((item) => `${item.card.name} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => b.quantity - a.quantity);
   }, [me, faction, search]);
 
@@ -27,13 +27,13 @@ export default function CollectionPage() {
     <SiteShell>
       <section className="section-head">
         <h2>Collection</h2>
-        <p>Filtrer par faction, analyser les stats et préparer vos meilleures synergies.</p>
+        <p>Audit your roster by faction and optimize your strongest card cores.</p>
       </section>
 
       <section className="filters">
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Recherche nom / symbole" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, symbol, faction" />
         <select value={faction} onChange={(e) => setFaction(e.target.value)}>
-          <option value="">Toutes factions</option>
+          <option value="">All factions</option>
           {factions.map((f) => (
             <option key={f} value={f}>{f}</option>
           ))}
@@ -41,7 +41,7 @@ export default function CollectionPage() {
       </section>
 
       <section className="card-grid">
-        {cards.length ? cards.map((item) => <CardFrame key={item.baseCardId} card={item.card} quantity={item.quantity} />) : <p>Aucune carte.</p>}
+        {cards.length ? cards.map((item) => <CardFrame key={item.baseCardId} card={item.card} quantity={item.quantity} />) : <p>No cards yet.</p>}
       </section>
     </SiteShell>
   );
