@@ -10,26 +10,15 @@ datasource db {
 
 model User {
   id           String        @id @default(cuid())
+  twitterId    String        @unique
   username     String        @unique
   points       Int           @default(300)
   packsOpened  Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  sessions     Session[]
   cards        UserCard[]
   packOpenings PackOpening[]
   pveRuns      PveRun[]
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 model UserCard {

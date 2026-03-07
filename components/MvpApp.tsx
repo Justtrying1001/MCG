@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import type { BaseCard } from "@/types/cards";
 
 type CollectionItem = {
@@ -45,7 +46,7 @@ function renderCard(card: BaseCard, qty: number | null = null, selectable = fals
 }
 
 export function MvpApp() {
-  const [username, setUsername] = useState("");
+  const { status } = useSession();
   const [me, setMe] = useState<MeResponse | null>(null);
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
@@ -55,7 +56,7 @@ export function MvpApp() {
   const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
 
   const refresh = async () => {
-    const res = await fetch("/api/me");
+    const res = await fetch("/api/me", { cache: "no-store" });
     if (!res.ok) {
       setMe(null);
       return;
@@ -65,8 +66,12 @@ export function MvpApp() {
   };
 
   useEffect(() => {
-    void refresh();
-  }, []);
+    if (status === "authenticated") {
+      void refresh();
+    } else {
+      setMe(null);
+    }
+  }, [status]);
 
   const factions = useMemo(() => {
     if (!me) return [];
@@ -97,31 +102,6 @@ export function MvpApp() {
       if (prev.length >= 3) return prev;
       return [...prev, baseCardId];
     });
-  };
-
-  const login = async () => {
-    if (!username.trim()) return;
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username.trim() }),
-    });
-    if (!res.ok) {
-      alert("Login error");
-      return;
-    }
-    setPackResult([]);
-    setBattleLog("");
-    setSelectedTeam([]);
-    await refresh();
-  };
-
-  const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setMe(null);
-    setPackResult([]);
-    setBattleLog("");
-    setSelectedTeam([]);
   };
 
   const openPack = async () => {
@@ -162,14 +142,21 @@ export function MvpApp() {
 
       <section className="panel">
         <h2>Login</h2>
+        {status === "authenticated" && me ? (
+          <p>Active user: {me.user.username}</p>
+        ) : (
+          <p>No active user</p>
+        )}
         <div className="inline">
-          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" />
-          <button onClick={login}>Login / Register</button>
+          {status === "authenticated" ? (
+            <button onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
+          ) : (
+            <button onClick={() => signIn("twitter")}>Login with Twitter</button>
+          )}
         </div>
-        <p>{me ? `Active user: ${me.user.username}` : "No active user"}</p>
       </section>
 
-      {me && (
+      {status === "authenticated" && me && (
         <>
           <section className="panel">
             <h2>Profile</h2>
@@ -179,7 +166,6 @@ export function MvpApp() {
               <span>Packs opened: {me.user.packsOpened}</span>
               <span>Opening records: {me.openingsCount}</span>
               <span>PvE runs: {me.pveRunsCount}</span>
-              <button onClick={logout}>Logout</button>
             </div>
           </section>
 
@@ -189,7 +175,7 @@ export function MvpApp() {
               Each pack contains <strong>5 base cards</strong> using weighted tier/rank drop logic.
             </p>
             <button onClick={openPack}>Open Pack (cost: 100 points)</button>
-            <div className="card-grid">{packResult.map((c) => <div key={c.baseCardId}>{renderCard(c, 1)}</div>)}</div>
+            <div className="card-grid">{packResult.map((c, i) => <div key={`${c.baseCardId}_${i}`}>{renderCard(c, 1)}</div>)}</div>
           </section>
 
           <section className="panel">
