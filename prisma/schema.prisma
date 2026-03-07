@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  twitterId    String        @unique
+  username     String        @unique
+  points       Int           @default(300)
+  packsOpened  Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  cards        UserCard[]
+  packOpenings PackOpening[]
+  pveRuns      PveRun[]
+}
+
+model UserCard {
+  id         String   @id @default(cuid())
+  userId     String
+  baseCardId String
+  quantity   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, baseCardId])
+  @@index([userId])
+}
+
+model PackOpening {
+  id        String   @id @default(cuid())
+  userId    String
+  packType  String
+  result    Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PveRun {
+  id            String   @id @default(cuid())
+  userId        String
+  difficulty    String
+  selectedCards Json
+  enemyCards    Json
+  result        String
+  reward        Int
+  battleMeta    Json
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
