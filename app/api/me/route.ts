@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
-import { ensurePveDailyState } from "@/lib/pve/reset";
+import { ensurePveDailyState, getNextPveResetAt } from "@/lib/pve/reset";
 
 export async function GET() {
   try {
@@ -35,7 +35,14 @@ export async function GET() {
     const availablePveCards = payload.collection.filter((c) => !c.pveExhausted).length;
     const exhaustedPveCards = payload.collection.filter((c) => c.pveExhausted).length;
 
-    return NextResponse.json({ ...payload, openingsCount, pveRunsCount, availablePveCards, exhaustedPveCards });
+    return NextResponse.json({
+      ...payload,
+      openingsCount,
+      pveRunsCount,
+      availablePveCards,
+      exhaustedPveCards,
+      nextPveResetAt: getNextPveResetAt().toISOString(),
+    });
   } catch (error) {
     return handleApiError(error, "Cannot load user profile");
   }

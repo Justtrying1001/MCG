@@ -24,6 +24,7 @@ export type MeResponse = {
   pveRunsCount: number;
   availablePveCards: number;
   exhaustedPveCards: number;
+  nextPveResetAt: string;
 };
 
 export function useSession() {

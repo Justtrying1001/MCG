@@ -9,6 +9,10 @@ export function shouldResetPve(lastResetAt: Date, now = new Date()) {
   return utcDateKey(lastResetAt) !== utcDateKey(now);
 }
 
+export function getNextPveResetAt(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+}
+
 export async function applyPveDailyReset(tx: Prisma.TransactionClient, userId: string, now = new Date()) {
   await tx.user.update({
     where: { id: userId },

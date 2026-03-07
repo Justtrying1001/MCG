@@ -21,11 +21,40 @@ function cardPower(card: { ATK: number; DEF: number; SPD: number; CTRL: number }
   return card.ATK + card.DEF + card.SPD + card.CTRL;
 }
 
+function formatCountdown(ms: number) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function useResetCountdown(nextResetAt: string | undefined) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const remainingMs = useMemo(() => {
+    if (!nextResetAt) return 0;
+    return Math.max(0, new Date(nextResetAt).getTime() - now);
+  }, [nextResetAt, now]);
+
+  return {
+    remainingLabel: formatCountdown(remainingMs),
+    resetAtLabel: nextResetAt ? new Date(nextResetAt).toLocaleString() : "—",
+  };
+}
+
 function useBattleReplay(result: BattleResultPayload | null, speed = 280) {
   const [actionStep, setActionStep] = useState(0);
+
   useEffect(() => {
     setActionStep(0);
     if (!result || result.actions.length === 0) return;
+
     const timer = window.setInterval(() => {
       setActionStep((prev) => {
         if (!result || prev >= result.actions.length) {
@@ -51,16 +80,18 @@ export default function CombatsPage() {
   const [error, setError] = useState("");
   const [battle, setBattle] = useState<BattleResultPayload | null>(null);
 
-  const availableCards = useMemo(() => {
-    const cards = me?.collection ?? [];
-    return [...cards].sort((a, b) => {
+  const { remainingLabel, resetAtLabel } = useResetCountdown(me?.nextPveResetAt);
+
+  const collection = me?.collection ?? [];
+  const sortedCards = useMemo(() => {
+    return [...collection].sort((a, b) => {
       const va = sortBy === "power" ? cardPower(a.card) : a.card[sortBy];
       const vb = sortBy === "power" ? cardPower(b.card) : b.card[sortBy];
       return vb - va;
     });
-  }, [me, sortBy]);
+  }, [collection, sortBy]);
 
-  const selectedCardItems = selectedTeam.map((id) => availableCards.find((c) => c.baseCardId === id)).filter(Boolean);
+  const selectedCardItems = selectedTeam.map((id) => sortedCards.find((c) => c.baseCardId === id)).filter(Boolean);
 
   const totals = selectedCardItems.reduce(
     (acc, item) => {
@@ -131,20 +162,24 @@ export default function CombatsPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">PvE Arena</h1>
-          <p className="page-subtitle">Build a 5-card strike team. Every battle consumes tickets and exhausts selected cards for today.</p>
+          <p className="page-subtitle">Build a 5-card strike team. Every battle consumes 1 ticket and exhausts selected cards until daily reset.</p>
         </div>
       </div>
 
       <div className="battle-layout">
-        <div>
-          <div className="battle-panel" style={{ marginBottom: "1rem" }}>
+        <section className="battle-main-col">
+          <div className="battle-panel pve-hub-panel">
             <p className="panel-label">Arena Hub</p>
-            <div style={{ marginTop: "0.6rem", display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "0.6rem" }}>
+            <div className="pve-hub-stats">
               <HubStat label="Tickets" value={`${me?.user.pveBattleTickets ?? 0}/3`} />
               <HubStat label="Cards Available" value={`${me?.availablePveCards ?? 0}`} />
               <HubStat label="Cards Exhausted" value={`${me?.exhaustedPveCards ?? 0}`} />
             </div>
-            <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.8rem", flexWrap: "wrap" }}>
+            <div className="pve-reset-banner">
+              <span>Daily reset in: <b>{remainingLabel}</b></span>
+              <span className="pve-reset-sub">Next reset: {resetAtLabel}</span>
+            </div>
+            <div className="pve-hub-actions">
               <Button onClick={() => { window.location.hash = "team-builder"; }}>Build Team</Button>
               <Button onClick={() => void runBattle()} disabled={selectedTeam.length !== TEAM_SIZE || (me?.user.pveBattleTickets ?? 0) <= 0 || running}>
                 {running ? "Running..." : "Start Battle"}
@@ -154,8 +189,8 @@ export default function CombatsPage() {
 
           <div className="battle-panel" id="team-builder">
             <p className="panel-label">Team Builder</p>
-            <p style={{ marginTop: "0.45rem", color: "var(--text-2)", fontSize: "0.86rem" }}>Select exactly 5 AVAILABLE cards. Selected cards become EXHAUSTED after battle.</p>
-            <div className="diff-tabs" style={{ margin: "0.8rem 0" }}>
+            <p className="pve-helper-copy">Select exactly 5 AVAILABLE cards. Selected cards become EXHAUSTED after battle and reset daily.</p>
+            <div className="diff-tabs pve-sort-tabs">
               {(["power", "ATK", "DEF", "SPD", "CTRL"] as SortKey[]).map((key) => (
                 <button key={key} className={`diff-tab${sortBy === key ? " active" : ""}`} onClick={() => setSortBy(key)}>
                   Sort: {key}
@@ -163,13 +198,14 @@ export default function CombatsPage() {
               ))}
             </div>
 
-            <div className="card-grid">
-              {availableCards.map((item) => {
+            <div className="card-grid pve-collection-grid">
+              {sortedCards.map((item) => {
                 const isSelected = selectedTeam.includes(item.baseCardId);
                 const exhausted = item.pveExhausted;
                 const stateLabel = exhausted ? "EXHAUSTED" : isSelected ? "SELECTED" : "AVAILABLE";
+
                 return (
-                  <div key={item.baseCardId} style={{ position: "relative" }}>
+                  <div key={item.baseCardId} className="pve-card-wrap">
                     <button
                       className="card-select"
                       onClick={() => toggleCard(item.baseCardId, exhausted)}
@@ -181,30 +217,15 @@ export default function CombatsPage() {
                     >
                       <CardFrame card={item.card} quantity={item.quantity} selectable selected={isSelected} />
                     </button>
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "0.45rem",
-                        left: "0.45rem",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        letterSpacing: "0.04em",
-                        borderRadius: "999px",
-                        padding: "0.2rem 0.5rem",
-                        border: "1px solid var(--border)",
-                        background: exhausted ? "rgba(255, 107, 107, 0.18)" : isSelected ? "rgba(0, 229, 255, 0.18)" : "rgba(61, 220, 151, 0.18)",
-                      }}
-                    >
-                      {stateLabel}
-                    </span>
+                    <span className={`pve-state-badge ${exhausted ? "exhausted" : isSelected ? "selected" : "available"}`}>{stateLabel}</span>
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="battle-sidebar">
+        <aside className="battle-sidebar">
           <div className="battle-panel">
             <p className="panel-label">Selected Team ({selectedTeam.length}/5)</p>
             <div className="squad-slots" style={{ marginTop: "0.7rem" }}>
@@ -218,33 +239,32 @@ export default function CombatsPage() {
                 );
               })}
             </div>
-            <p style={{ marginTop: "0.75rem", color: "var(--text-3)", fontSize: "0.8rem" }}>
+            <p className="pve-team-stats">
               ATK {totals.ATK} · DEF {totals.DEF} · SPD {totals.SPD} · CTRL {totals.CTRL} · POW {totals.ATK + totals.DEF + totals.SPD + totals.CTRL}
             </p>
           </div>
 
           <div className="battle-panel">
             <p className="panel-label">Difficulty</p>
-            <div style={{ display: "grid", gap: "0.55rem", marginTop: "0.7rem" }}>
+            <div className="pve-difficulty-list">
               {DIFFICULTIES.map((d) => (
-                <button key={d.value} className={`diff-tab${difficulty === d.value ? " active" : ""}`} onClick={() => setDifficulty(d.value)} style={{ textAlign: "left" }}>
+                <button key={d.value} className={`diff-tab pve-diff-card${difficulty === d.value ? " active" : ""}`} onClick={() => setDifficulty(d.value)}>
                   <strong>{d.label}</strong>
-                  <div style={{ opacity: 0.85, marginTop: "0.2rem", fontSize: "0.8rem" }}>
-                    Win +{d.win} · Loss +{d.loss} · Bonus {d.bonus} · {d.desc}
-                  </div>
+                  <span>Win +{d.win} · Loss +{d.loss} · Bonus {d.bonus}</span>
+                  <span>{d.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {error ? <div className="battle-log-box">{error}</div> : null}
-        </div>
+        </aside>
       </div>
 
       {battle ? (
-        <div className="battle-panel" style={{ marginTop: "1rem" }}>
+        <div className="battle-panel pve-replay-panel">
           <p className="panel-label">Battle Replay</p>
-          <div style={{ marginTop: "0.6rem", display: "flex", justifyContent: "space-between", gap: "0.8rem", flexWrap: "wrap" }}>
+          <div className="pve-replay-kpis">
             <span>Round {liveRound} / {battle.rounds.length}</span>
             <span>Impact — Player {cumulative.player} · Enemy {cumulative.enemy}</span>
             <span>Rounds won — You {battle.playerRoundsWon} · Enemy {battle.enemyRoundsWon}</span>
@@ -258,23 +278,23 @@ export default function CombatsPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: "0.8rem", display: "grid", gap: "0.4rem" }}>
+          <div className="pve-round-list">
             {displayedRoundSummaries.map((round) => (
-              <div key={round.round} style={{ border: "1px solid var(--border)", borderRadius: "0.6rem", padding: "0.45rem 0.6rem" }}>
+              <div key={round.round} className="pve-round-item">
                 Round {round.round}: Player {round.playerImpact} · Enemy {round.enemyImpact} · Winner: {round.winner.toUpperCase()}
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop: "1rem", display: "grid", gap: "0.35rem" }}>
-            <h3 style={{ margin: 0 }}>{battle.result === "WIN" ? "Victory" : "Defeat"}</h3>
+          <div className="pve-result-grid">
+            <h3>{battle.result === "WIN" ? "Victory" : "Defeat"}</h3>
             <div>Total impact: You {battle.playerTotalImpact} · Enemy {battle.enemyTotalImpact}</div>
             <div>Rounds won: You {battle.playerRoundsWon} · Enemy {battle.enemyRoundsWon}</div>
             <div>Points earned: +{battle.rewardPoints}</div>
             <div>{battle.bonusPackAwarded ? "Bonus pack equivalent awarded." : "No bonus pack equivalent this run."}</div>
             <div>Cards exhausted this run: {battle.exhaustedCardIds.length}</div>
             <div>Remaining battle tickets: {battle.remainingBattleTickets}</div>
-            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+            <div className="pve-result-actions">
               <Button onClick={() => void runBattle()} disabled={selectedTeam.length !== TEAM_SIZE || (me?.user.pveBattleTickets ?? 0) <= 0 || running}>Play Again</Button>
               <Button onClick={() => { window.location.hash = "team-builder"; }}>Change Team</Button>
               <Button onClick={() => { window.location.href = "/packs"; }} disabled={!canOpenPack}>Open Packs</Button>
@@ -288,9 +308,9 @@ export default function CombatsPage() {
 
 function HubStat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ border: "1px solid var(--border)", borderRadius: "0.7rem", padding: "0.55rem" }}>
-      <div style={{ fontSize: "0.75rem", color: "var(--text-3)" }}>{label}</div>
-      <div style={{ fontWeight: 800, marginTop: "0.2rem" }}>{value}</div>
+    <div className="pve-hub-stat">
+      <div className="pve-hub-stat-label">{label}</div>
+      <div className="pve-hub-stat-value">{value}</div>
     </div>
   );
 }
