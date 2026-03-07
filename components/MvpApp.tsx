@@ -162,7 +162,7 @@ export function MvpApp() {
   };
 
   return (
-    <>
+    <main className="app-shell">
       <header>
         <h1>MCG MVP V1</h1>
         <p>Open packs → collect base cards → play PvE → earn rewards.</p>
@@ -188,13 +188,13 @@ export function MvpApp() {
               minLength={PASSWORD_MIN_LENGTH}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <button onClick={() => void doAuth("/api/auth/register")}>Register</button>
-            <button onClick={() => void doAuth("/api/auth/login")}>Login</button>
+            <button className="btn-success" onClick={() => void doAuth("/api/auth/register")}>Register</button>
+            <button className="btn-primary" onClick={() => void doAuth("/api/auth/login")}>Login</button>
           </div>
         )}
         {me && (
           <div className="inline">
-            <button onClick={() => void logout()}>Logout</button>
+            <button className="btn-danger" onClick={() => void logout()}>Logout</button>
           </div>
         )}
       </section>
@@ -203,12 +203,12 @@ export function MvpApp() {
         <>
           <section className="panel">
             <h2>Profile</h2>
-            <div className="inline wrap">
-              <strong>User: {me.user.username}</strong>
-              <span>Points: {me.user.points}</span>
-              <span>Packs opened: {me.user.packsOpened}</span>
-              <span>Opening records: {me.openingsCount}</span>
-              <span>PvE runs: {me.pveRunsCount}</span>
+            <div className="kpis">
+              <span className="kpi-chip"><strong>User:</strong>&nbsp;{me.user.username}</span>
+              <span className="kpi-chip">Points: {me.user.points}</span>
+              <span className="kpi-chip">Packs opened: {me.user.packsOpened}</span>
+              <span className="kpi-chip">Opening records: {me.openingsCount}</span>
+              <span className="kpi-chip">PvE runs: {me.pveRunsCount}</span>
             </div>
           </section>
 
@@ -217,7 +217,7 @@ export function MvpApp() {
             <p>
               Each pack contains <strong>5 base cards</strong> using weighted tier/rank drop logic.
             </p>
-            <button onClick={openPack}>Open Pack (cost: 100 points)</button>
+            <button className="btn-primary" onClick={openPack}>Open Pack (cost: 100 points)</button>
             <div className="card-grid">{packResult.map((c, i) => <div key={`${c.baseCardId}_${i}`}>{renderCard(c, 1)}</div>)}</div>
           </section>
 
@@ -241,7 +241,7 @@ export function MvpApp() {
             <div className="card-grid">
               {filteredCollection.length
                 ? filteredCollection.map((x) => <div key={x.baseCardId}>{renderCard(x.card, x.quantity)}</div>)
-                : "No cards owned yet. Open a pack first."}
+                : <div className="empty">No cards owned yet. Open a pack first.</div>}
             </div>
           </section>
 
@@ -254,21 +254,25 @@ export function MvpApp() {
                 <option value="normal">Normal</option>
                 <option value="hard">Hard</option>
               </select>
-              <button onClick={runPve}>Start PvE Battle</button>
+              <button className="btn-success" onClick={runPve}>Start PvE Battle</button>
             </div>
             <div className="card-grid">
               {teamOwned.length
                 ? teamOwned.map((x) => (
-                    <button key={x.baseCardId} onClick={() => toggleTeam(x.baseCardId)}>
+                    <button
+                      className={`team-btn ${selectedTeam.includes(x.baseCardId) ? "selected" : ""}`}
+                      key={x.baseCardId}
+                      onClick={() => toggleTeam(x.baseCardId)}
+                    >
                       {renderCard(x.card, x.quantity, true, selectedTeam.includes(x.baseCardId))}
                     </button>
                   ))
-                : "Own cards to build a PvE team."}
+                : <div className="empty">Own cards to build a PvE team.</div>}
             </div>
             <pre>{battleLog}</pre>
           </section>
         </>
       )}
-    </>
+    </main>
   );
 }
