@@ -9,47 +9,73 @@ import type { BaseCard } from "@/types/cards";
 import { useState } from "react";
 
 const ODDS = [
-  { label: "Legendary", pct: "2%",  color: "var(--gold)" },
-  { label: "Epic",      pct: "10%", color: "var(--magenta)" },
-  { label: "Rare",      pct: "28%", color: "var(--cyan)" },
-  { label: "Common",    pct: "60%", color: "var(--text-3)" },
+  { label: "Legendary", pct: "2%", color: "var(--gold)" },
+  { label: "Epic", pct: "10%", color: "var(--magenta)" },
+  { label: "Rare", pct: "28%", color: "var(--cyan)" },
+  { label: "Common", pct: "60%", color: "var(--text-3)" },
 ];
 
 export default function PacksPage() {
   const { me, refresh } = useSession();
   const [result, setResult] = useState<BaseCard[]>([]);
   const [isOpening, setIsOpening] = useState(false);
+  const [revealed, setRevealed] = useState<boolean[]>([]);
+  const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
+
+  const allRevealed = revealed.length > 0 && revealed.every(Boolean);
+  const revealedCount = revealed.filter(Boolean).length;
 
   const openPack = async () => {
     setIsOpening(true);
+    setOpeningPhase("tearing");
+    setResult([]);
+    setRevealed([]);
+
     const res = await fetch("/api/pack/open", { method: "POST" });
     if (!res.ok) {
       alert(await res.text());
       setIsOpening(false);
+      setOpeningPhase("idle");
       return;
     }
+
     const payload = await res.json();
-    setResult(payload.pulledCards as BaseCard[]);
+    const pulled = payload.pulledCards as BaseCard[];
+
+    setTimeout(() => {
+      setResult(pulled);
+      setRevealed(new Array(pulled.length).fill(false));
+      setOpeningPhase("revealing");
+      setIsOpening(false);
+    }, 900);
+
     await refresh();
-    setTimeout(() => setIsOpening(false), 760);
+  };
+
+  const handleReveal = (index: number) => {
+    if (revealed[index]) return;
+    setRevealed((prev) => prev.map((item, itemIndex) => (itemIndex === index ? true : item)));
+  };
+
+  const closeReveal = () => {
+    setResult([]);
+    setRevealed([]);
+    setOpeningPhase("idle");
   };
 
   return (
     <SiteShell>
-      {/* Page header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Pack opening</h1>
           <p className="page-subtitle">
-            Crack open a Genesis Booster and discover your next legendary pull. Every pack
-            contains 5 cards with weighted rarity drops.
+            Crack open a premium Genesis Booster and run a full reveal ritual. Tear the pack,
+            fan the card backs, then flip each pull one by one.
           </p>
         </div>
       </div>
 
-      {/* Pack stage */}
-      <div className={`pack-stage${isOpening ? " is-opening" : ""}`}>
-        {/* Left — info */}
+      <div className={`pack-stage${openingPhase === "tearing" ? " is-opening" : ""}`}>
         <div className="pack-info">
           <div>
             <p className="pack-info-title">Genesis Booster</p>
@@ -70,29 +96,43 @@ export default function PacksPage() {
           </div>
         </div>
 
-        {/* Center — pack visual + CTA */}
         <div className="pack-center">
-          <div className="pack-visual">
+          <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>
             <div className="pack-visual-inner">
+              <span className="pack-visual-edition">MCG // GEN-01</span>
               <span className="pack-visual-name">GENESIS</span>
-              <span className="pack-visual-type">BOOSTER PACK</span>
+              <span className="pack-visual-type">CRYPTO BOOSTER</span>
+              <span className="pack-visual-cta">5 collectible cards</span>
             </div>
+
+            <div className="pack-foil-strip" aria-hidden="true" />
+            <div className="pack-seal" aria-hidden="true">SEALED</div>
+            <div className="pack-corner-mark" aria-hidden="true">◈ MCG ◈</div>
+            <div className="pack-energy" aria-hidden="true" />
+            <div className="pack-glint" aria-hidden="true" />
+            <div className="pack-open-flash" aria-hidden="true" />
+          </div>
+
+          <div className="pack-action-copy">
+            <p className="pack-action-title">Genesis Booster</p>
+            <p className="pack-action-desc">Open to receive 5 base cards with standard weighted rarity distribution.</p>
           </div>
 
           <Button
             onClick={() => void openPack()}
-            disabled={!me || isOpening}
+            disabled={!me || isOpening || openingPhase === "tearing"}
             className="btn-lg"
           >
-            {isOpening ? "Revealing…" : "Open pack"}
+            {openingPhase === "tearing" ? "Tearing pack..." : isOpening ? "Preparing reveal..." : "Open pack"}
           </Button>
 
-          {!me && (
-            <p className="pack-tip">Sign in to open packs and build your collection.</p>
+          {openingPhase === "tearing" && (
+            <p className="pack-opening-status">Quantum seal rupturing... stand by for card reveal.</p>
           )}
+
+          {!me && <p className="pack-tip">Sign in to open packs and build your collection.</p>}
         </div>
 
-        {/* Right — tips */}
         <div className="pack-right">
           <div style={{
             borderRadius: "var(--radius-sm)",
@@ -101,11 +141,11 @@ export default function PacksPage() {
             padding: "1.1rem",
           }}>
             <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
-              Pack strategy
+              Opening protocol
             </p>
             <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
-              Build a 3-card squad with high synergy before heading into PvE.
-              Prioritise cards with complementary ATK and DEF values.
+              1) Tear booster. 2) Cards fan in face-down. 3) Flip each card manually.
+              4) Confirm full reveal.
             </p>
           </div>
 
@@ -116,23 +156,66 @@ export default function PacksPage() {
             padding: "1.1rem",
           }}>
             <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
-              Reveal ritual
+              Reveal tip
             </p>
             <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
-              Card-by-card reveal reinforces ownership and collection desire.
-              Each pull adds to your permanent roster.
+              Hover each card back and click to flip. Every reveal is tracked in your permanent collection.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Pull reveal modal */}
-      <Modal title="Pack reveal — 5 cards pulled" open={result.length > 0 && !isOpening} onClose={() => setResult([])}>
-        <div className="card-grid">
-          {result.map((card) => (
-            <CardFrame key={card.baseCardId} card={card} />
-          ))}
+      <Modal
+        title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - click each card to flip"}
+        open={result.length > 0 && openingPhase === "revealing"}
+        onClose={closeReveal}
+      >
+        <div className="reveal-progress-wrap">
+          <p className="reveal-progress-text">
+            Revealed {revealedCount}/{result.length}
+          </p>
+          <div className="reveal-progress-track">
+            <div
+              className="reveal-progress-fill"
+              style={{ width: `${(revealedCount / Math.max(result.length, 1)) * 100}%` }}
+            />
+          </div>
         </div>
+
+        <div className="pack-reveal-grid">
+          {result.map((card, index) => {
+            const isCardRevealed = revealed[index];
+
+            return (
+              <button
+                key={`${card.baseCardId}_${index}`}
+                className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}`}
+                onClick={() => handleReveal(index)}
+                disabled={isCardRevealed}
+                aria-label={isCardRevealed ? `${card.name} revealed` : `Reveal card ${index + 1}`}
+              >
+                <div className="reveal-slot-inner">
+                  <div className="reveal-slot-face reveal-slot-back">
+                    <span className="back-mark">◈</span>
+                    <span className="back-brand">MCG GENESIS</span>
+                    <span className="back-label">Tap to reveal</span>
+                  </div>
+
+                  <div className="reveal-slot-face reveal-slot-front">
+                    <CardFrame card={card} />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {allRevealed && (
+          <div className="reveal-complete-row">
+            <p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p>
+            <Button onClick={closeReveal}>Done</Button>
+          </div>
+        )}
       </Modal>
     </SiteShell>
   );
