@@ -8,17 +8,18 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#08080c;--border:rgba(255,255,255,0.06);--muted:rgba(255,255,255,0.28)}
-body{background:var(--bg);font-family:'Space Grotesk',sans-serif;color:rgba(255,255,255,0.8);min-height:100vh}
+body{background:radial-gradient(circle at 50% -20%,rgba(118,135,186,.18) 0%,rgba(8,8,12,0) 44%),radial-gradient(circle at 50% 120%,rgba(255,60,172,.08) 0%,rgba(8,8,12,0) 52%),var(--bg);font-family:'Space Grotesk',sans-serif;color:rgba(255,255,255,0.8);min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 18%,rgba(255,255,255,.08) 0%,transparent 34%),radial-gradient(circle at 82% 72%,rgba(42,250,223,.06) 0%,transparent 30%);opacity:.4;pointer-events:none;z-index:0}
 
-.header{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:52px;background:rgba(8,8,12,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(16px)}
+.header{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 34px;height:56px;background:linear-gradient(180deg,rgba(12,13,22,.96) 0%,rgba(8,8,12,.92) 100%);border-bottom:1px solid rgba(255,255,255,.09);backdrop-filter:blur(16px);box-shadow:0 10px 28px rgba(0,0,0,.35)}
 .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff}
 .logo em{font-style:normal;background:linear-gradient(90deg,#ff3cac,#7928ca,#2afadf);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hstats{display:flex;gap:20px}
 .hstat{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
 .hstat b{color:#fff}
 
-.controls{padding:12px 28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:10}
+.controls{padding:16px 34px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:10}
 .search{flex:1;min-width:160px;max-width:260px;padding:6px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none}
 .search::placeholder{color:var(--muted)}
 .search:focus{border-color:rgba(255,60,172,0.4)}
@@ -46,15 +47,15 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .sort option{background:#0f0f18}
 .count{margin-left:auto;font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;padding:6px 28px 60px;position:relative;z-index:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px;padding:12px 34px 68px;position:relative;z-index:1}
 .empty{grid-column:1/-1;text-align:center;padding:80px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px}
-.loadwrap{position:relative;z-index:1;padding:0 28px 60px;display:flex;justify-content:center}
+.loadwrap{position:relative;z-index:1;padding:0 34px 64px;display:flex;justify-content:center}
 .loadbtn{padding:9px 32px;border:1px solid rgba(255,60,172,0.25);background:rgba(255,60,172,0.06);color:rgba(255,60,172,0.7);font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:4px}
 .loadbtn:hover{background:rgba(255,60,172,0.12);border-color:rgba(255,60,172,0.45)}
 .loadbtn:disabled{opacity:.2;cursor:not-allowed}
 
 /* ══════════════════ CARD ══════════════════ */
-.cs{perspective:1100px;cursor:pointer}
+.cs{perspective:1100px;cursor:pointer;padding:6px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.015) 34%,rgba(0,0,0,.18) 100%);box-shadow:0 16px 30px rgba(0,0,0,.35);transition:transform .16s ease,box-shadow .16s ease}
 .card{width:100%;height:470px;border-radius:12px;position:relative;transform-style:preserve-3d;transition:transform .06s ease-out}
 .ci{
   width:100%;height:100%;border-radius:12px;overflow:hidden;
@@ -64,6 +65,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   box-shadow:0 0 0 1px rgba(0,0,0,.5),0 18px 48px rgba(0,0,0,.7),0 0 40px var(--vc-glow);
   position:relative;
 }
+.cs:hover{transform:translateY(-4px);box-shadow:0 22px 38px rgba(0,0,0,.44)}
 
 /* ── TOP BAND ── */
 .band{height:3px;background:var(--vc-accent);flex-shrink:0}
