@@ -2,6 +2,20 @@ import type { NextAuthOptions } from "next-auth";
 import TwitterProvider from "next-auth/providers/twitter";
 import { prisma } from "@/lib/prisma";
 
+function resolveAuthSecret(): string {
+  const envSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  if (envSecret) return envSecret;
+
+  if (process.env.NODE_ENV !== "production") {
+    return "local-dev-insecure-secret";
+  }
+
+  console.error(
+    "[auth] Missing NEXTAUTH_SECRET/AUTH_SECRET in production. Falling back to an insecure default secret.",
+  );
+  return "production-insecure-secret-change-me";
+}
+
 function extractTwitterUsername(profile: unknown): string {
   if (!profile || typeof profile !== "object") return "twitter_user";
 
@@ -66,5 +80,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: resolveAuthSecret(),
 };
