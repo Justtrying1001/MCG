@@ -1,6 +1,6 @@
-import { DIFFICULTY_MODIFIERS, MAX_BATTLE_ROUNDS } from "@/lib/pve/constants";
-import { clamp, countAlive, snapshotUnit, toSimUnit, totalHp } from "@/lib/pve/helpers";
-import type { BattleActionLog, BattleResult, PveDifficulty, TeamCard } from "@/lib/pve/types";
+import { ENEMY_IMPACT_MULTIPLIER, PVE_ROUNDS } from "@/lib/pve/constants";
+import { clamp, toUnitSnapshot } from "@/lib/pve/helpers";
+import type { BattleActionLog, BattleUnitSnapshot, PveDifficulty, RoundSummary, SimBattleCoreResult, TeamCard } from "@/lib/pve/types";
 
 type SimInput = {
   difficulty: PveDifficulty;
@@ -8,121 +8,136 @@ type SimInput = {
   enemyTeam: TeamCard[];
 };
 
-function sortInitiative(a: { spd: number; ctrl: number; atk: number; slot: number }, b: { spd: number; ctrl: number; atk: number; slot: number }) {
+function sortInitiative(a: BattleUnitSnapshot, b: BattleUnitSnapshot) {
   if (b.spd !== a.spd) return b.spd - a.spd;
   if (b.ctrl !== a.ctrl) return b.ctrl - a.ctrl;
   if (b.atk !== a.atk) return b.atk - a.atk;
+  if (a.side !== b.side) return a.side === "player" ? -1 : 1;
   return a.slot - b.slot;
 }
 
-function pickTarget(units: ReturnType<typeof toSimUnit>[]) {
-  const alive = units.filter((u) => u.hp > 0);
-  alive.sort((a, b) => {
-    const aHpPct = a.hp / a.maxHp;
-    const bHpPct = b.hp / b.maxHp;
-    if (aHpPct !== bHpPct) return aHpPct - bHpPct;
+function pickTarget(targets: BattleUnitSnapshot[]) {
+  return [...targets].sort((a, b) => {
     if (a.def !== b.def) return a.def - b.def;
+    if (a.ctrl !== b.ctrl) return a.ctrl - b.ctrl;
     return a.slot - b.slot;
-  });
-  return alive[0] ?? null;
+  })[0];
 }
 
-function rollDamage(actor: ReturnType<typeof toSimUnit>, target: ReturnType<typeof toSimUnit>, actorDamageMult: number) {
-  const rawDamage = actor.atk * 1.35 * actorDamageMult;
-  const mitigation = target.def * 0.75;
-  const baseDamage = Math.max(8, rawDamage - mitigation);
+function computeImpact(attacker: BattleUnitSnapshot, defender: BattleUnitSnapshot, enemyImpactMult: number, actorSide: "player" | "enemy") {
+  const baseImpact = attacker.atk * 1.2 + attacker.spd * 0.35 + attacker.ctrl * 0.25;
+  const resistance = defender.def * 0.9 + defender.ctrl * 0.2;
+  const impactBeforeVariance = Math.max(4, baseImpact - resistance);
 
-  const baseRoll = 0.9 + Math.random() * 0.2;
-  const ctrlDelta = clamp((actor.ctrl - target.ctrl) / 400, -0.03, 0.03);
-  const varianceMultiplier = clamp(baseRoll + ctrlDelta, 0.92, 1.08);
+  const baseVariance = 0.94 + Math.random() * 0.12;
+  const ctrlShift = clamp((attacker.ctrl - defender.ctrl) / 500, -0.02, 0.02);
+  const varianceMultiplier = clamp(baseVariance + ctrlShift, 0.95, 1.05);
 
-  const critChance = Math.min(0.12, 0.03 + Math.floor(actor.ctrl / 25) / 100);
+  let finalImpact = Math.round(impactBeforeVariance * varianceMultiplier);
+
+  const critChance = Math.min(0.1, 0.03 + Math.floor(attacker.ctrl / 25) / 100);
   const isCrit = Math.random() < critChance;
-  const totalDamage = Math.round(baseDamage * varianceMultiplier * (isCrit ? 1.35 : 1));
+  if (isCrit) {
+    finalImpact = Math.round(finalImpact * 1.3);
+  }
 
-  return { damage: Math.max(1, totalDamage), isCrit };
+  finalImpact = Math.max(1, finalImpact);
+
+  if (actorSide === "enemy") {
+    finalImpact = Math.max(1, Math.round(finalImpact * enemyImpactMult));
+  }
+
+  return { impact: finalImpact, isCrit };
 }
 
-function resolveByRoundCap(player: ReturnType<typeof toSimUnit>[], enemy: ReturnType<typeof toSimUnit>[]): BattleResult {
-  const playerAlive = countAlive(player);
-  const enemyAlive = countAlive(enemy);
+export function simulateBattle({ difficulty, playerTeam, enemyTeam }: SimInput): SimBattleCoreResult {
+  const playerUnits = playerTeam.map((card, slot) => toUnitSnapshot(card, "player", slot));
+  const enemyUnits = enemyTeam.map((card, slot) => toUnitSnapshot(card, "enemy", slot));
+  const enemyImpactMult = ENEMY_IMPACT_MULTIPLIER[difficulty];
 
-  if (playerAlive !== enemyAlive) return playerAlive > enemyAlive ? "WIN" : "LOSS";
+  const actions: BattleActionLog[] = [];
+  const rounds: RoundSummary[] = [];
+  let playerRoundsWon = 0;
+  let enemyRoundsWon = 0;
+  let playerTotalImpact = 0;
+  let enemyTotalImpact = 0;
 
-  const playerHp = totalHp(player);
-  const enemyHp = totalHp(enemy);
-  if (playerHp >= enemyHp) return "WIN";
-  return "LOSS";
-}
+  for (let round = 1; round <= PVE_ROUNDS; round += 1) {
+    const actingOrder = [...playerUnits, ...enemyUnits].sort(sortInitiative);
+    let playerRoundImpact = 0;
+    let enemyRoundImpact = 0;
+    const playerCardImpact: Record<string, number> = {};
+    const enemyCardImpact: Record<string, number> = {};
 
-export function simulateBattle({ difficulty, playerTeam, enemyTeam }: SimInput) {
-  const mods = DIFFICULTY_MODIFIERS[difficulty];
-  const player = playerTeam.map((card, slot) => toSimUnit(card, "player", slot, 1));
-  const enemy = enemyTeam.map((card, slot) => toSimUnit(card, "enemy", slot, mods.hpMult));
+    for (const actor of actingOrder) {
+      const targetPool = actor.side === "player" ? enemyUnits : playerUnits;
+      const target = pickTarget(targetPool);
+      const { impact, isCrit } = computeImpact(actor, target, enemyImpactMult, actor.side);
 
-  const rounds: BattleActionLog[] = [];
+      if (actor.side === "player") {
+        playerRoundImpact += impact;
+        playerCardImpact[actor.baseCardId] = (playerCardImpact[actor.baseCardId] ?? 0) + impact;
+      } else {
+        enemyRoundImpact += impact;
+        enemyCardImpact[actor.baseCardId] = (enemyCardImpact[actor.baseCardId] ?? 0) + impact;
+      }
 
-  for (let round = 1; round <= MAX_BATTLE_ROUNDS; round += 1) {
-    const turnOrder = [...player, ...enemy].filter((u) => u.hp > 0).sort(sortInitiative);
-
-    for (const actor of turnOrder) {
-      if (actor.hp <= 0) continue;
-
-      const targets = actor.side === "player" ? enemy : player;
-      const target = pickTarget(targets);
-      if (!target) break;
-
-      const actorDamageMult = actor.side === "enemy" ? mods.damageMult : 1;
-      const { damage, isCrit } = rollDamage(actor, target, actorDamageMult);
-
-      target.hp = Math.max(0, target.hp - damage);
-      rounds.push({
+      actions.push({
         round,
         actorSide: actor.side,
         actorSlot: actor.slot,
+        actorCardId: actor.baseCardId,
         targetSide: target.side,
         targetSlot: target.slot,
-        damage,
+        targetCardId: target.baseCardId,
+        impact,
         isCrit,
-        targetRemainingHp: target.hp,
-        targetDefeated: target.hp <= 0,
       });
-
-      if (countAlive(player) === 0 || countAlive(enemy) === 0) {
-        const result: BattleResult = countAlive(enemy) === 0 ? "WIN" : "LOSS";
-        return {
-          result,
-          playerTeam: player.map(snapshotUnit),
-          enemyTeam: enemy.map(snapshotUnit),
-          rounds,
-          totalRounds: round,
-          battleStats: {
-            survivingPlayerUnits: countAlive(player),
-            survivingEnemyUnits: countAlive(enemy),
-            playerHpRemaining: totalHp(player),
-            enemyHpRemaining: totalHp(enemy),
-            damageDone: enemy.reduce((sum, u) => sum + (u.maxHp - u.hp), 0),
-            damageTaken: player.reduce((sum, u) => sum + (u.maxHp - u.hp), 0),
-          },
-        };
-      }
     }
+
+    playerTotalImpact += playerRoundImpact;
+    enemyTotalImpact += enemyRoundImpact;
+
+    let winner: "player" | "enemy" | "draw" = "draw";
+    if (playerRoundImpact > enemyRoundImpact) {
+      winner = "player";
+      playerRoundsWon += 1;
+    } else if (enemyRoundImpact > playerRoundImpact) {
+      winner = "enemy";
+      enemyRoundsWon += 1;
+    }
+
+    const bestPlayerCardId = Object.entries(playerCardImpact).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const bestEnemyCardId = Object.entries(enemyCardImpact).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    rounds.push({
+      round,
+      playerImpact: playerRoundImpact,
+      enemyImpact: enemyRoundImpact,
+      winner,
+      bestPlayerCardId,
+      bestEnemyCardId,
+    });
   }
 
-  const result = resolveByRoundCap(player, enemy);
+  const result =
+    playerRoundsWon > enemyRoundsWon
+      ? "WIN"
+      : enemyRoundsWon > playerRoundsWon
+      ? "LOSS"
+      : playerTotalImpact >= enemyTotalImpact
+      ? "WIN"
+      : "LOSS";
+
   return {
     result,
-    playerTeam: player.map(snapshotUnit),
-    enemyTeam: enemy.map(snapshotUnit),
+    playerTeam: playerUnits,
+    enemyTeam: enemyUnits,
+    actions,
     rounds,
-    totalRounds: MAX_BATTLE_ROUNDS,
-    battleStats: {
-      survivingPlayerUnits: countAlive(player),
-      survivingEnemyUnits: countAlive(enemy),
-      playerHpRemaining: totalHp(player),
-      enemyHpRemaining: totalHp(enemy),
-      damageDone: enemy.reduce((sum, u) => sum + (u.maxHp - u.hp), 0),
-      damageTaken: player.reduce((sum, u) => sum + (u.maxHp - u.hp), 0),
-    },
+    playerRoundsWon,
+    enemyRoundsWon,
+    playerTotalImpact,
+    enemyTotalImpact,
   };
 }

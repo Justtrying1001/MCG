@@ -4,100 +4,96 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { CardFrame } from "@/components/ui/CardFrame";
 import { useSession } from "@/components/useSession";
-import type { BattleActionLog, BattleResultPayload, BattleUnitSnapshot, PveDifficulty } from "@/lib/pve/types";
+import type { BattleResultPayload, PveDifficulty } from "@/lib/pve/types";
 import { useEffect, useMemo, useState } from "react";
 
 type SortKey = "power" | "ATK" | "DEF" | "SPD" | "CTRL";
 
 const TEAM_SIZE = 5;
-const DIFFICULTIES: Array<{ value: PveDifficulty; label: string; reward: string; bonus: string; note: string }> = [
-  { value: "easy", label: "Easy", reward: "90 win / 25 loss", bonus: "4% bonus pack", note: "Safe runs for testing teams." },
-  { value: "normal", label: "Normal", reward: "130 win / 35 loss", bonus: "7% bonus pack", note: "Balanced reward and risk." },
-  { value: "hard", label: "Hard", reward: "190 win / 50 loss", bonus: "11% bonus pack", note: "Stronger enemies, best returns." },
+const PACK_COST = 100;
+const DIFFICULTIES: Array<{ value: PveDifficulty; label: string; win: number; loss: number; bonus: string; desc: string }> = [
+  { value: "easy", label: "Easy", win: 90, loss: 20, bonus: "4%", desc: "Safe test run" },
+  { value: "normal", label: "Normal", win: 130, loss: 30, bonus: "7%", desc: "Balanced reward / risk" },
+  { value: "hard", label: "Hard", win: 190, loss: 45, bonus: "11%", desc: "Stronger enemy, best returns" },
 ];
 
-function calcPower(unit: { ATK: number; DEF: number; SPD: number; CTRL: number }) {
-  return unit.ATK + unit.DEF + unit.SPD + unit.CTRL;
+function cardPower(card: { ATK: number; DEF: number; SPD: number; CTRL: number }) {
+  return card.ATK + card.DEF + card.SPD + card.CTRL;
 }
 
-function useReplay(result: BattleResultPayload | null, speedMs = 220) {
-  const [step, setStep] = useState(0);
+function formatCountdown(ms: number) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function useResetCountdown(nextResetAt: string | undefined) {
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    setStep(0);
-    if (!result || result.rounds.length === 0) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const remainingMs = useMemo(() => {
+    if (!nextResetAt) return 0;
+    return Math.max(0, new Date(nextResetAt).getTime() - now);
+  }, [nextResetAt, now]);
+
+  return {
+    remainingLabel: formatCountdown(remainingMs),
+    resetAtLabel: nextResetAt ? new Date(nextResetAt).toLocaleString() : "—",
+  };
+}
+
+function useBattleReplay(result: BattleResultPayload | null, speed = 280) {
+  const [actionStep, setActionStep] = useState(0);
+
+  useEffect(() => {
+    setActionStep(0);
+    if (!result || result.actions.length === 0) return;
 
     const timer = window.setInterval(() => {
-      setStep((current) => {
-        if (!result) return current;
-        if (current >= result.rounds.length) {
+      setActionStep((prev) => {
+        if (!result || prev >= result.actions.length) {
           window.clearInterval(timer);
-          return current;
+          return prev;
         }
-        return current + 1;
+        return prev + 1;
       });
-    }, speedMs);
+    }, speed);
 
     return () => window.clearInterval(timer);
-  }, [result, speedMs]);
+  }, [result, speed]);
 
-  return step;
+  return actionStep;
 }
 
 export default function CombatsPage() {
   const { me, refresh } = useSession();
-  const [team, setTeam] = useState<string[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<PveDifficulty>("normal");
-  const [sortKey, setSortKey] = useState<SortKey>("power");
-  const [isRunning, setIsRunning] = useState(false);
-  const [result, setResult] = useState<BattleResultPayload | null>(null);
-  const [error, setError] = useState<string>("");
+  const [sortBy, setSortBy] = useState<SortKey>("power");
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const [battle, setBattle] = useState<BattleResultPayload | null>(null);
 
-  const available = useMemo(() => {
-    const base = me?.collection.filter((x) => x.quantity > 0) ?? [];
-    return [...base].sort((a, b) => {
-      const av = sortKey === "power" ? calcPower(a.card) : a.card[sortKey];
-      const bv = sortKey === "power" ? calcPower(b.card) : b.card[sortKey];
-      return bv - av;
+  const { remainingLabel, resetAtLabel } = useResetCountdown(me?.nextPveResetAt);
+
+  const collection = me?.collection ?? [];
+  const sortedCards = useMemo(() => {
+    return [...collection].sort((a, b) => {
+      const va = sortBy === "power" ? cardPower(a.card) : a.card[sortBy];
+      const vb = sortBy === "power" ? cardPower(b.card) : b.card[sortBy];
+      return vb - va;
     });
-  }, [me, sortKey]);
+  }, [collection, sortBy]);
 
-  const toggle = (id: string) => {
-    setTeam((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= TEAM_SIZE) return prev;
-      return [...prev, id];
-    });
-  };
+  const selectedCardItems = selectedTeam.map((id) => sortedCards.find((c) => c.baseCardId === id)).filter(Boolean);
 
-  const run = async () => {
-    if (team.length !== TEAM_SIZE) return;
-    setIsRunning(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/pve/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectedCardIds: team, difficulty }),
-      });
-      if (!res.ok) {
-        setError(await res.text());
-        setIsRunning(false);
-        return;
-      }
-      const payload = (await res.json()) as BattleResultPayload;
-      setResult(payload);
-      await refresh();
-    } catch {
-      setError("Cannot run battle now. Please retry.");
-    }
-
-    setIsRunning(false);
-  };
-
-  const teamCards = team.map((id) => available.find((x) => x.baseCardId === id)).filter(Boolean);
-  const teamTotals = teamCards.reduce(
+  const totals = selectedCardItems.reduce(
     (acc, item) => {
       acc.ATK += item!.card.ATK;
       acc.DEF += item!.card.DEF;
@@ -108,200 +104,213 @@ export default function CombatsPage() {
     { ATK: 0, DEF: 0, SPD: 0, CTRL: 0 },
   );
 
-  const replayStep = useReplay(result);
-  const replayState = useMemo(() => {
-    if (!result) return null;
-    const playerHp = Object.fromEntries(result.playerTeam.map((u) => [u.slot, u.maxHp]));
-    const enemyHp = Object.fromEntries(result.enemyTeam.map((u) => [u.slot, u.maxHp]));
+  const replayStep = useBattleReplay(battle);
+  const shownActions = battle?.actions.slice(0, Math.max(1, replayStep)) ?? [];
+  const liveRound = shownActions.at(-1)?.round ?? 1;
 
-    for (let i = 0; i < Math.min(replayStep, result.rounds.length); i += 1) {
-      const action = result.rounds[i];
-      if (action.targetSide === "player") playerHp[action.targetSlot] = action.targetRemainingHp;
-      else enemyHp[action.targetSlot] = action.targetRemainingHp;
+  const displayedRoundSummaries = useMemo(() => {
+    if (!battle) return [];
+    return battle.rounds.filter((r) => r.round <= liveRound);
+  }, [battle, liveRound]);
+
+  const cumulative = displayedRoundSummaries.reduce(
+    (acc, round) => {
+      acc.player += round.playerImpact;
+      acc.enemy += round.enemyImpact;
+      return acc;
+    },
+    { player: 0, enemy: 0 },
+  );
+
+  const toggleCard = (cardId: string, exhausted: boolean) => {
+    if (exhausted) return;
+    setSelectedTeam((prev) => {
+      if (prev.includes(cardId)) return prev.filter((id) => id !== cardId);
+      if (prev.length >= TEAM_SIZE) return prev;
+      return [...prev, cardId];
+    });
+  };
+
+  const runBattle = async () => {
+    if (selectedTeam.length !== TEAM_SIZE) return;
+    setRunning(true);
+    setError("");
+
+    const res = await fetch("/api/pve/battle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selectedCardIds: selectedTeam, difficulty }),
+    });
+
+    if (!res.ok) {
+      setError(await res.text());
+      setRunning(false);
+      return;
     }
 
-    const currentAction = replayStep > 0 ? result.rounds[Math.min(replayStep, result.rounds.length) - 1] : null;
-    return { playerHp, enemyHp, currentAction };
-  }, [result, replayStep]);
+    const payload = (await res.json()) as BattleResultPayload;
+    setBattle(payload);
+    setSelectedTeam([]);
+    await refresh();
+    setRunning(false);
+  };
 
-  const canOpenPack = (me?.user.points ?? 0) >= 100;
+  const canOpenPack = (me?.user.points ?? 0) >= PACK_COST;
 
   return (
     <SiteShell>
       <div className="page-header">
         <div>
           <h1 className="page-title">PvE Arena</h1>
-          <p className="page-subtitle">Build a 5-card roster, run auto battles, earn points, and open more packs.</p>
+          <p className="page-subtitle">Build a 5-card strike team. Every battle consumes 1 ticket and exhausts selected cards until daily reset.</p>
         </div>
       </div>
 
       <div className="battle-layout">
-        <div>
-          <div className="battle-panel" style={{ marginBottom: "1rem" }}>
-            <p className="panel-label">PvE Hub</p>
-            <p style={{ marginTop: "0.35rem", color: "var(--text-2)", fontSize: "0.9rem" }}>
-              Open packs → strengthen roster → win PvE → earn rewards → open more packs.
-            </p>
-            <div className="diff-tabs" style={{ marginTop: "0.8rem" }}>
+        <section className="battle-main-col">
+          <div className="battle-panel pve-hub-panel">
+            <p className="panel-label">Arena Hub</p>
+            <div className="pve-hub-stats">
+              <HubStat label="Tickets" value={`${me?.user.pveBattleTickets ?? 0}/3`} />
+              <HubStat label="Cards Available" value={`${me?.availablePveCards ?? 0}`} />
+              <HubStat label="Cards Exhausted" value={`${me?.exhaustedPveCards ?? 0}`} />
+            </div>
+            <div className="pve-reset-banner">
+              <span>Daily reset in: <b>{remainingLabel}</b></span>
+              <span className="pve-reset-sub">Next reset: {resetAtLabel}</span>
+            </div>
+            <div className="pve-hub-actions">
               <Button onClick={() => { window.location.hash = "team-builder"; }}>Build Team</Button>
-              <Button onClick={() => void run()} disabled={team.length !== TEAM_SIZE || isRunning}>
-                {isRunning ? "Battle in progress..." : "Battle"}
+              <Button onClick={() => void runBattle()} disabled={selectedTeam.length !== TEAM_SIZE || (me?.user.pveBattleTickets ?? 0) <= 0 || running}>
+                {running ? "Running..." : "Start Battle"}
               </Button>
             </div>
-            <p style={{ marginTop: "0.7rem", color: "var(--text-3)", fontSize: "0.8rem" }}>
-              Runs played: {me?.pveRunsCount ?? 0} {result ? `· Last result: ${result.result}` : ""}
-            </p>
           </div>
 
           <div className="battle-panel" id="team-builder">
-            <p className="panel-label">Team Builder (5/5 required)</p>
-            <div className="diff-tabs" style={{ margin: "0.7rem 0" }}>
+            <p className="panel-label">Team Builder</p>
+            <p className="pve-helper-copy">Select exactly 5 AVAILABLE cards. Selected cards become EXHAUSTED after battle and reset daily.</p>
+            <div className="diff-tabs pve-sort-tabs">
               {(["power", "ATK", "DEF", "SPD", "CTRL"] as SortKey[]).map((key) => (
-                <button key={key} className={`diff-tab${sortKey === key ? " active" : ""}`} onClick={() => setSortKey(key)}>
+                <button key={key} className={`diff-tab${sortBy === key ? " active" : ""}`} onClick={() => setSortBy(key)}>
                   Sort: {key}
                 </button>
               ))}
             </div>
-            {available.length === 0 ? (
-              <div className="empty-state">
-                <p className="empty-state-title">No cards available</p>
-                <p className="empty-state-desc">Open packs first to build your PvE roster.</p>
-              </div>
-            ) : (
-              <div className="card-grid">
-                {available.map((item) => (
-                  <button
-                    key={item.baseCardId}
-                    className="card-select"
-                    onClick={() => toggle(item.baseCardId)}
-                    disabled={!team.includes(item.baseCardId) && team.length >= TEAM_SIZE}
-                    style={{ opacity: !team.includes(item.baseCardId) && team.length >= TEAM_SIZE ? 0.45 : 1 }}
-                  >
-                    <CardFrame card={item.card} quantity={item.quantity} selectable selected={team.includes(item.baseCardId)} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className="battle-sidebar">
-          <div className="battle-panel">
-            <p className="panel-label">Selected Team</p>
-            <div className="squad-slots" style={{ marginTop: "0.75rem" }}>
-              {Array.from({ length: TEAM_SIZE }).map((_, i) => {
-                const card = teamCards[i];
+            <div className="card-grid pve-collection-grid">
+              {sortedCards.map((item) => {
+                const isSelected = selectedTeam.includes(item.baseCardId);
+                const exhausted = item.pveExhausted;
+                const stateLabel = exhausted ? "EXHAUSTED" : isSelected ? "SELECTED" : "AVAILABLE";
+
                 return (
-                  <div key={i} className={`squad-slot${card ? " filled" : ""}`}>
-                    <div className="squad-slot-num">{i + 1}</div>
-                    {card ? <div className="squad-slot-name">{card.card.name}</div> : <span className="squad-slot-empty">Empty slot</span>}
+                  <div key={item.baseCardId} className="pve-card-wrap">
+                    <button
+                      className="card-select"
+                      onClick={() => toggleCard(item.baseCardId, exhausted)}
+                      disabled={exhausted || (!isSelected && selectedTeam.length >= TEAM_SIZE)}
+                      style={{
+                        opacity: exhausted || (!isSelected && selectedTeam.length >= TEAM_SIZE) ? 0.45 : 1,
+                        filter: exhausted ? "grayscale(0.65)" : "none",
+                      }}
+                    >
+                      <CardFrame card={item.card} quantity={item.quantity} selectable selected={isSelected} />
+                    </button>
+                    <span className={`pve-state-badge ${exhausted ? "exhausted" : isSelected ? "selected" : "available"}`}>{stateLabel}</span>
                   </div>
                 );
               })}
             </div>
-            <p style={{ marginTop: "0.8rem", fontSize: "0.8rem", color: "var(--text-3)" }}>
-              ATK {teamTotals.ATK} · DEF {teamTotals.DEF} · SPD {teamTotals.SPD} · CTRL {teamTotals.CTRL} · Power {teamTotals.ATK + teamTotals.DEF + teamTotals.SPD + teamTotals.CTRL}
+          </div>
+        </section>
+
+        <aside className="battle-sidebar">
+          <div className="battle-panel">
+            <p className="panel-label">Selected Team ({selectedTeam.length}/5)</p>
+            <div className="squad-slots" style={{ marginTop: "0.7rem" }}>
+              {Array.from({ length: TEAM_SIZE }).map((_, idx) => {
+                const card = selectedCardItems[idx];
+                return (
+                  <div key={idx} className={`squad-slot${card ? " filled" : ""}`}>
+                    <div className="squad-slot-num">{idx + 1}</div>
+                    {card ? <div className="squad-slot-name">{card.card.name}</div> : <span className="squad-slot-empty">Empty</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="pve-team-stats">
+              ATK {totals.ATK} · DEF {totals.DEF} · SPD {totals.SPD} · CTRL {totals.CTRL} · POW {totals.ATK + totals.DEF + totals.SPD + totals.CTRL}
             </p>
           </div>
 
           <div className="battle-panel">
             <p className="panel-label">Difficulty</p>
-            <div style={{ display: "grid", gap: "0.6rem", marginTop: "0.7rem" }}>
+            <div className="pve-difficulty-list">
               {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.value}
-                  className={`diff-tab${difficulty === d.value ? " active" : ""}`}
-                  onClick={() => setDifficulty(d.value)}
-                  style={{ textAlign: "left" }}
-                >
-                  <strong>{d.label}</strong> · {d.reward} · {d.bonus}
-                  <div style={{ opacity: 0.8, marginTop: "0.2rem" }}>{d.note}</div>
+                <button key={d.value} className={`diff-tab pve-diff-card${difficulty === d.value ? " active" : ""}`} onClick={() => setDifficulty(d.value)}>
+                  <strong>{d.label}</strong>
+                  <span>Win +{d.win} · Loss +{d.loss} · Bonus {d.bonus}</span>
+                  <span>{d.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {error && <div className="battle-log-box">{error}</div>}
-        </div>
+          {error ? <div className="battle-log-box">{error}</div> : null}
+        </aside>
       </div>
 
-      {result && replayState && (
-        <div className="battle-panel" style={{ marginTop: "1rem" }}>
+      {battle ? (
+        <div className="battle-panel pve-replay-panel">
           <p className="panel-label">Battle Replay</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem", marginTop: "0.8rem" }}>
-            <TeamHealth title="Player" units={result.playerTeam} hpMap={replayState.playerHp} action={replayState.currentAction} side="player" />
-            <TeamHealth title="Enemy" units={result.enemyTeam} hpMap={replayState.enemyHp} action={replayState.currentAction} side="enemy" />
-          </div>
-          <div className="battle-log-box" style={{ marginTop: "0.8rem" }}>
-            {(result.rounds.slice(0, Math.max(1, replayStep)).map((a, idx) => (
-              <div key={`${a.round}-${idx}`} style={{ marginBottom: "0.25rem" }}>
-                R{a.round} · {a.actorSide}#{a.actorSlot + 1} → {a.targetSide}#{a.targetSlot + 1} · -{a.damage} HP {a.isCrit ? "· CRIT" : ""} {a.targetDefeated ? "· KO" : ""}
-              </div>
-            ))) || "No battle events."}
+          <div className="pve-replay-kpis">
+            <span>Round {liveRound} / {battle.rounds.length}</span>
+            <span>Impact — Player {cumulative.player} · Enemy {cumulative.enemy}</span>
+            <span>Rounds won — You {battle.playerRoundsWon} · Enemy {battle.enemyRoundsWon}</span>
           </div>
 
-          <div style={{ marginTop: "1rem", display: "grid", gap: "0.3rem" }}>
-            <h3 style={{ margin: 0 }}>{result.result === "WIN" ? "Victory" : "Defeat"}</h3>
-            <div>Points gained: +{result.rewardPoints}</div>
-            <div>Rounds: {result.totalRounds}</div>
-            <div>Survivors: you {result.battleStats.survivingPlayerUnits} · enemy {result.battleStats.survivingEnemyUnits}</div>
-            <div>{result.bonusPackAwarded ? "Bonus pack reward triggered." : "No bonus pack this run."}</div>
-            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
-              <Button onClick={() => void run()} disabled={team.length !== TEAM_SIZE || isRunning}>Play Again</Button>
+          <div className="battle-log-box" style={{ marginTop: "0.75rem", maxHeight: "260px", overflowY: "auto" }}>
+            {shownActions.map((a, idx) => (
+              <div key={`${a.round}-${idx}`} style={{ marginBottom: "0.22rem" }}>
+                R{a.round} · {a.actorSide}#{a.actorSlot + 1} → {a.targetSide}#{a.targetSlot + 1} · Impact +{a.impact} {a.isCrit ? "· CRIT" : ""}
+              </div>
+            ))}
+          </div>
+
+          <div className="pve-round-list">
+            {displayedRoundSummaries.map((round) => (
+              <div key={round.round} className="pve-round-item">
+                Round {round.round}: Player {round.playerImpact} · Enemy {round.enemyImpact} · Winner: {round.winner.toUpperCase()}
+              </div>
+            ))}
+          </div>
+
+          <div className="pve-result-grid">
+            <h3>{battle.result === "WIN" ? "Victory" : "Defeat"}</h3>
+            <div>Total impact: You {battle.playerTotalImpact} · Enemy {battle.enemyTotalImpact}</div>
+            <div>Rounds won: You {battle.playerRoundsWon} · Enemy {battle.enemyRoundsWon}</div>
+            <div>Points earned: +{battle.rewardPoints}</div>
+            <div>{battle.bonusPackAwarded ? "Bonus pack equivalent awarded." : "No bonus pack equivalent this run."}</div>
+            <div>Cards exhausted this run: {battle.exhaustedCardIds.length}</div>
+            <div>Remaining battle tickets: {battle.remainingBattleTickets}</div>
+            <div className="pve-result-actions">
+              <Button onClick={() => void runBattle()} disabled={selectedTeam.length !== TEAM_SIZE || (me?.user.pveBattleTickets ?? 0) <= 0 || running}>Play Again</Button>
               <Button onClick={() => { window.location.hash = "team-builder"; }}>Change Team</Button>
               <Button onClick={() => { window.location.href = "/packs"; }} disabled={!canOpenPack}>Open Packs</Button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </SiteShell>
   );
 }
 
-function TeamHealth({
-  title,
-  units,
-  hpMap,
-  action,
-  side,
-}: {
-  title: string;
-  units: BattleUnitSnapshot[];
-  hpMap: Record<number, number>;
-  action: BattleActionLog | null;
-  side: "player" | "enemy";
-}) {
+function HubStat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ border: "1px solid var(--line)", borderRadius: "0.9rem", padding: "0.75rem" }}>
-      <p className="panel-label">{title}</p>
-      <div style={{ display: "grid", gap: "0.45rem", marginTop: "0.55rem" }}>
-        {units.map((u) => {
-          const hp = Math.max(0, hpMap[u.slot] ?? u.maxHp);
-          const pct = Math.max(0, Math.min(100, Math.round((hp / u.maxHp) * 100)));
-          const isActor = action?.actorSide === side && action.actorSlot === u.slot;
-          const isTarget = action?.targetSide === side && action.targetSlot === u.slot;
-
-          return (
-            <div
-              key={u.slot}
-              style={{
-                padding: "0.45rem",
-                borderRadius: "0.6rem",
-                border: isActor ? "1px solid #66e3ff" : isTarget ? "1px solid #ff7c7c" : "1px solid var(--line)",
-                background: "rgba(255,255,255,0.01)",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
-                <span>{u.name}</span>
-                <span>{hp}/{u.maxHp}</span>
-              </div>
-              <div style={{ height: "7px", borderRadius: "999px", background: "#1b2434", marginTop: "0.25rem" }}>
-                <div style={{ width: `${pct}%`, height: "100%", borderRadius: "999px", background: pct > 45 ? "#3ddc97" : pct > 20 ? "#e9b949" : "#ef476f" }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="pve-hub-stat">
+      <div className="pve-hub-stat-label">{label}</div>
+      <div className="pve-hub-stat-value">{value}</div>
     </div>
   );
 }

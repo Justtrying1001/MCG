@@ -1,8 +1,10 @@
 import type { BaseCard } from "@/types/cards";
 
 export type PveDifficulty = "easy" | "normal" | "hard";
-
 export type BattleSide = "player" | "enemy";
+export type RoundWinner = "player" | "enemy" | "draw";
+
+export type TeamCard = Pick<BaseCard, "baseCardId" | "name" | "image" | "ATK" | "DEF" | "SPD" | "CTRL">;
 
 export type BattleUnitSnapshot = {
   side: BattleSide;
@@ -14,61 +16,50 @@ export type BattleUnitSnapshot = {
   def: number;
   spd: number;
   ctrl: number;
-  maxHp: number;
 };
 
 export type BattleActionLog = {
   round: number;
   actorSide: BattleSide;
   actorSlot: number;
+  actorCardId: string;
   targetSide: BattleSide;
   targetSlot: number;
-  damage: number;
+  targetCardId: string;
+  impact: number;
   isCrit: boolean;
-  targetRemainingHp: number;
-  targetDefeated: boolean;
 };
 
-export type BattleResult = "WIN" | "LOSS";
+export type RoundSummary = {
+  round: number;
+  playerImpact: number;
+  enemyImpact: number;
+  winner: RoundWinner;
+  bestPlayerCardId: string | null;
+  bestEnemyCardId: string | null;
+};
 
 export type BattleResultPayload = {
-  result: BattleResult;
+  result: "WIN" | "LOSS";
   difficulty: PveDifficulty;
   playerTeam: BattleUnitSnapshot[];
   enemyTeam: BattleUnitSnapshot[];
-  rounds: BattleActionLog[];
-  totalRounds: number;
+  actions: BattleActionLog[];
+  rounds: RoundSummary[];
+  playerRoundsWon: number;
+  enemyRoundsWon: number;
+  playerTotalImpact: number;
+  enemyTotalImpact: number;
   rewardPoints: number;
   bonusPackAwarded: boolean;
-  rewardSummary: string[];
-  battleStats: {
-    survivingPlayerUnits: number;
-    survivingEnemyUnits: number;
-    playerHpRemaining: number;
-    enemyHpRemaining: number;
-    damageDone: number;
-    damageTaken: number;
-  };
-};
-
-export type SimUnit = {
-  side: BattleSide;
-  slot: number;
-  baseCardId: string;
-  name: string;
-  image: string;
-  atk: number;
-  def: number;
-  spd: number;
-  ctrl: number;
-  maxHp: number;
-  hp: number;
-};
-
-export type PveRewards = {
-  rewardPoints: number;
-  bonusPackAwarded: boolean;
+  remainingBattleTickets: number;
+  exhaustedCardIds: string[];
   rewardSummary: string[];
 };
 
-export type TeamCard = Pick<BaseCard, "baseCardId" | "name" | "image" | "ATK" | "DEF" | "SPD" | "CTRL">;
+export type SimUnit = BattleUnitSnapshot;
+
+export type SimBattleCoreResult = Omit<
+  BattleResultPayload,
+  "difficulty" | "rewardPoints" | "bonusPackAwarded" | "remainingBattleTickets" | "exhaustedCardIds" | "rewardSummary"
+>;

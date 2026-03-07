@@ -4,13 +4,7 @@ export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-export function calcMaxHp(def: number, ctrl: number) {
-  return Math.round(40 + def * 2 + ctrl * 0.5);
-}
-
-export function toSimUnit(card: TeamCard, side: SimUnit["side"], slot: number, hpMult = 1): SimUnit {
-  const baseHp = calcMaxHp(card.DEF, card.CTRL);
-  const maxHp = Math.max(1, Math.round(baseHp * hpMult));
+export function toUnitSnapshot(card: TeamCard, side: SimUnit["side"], slot: number): BattleUnitSnapshot {
   return {
     side,
     slot,
@@ -21,30 +15,9 @@ export function toSimUnit(card: TeamCard, side: SimUnit["side"], slot: number, h
     def: card.DEF,
     spd: card.SPD,
     ctrl: card.CTRL,
-    maxHp,
-    hp: maxHp,
   };
 }
 
-export function snapshotUnit(unit: SimUnit): BattleUnitSnapshot {
-  return {
-    side: unit.side,
-    slot: unit.slot,
-    baseCardId: unit.baseCardId,
-    name: unit.name,
-    image: unit.image,
-    atk: unit.atk,
-    def: unit.def,
-    spd: unit.spd,
-    ctrl: unit.ctrl,
-    maxHp: unit.maxHp,
-  };
-}
-
-export function countAlive(units: SimUnit[]) {
-  return units.filter((u) => u.hp > 0).length;
-}
-
-export function totalHp(units: SimUnit[]) {
-  return units.reduce((sum, unit) => sum + Math.max(0, unit.hp), 0);
+export function powerScore(unit: { atk?: number; def?: number; spd?: number; ctrl?: number; ATK?: number; DEF?: number; SPD?: number; CTRL?: number }) {
+  return (unit.atk ?? unit.ATK ?? 0) + (unit.def ?? unit.DEF ?? 0) + (unit.spd ?? unit.SPD ?? 0) + (unit.ctrl ?? unit.CTRL ?? 0);
 }

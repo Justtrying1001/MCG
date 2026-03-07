@@ -1,24 +1,23 @@
-import type { BattleResultPayload, PveDifficulty } from "@/lib/pve/types";
+import type { BattleResultPayload, PveDifficulty, SimBattleCoreResult } from "@/lib/pve/types";
 
 type SerializeInput = {
+  simulation: SimBattleCoreResult;
   difficulty: PveDifficulty;
-  simulation: Omit<BattleResultPayload, "difficulty" | "rewardPoints" | "bonusPackAwarded" | "rewardSummary">;
   rewardPoints: number;
   bonusPackAwarded: boolean;
+  remainingBattleTickets: number;
+  exhaustedCardIds: string[];
   rewardSummary: string[];
 };
 
-export function serializeBattleResult(input: SerializeInput): BattleResultPayload {
+export function serializeBattle(input: SerializeInput): BattleResultPayload {
   return {
-    result: input.simulation.result,
+    ...input.simulation,
     difficulty: input.difficulty,
-    playerTeam: input.simulation.playerTeam,
-    enemyTeam: input.simulation.enemyTeam,
-    rounds: input.simulation.rounds,
-    totalRounds: input.simulation.totalRounds,
     rewardPoints: input.rewardPoints,
     bonusPackAwarded: input.bonusPackAwarded,
+    remainingBattleTickets: input.remainingBattleTickets,
+    exhaustedCardIds: input.exhaustedCardIds,
     rewardSummary: input.rewardSummary,
-    battleStats: input.simulation.battleStats,
   };
 }

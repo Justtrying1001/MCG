@@ -1,16 +1,17 @@
 import type { PveDifficulty } from "@/lib/pve/types";
 
 export const PVE_TEAM_SIZE = 5;
-export const MAX_BATTLE_ROUNDS = 20;
+export const PVE_ROUNDS = 6;
+export const PVE_DAILY_TICKETS = 3;
 
 export const REWARD_TABLE: Record<PveDifficulty, { win: number; loss: number; bonusChance: number }> = {
-  easy: { win: 90, loss: 25, bonusChance: 0.04 },
-  normal: { win: 130, loss: 35, bonusChance: 0.07 },
-  hard: { win: 190, loss: 50, bonusChance: 0.11 },
+  easy: { win: 90, loss: 20, bonusChance: 0.04 },
+  normal: { win: 130, loss: 30, bonusChance: 0.07 },
+  hard: { win: 190, loss: 45, bonusChance: 0.11 },
 };
 
-export const DIFFICULTY_MODIFIERS: Record<PveDifficulty, { hpMult: number; damageMult: number }> = {
-  easy: { hpMult: 0.92, damageMult: 0.92 },
-  normal: { hpMult: 1, damageMult: 1 },
-  hard: { hpMult: 1.1, damageMult: 1.08 },
+export const ENEMY_IMPACT_MULTIPLIER: Record<PveDifficulty, number> = {
+  easy: 0.94,
+  normal: 1,
+  hard: 1.08,
 };
