@@ -10,10 +10,31 @@ function resolveAuthSecret(): string {
     return "local-dev-insecure-secret";
   }
 
-  console.error(
-    "[auth] Missing NEXTAUTH_SECRET/AUTH_SECRET in production. Falling back to an insecure default secret.",
+  throw new Error("Missing NEXTAUTH_SECRET or AUTH_SECRET in production environment.");
+}
+
+function resolveTwitterClientId(): string {
+  const clientId = process.env.TWITTER_CLIENT_ID || process.env.AUTH_TWITTER_ID;
+  if (clientId) return clientId;
+
+  if (process.env.NODE_ENV !== "production") {
+    return "missing-twitter-client-id";
+  }
+
+  throw new Error("Missing TWITTER_CLIENT_ID or AUTH_TWITTER_ID in production environment.");
+}
+
+function resolveTwitterClientSecret(): string {
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET || process.env.AUTH_TWITTER_SECRET;
+  if (clientSecret) return clientSecret;
+
+  if (process.env.NODE_ENV !== "production") {
+    return "missing-twitter-client-secret";
+  }
+
+  throw new Error(
+    "Missing TWITTER_CLIENT_SECRET or AUTH_TWITTER_SECRET in production environment.",
   );
-  return "production-insecure-secret-change-me";
 }
 
 function extractTwitterUsername(profile: unknown): string {
@@ -31,8 +52,8 @@ function extractTwitterUsername(profile: unknown): string {
 export const authOptions: NextAuthOptions = {
   providers: [
     TwitterProvider({
-      clientId: process.env.TWITTER_CLIENT_ID || "",
-      clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
+      clientId: resolveTwitterClientId(),
+      clientSecret: resolveTwitterClientSecret(),
       version: "2.0",
     }),
   ],
