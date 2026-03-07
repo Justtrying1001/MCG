@@ -2,6 +2,14 @@ import type { NextAuthOptions } from "next-auth";
 import TwitterProvider from "next-auth/providers/twitter";
 import { prisma } from "@/lib/prisma";
 
+const twitterClientId = process.env.TWITTER_CLIENT_ID || process.env.AUTH_TWITTER_ID || "";
+const twitterClientSecret = process.env.TWITTER_CLIENT_SECRET || process.env.AUTH_TWITTER_SECRET || "";
+const isTwitterAuthEnabled = Boolean(twitterClientId && twitterClientSecret);
+
+if (!isTwitterAuthEnabled) {
+  console.warn("Twitter auth disabled: missing TWITTER_CLIENT_ID/AUTH_TWITTER_ID or TWITTER_CLIENT_SECRET/AUTH_TWITTER_SECRET.");
+}
+
 function extractTwitterUsername(profile: unknown): string {
   if (!profile || typeof profile !== "object") return "twitter_user";
 
@@ -15,13 +23,15 @@ function extractTwitterUsername(profile: unknown): string {
 }
 
 export const authOptions: NextAuthOptions = {
-  providers: [
-    TwitterProvider({
-      clientId: process.env.TWITTER_CLIENT_ID || "",
-      clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
-      version: "2.0",
-    }),
-  ],
+  providers: isTwitterAuthEnabled
+    ? [
+        TwitterProvider({
+          clientId: twitterClientId,
+          clientSecret: twitterClientSecret,
+          version: "2.0",
+        }),
+      ]
+    : [],
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, account, profile }) {

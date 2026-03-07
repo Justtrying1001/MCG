@@ -55,8 +55,8 @@ Required:
 - `DIRECT_URL`
 - `NEXTAUTH_URL`
 - `NEXTAUTH_SECRET`
-- `TWITTER_CLIENT_ID`
-- `TWITTER_CLIENT_SECRET`
+- `TWITTER_CLIENT_ID` (or `AUTH_TWITTER_ID`)
+- `TWITTER_CLIENT_SECRET` (or `AUTH_TWITTER_SECRET`)
 
 ## Setup
 
@@ -71,7 +71,7 @@ Open http://localhost:3000.
 ## Deploy on Vercel
 
 1. Import repo in Vercel.
-2. Add all required env vars.
+2. Add all required env vars (Twitter can use either `TWITTER_CLIENT_*` or `AUTH_TWITTER_*`).
 3. Build command: `npm run build`.
 4. Install command: `npm install`.
 
