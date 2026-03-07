@@ -1485,6 +1485,8 @@ a { color: inherit; text-decoration: none; }
   padding: 0;
   text-align: left;
   cursor: pointer;
+  display: block;
+  width: 100%;
 }
 
 /* --------------------------------------------------------------------------
@@ -2459,9 +2461,23 @@ a { color: inherit; text-decoration: none; }
 .pve-collection-grid {
   grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
   margin-top: 0.85rem;
+  align-items: start;
+  grid-auto-flow: row;
 }
 
-.pve-card-wrap { position: relative; }
+.pve-card-wrap {
+  position: relative;
+  min-width: 0;
+  align-self: start;
+}
+
+.pve-card-wrap .card-select {
+  width: 100%;
+}
+
+.pve-card-wrap .mcg-card {
+  width: 100%;
+}
 
 .pve-state-badge {
   position: absolute;
