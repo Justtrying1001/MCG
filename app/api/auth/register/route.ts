@@ -6,7 +6,7 @@ import {
   createSession,
   getSessionCookieName,
   getSessionMaxAgeSeconds,
-  verifyPassword,
+  hashPassword,
 } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -18,10 +18,18 @@ export async function POST(req: Request) {
     }
 
     const username = parsed.data.username.toLowerCase();
-    const user = await prisma.user.findUnique({ where: { username } });
-    if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
-      return NextResponse.json({ ok: false, error: "Invalid credentials" }, { status: 401 });
+
+    const exists = await prisma.user.findUnique({ where: { username } });
+    if (exists) {
+      return NextResponse.json({ ok: false, error: "Username already used" }, { status: 409 });
     }
+
+    const user = await prisma.user.create({
+      data: {
+        username,
+        passwordHash: hashPassword(parsed.data.password),
+      },
+    });
 
     const { token } = await createSession(user.id);
     const response = NextResponse.json({ ok: true });
@@ -37,6 +45,6 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error) {
-    return handleApiError(error, "Login failed");
+    return handleApiError(error, "Register failed");
   }
 }

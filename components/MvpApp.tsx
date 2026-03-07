@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/lib/auth-validation";
 import type { BaseCard } from "@/types/cards";
 
 type CollectionItem = {
@@ -46,8 +46,10 @@ function renderCard(card: BaseCard, qty: number | null = null, selectable = fals
 }
 
 export function MvpApp() {
-  const { status } = useSession();
   const [me, setMe] = useState<MeResponse | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
   const [difficulty, setDifficulty] = useState("normal");
@@ -59,19 +61,20 @@ export function MvpApp() {
     const res = await fetch("/api/me", { cache: "no-store" });
     if (!res.ok) {
       setMe(null);
-      return;
+      return false;
     }
     const payload = (await res.json()) as MeResponse;
     setMe(payload);
+    return true;
   };
 
   useEffect(() => {
-    if (status === "authenticated") {
-      void refresh();
-    } else {
-      setMe(null);
-    }
-  }, [status]);
+    void (async () => {
+      setAuthLoading(true);
+      await refresh();
+      setAuthLoading(false);
+    })();
+  }, []);
 
   const factions = useMemo(() => {
     if (!me) return [];
@@ -104,6 +107,38 @@ export function MvpApp() {
     });
   };
 
+  const doAuth = async (path: "/api/auth/register" | "/api/auth/login") => {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const raw = await res.text().catch(() => "");
+      let payload: { error?: string } | null = null;
+      try {
+        payload = raw ? (JSON.parse(raw) as { error?: string }) : null;
+      } catch {
+        payload = null;
+      }
+
+      alert(payload?.error || raw || "Auth failed");
+      return;
+    }
+
+    setPassword("");
+    await refresh();
+  };
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setMe(null);
+    setSelectedTeam([]);
+    setPackResult([]);
+    setBattleLog("");
+  };
+
   const openPack = async () => {
     const res = await fetch("/api/pack/open", { method: "POST" });
     if (!res.ok) {
@@ -134,38 +169,53 @@ export function MvpApp() {
   };
 
   return (
-    <>
+    <main className="app-shell">
       <header>
         <h1>MCG MVP V1</h1>
         <p>Open packs → collect base cards → play PvE → earn rewards.</p>
       </header>
 
       <section className="panel">
-        <h2>Login</h2>
-        {status === "authenticated" && me ? (
-          <p>Active user: {me.user.username}</p>
-        ) : (
-          <p>No active user</p>
+        <h2>Login / Register</h2>
+        {authLoading ? <p>Loading session…</p> : <p>{me ? `Active user: ${me.user.username}` : "No active user"}</p>}
+        {!me && (
+          <div className="inline wrap">
+            <span className="small">Username 3-24 (letters/numbers/_), password min 4 chars.</span>
+            <input
+              placeholder="username"
+              value={username}
+              minLength={USERNAME_MIN_LENGTH}
+              maxLength={USERNAME_MAX_LENGTH}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              placeholder="password"
+              type="password"
+              value={password}
+              minLength={PASSWORD_MIN_LENGTH}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button className="btn-success" onClick={() => void doAuth("/api/auth/register")}>Register</button>
+            <button className="btn-primary" onClick={() => void doAuth("/api/auth/login")}>Login</button>
+          </div>
         )}
-        <div className="inline">
-          {status === "authenticated" ? (
-            <button onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
-          ) : (
-            <button onClick={() => signIn("twitter")}>Login with Twitter</button>
-          )}
-        </div>
+        {me && (
+          <div className="inline">
+            <button className="btn-danger" onClick={() => void logout()}>Logout</button>
+          </div>
+        )}
       </section>
 
-      {status === "authenticated" && me && (
+      {me && (
         <>
           <section className="panel">
             <h2>Profile</h2>
-            <div className="inline wrap">
-              <strong>User: {me.user.username}</strong>
-              <span>Points: {me.user.points}</span>
-              <span>Packs opened: {me.user.packsOpened}</span>
-              <span>Opening records: {me.openingsCount}</span>
-              <span>PvE runs: {me.pveRunsCount}</span>
+            <div className="kpis">
+              <span className="kpi-chip"><strong>User:</strong>&nbsp;{me.user.username}</span>
+              <span className="kpi-chip">Points: {me.user.points}</span>
+              <span className="kpi-chip">Packs opened: {me.user.packsOpened}</span>
+              <span className="kpi-chip">Opening records: {me.openingsCount}</span>
+              <span className="kpi-chip">PvE runs: {me.pveRunsCount}</span>
             </div>
           </section>
 
@@ -174,7 +224,7 @@ export function MvpApp() {
             <p>
               Each pack contains <strong>5 base cards</strong> using weighted tier/rank drop logic.
             </p>
-            <button onClick={openPack}>Open Pack (cost: 100 points)</button>
+            <button className="btn-primary" onClick={openPack}>Open Pack (cost: 100 points)</button>
             <div className="card-grid">{packResult.map((c, i) => <div key={`${c.baseCardId}_${i}`}>{renderCard(c, 1)}</div>)}</div>
           </section>
 
@@ -198,7 +248,7 @@ export function MvpApp() {
             <div className="card-grid">
               {filteredCollection.length
                 ? filteredCollection.map((x) => <div key={x.baseCardId}>{renderCard(x.card, x.quantity)}</div>)
-                : "No cards owned yet. Open a pack first."}
+                : <div className="empty">No cards owned yet. Open a pack first.</div>}
             </div>
           </section>
 
@@ -211,21 +261,25 @@ export function MvpApp() {
                 <option value="normal">Normal</option>
                 <option value="hard">Hard</option>
               </select>
-              <button onClick={runPve}>Start PvE Battle</button>
+              <button className="btn-success" onClick={runPve}>Start PvE Battle</button>
             </div>
             <div className="card-grid">
               {teamOwned.length
                 ? teamOwned.map((x) => (
-                    <button key={x.baseCardId} onClick={() => toggleTeam(x.baseCardId)}>
+                    <button
+                      className={`team-btn ${selectedTeam.includes(x.baseCardId) ? "selected" : ""}`}
+                      key={x.baseCardId}
+                      onClick={() => toggleTeam(x.baseCardId)}
+                    >
                       {renderCard(x.card, x.quantity, true, selectedTeam.includes(x.baseCardId))}
                     </button>
                   ))
-                : "Own cards to build a PvE team."}
+                : <div className="empty">Own cards to build a PvE team.</div>}
             </div>
             <pre>{battleLog}</pre>
           </section>
         </>
       )}
-    </>
+    </main>
   );
 }

@@ -5,13 +5,12 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
   id           String        @id @default(cuid())
-  twitterId    String        @unique
   username     String        @unique
+  passwordHash String
   points       Int           @default(300)
   packsOpened  Int           @default(0)
   createdAt    DateTime      @default(now())
@@ -19,6 +18,19 @@ model User {
   cards        UserCard[]
   packOpenings PackOpening[]
   pveRuns      PveRun[]
+  sessions     UserSession[]
+}
+
+model UserSession {
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model UserCard {

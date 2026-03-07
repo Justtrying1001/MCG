@@ -1,11 +1,11 @@
 # MCG MVP V1 — Vercel + Neon Base
 
-This app keeps the exact MVP scope:
+This app keeps the MVP scope:
 
 - Base cards only
 - Pack opening
 - Collection
-- Simple auth (**Twitter-only**)
+- Minimal auth (username + password)
 - Simple PvE
 - Simple reward loop
 
@@ -16,12 +16,14 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 - Next.js (App Router) + TypeScript
 - Prisma ORM
 - Neon Postgres
-- NextAuth (Twitter OAuth only)
+- Cookie session auth (custom minimal implementation)
 
 ## Data model (Prisma)
 
 - `User`
-  - `id`, `twitterId`, `username`, `points`, `packsOpened`, timestamps
+  - `id`, `username`, `passwordHash`, `points`, `packsOpened`, timestamps
+- `UserSession`
+  - `userId`, hashed session token, expiry
 - `UserCard`
   - `userId`, `baseCardId`, `quantity`
 - `PackOpening`
@@ -36,14 +38,20 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 
 ## API routes
 
-- `GET/POST /api/auth/[...nextauth]` — Twitter OAuth flow
+- `POST /api/auth/register` — create account and start session
+- `POST /api/auth/login` — login and start session
+- `POST /api/auth/logout` — logout and clear session cookie
 - `GET /api/me` — profile + persisted collection + counters
 - `POST /api/pack/open` — open base pack (5 cards, weighted by tier/rank), persist updates
 - `POST /api/pve/run` — run PvE battle, persist history and rewards
 
+Credentials format:
+- `username`: 3-24 chars, letters/numbers/underscore only
+- `password`: 4-72 chars
+
 ## Environment
 
-Copy `.env.example` to `.env` and set Neon + Twitter credentials:
+Copy `.env.example` to `.env` and set Neon credentials:
 
 ```bash
 cp .env.example .env
@@ -52,11 +60,6 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL`
-- `DIRECT_URL`
-- `NEXTAUTH_URL`
-- `NEXTAUTH_SECRET`
-- `TWITTER_CLIENT_ID` (or `AUTH_TWITTER_ID`)
-- `TWITTER_CLIENT_SECRET` (or `AUTH_TWITTER_SECRET`)
 
 ## Setup
 
@@ -71,8 +74,10 @@ Open http://localhost:3000.
 ## Deploy on Vercel
 
 1. Import repo in Vercel.
-2. Add all required env vars (Twitter can use either `TWITTER_CLIENT_*` or `AUTH_TWITTER_*`).
-3. Build command: `npm run build`.
+2. Add `DATABASE_URL` env var.
+3. Build command: `npm run vercel-build` (recommended for V0, ensures tables exist).
 4. Install command: `npm install`.
 
-`npm run build` runs `prisma generate && next build` to avoid the Vercel Prisma client cache issue.
+`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+
+If you keep `npm run build` as Vercel build command, run `npx prisma db push` manually at least once against the target Neon database before first login/register.
