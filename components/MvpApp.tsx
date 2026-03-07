@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
 import type { BaseCard } from "@/types/cards";
 
 type CollectionItem = {
@@ -46,8 +45,10 @@ function renderCard(card: BaseCard, qty: number | null = null, selectable = fals
 }
 
 export function MvpApp() {
-  const { status } = useSession();
   const [me, setMe] = useState<MeResponse | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
   const [difficulty, setDifficulty] = useState("normal");
@@ -59,19 +60,20 @@ export function MvpApp() {
     const res = await fetch("/api/me", { cache: "no-store" });
     if (!res.ok) {
       setMe(null);
-      return;
+      return false;
     }
     const payload = (await res.json()) as MeResponse;
     setMe(payload);
+    return true;
   };
 
   useEffect(() => {
-    if (status === "authenticated") {
-      void refresh();
-    } else {
-      setMe(null);
-    }
-  }, [status]);
+    void (async () => {
+      setAuthLoading(true);
+      await refresh();
+      setAuthLoading(false);
+    })();
+  }, []);
 
   const factions = useMemo(() => {
     if (!me) return [];
@@ -102,6 +104,31 @@ export function MvpApp() {
       if (prev.length >= 3) return prev;
       return [...prev, baseCardId];
     });
+  };
+
+  const doAuth = async (path: "/api/auth/register" | "/api/auth/login") => {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      alert(payload?.error || "Auth failed");
+      return;
+    }
+
+    setPassword("");
+    await refresh();
+  };
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setMe(null);
+    setSelectedTeam([]);
+    setPackResult([]);
+    setBattleLog("");
   };
 
   const openPack = async () => {
@@ -141,22 +168,29 @@ export function MvpApp() {
       </header>
 
       <section className="panel">
-        <h2>Login</h2>
-        {status === "authenticated" && me ? (
-          <p>Active user: {me.user.username}</p>
-        ) : (
-          <p>No active user</p>
+        <h2>Login / Register</h2>
+        {authLoading ? <p>Loading session…</p> : <p>{me ? `Active user: ${me.user.username}` : "No active user"}</p>}
+        {!me && (
+          <div className="inline wrap">
+            <input placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <input
+              placeholder="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button onClick={() => void doAuth("/api/auth/register")}>Register</button>
+            <button onClick={() => void doAuth("/api/auth/login")}>Login</button>
+          </div>
         )}
-        <div className="inline">
-          {status === "authenticated" ? (
-            <button onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
-          ) : (
-            <button onClick={() => signIn("twitter")}>Login with Twitter</button>
-          )}
-        </div>
+        {me && (
+          <div className="inline">
+            <button onClick={() => void logout()}>Logout</button>
+          </div>
+        )}
       </section>
 
-      {status === "authenticated" && me && (
+      {me && (
         <>
           <section className="panel">
             <h2>Profile</h2>

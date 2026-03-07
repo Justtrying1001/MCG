@@ -1,13 +1,16 @@
-import "./globals.css";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { SessionProviderClient } from "@/components/providers/SessionProviderClient";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "MCG MVP V1",
+  description: "Minimal base-card pack + collection + PvE loop",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <SessionProviderClient>{children}</SessionProviderClient>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
