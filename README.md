@@ -60,7 +60,6 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL`
-- `DIRECT_URL`
 
 ## Setup
 
@@ -75,7 +74,7 @@ Open http://localhost:3000.
 ## Deploy on Vercel
 
 1. Import repo in Vercel.
-2. Add database env vars.
+2. Add `DATABASE_URL` env var.
 3. Build command: `npm run vercel-build` (recommended for V0, ensures tables exist).
 4. Install command: `npm install`.
 
