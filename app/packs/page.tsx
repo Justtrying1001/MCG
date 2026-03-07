@@ -24,6 +24,7 @@ export default function PacksPage() {
 
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
   const revealedCount = revealed.filter(Boolean).length;
+  const nextRevealIndex = revealed.findIndex((isRevealed) => !isRevealed);
 
   const openPack = async () => {
     setIsOpening(true);
@@ -47,13 +48,13 @@ export default function PacksPage() {
       setRevealed(new Array(pulled.length).fill(false));
       setOpeningPhase("revealing");
       setIsOpening(false);
-    }, 900);
+    }, 1000);
 
     await refresh();
   };
 
   const handleReveal = (index: number) => {
-    if (revealed[index]) return;
+    if (revealed[index] || index !== nextRevealIndex) return;
     setRevealed((prev) => prev.map((item, itemIndex) => (itemIndex === index ? true : item)));
   };
 
@@ -69,8 +70,8 @@ export default function PacksPage() {
         <div>
           <h1 className="page-title">Pack opening</h1>
           <p className="page-subtitle">
-            Crack open a premium Genesis Booster and run a full reveal ritual. Tear the pack,
-            fan the card backs, then flip each pull one by one.
+            Open a Genesis Booster through a full collectible ritual: break the seal,
+            lay out 5 face-down cards, and reveal each pull in sequence.
           </p>
         </div>
       </div>
@@ -80,8 +81,8 @@ export default function PacksPage() {
           <div>
             <p className="pack-info-title">Genesis Booster</p>
             <p className="pack-info-desc">
-              The foundational MCG booster. Contains 5 cards drawn from the full
-              card pool with standard rarity distribution.
+              A sealed Series-1 MCG product containing 5 cards drawn from the complete
+              base pool with weighted rarity distribution.
             </p>
           </div>
 
@@ -98,24 +99,33 @@ export default function PacksPage() {
 
         <div className="pack-center">
           <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>
-            <div className="pack-visual-inner">
-              <span className="pack-visual-edition">MCG // GEN-01</span>
-              <span className="pack-visual-name">GENESIS</span>
-              <span className="pack-visual-type">CRYPTO BOOSTER</span>
-              <span className="pack-visual-cta">5 collectible cards</span>
-            </div>
-
+            <div className="pack-top-crimp" aria-hidden="true" />
+            <div className="pack-bottom-crimp" aria-hidden="true" />
+            <div className="pack-side-seam pack-side-seam-left" aria-hidden="true" />
+            <div className="pack-side-seam pack-side-seam-right" aria-hidden="true" />
+            <div className="pack-tear-notch" aria-hidden="true">TEAR</div>
             <div className="pack-foil-strip" aria-hidden="true" />
-            <div className="pack-seal" aria-hidden="true">SEALED</div>
-            <div className="pack-corner-mark" aria-hidden="true">◈ MCG ◈</div>
             <div className="pack-energy" aria-hidden="true" />
             <div className="pack-glint" aria-hidden="true" />
             <div className="pack-open-flash" aria-hidden="true" />
+
+            <div className="pack-visual-inner">
+              <span className="pack-visual-edition">MCG AUTHENTIC BOOSTER // SERIES 01</span>
+              <span className="pack-visual-name">GENESIS</span>
+              <span className="pack-visual-type">PREMIUM CRYPTO BOOSTER</span>
+
+              <div className="pack-visual-divider" />
+              <span className="pack-visual-count">5 collectible cards</span>
+              <span className="pack-visual-series">OFFICIAL GAME PACK PRODUCT</span>
+            </div>
+
+            <div className="pack-seal" aria-hidden="true">Factory sealed</div>
+            <div className="pack-corner-mark" aria-hidden="true">◈ MCG ◈</div>
           </div>
 
           <div className="pack-action-copy">
-            <p className="pack-action-title">Genesis Booster</p>
-            <p className="pack-action-desc">Open to receive 5 base cards with standard weighted rarity distribution.</p>
+            <p className="pack-action-title">Genesis Booster — Standard pull</p>
+            <p className="pack-action-desc">Open one pack now and reveal all 5 cards manually, one at a time.</p>
           </div>
 
           <Button
@@ -123,82 +133,66 @@ export default function PacksPage() {
             disabled={!me || isOpening || openingPhase === "tearing"}
             className="btn-lg"
           >
-            {openingPhase === "tearing" ? "Tearing pack..." : isOpening ? "Preparing reveal..." : "Open pack"}
+            {openingPhase === "tearing" ? "Breaking seal..." : isOpening ? "Preparing reveal..." : "Open pack"}
           </Button>
 
           {openingPhase === "tearing" && (
-            <p className="pack-opening-status">Quantum seal rupturing... stand by for card reveal.</p>
+            <p className="pack-opening-status">Foil tearing... cards incoming.</p>
           )}
 
           {!me && <p className="pack-tip">Sign in to open packs and build your collection.</p>}
         </div>
 
         <div className="pack-right">
-          <div style={{
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid var(--border)",
-            background: "rgba(255,255,255,0.02)",
-            padding: "1.1rem",
-          }}>
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
-              Opening protocol
-            </p>
-            <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
-              1) Tear booster. 2) Cards fan in face-down. 3) Flip each card manually.
-              4) Confirm full reveal.
+          <div className="pack-side-card">
+            <p className="pack-side-card-label">Opening protocol</p>
+            <p className="pack-side-card-copy">
+              Tear pack → cards fan face-down → reveal each card in sequence → finalize results.
             </p>
           </div>
 
-          <div style={{
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid var(--border)",
-            background: "rgba(255,255,255,0.02)",
-            padding: "1.1rem",
-          }}>
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
-              Reveal tip
-            </p>
-            <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
-              Hover each card back and click to flip. Every reveal is tracked in your permanent collection.
+          <div className="pack-side-card">
+            <p className="pack-side-card-label">Reveal quality</p>
+            <p className="pack-side-card-copy">
+              Card backs are interactive. Each flip is deliberate and updates your permanent collection.
             </p>
           </div>
         </div>
       </div>
 
       <Modal
-        title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - click each card to flip"}
+        title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - flip cards in order"}
         open={result.length > 0 && openingPhase === "revealing"}
         onClose={closeReveal}
       >
         <div className="reveal-progress-wrap">
-          <p className="reveal-progress-text">
-            Revealed {revealedCount}/{result.length}
-          </p>
+          <p className="reveal-progress-text">Revealed {revealedCount}/{result.length}</p>
           <div className="reveal-progress-track">
-            <div
-              className="reveal-progress-fill"
-              style={{ width: `${(revealedCount / Math.max(result.length, 1)) * 100}%` }}
-            />
+            <div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(result.length, 1)) * 100}%` }} />
           </div>
+          {!allRevealed && (
+            <p className="reveal-next-copy">Next card to flip: #{nextRevealIndex + 1}</p>
+          )}
         </div>
 
         <div className="pack-reveal-grid">
           {result.map((card, index) => {
             const isCardRevealed = revealed[index];
+            const isNext = index === nextRevealIndex;
 
             return (
               <button
                 key={`${card.baseCardId}_${index}`}
-                className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}`}
+                className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`}
                 onClick={() => handleReveal(index)}
-                disabled={isCardRevealed}
+                disabled={isCardRevealed || !isNext}
                 aria-label={isCardRevealed ? `${card.name} revealed` : `Reveal card ${index + 1}`}
               >
                 <div className="reveal-slot-inner">
                   <div className="reveal-slot-face reveal-slot-back">
                     <span className="back-mark">◈</span>
                     <span className="back-brand">MCG GENESIS</span>
-                    <span className="back-label">Tap to reveal</span>
+                    <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span>
                   </div>
 
                   <div className="reveal-slot-face reveal-slot-front">
