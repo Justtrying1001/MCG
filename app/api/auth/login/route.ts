@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { credentialsFormatMessage, credentialsSchema } from "@/lib/auth-validation";
 import {
   createSession,
   getSessionCookieName,
@@ -8,16 +8,11 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 
-const schema = z.object({
-  username: z.string().trim().min(3).max(24).regex(/^[a-zA-Z0-9_]+$/),
-  password: z.string().min(6).max(72),
-});
-
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
-  const parsed = schema.safeParse(body);
+  const parsed = credentialsSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: "Invalid username or password format" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: credentialsFormatMessage }, { status: 400 });
   }
 
   const username = parsed.data.username.toLowerCase();

@@ -45,6 +45,10 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 - `POST /api/pack/open` — open base pack (5 cards, weighted by tier/rank), persist updates
 - `POST /api/pve/run` — run PvE battle, persist history and rewards
 
+Credentials format:
+- `username`: 3-24 chars, letters/numbers/underscore only
+- `password`: 4-72 chars
+
 ## Environment
 
 Copy `.env.example` to `.env` and set Neon credentials:

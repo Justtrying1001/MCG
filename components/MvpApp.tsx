@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/lib/auth-validation";
 import type { BaseCard } from "@/types/cards";
 
 type CollectionItem = {
@@ -172,11 +173,19 @@ export function MvpApp() {
         {authLoading ? <p>Loading session…</p> : <p>{me ? `Active user: ${me.user.username}` : "No active user"}</p>}
         {!me && (
           <div className="inline wrap">
-            <input placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <span className="small">Username 3-24 (letters/numbers/_), password min 4 chars.</span>
+            <input
+              placeholder="username"
+              value={username}
+              minLength={USERNAME_MIN_LENGTH}
+              maxLength={USERNAME_MAX_LENGTH}
+              onChange={(e) => setUsername(e.target.value)}
+            />
             <input
               placeholder="password"
               type="password"
               value={password}
+              minLength={PASSWORD_MIN_LENGTH}
               onChange={(e) => setPassword(e.target.value)}
             />
             <button onClick={() => void doAuth("/api/auth/register")}>Register</button>
