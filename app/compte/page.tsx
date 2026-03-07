@@ -9,31 +9,68 @@ export default function AccountPage() {
 
   return (
     <SiteShell>
-      <section className="section-head">
-        <h2>Account</h2>
-        <p>Track your profile performance, opening history, and seasonal progression.</p>
-      </section>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Profile</h1>
+          <p className="page-subtitle">
+            Your account overview — XP, pack history, and PvE progression.
+          </p>
+        </div>
+      </div>
 
       {me ? (
-        <section className="feature-grid">
-          <article className="feature-panel">
-            <h3>Profile</h3>
-            <p>Player: <strong>{me.user.username}</strong></p>
-            <p>XP: <strong>{me.user.points}</strong></p>
-          </article>
-          <article className="feature-panel">
-            <h3>Pack history</h3>
-            <p>Packs opened: <strong>{me.user.packsOpened}</strong></p>
-            <p>Recorded openings: <strong>{me.openingsCount}</strong></p>
-          </article>
-          <article className="feature-panel">
-            <h3>PvE progression</h3>
-            <ProgressBar value={Math.min(me.pveRunsCount, 100)} max={100} label="Road to Mythic" />
-            <p>PvE runs: <strong>{me.pveRunsCount}</strong></p>
-          </article>
-        </section>
+        <>
+          {/* Profile banner */}
+          <div className="profile-banner">
+            <div className="profile-banner-bg" />
+            <div className="profile-header">
+              <div className="profile-avatar">
+                {me.user.username.slice(0, 1).toUpperCase()}
+              </div>
+              <div>
+                <div className="profile-name">{me.user.username}</div>
+                <div className="profile-sub">MCG Player · Active account</div>
+              </div>
+            </div>
+
+            <div className="profile-stats-grid">
+              <div className="profile-stat-card">
+                <span className="profile-stat-label">Total XP</span>
+                <span className="profile-stat-value" style={{ color: "var(--cyan)" }}>
+                  {me.user.points}
+                </span>
+                <span className="profile-stat-sub">Progression points</span>
+              </div>
+
+              <div className="profile-stat-card">
+                <span className="profile-stat-label">Packs opened</span>
+                <span className="profile-stat-value">{me.user.packsOpened}</span>
+                <span className="profile-stat-sub">{me.openingsCount} recorded openings</span>
+              </div>
+
+              <div className="profile-stat-card">
+                <span className="profile-stat-label">PvE runs</span>
+                <span className="profile-stat-value">{me.pveRunsCount}</span>
+                <span className="profile-stat-sub">Encounters completed</span>
+              </div>
+
+              <div className="profile-stat-card">
+                <span className="profile-stat-label">Road to Mythic</span>
+                <div style={{ marginTop: "0.5rem" }}>
+                  <ProgressBar value={Math.min(me.pveRunsCount, 100)} max={100} label="PvE ladder" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       ) : (
-        <p>Please log in to view your account dashboard.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">◎</div>
+          <p className="empty-state-title">Sign in to view your profile</p>
+          <p className="empty-state-desc">
+            Create an account or log in to track your XP, pack history, and PvE progression.
+          </p>
+        </div>
       )}
     </SiteShell>
   );

@@ -19,30 +19,99 @@ export default function CollectionPage() {
     if (!me) return [];
     return me.collection
       .filter((item) => !faction || item.card.faction === faction)
-      .filter((item) => `${item.card.name} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => b.quantity - a.quantity);
+      .filter((item) =>
+        `${item.card.name} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
+      )
+      .sort((a, b) => (a.card.marketCapRank ?? 9999) - (b.card.marketCapRank ?? 9999));
   }, [me, faction, search]);
+
+  const totalCards = me?.collection.reduce((acc, x) => acc + x.quantity, 0) ?? 0;
+  const uniqueCards = me?.collection.length ?? 0;
+  const legendaryCount = me?.collection.filter((x) => (x.card.marketCapRank ?? 9999) <= 10).length ?? 0;
 
   return (
     <SiteShell>
-      <section className="section-head">
-        <h2>Collection</h2>
-        <p>Audit your roster by faction and optimize your strongest card cores.</p>
-      </section>
+      {/* Page header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Collection</h1>
+          <p className="page-subtitle">
+            Your complete card roster. Filter by faction, search by name, and audit your
+            strongest cores before heading into battle.
+          </p>
+        </div>
+      </div>
 
-      <section className="filters">
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, symbol, faction" />
-        <select value={faction} onChange={(e) => setFaction(e.target.value)}>
+      {/* Stats strip */}
+      {me && (
+        <div className="collection-stats">
+          <div className="stat-pill">
+            <span className="stat-pill-value" style={{ color: "var(--cyan)" }}>{totalCards}</span>
+            <span className="stat-pill-label">Total cards</span>
+          </div>
+          <div className="stat-pill">
+            <span className="stat-pill-value">{uniqueCards}</span>
+            <span className="stat-pill-label">Unique cards</span>
+          </div>
+          <div className="stat-pill">
+            <span className="stat-pill-value" style={{ color: "var(--gold)" }}>{legendaryCount}</span>
+            <span className="stat-pill-label">Legendaries</span>
+          </div>
+          <div className="stat-pill">
+            <span className="stat-pill-value">{factions.length}</span>
+            <span className="stat-pill-label">Factions</span>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="filters-bar">
+        <input
+          className="filter-input"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, symbol, faction…"
+        />
+        <select
+          className="filter-select"
+          value={faction}
+          onChange={(e) => setFaction(e.target.value)}
+        >
           <option value="">All factions</option>
           {factions.map((f) => (
             <option key={f} value={f}>{f}</option>
           ))}
         </select>
-      </section>
+      </div>
 
-      <section className="card-grid">
-        {cards.length ? cards.map((item) => <CardFrame key={item.baseCardId} card={item.card} quantity={item.quantity} />) : <p>No cards yet.</p>}
-      </section>
+      {/* Card grid */}
+      {!me ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">▦</div>
+          <p className="empty-state-title">Sign in to view your collection</p>
+          <p className="empty-state-desc">
+            Create an account or log in to start building your card roster.
+          </p>
+        </div>
+      ) : cards.length > 0 ? (
+        <div className="card-grid">
+          {cards.map((item) => (
+            <CardFrame key={item.baseCardId} card={item.card} quantity={item.quantity} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <div className="empty-state-icon">◈</div>
+          <p className="empty-state-title">
+            {search || faction ? "No cards match your filters" : "Your collection is empty"}
+          </p>
+          <p className="empty-state-desc">
+            {search || faction
+              ? "Try adjusting your search or removing the faction filter."
+              : "Head to Packs and crack open your first booster to get started."}
+          </p>
+        </div>
+      )}
     </SiteShell>
   );
 }
