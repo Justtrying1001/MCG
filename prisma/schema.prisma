@@ -8,17 +8,19 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  username     String        @unique
-  passwordHash String
-  points       Int           @default(300)
-  packsOpened  Int           @default(0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  cards        UserCard[]
-  packOpenings PackOpening[]
-  pveRuns      PveRun[]
-  sessions     UserSession[]
+  id              String        @id @default(cuid())
+  username        String        @unique
+  passwordHash    String
+  points          Int           @default(300)
+  packsOpened     Int           @default(0)
+  pveBattleTickets Int          @default(3)
+  lastPveResetAt  DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  cards           UserCard[]
+  packOpenings    PackOpening[]
+  pveRuns         PveRun[]
+  sessions        UserSession[]
 }
 
 model UserSession {
@@ -34,12 +36,14 @@ model UserSession {
 }
 
 model UserCard {
-  id         String   @id @default(cuid())
-  userId     String
-  baseCardId String
-  quantity   Int      @default(0)
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  baseCardId     String
+  quantity       Int      @default(0)
+  pveExhausted   Boolean  @default(false)
+  pveExhaustedAt DateTime?
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, baseCardId])
   @@index([userId])
@@ -57,16 +61,17 @@ model PackOpening {
 }
 
 model PveRun {
-  id            String   @id @default(cuid())
-  userId        String
-  difficulty    String
-  selectedCards Json
-  enemyCards    Json
-  result        String
-  reward        Int
-  battleMeta    Json
-  createdAt     DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  difficulty      String
+  selectedCards   Json
+  enemyCards      Json
+  result          String
+  reward          Int
+  bonusPackAwarded Boolean @default(false)
+  battleMeta      Json
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

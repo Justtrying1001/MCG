@@ -5,20 +5,37 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
+import { ensurePveDailyState } from "@/lib/pve/reset";
 
 export async function GET() {
   try {
-    const user = await getSessionUser();
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) return new NextResponse("Unauthorized", { status: 401 });
+
+    const [userCards, openingsCount, pveRunsCount] = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: sessionUser.id },
+        select: { id: true, lastPveResetAt: true },
+      });
+      if (!user) throw new Error("User not found");
+
+      await ensurePveDailyState(tx, user);
+
+      return Promise.all([
+        tx.userCard.findMany({ where: { userId: sessionUser.id } }),
+        tx.packOpening.count({ where: { userId: sessionUser.id } }),
+        tx.pveRun.count({ where: { userId: sessionUser.id } }),
+      ]);
+    });
+
+    const user = await prisma.user.findUnique({ where: { id: sessionUser.id } });
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const [userCards, openingsCount, pveRunsCount] = await Promise.all([
-      prisma.userCard.findMany({ where: { userId: user.id } }),
-      prisma.packOpening.count({ where: { userId: user.id } }),
-      prisma.pveRun.count({ where: { userId: user.id } }),
-    ]);
-
     const payload = buildUserPayload(user, userCards);
-    return NextResponse.json({ ...payload, openingsCount, pveRunsCount });
+    const availablePveCards = payload.collection.filter((c) => !c.pveExhausted).length;
+    const exhaustedPveCards = payload.collection.filter((c) => c.pveExhausted).length;
+
+    return NextResponse.json({ ...payload, openingsCount, pveRunsCount, availablePveCards, exhaustedPveCards });
   } catch (error) {
     return handleApiError(error, "Cannot load user profile");
   }

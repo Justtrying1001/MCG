@@ -6,14 +6,24 @@ import type { BaseCard } from "@/types/cards";
 export type CollectionItem = {
   baseCardId: string;
   quantity: number;
+  pveExhausted: boolean;
   card: BaseCard;
 };
 
 export type MeResponse = {
-  user: { id: string; username: string; points: number; packsOpened: number };
+  user: {
+    id: string;
+    username: string;
+    points: number;
+    packsOpened: number;
+    pveBattleTickets: number;
+    lastPveResetAt: string;
+  };
   collection: CollectionItem[];
   openingsCount: number;
   pveRunsCount: number;
+  availablePveCards: number;
+  exhaustedPveCards: number;
 };
 
 export function useSession() {
