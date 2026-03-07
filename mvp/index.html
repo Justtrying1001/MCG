@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MCG MVP V1</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>MCG MVP V1</h1>
+    <p>Open packs → collect base cards → play PvE → earn rewards.</p>
+  </header>
+
+  <main>
+    <section id="auth-section" class="panel">
+      <h2>Login</h2>
+      <div class="inline">
+        <input id="username-input" placeholder="Enter username" />
+        <button id="login-btn">Login / Register</button>
+      </div>
+      <p id="auth-state">No active user</p>
+    </section>
+
+    <section id="user-section" class="panel hidden">
+      <h2>Profile</h2>
+      <div class="inline wrap">
+        <strong id="active-user"></strong>
+        <span id="balance"></span>
+        <span id="pack-count"></span>
+        <span id="openings-count"></span>
+        <button id="logout-btn">Logout</button>
+      </div>
+    </section>
+
+    <section id="pack-section" class="panel hidden">
+      <h2>Pack Opening (Base Cards Only)</h2>
+      <p>Each pack contains <strong>5 base cards</strong> using weighted tier/rank drop logic.</p>
+      <div class="inline">
+        <button id="open-pack-btn">Open Pack (cost: 100 points)</button>
+      </div>
+      <div id="pack-result" class="card-grid"></div>
+    </section>
+
+    <section id="collection-section" class="panel hidden">
+      <h2>Collection</h2>
+      <div class="inline wrap">
+        <input id="collection-search" placeholder="Filter by name / symbol / faction" />
+        <select id="faction-filter"><option value="">All factions</option></select>
+      </div>
+      <div id="collection" class="card-grid"></div>
+    </section>
+
+    <section id="pve-section" class="panel hidden">
+      <h2>PvE Battle</h2>
+      <p>Select up to 3 owned cards. Win for points and bonus pack chance.</p>
+      <div class="inline">
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="start-pve-btn">Start PvE Battle</button>
+      </div>
+      <div id="team-picker" class="card-grid"></div>
+      <pre id="battle-log"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
