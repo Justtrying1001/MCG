@@ -9,11 +9,13 @@ export function ProgressBar({ value, max, label }: Props) {
 
   return (
     <div className="progress-wrap" aria-label={label ?? "Progress"}>
-      {label ? <div className="progress-label">{label}</div> : null}
+      <div className="progress-label-row">
+        {label ? <span className="progress-label">{label}</span> : null}
+        <span className="progress-pct">{clamped}%</span>
+      </div>
       <div className="progress-track">
         <div className="progress-fill" style={{ width: `${clamped}%` }} />
       </div>
-      <div className="progress-caption">{clamped}%</div>
     </div>
   );
 }

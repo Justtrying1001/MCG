@@ -8,6 +8,13 @@ import { useSession } from "@/components/useSession";
 import type { BaseCard } from "@/types/cards";
 import { useState } from "react";
 
+const ODDS = [
+  { label: "Legendary", pct: "2%",  color: "var(--gold)" },
+  { label: "Epic",      pct: "10%", color: "var(--magenta)" },
+  { label: "Rare",      pct: "28%", color: "var(--cyan)" },
+  { label: "Common",    pct: "60%", color: "var(--text-3)" },
+];
+
 export default function PacksPage() {
   const { me, refresh } = useSession();
   const [result, setResult] = useState<BaseCard[]>([]);
@@ -29,33 +36,98 @@ export default function PacksPage() {
 
   return (
     <SiteShell>
-      <section className="section-head">
-        <h2>Packs</h2>
-        <p>Choose your risk profile, open boosters, and chase rare meme archetypes.</p>
-        <div className="inline-actions">
-          <Button onClick={() => void openPack()} disabled={!me || isOpening}>
-            {isOpening ? "Opening..." : "Open pack"}
-          </Button>
-          <span className="hint">Tip: each pack can unlock your next PvE-winning combo.</span>
+      {/* Page header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Pack opening</h1>
+          <p className="page-subtitle">
+            Crack open a Genesis Booster and discover your next legendary pull. Every pack
+            contains 5 cards with weighted rarity drops.
+          </p>
         </div>
-      </section>
+      </div>
 
-      <section className={`pack-simulator ${isOpening ? "opening" : ""}`}>
-        <div className="pack-foil">GENESIS BOOSTER</div>
-      </section>
+      {/* Pack stage */}
+      <div className={`pack-stage${isOpening ? " is-opening" : ""}`}>
+        {/* Left — info */}
+        <div className="pack-info">
+          <div>
+            <p className="pack-info-title">Genesis Booster</p>
+            <p className="pack-info-desc">
+              The foundational MCG booster. Contains 5 cards drawn from the full
+              card pool with standard rarity distribution.
+            </p>
+          </div>
 
-      <section className="feature-grid">
-        <article className="feature-panel">
-          <h3>Drop design</h3>
-          <p>Weighted rarity keeps progression exciting while preserving long-term chase value.</p>
-        </article>
-        <article className="feature-panel">
-          <h3>Reveal ritual</h3>
-          <p>Foil animation + card-by-card reveal reinforces ownership and collection desire.</p>
-        </article>
-      </section>
+          <div className="pack-odds">
+            <p className="pack-odds-label">Drop rates</p>
+            {ODDS.map((o) => (
+              <div key={o.label} className="pack-odds-row">
+                <span className="pack-odds-rarity" style={{ color: o.color }}>{o.label}</span>
+                <span className="pack-odds-pct">{o.pct}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      <Modal title="Pack Reveal" open={result.length > 0 && !isOpening} onClose={() => setResult([])}>
+        {/* Center — pack visual + CTA */}
+        <div className="pack-center">
+          <div className="pack-visual">
+            <div className="pack-visual-inner">
+              <span className="pack-visual-name">GENESIS</span>
+              <span className="pack-visual-type">BOOSTER PACK</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => void openPack()}
+            disabled={!me || isOpening}
+            className="btn-lg"
+          >
+            {isOpening ? "Revealing…" : "Open pack"}
+          </Button>
+
+          {!me && (
+            <p className="pack-tip">Sign in to open packs and build your collection.</p>
+          )}
+        </div>
+
+        {/* Right — tips */}
+        <div className="pack-right">
+          <div style={{
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.02)",
+            padding: "1.1rem",
+          }}>
+            <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
+              Pack strategy
+            </p>
+            <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
+              Build a 3-card squad with high synergy before heading into PvE.
+              Prioritise cards with complementary ATK and DEF values.
+            </p>
+          </div>
+
+          <div style={{
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.02)",
+            padding: "1.1rem",
+          }}>
+            <p style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)", marginBottom: "0.75rem" }}>
+              Reveal ritual
+            </p>
+            <p style={{ fontSize: "0.86rem", color: "var(--text-2)", lineHeight: 1.65 }}>
+              Card-by-card reveal reinforces ownership and collection desire.
+              Each pull adds to your permanent roster.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pull reveal modal */}
+      <Modal title="Pack reveal — 5 cards pulled" open={result.length > 0 && !isOpening} onClose={() => setResult([])}>
         <div className="card-grid">
           {result.map((card) => (
             <CardFrame key={card.baseCardId} card={card} />

@@ -9,11 +9,11 @@ import { useSession } from "@/components/useSession";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/packs", label: "Packs" },
-  { href: "/collection", label: "Collection" },
-  { href: "/combats", label: "PvE" },
-  { href: "/compte", label: "Account" },
+  { href: "/",          label: "Home",       icon: "⬡" },
+  { href: "/packs",     label: "Packs",      icon: "◈" },
+  { href: "/collection",label: "Collection", icon: "▦" },
+  { href: "/combats",   label: "Battle",     icon: "⚔" },
+  { href: "/compte",    label: "Profile",    icon: "◎" },
 ];
 
 export function SiteShell({ children }: { children: ReactNode }) {
@@ -45,63 +45,88 @@ export function SiteShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="site-bg">
+    <>
       <div className="noise-layer" />
-      <header className="site-header">
-        <div className="logo-wrap">
-          <div className="logo-badge">MCG</div>
-          <div>
-            <h1>Meme Card Game</h1>
-            <p>Collect. Evolve. Dominate the memeverse.</p>
-          </div>
-        </div>
 
-        <nav className="main-nav">
+      {/* ── Top navigation ── */}
+      <nav className="topnav">
+        <Link href="/" className="nav-logo">
+          <div className="nav-logo-badge">MCG</div>
+          <div>
+            <span className="nav-logo-name">Meme Card Game</span>
+            <span className="nav-logo-tagline">Collect · Battle · Dominate</span>
+          </div>
+        </Link>
+
+        <div className="nav-links">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className={pathname === item.href ? "active" : ""}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-link${pathname === item.href ? " active" : ""}`}
+            >
               {item.label}
             </Link>
           ))}
-        </nav>
+        </div>
 
-        <div className="account-chip">
+        <div className="nav-auth">
           {loading ? (
-            <span>Loading session...</span>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>Loading…</span>
           ) : me ? (
             <>
-              <span className="player-badge">{me.user.username} · {me.user.points} XP</span>
-              <Button variant="ghost" onClick={logout}>
+              <div className="player-pill">
+                <span>{me.user.username}</span>
+                <span className="xp-badge">{me.user.points} XP</span>
+              </div>
+              <Button variant="ghost" className="btn-sm" onClick={logout}>
                 Logout
               </Button>
             </>
           ) : (
             <>
               <input
+                className="nav-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={`Username ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH}`}
               />
               <input
+                className="nav-input"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={`Password min ${PASSWORD_MIN_LENGTH}`}
+                placeholder={`Password (min ${PASSWORD_MIN_LENGTH})`}
               />
-              <Button variant="ghost" onClick={() => void doAuth("/api/auth/login")}>
+              <Button variant="ghost" className="btn-sm" onClick={() => void doAuth("/api/auth/login")}>
                 Login
               </Button>
-              <Button onClick={() => void doAuth("/api/auth/register")}>Create account</Button>
+              <Button className="btn-sm" onClick={() => void doAuth("/api/auth/register")}>
+                Sign up
+              </Button>
             </>
           )}
         </div>
-      </header>
+      </nav>
 
-      <main className="page-shell">{children}</main>
+      {/* ── App body ── */}
+      <div className="app-root">
+        <main className="page-content">{children}</main>
 
-      <footer className="site-footer">
-        <span>© MCG · Neon Memeverse Protocol</span>
-        <span>Packs · Collection · PvE · Shop (coming soon)</span>
-      </footer>
-    </div>
+        <footer className="site-footer">
+          <div className="footer-brand">
+            <div style={{
+              width: 22, height: 22, borderRadius: 6, display: "grid", placeItems: "center",
+              background: "linear-gradient(135deg, var(--cyan), #6050ff, var(--magenta))",
+              fontSize: "0.55rem", fontWeight: 900, color: "#030710"
+            }}>
+              MCG
+            </div>
+            Neon Memeverse Protocol
+          </div>
+          <span>© 2025 MCG · Packs · Collection · PvE</span>
+        </footer>
+      </div>
+    </>
   );
 }
