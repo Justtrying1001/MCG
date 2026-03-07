@@ -145,18 +145,6 @@ export function openBasePack(cards: BaseCard[]): BaseCard[] {
   return pulled;
 }
 
-export function getMtgTemplateHints() {
-  const templatePath = path.join(process.cwd(), "mcg_card_template.html");
-  const galleryPath = path.join(process.cwd(), "mcg_gallery.html");
-  const templateHtml = readFileSync(templatePath, "utf-8");
-  const galleryHtml = readFileSync(galleryPath, "utf-8");
-
-  return {
-    hasVariantClasses: templateHtml.includes("vt-holo") && templateHtml.includes("vt-gold"),
-    hasSegmentStats: galleryHtml.includes('class="seg') && galleryHtml.includes("ATK"),
-  };
-}
-
 export const GAME_CONFIG = {
   STARTING_POINTS: 300,
   PACK_COST: 100,
