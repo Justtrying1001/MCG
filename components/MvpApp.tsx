@@ -115,8 +115,15 @@ export function MvpApp() {
     });
 
     if (!res.ok) {
-      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      alert(payload?.error || "Auth failed");
+      const raw = await res.text().catch(() => "");
+      let payload: { error?: string } | null = null;
+      try {
+        payload = raw ? (JSON.parse(raw) as { error?: string }) : null;
+      } catch {
+        payload = null;
+      }
+
+      alert(payload?.error || raw || "Auth failed");
       return;
     }
 

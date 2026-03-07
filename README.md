@@ -76,7 +76,9 @@ Open http://localhost:3000.
 
 1. Import repo in Vercel.
 2. Add database env vars.
-3. Build command: `npm run build`.
+3. Build command: `npm run vercel-build` (recommended for V0, ensures tables exist).
 4. Install command: `npm install`.
 
-`npm run build` runs `prisma generate && next build` to avoid the Vercel Prisma client cache issue.
+`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+
+If you keep `npm run build` as Vercel build command, run `npx prisma db push` manually at least once against the target Neon database before first login/register.
