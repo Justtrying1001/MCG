@@ -103,20 +103,26 @@ export default function PacksPage() {
             <div className="pack-bottom-crimp" aria-hidden="true" />
             <div className="pack-side-seam pack-side-seam-left" aria-hidden="true" />
             <div className="pack-side-seam pack-side-seam-right" aria-hidden="true" />
+            <div className="pack-border-bevel" aria-hidden="true" />
+            <div className="pack-front-panel" aria-hidden="true" />
             <div className="pack-tear-notch" aria-hidden="true">TEAR</div>
+            <div className="pack-auth-strip" aria-hidden="true">AUTHENTIC MCG SEALED PRODUCT</div>
             <div className="pack-foil-strip" aria-hidden="true" />
             <div className="pack-energy" aria-hidden="true" />
+            <div className="pack-material-grain" aria-hidden="true" />
             <div className="pack-glint" aria-hidden="true" />
             <div className="pack-open-flash" aria-hidden="true" />
 
             <div className="pack-visual-inner">
-              <span className="pack-visual-edition">MCG AUTHENTIC BOOSTER // SERIES 01</span>
+              <span className="pack-brand-lockup">MCG</span>
+              <span className="pack-visual-edition">AUTHENTIC BOOSTER // GENESIS SET // SERIES 01</span>
               <span className="pack-visual-name">GENESIS</span>
-              <span className="pack-visual-type">PREMIUM CRYPTO BOOSTER</span>
+              <span className="pack-visual-type">TRADING CARD BOOSTER</span>
 
               <div className="pack-visual-divider" />
+              <span className="pack-visual-subline">DIGITAL ASSET FACTION EDITION</span>
               <span className="pack-visual-count">5 collectible cards</span>
-              <span className="pack-visual-series">OFFICIAL GAME PACK PRODUCT</span>
+              <span className="pack-visual-series">OFFICIAL MCG PACK PRODUCT</span>
             </div>
 
             <div className="pack-seal" aria-hidden="true">Factory sealed</div>
