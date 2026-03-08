@@ -10,43 +10,43 @@ export default function HomePage() {
         <div className="hero-grid-lines" />
 
         <div className="hero-body">
-          <p className="eyebrow">Next-Gen Crypto TCG</p>
+          <p className="eyebrow">Premium Dark-Modern TCG</p>
           <h1 className="hero-title">
-            Own the rarest memes.<br />
-            <span className="accent">Build unstoppable</span><br />
-            lineups.
+            Own the rarest.<br />
+            <span className="accent">Chase the drop.</span><br />
+            Dominate.
           </h1>
           <p className="hero-desc">
-            MCG is a collectible strategy loop where every card pull matters.
-            Crack open boosters, craft high-synergy squads, and grind PvE
-            ladders for rewards and prestige.
+            MCG is a premium collectible card game where every pull carries weight.
+            Open sealed boosters, build high-synergy rosters, and compete
+            for the rarest cards in the set.
           </p>
           <div className="cta-row">
-            <Link href="/packs" className="btn btn-primary btn-lg">Open a booster</Link>
-            <Link href="/collection" className="btn btn-ghost btn-lg">Explore collection</Link>
+            <Link href="/packs" className="btn btn-primary btn-lg">Open a pack</Link>
+            <Link href="/collection" className="btn btn-ghost btn-lg">My collection</Link>
           </div>
           <div className="hero-pills">
-            <span className="hero-pill">Dynamic rarity layers</span>
-            <span className="hero-pill">Competitive PvE</span>
-            <span className="hero-pill">Web3-native identity</span>
+            <span className="hero-pill">6-tier rarity system</span>
+            <span className="hero-pill">Sealed pack ritual</span>
+            <span className="hero-pill">PvE progression</span>
           </div>
         </div>
 
         <div className="hero-cards-wrap">
           <div className="hero-card hero-card-1">
             <span className="hero-card-name">Genesis Pepe</span>
-            <span className="hero-card-rarity">Legendary · Meme Core</span>
+            <span className="hero-card-rarity" style={{ color: "var(--rarity-legendary)" }}>Legendary · S01</span>
             <div className="hero-card-art">🐸</div>
           </div>
           <div className="hero-card hero-card-2">
             <span className="hero-card-name">Bull Matrix</span>
-            <span className="hero-card-rarity">Epic · Alpha Faction</span>
+            <span className="hero-card-rarity" style={{ color: "var(--rarity-epic)" }}>Epic · S01</span>
             <div className="hero-card-art">🐂</div>
           </div>
           <div className="hero-card hero-card-3">
-            <span className="hero-card-name">Degen Pulse</span>
-            <span className="hero-card-rarity">Rare · Neon Syndicate</span>
-            <div className="hero-card-art">⚡</div>
+            <span className="hero-card-name">Signal Drop</span>
+            <span className="hero-card-rarity" style={{ color: "var(--rarity-rare)" }}>Rare · S01</span>
+            <div className="hero-card-art">◈</div>
           </div>
         </div>
       </section>
@@ -55,26 +55,26 @@ export default function HomePage() {
       <div className="feature-grid">
         <article className="feature-panel">
           <div className="feature-panel-icon">◈</div>
-          <h3>Open packs, chase rarity</h3>
+          <h3>Crack the seal</h3>
           <p>
-            Weighted drop tables keep progression exciting while preserving
-            long-term chase value for the rarest archetypes.
+            Sealed booster ritual — five face-down cards, revealed one by one.
+            Every flip is a moment. Every pull stays in your collection forever.
           </p>
         </article>
         <article className="feature-panel">
           <div className="feature-panel-icon">▦</div>
-          <h3>Build your collection</h3>
+          <h3>Build your binder</h3>
           <p>
-            High-contrast frames, focused art zones, rarity glow, and premium
-            readability — every card feels like an asset.
+            Six rarity tiers. Foil variants. Full-art chases.
+            Every card is an object worth possessing — not just a stat block.
           </p>
         </article>
         <article className="feature-panel">
           <div className="feature-panel-icon">⚔</div>
-          <h3>Grind the PvE ladder</h3>
+          <h3>Run the ladder</h3>
           <p>
-            Open packs → tune your squad → run encounters → gain XP and
-            reinvest into stronger, synergy-first lineups.
+            Select your squad from your collection, choose your difficulty,
+            and earn XP toward stronger drops and better standing.
           </p>
         </article>
       </div>

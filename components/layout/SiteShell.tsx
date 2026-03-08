@@ -116,15 +116,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <footer className="site-footer">
           <div className="footer-brand">
             <div style={{
-              width: 22, height: 22, borderRadius: 6, display: "grid", placeItems: "center",
-              background: "linear-gradient(135deg, var(--cyan), #6050ff, var(--magenta))",
-              fontSize: "0.55rem", fontWeight: 900, color: "#030710"
+              width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center",
+              background: "var(--red)",
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: "0.52rem", fontWeight: 900, letterSpacing: "0.06em", color: "var(--text)"
             }}>
               MCG
             </div>
-            Neon Memeverse Protocol
+            Meme Card Game
           </div>
-          <span>© 2025 MCG · Packs · Collection · PvE</span>
+          <span>© 2025 MCG · Premium Collectible TCG</span>
         </footer>
       </div>
     </>
