@@ -21,6 +21,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const { me, loading, refresh, setMe } = useSession();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
 
   const doAuth = async (path: "/api/auth/register" | "/api/auth/login") => {
     const res = await fetch(path, {
@@ -36,12 +39,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
     }
 
     setPassword("");
+    closeMenu();
     await refresh();
   };
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setMe(null);
+    closeMenu();
   };
 
   return (
@@ -50,7 +55,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
       {/* ── Top navigation ── */}
       <nav className="topnav">
-        <Link href="/" className="nav-logo">
+        <Link href="/" className="nav-logo" onClick={closeMenu}>
           <div className="nav-logo-badge">MCG</div>
           <div>
             <span className="nav-logo-name">Meme Card Game</span>
@@ -107,7 +112,93 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </>
           )}
         </div>
+
+        {/* ── Mobile hamburger button ── */}
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+        >
+          <span className={`hamburger${menuOpen ? " open" : ""}`} />
+        </button>
       </nav>
+
+      {/* ── Mobile navigation drawer ── */}
+      {menuOpen && (
+        <div
+          className="mobile-nav-overlay"
+          onClick={closeMenu}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          <div className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Nav links */}
+            <nav className="mobile-nav-links">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`mobile-nav-link${pathname === item.href ? " active" : ""}`}
+                  onClick={closeMenu}
+                >
+                  <span className="mobile-nav-icon">{item.icon}</span>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Auth section */}
+            <div className="mobile-nav-auth">
+              {loading ? (
+                <span style={{ fontSize: "0.85rem", color: "var(--text-3)" }}>Loading…</span>
+              ) : me ? (
+                <div className="mobile-auth-logged">
+                  <div className="player-pill mobile-player-pill">
+                    <span>{me.user.username}</span>
+                    <span className="xp-badge">{me.user.points} XP</span>
+                  </div>
+                  <Button variant="ghost" onClick={logout} style={{ width: "100%" }}>
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <div className="mobile-auth-form">
+                  <input
+                    className="filter-input mobile-auth-input"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={`Username ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH}`}
+                  />
+                  <input
+                    className="filter-input mobile-auth-input"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={`Password (min ${PASSWORD_MIN_LENGTH})`}
+                  />
+                  <div className="mobile-auth-buttons">
+                    <Button
+                      variant="ghost"
+                      onClick={() => void doAuth("/api/auth/login")}
+                      style={{ flex: 1 }}
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      onClick={() => void doAuth("/api/auth/register")}
+                      style={{ flex: 1 }}
+                    >
+                      Sign up
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── App body ── */}
       <div className="app-root">
