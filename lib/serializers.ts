@@ -14,9 +14,14 @@ export function buildUserPayload(user: User, userCards: UserCard[]) {
     .filter((c) => Boolean(c.card));
 
   return {
+    mode: "user" as const,
     user: {
       id: user.id,
-      username: user.username,
+      xUserId: user.xUserId,
+      username: user.xUsername,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      authProvider: user.authProvider,
       points: user.points,
       packsOpened: user.packsOpened,
       pveBattleTickets: user.pveBattleTickets,

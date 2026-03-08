@@ -25,11 +25,11 @@ export default function AccountPage() {
             <div className="profile-banner-bg" />
             <div className="profile-header">
               <div className="profile-avatar">
-                {me.user.username.slice(0, 1).toUpperCase()}
+                {me.user.displayName.slice(0, 1).toUpperCase()}
               </div>
               <div>
-                <div className="profile-name">{me.user.username}</div>
-                <div className="profile-sub">MCG Player · Active account</div>
+                <div className="profile-name">{me.user.displayName}</div>
+                <div className="profile-sub">{me.mode === "guest" ? "Guest session · Temporary" : `Connected with X · @${me.user.username}`}</div>
               </div>
             </div>
 
@@ -68,7 +68,7 @@ export default function AccountPage() {
           <div className="empty-state-icon">◎</div>
           <p className="empty-state-title">Sign in to view your profile</p>
           <p className="empty-state-desc">
-            Create an account or log in to track your XP, pack history, and PvE progression.
+            Continue with X for persistent progress, or start as guest for a temporary session.
           </p>
         </div>
       )}

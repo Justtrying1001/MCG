@@ -72,7 +72,7 @@ function useBattleReplay(result: BattleResultPayload | null, speed = 280) {
 }
 
 export default function CombatsPage() {
-  const { me, refresh } = useSession();
+  const { me, refresh, updateGuestState } = useSession();
   const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<PveDifficulty>("normal");
   const [sortBy, setSortBy] = useState<SortKey>("power");
@@ -136,10 +136,23 @@ export default function CombatsPage() {
     setRunning(true);
     setError("");
 
-    const res = await fetch("/api/pve/battle", {
+    const guestState = me?.mode === "guest" ? {
+      points: me.user.points,
+      packsOpened: me.user.packsOpened,
+      pveBattleTickets: me.user.pveBattleTickets,
+      lastPveResetAt: me.user.lastPveResetAt,
+      collection: me.collection,
+      openingsCount: me.openingsCount,
+      pveRunsCount: me.pveRunsCount,
+      nextPveResetAt: me.nextPveResetAt,
+    } : undefined;
+
+    const res = await fetch(me?.mode === "guest" ? "/api/guest/pve/battle" : "/api/pve/battle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selectedCardIds: selectedTeam, difficulty }),
+      body: JSON.stringify(me?.mode === "guest"
+        ? { selectedCardIds: selectedTeam, difficulty, state: guestState }
+        : { selectedCardIds: selectedTeam, difficulty }),
     });
 
     if (!res.ok) {
@@ -148,10 +161,15 @@ export default function CombatsPage() {
       return;
     }
 
-    const payload = (await res.json()) as BattleResultPayload;
-    setBattle(payload);
+    const payload = await res.json();
+    const battlePayload = (me?.mode === "guest" ? payload.battle : payload) as BattleResultPayload;
+    setBattle(battlePayload);
     setSelectedTeam([]);
-    await refresh();
+    if (me?.mode === "guest") {
+      updateGuestState(payload.state);
+    } else {
+      await refresh();
+    }
     setRunning(false);
   };
 
@@ -163,6 +181,7 @@ export default function CombatsPage() {
         <div>
           <h1 className="page-title">PvE Arena</h1>
           <p className="page-subtitle">Build a 5-card strike team. Every battle consumes 1 ticket and exhausts selected cards until daily reset.</p>
+          {me?.mode === "guest" ? <p className="pack-tip">Guest mode is temporary. PvE results are not persisted server-side.</p> : null}
         </div>
       </div>
 

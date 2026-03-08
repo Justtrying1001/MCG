@@ -5,7 +5,7 @@ This app keeps the MVP scope:
 - Base cards only
 - Pack opening
 - Collection
-- Minimal auth (username + password)
+- X OAuth authentication + guest mode
 - Simple PvE
 - Simple reward loop
 
@@ -21,7 +21,7 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 ## Data model (Prisma)
 
 - `User`
-  - `id`, `username`, `passwordHash`, `points`, `packsOpened`, timestamps
+  - `id`, `xUserId`, `xUsername`, `displayName`, `avatarUrl`, progression fields, timestamps
 - `UserSession`
   - `userId`, hashed session token, expiry
 - `UserCard`
@@ -45,16 +45,14 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 
 ## API routes
 
-- `POST /api/auth/register` — create account and start session
-- `POST /api/auth/login` — login and start session
+- `GET /api/auth/x/start` — begin OAuth flow with X
+- `GET /api/auth/x/callback` — handle OAuth callback, upsert account, start session
 - `POST /api/auth/logout` — logout and clear session cookie
 - `GET /api/me` — profile + persisted collection + counters
-- `POST /api/pack/open` — open base pack (5 cards, weighted by tier/rank), persist updates
-- `POST /api/pve/run` — run PvE battle, persist history and rewards
-
-Credentials format:
-- `username`: 3-24 chars, letters/numbers/underscore only
-- `password`: 4-72 chars
+- `POST /api/pack/open` — open base pack for authenticated X users (persistent)
+- `POST /api/guest/pack/open` — open base pack for guests (ephemeral)
+- `POST /api/pve/run` — run PvE battle for authenticated X users (persistent)
+- `POST /api/guest/pve/battle` — run PvE battle for guests (ephemeral)
 
 ## Environment
 
@@ -67,6 +65,13 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL`
+- `X_CLIENT_ID`
+- `X_CLIENT_SECRET`
+- `X_REDIRECT_URI`
+
+Not required for current login flow:
+
+- `X_BEARER_TOKEN` (not used by this implementation)
 
 ## Setup
 
@@ -82,9 +87,13 @@ Open http://localhost:3000.
 
 1. Import repo in Vercel.
 2. Add `DATABASE_URL` env var.
-3. Build command: `npm run vercel-build` (recommended for V0, ensures tables exist).
+3. Build command: `npm run vercel-build` (MVP reset strategy: wipes and recreates schema each deploy).
 4. Install command: `npm install`.
 
-`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+`npm run vercel-build` runs `prisma generate && prisma db push --force-reset && next build`.
+Because this MVP currently has no important production data, the deployment strategy intentionally resets the database schema on build to avoid non-null migration failures when Prisma models change rapidly.
 
-If you keep `npm run build` as Vercel build command, run `npx prisma db push` manually at least once against the target Neon database before first login/register.
+If you later need data retention, remove `--force-reset` and switch to proper versioned Prisma migrations.
+
+
+If you keep `npm run build` as Vercel build command, run `npx prisma db push --force-reset` manually against the target Neon database when schema changes are incompatible with existing rows.
