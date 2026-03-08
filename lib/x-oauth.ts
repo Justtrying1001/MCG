@@ -30,7 +30,7 @@ export function buildXAuthRequest() {
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: "tweet.read users.read offline.access",
+    scope: "tweet.read users.read",
     state,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",

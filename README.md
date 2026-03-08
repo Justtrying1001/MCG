@@ -51,7 +51,8 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 - `GET /api/me` — profile + persisted collection + counters
 - `POST /api/pack/open` — open base pack for authenticated X users (persistent)
 - `POST /api/guest/pack/open` — open base pack for guests (ephemeral)
-- `POST /api/pve/run` — run PvE battle for authenticated X users (persistent)
+- `POST /api/pve/battle` — run PvE battle for authenticated X users (persistent)
+- `POST /api/pve/run` — alias of `/api/pve/battle` (compatibility route)
 - `POST /api/guest/pve/battle` — run PvE battle for guests (ephemeral)
 
 ## Environment
@@ -86,7 +87,7 @@ Open http://localhost:3000.
 ## Deploy on Vercel
 
 1. Import repo in Vercel.
-2. Add `DATABASE_URL` env var.
+2. Add env vars: `DATABASE_URL`, `X_CLIENT_ID`, `X_CLIENT_SECRET`, `X_REDIRECT_URI`.
 3. Build command: `npm run vercel-build` (MVP reset strategy: wipes and recreates schema each deploy).
 4. Install command: `npm install`.
 

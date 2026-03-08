@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { AuthErrorNotice } from "@/components/auth/AuthErrorNotice";
 
 export default function HomePage() {
   return (
@@ -10,6 +12,9 @@ export default function HomePage() {
         <div className="hero-grid-lines" />
 
         <div className="hero-body">
+          <Suspense fallback={null}>
+            <AuthErrorNotice />
+          </Suspense>
           <p className="eyebrow">Premium Dark-Modern TCG</p>
           <h1 className="hero-title">
             Own the rarest.<br />
