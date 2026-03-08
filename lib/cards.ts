@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { BaseCard } from "@/types/cards";
+import {
+  buildCollectorId,
+  computeArchetype,
+  computeCombatScore,
+  mapBaseRarityFromProjectTier,
+  mapFinishFromVariantType,
+} from "@/lib/cards-mapping";
 
 const CARDS_PER_PACK = 5;
 const tierBaseWeight: Record<string, number> = { S: 1, A: 2, B: 4, C: 6, D: 8 };
@@ -79,6 +86,19 @@ function hydrateCard(baseCard: BaseCard): BaseCard {
   const variants = getVariantsByBaseCard().get(baseCard.baseCardId) ?? [];
   const defaultVariant = variants.find((variant) => variant.isDefaultVariant) ?? variants[0];
   const theme = CHAIN_THEME[baseCard.faction || "Other"] ?? CHAIN_THEME.Other;
+  const ATK = baseCard.ATK;
+  const DEF = baseCard.DEF;
+  const SPD = baseCard.SPD;
+  const CTRL = baseCard.CTRL;
+  const baseRarity = mapBaseRarityFromProjectTier(baseCard.projectTier);
+  const finish = mapFinishFromVariantType(defaultVariant?.variantType);
+  const combatScore = computeCombatScore({ ATK, DEF, SPD, CTRL });
+  const archetype = computeArchetype({ ATK, DEF, SPD, CTRL });
+  const collectorId = buildCollectorId({
+    baseCardId: baseCard.baseCardId,
+    baseRarity,
+    marketCapRank: baseCard.marketCapRank ?? project?.marketCapRank ?? null,
+  });
 
   return {
     ...baseCard,
@@ -89,6 +109,11 @@ function hydrateCard(baseCard: BaseCard): BaseCard {
     variantId: defaultVariant?.variantId,
     variantType: defaultVariant?.variantType ?? "standard",
     variantRarity: defaultVariant?.variantRarity ?? "common",
+    baseRarity,
+    finish,
+    combatScore,
+    archetype,
+    collectorId,
     frameStyle: defaultVariant?.frameStyle ?? "default",
     variantLabel: VARIANT_LABEL[defaultVariant?.variantType ?? "standard"] ?? "STD",
     chainColor: theme.color,
