@@ -80,11 +80,6 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
     >
       <div className="mcg-card-inner">
         <div className="mcg-card-header">
-          <div className="mcg-card-idline">
-            <span>{setCode}</span>
-            <span>#{cardNumber}</span>
-          </div>
-
           <div className="mcg-card-name-wrap">
             <p className="mcg-card-name">{card.name}</p>
             <p className="mcg-card-symbol">${card.symbol}</p>
@@ -94,12 +89,20 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
             <span className="mcg-rarity-dot" />
             <span>{rarityLabel}</span>
           </div>
+
+          <div className="mcg-card-idline">
+            <span>{setCode}</span>
+            <span>#{cardNumber}</span>
+          </div>
         </div>
 
         <div className="mcg-hero-zone">
           <div className="mcg-hero-bg" />
+          <div className="mcg-hero-rings" />
+          <div className="mcg-hero-frame" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="mcg-hero-img" src={card.image} alt={card.name} loading="lazy" />
+          <div className="mcg-hero-baseglow" />
           <div className="mcg-hero-vignette" />
           <div className="mcg-finish-layer" />
         </div>
