@@ -49,6 +49,8 @@ export async function executePveBattle(userId: string, selectedCardIds: string[]
         DEF: card!.DEF,
         SPD: card!.SPD,
         CTRL: card!.CTRL,
+        combatScore: card!.combatScore,
+        archetype: card!.archetype,
       })) as TeamCard[];
 
     if (playerTeam.length !== selectedCardIds.length) {

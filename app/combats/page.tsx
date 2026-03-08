@@ -7,7 +7,7 @@ import { useSession } from "@/components/useSession";
 import type { BattleResultPayload, PveDifficulty } from "@/lib/pve/types";
 import { useEffect, useMemo, useState } from "react";
 
-type SortKey = "power" | "ATK" | "DEF" | "SPD" | "CTRL";
+type SortKey = "combatScore" | "ATK" | "DEF" | "SPD" | "CTRL" | "archetype";
 
 const TEAM_SIZE = 5;
 const PACK_COST = 100;
@@ -17,8 +17,9 @@ const DIFFICULTIES: Array<{ value: PveDifficulty; label: string; win: number; lo
   { value: "hard", label: "Hard", win: 190, loss: 45, bonus: "11%", desc: "Stronger enemy, best returns" },
 ];
 
-function cardPower(card: { ATK: number; DEF: number; SPD: number; CTRL: number }) {
-  return card.ATK + card.DEF + card.SPD + card.CTRL;
+function cardCombatScore(card: { ATK: number; DEF: number; SPD: number; CTRL: number; combatScore?: number }) {
+  if (typeof card.combatScore === "number") return card.combatScore;
+  return Math.max(0, Math.min(100, Math.round(card.ATK * 0.34 + card.DEF * 0.27 + card.SPD * 0.21 + card.CTRL * 0.18)));
 }
 
 function formatCountdown(ms: number) {
@@ -75,7 +76,7 @@ export default function CombatsPage() {
   const { me, refresh } = useSession();
   const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<PveDifficulty>("normal");
-  const [sortBy, setSortBy] = useState<SortKey>("power");
+  const [sortBy, setSortBy] = useState<SortKey>("combatScore");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
   const [battle, setBattle] = useState<BattleResultPayload | null>(null);
@@ -85,9 +86,13 @@ export default function CombatsPage() {
   const collection = me?.collection ?? [];
   const sortedCards = useMemo(() => {
     return [...collection].sort((a, b) => {
-      const va = sortBy === "power" ? cardPower(a.card) : a.card[sortBy];
-      const vb = sortBy === "power" ? cardPower(b.card) : b.card[sortBy];
-      return vb - va;
+      if (sortBy === "combatScore") {
+        return cardCombatScore(b.card) - cardCombatScore(a.card);
+      }
+      if (sortBy === "archetype") {
+        return (a.card.archetype || "balanced").localeCompare(b.card.archetype || "balanced");
+      }
+      return b.card[sortBy] - a.card[sortBy];
     });
   }, [collection, sortBy]);
 
@@ -99,9 +104,11 @@ export default function CombatsPage() {
       acc.DEF += item!.card.DEF;
       acc.SPD += item!.card.SPD;
       acc.CTRL += item!.card.CTRL;
+      acc.combatScore += cardCombatScore(item!.card);
+      acc.archetypes.add(item!.card.archetype || "balanced");
       return acc;
     },
-    { ATK: 0, DEF: 0, SPD: 0, CTRL: 0 },
+    { ATK: 0, DEF: 0, SPD: 0, CTRL: 0, combatScore: 0, archetypes: new Set<string>() },
   );
 
   const replayStep = useBattleReplay(battle);
@@ -191,7 +198,7 @@ export default function CombatsPage() {
             <p className="panel-label">Team Builder</p>
             <p className="pve-helper-copy">Select exactly 5 AVAILABLE cards. Selected cards become EXHAUSTED after battle and reset daily.</p>
             <div className="diff-tabs pve-sort-tabs">
-              {(["power", "ATK", "DEF", "SPD", "CTRL"] as SortKey[]).map((key) => (
+              {(["combatScore", "ATK", "DEF", "SPD", "CTRL", "archetype"] as SortKey[]).map((key) => (
                 <button key={key} className={`diff-tab${sortBy === key ? " active" : ""}`} onClick={() => setSortBy(key)}>
                   Sort: {key}
                 </button>
@@ -234,13 +241,13 @@ export default function CombatsPage() {
                 return (
                   <div key={idx} className={`squad-slot${card ? " filled" : ""}`}>
                     <div className="squad-slot-num">{idx + 1}</div>
-                    {card ? <div className="squad-slot-name">{card.card.name}</div> : <span className="squad-slot-empty">Empty</span>}
+                    {card ? <div className="squad-slot-name">{card.card.name} · {card.card.archetype || "balanced"} · CMB {cardCombatScore(card.card)}</div> : <span className="squad-slot-empty">Empty</span>}
                   </div>
                 );
               })}
             </div>
             <p className="pve-team-stats">
-              ATK {totals.ATK} · DEF {totals.DEF} · SPD {totals.SPD} · CTRL {totals.CTRL} · POW {totals.ATK + totals.DEF + totals.SPD + totals.CTRL}
+              ATK {totals.ATK} · DEF {totals.DEF} · SPD {totals.SPD} · CTRL {totals.CTRL} · CMB {totals.combatScore} · Archetypes {totals.archetypes.size}
             </p>
           </div>
 

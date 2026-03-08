@@ -4,7 +4,7 @@ export type PveDifficulty = "easy" | "normal" | "hard";
 export type BattleSide = "player" | "enemy";
 export type RoundWinner = "player" | "enemy" | "draw";
 
-export type TeamCard = Pick<BaseCard, "baseCardId" | "name" | "image" | "ATK" | "DEF" | "SPD" | "CTRL">;
+export type TeamCard = Pick<BaseCard, "baseCardId" | "name" | "image" | "ATK" | "DEF" | "SPD" | "CTRL" | "combatScore" | "archetype">;
 
 export type BattleUnitSnapshot = {
   side: BattleSide;
@@ -16,6 +16,8 @@ export type BattleUnitSnapshot = {
   def: number;
   spd: number;
   ctrl: number;
+  combatScore: number;
+  archetype: BaseCard["archetype"];
 };
 
 export type BattleActionLog = {
