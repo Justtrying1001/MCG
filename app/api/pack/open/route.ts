@@ -8,17 +8,17 @@ export async function POST() {
   const user = await getSessionUser();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-  if (user.points < GAME_CONFIG.PACK_COST) {
-    return new NextResponse("Not enough points", { status: 400 });
-  }
-
   const pulled = openBasePack(getBaseCards());
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: user.id },
+  const result = await prisma.$transaction(async (tx) => {
+    const spend = await tx.user.updateMany({
+      where: { id: user.id, points: { gte: GAME_CONFIG.PACK_COST } },
       data: { points: { decrement: GAME_CONFIG.PACK_COST }, packsOpened: { increment: 1 } },
     });
+
+    if (spend.count !== 1) {
+      return { ok: false as const };
+    }
 
     await tx.packOpening.create({
       data: {
@@ -35,7 +35,13 @@ export async function POST() {
         update: { quantity: { increment: 1 } },
       });
     }
+
+    return { ok: true as const };
   });
+
+  if (!result.ok) {
+    return new NextResponse("Not enough points", { status: 400 });
+  }
 
   return NextResponse.json({ pulledCards: pulled });
 }

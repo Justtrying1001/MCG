@@ -13,6 +13,8 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
+  const providerError = url.searchParams.get("error");
+  const providerErrorDescription = url.searchParams.get("error_description");
 
   const cookieStore = cookies();
   const expectedState = cookieStore.get(X_STATE_COOKIE)?.value;
@@ -22,6 +24,18 @@ export async function GET(req: Request) {
     response.cookies.set({ name: X_STATE_COOKIE, value: "", path: "/", maxAge: 0 });
     response.cookies.set({ name: X_VERIFIER_COOKIE, value: "", path: "/", maxAge: 0 });
   };
+
+  if (providerError) {
+    const deniedErrors = new Set(["access_denied", "authorization_denied", "user_denied"]);
+    const deniedByCode = deniedErrors.has(providerError);
+    const deniedByDescription = (providerErrorDescription ?? "").toLowerCase().includes("denied")
+      || (providerErrorDescription ?? "").toLowerCase().includes("cancel");
+
+    const authError = deniedByCode || deniedByDescription ? "x_oauth_denied" : "x_oauth_failed";
+    const fail = NextResponse.redirect(new URL(`/?auth_error=${authError}`, req.url));
+    clearCookies(fail);
+    return fail;
+  }
 
   if (!code || !state || !expectedState || !codeVerifier || state !== expectedState) {
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_state", req.url));
@@ -62,7 +76,8 @@ export async function GET(req: Request) {
 
     clearCookies(response);
     return response;
-  } catch {
+  } catch (error) {
+    console.error("X OAuth callback failed:", error);
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_failed", req.url));
     clearCookies(fail);
     return fail;
