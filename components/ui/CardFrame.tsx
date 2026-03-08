@@ -16,10 +16,16 @@ const VARIANT_LABELS: Record<string, string> = {
   gold: "GOLD",
 };
 
-const STAT_BARS = 10;
+const STAT_BARS = 6;
+const RARITY_LABELS: Record<string, string> = {
+  common: "Common",
+  rare: "Rare",
+  epic: "Epic",
+  legendary: "Legendary",
+};
 
 function statSegments(val: number) {
-  return Math.max(0, Math.min(STAT_BARS, Math.round((val || 0) / 10)));
+  return Math.max(0, Math.min(STAT_BARS, Math.round((val || 0) / 17)));
 }
 
 export function CardFrame({ card, quantity, selectable, selected, onClick }: Props) {
@@ -31,6 +37,8 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
   const chainArt = card.chainArt || "radial-gradient(ellipse at 50% 65%,#0d1218 0%,#060810 100%)";
   const isShiny = variantType === "holo" || variantType === "gold" || variantType === "full_art";
   const powerScore = card.powerScore ?? Math.round((card.ATK + card.DEF + card.SPD + card.CTRL) / 4);
+  const rarityKey = (card.variantRarity || "common").toLowerCase();
+  const rarityLabel = RARITY_LABELS[rarityKey] || "Common";
 
   return (
     <article
@@ -101,10 +109,6 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
 
         {/* ── FOOTER ── */}
         <div className="mcg-card-footer">
-          <span className="mcg-footer-id">{card.variantId || card.baseCardId}</span>
-
-          <span className="mcg-footer-meta">{card.faction || "Other"}</span>
-
           {selectable ? (
             <span className="mcg-select-indicator">{selected ? "✓ Team" : "+ Team"}</span>
           ) : (
@@ -113,10 +117,15 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
             </span>
           )}
 
+          <span className={`mcg-rarity-mark r-${rarityKey}`}>
+            <span className="mcg-rarity-dot" />
+            <span className="mcg-rarity-text">{rarityLabel}</span>
+          </span>
+
           {typeof quantity === "number" ? (
             <span className="mcg-qty">×{quantity}</span>
           ) : (
-            <span className="mcg-footer-rarity">{card.variantRarity || "common"}</span>
+            <span className="mcg-footer-id">{card.variantId || card.baseCardId}</span>
           )}
         </div>
       </div>
