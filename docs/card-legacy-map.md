@@ -6,16 +6,16 @@ Lister explicitement les éléments cartes legacy/prototype pour éviter qu’il
 
 ## 2. Legacy files identified
 
-- `components/MvpApp.tsx`
-- `mvp/main.js`
-- `mvp/index.html`
-- `mvp/styles.css`
-- `mvp/README.md`
+- `components/MvpApp.tsx` (supprimé dans ce cleanup)
+- `mvp/main.js` (supprimé dans ce cleanup)
+- `mvp/index.html` (supprimé dans ce cleanup)
+- `mvp/styles.css` (supprimé dans ce cleanup)
+- `mvp/README.md` (supprimé dans ce cleanup)
 
 ## 3. Why they are not part of current runtime
 
-- `components/MvpApp.tsx` n’est pas branché dans les pages App Router actuelles.
-- `mvp/*` est un prototype séparé, hors du flow runtime Next.js live.
+- `components/MvpApp.tsx` n’était pas branché dans les pages App Router actuelles.
+- `mvp/*` était un prototype séparé, hors du flow runtime Next.js live.
 - Le rendu cartes actif passe par `CardFrame` + `app/globals.css` + pages `collection/packs/combats`, pas par ces fichiers.
 
 ## 4. Caution before deletion
@@ -28,7 +28,6 @@ Lister explicitement les éléments cartes legacy/prototype pour éviter qu’il
 
 Candidats d’archivage futur (sans action physique immédiate):
 
-- `components/MvpApp.tsx`
-- dossier `mvp/` complet
+- Aucun candidat immédiat supplémentaire après suppression exécutée.
 
-Statut recommandé actuel: conserver en place, documenter clairement comme legacy.
+Statut recommandé actuel: conserver ce document comme trace de cleanup legacy exécuté.

@@ -49,9 +49,9 @@ Il liste uniquement ce qui pilote réellement la donnée carte et son rendu live
 
 ## 5. What is NOT runtime
 
-- Legacy/prototype:
-  - `components/MvpApp.tsx`
-  - `mvp/*`
+- Legacy/prototype supprimé:
+  - `components/MvpApp.tsx` (retiré)
+  - `mvp/*` (retiré)
 - Docs/specs:
   - `docs/card-system-v1-production-spec.md`
   - `docs/card-pipeline-v1-semi-generatif.md`
