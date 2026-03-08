@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import type { BaseCard } from "@/types/cards";
+import type { BaseCard, BaseCardFinish, BaseCardRarity } from "@/types/cards";
 import {
   buildCollectorId,
   computeArchetype,
@@ -10,7 +10,6 @@ import {
 } from "@/lib/cards-mapping";
 
 const CARDS_PER_PACK = 5;
-const tierBaseWeight: Record<string, number> = { S: 1, A: 2, B: 4, C: 6, D: 8 };
 
 const CHAIN_THEME: Record<string, { color: string; glow: string; art: string }> = {
   Solana: { color: "#14f195", glow: "rgba(20,241,149,0.28)", art: "radial-gradient(ellipse at 50% 65%,#042e1e 0%,#010b07 100%)" },
@@ -52,6 +51,78 @@ type ProjectMetadata = {
   faction: string | null;
   marketCapRank: number | null;
   image: string;
+};
+
+type WeightedRarity = { rarity: BaseCardRarity; weight: number };
+type WeightedFinish = { finish: BaseCardFinish; weight: number };
+type PackSlot =
+  | { slot: "A" | "B"; type: "fixed"; rarity: "common" }
+  | { slot: "C" | "D"; type: "weighted"; options: WeightedRarity[] }
+  | { slot: "E"; type: "weighted"; options: WeightedRarity[] };
+
+/**
+ * Canonical pack slot structure (Lot 2):
+ * A/B: common
+ * C/D: rare+ 78/20/2
+ * E: epic+ 72/28
+ */
+const PACK_SLOT_TABLE: PackSlot[] = [
+  { slot: "A", type: "fixed", rarity: "common" },
+  { slot: "B", type: "fixed", rarity: "common" },
+  {
+    slot: "C",
+    type: "weighted",
+    options: [
+      { rarity: "rare", weight: 78 },
+      { rarity: "epic", weight: 20 },
+      { rarity: "legendary", weight: 2 },
+    ],
+  },
+  {
+    slot: "D",
+    type: "weighted",
+    options: [
+      { rarity: "rare", weight: 78 },
+      { rarity: "epic", weight: 20 },
+      { rarity: "legendary", weight: 2 },
+    ],
+  },
+  {
+    slot: "E",
+    type: "weighted",
+    options: [
+      { rarity: "epic", weight: 72 },
+      { rarity: "legendary", weight: 28 },
+    ],
+  },
+];
+
+/**
+ * Canonical finish roll table (Lot 2), applied after base card rarity is selected.
+ */
+const FINISH_ODDS_BY_RARITY: Record<BaseCardRarity, WeightedFinish[]> = {
+  common: [
+    { finish: "standard", weight: 94 },
+    { finish: "holo", weight: 6 },
+  ],
+  rare: [
+    { finish: "standard", weight: 78 },
+    { finish: "holo", weight: 18 },
+    { finish: "full_art", weight: 4 },
+  ],
+  epic: [
+    { finish: "standard", weight: 55 },
+    { finish: "holo", weight: 28 },
+    { finish: "full_art", weight: 12 },
+    { finish: "glitch", weight: 5 },
+  ],
+  legendary: [
+    { finish: "standard", weight: 30 },
+    { finish: "holo", weight: 35 },
+    { finish: "full_art", weight: 20 },
+    { finish: "glitch", weight: 10 },
+    { finish: "gold", weight: 5 },
+  ],
 };
 
 let cachedCards: BaseCard[] | null = null;
@@ -136,37 +207,86 @@ export function getCardsMap(): Map<string, BaseCard> {
   return new Map(getBaseCards().map((c) => [c.baseCardId, c]));
 }
 
-function weightedCardsPool(cards: BaseCard[]) {
-  return cards.map((card) => {
-    const variants = getVariantsByBaseCard().get(card.baseCardId) ?? [];
-    const defaultVariant = variants.find((variant) => variant.isDefaultVariant) ?? variants[0];
-    const variantWeight = defaultVariant?.dropWeight ?? 1000;
-    const tier = card.projectTier || "D";
-    const base = tierBaseWeight[tier] ?? 8;
-    const rank = Number(card.marketCapRank) || 1000;
-    const rankFactor = Math.max(0.3, 1 - Math.min(rank, 2000) / 3000);
-    return { card, weight: base * (1 + rankFactor) * (variantWeight / 1000) };
-  });
-}
-
-function drawWeighted(pool: Array<{ card: BaseCard; weight: number }>): BaseCard {
-  const total = pool.reduce((s, x) => s + x.weight, 0);
+function drawWeighted<T>(pool: Array<{ item: T; weight: number }>): T {
+  const total = pool.reduce((sum, x) => sum + x.weight, 0);
   let roll = Math.random() * total;
 
   for (const entry of pool) {
     roll -= entry.weight;
-    if (roll <= 0) return entry.card;
+    if (roll <= 0) return entry.item;
   }
 
-  return pool[pool.length - 1].card;
+  return pool[pool.length - 1].item;
+}
+
+function drawRarityForSlot(slot: PackSlot): BaseCardRarity {
+  if (slot.type === "fixed") return slot.rarity;
+  return drawWeighted(slot.options.map((option) => ({ item: option.rarity, weight: option.weight })));
+}
+
+function drawFinishForRarity(rarity: BaseCardRarity): BaseCardFinish {
+  const table = FINISH_ODDS_BY_RARITY[rarity];
+  return drawWeighted(table.map((option) => ({ item: option.finish, weight: option.weight })));
+}
+
+function pickCardFromRarityBucket(cards: BaseCard[], rarity: BaseCardRarity, usedIds: Set<string>): BaseCard {
+  const exactPool = cards.filter((card) => (card.baseRarity ?? "common") === rarity && !usedIds.has(card.baseCardId));
+  if (exactPool.length > 0) {
+    return exactPool[Math.floor(Math.random() * exactPool.length)];
+  }
+
+  const fallbackPool = cards.filter((card) => !usedIds.has(card.baseCardId));
+  if (fallbackPool.length > 0) {
+    return fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+  }
+
+  // Defensive fallback (should never happen with current dataset size > pack size).
+  return cards[Math.floor(Math.random() * cards.length)];
+}
+
+function getVariantForFinish(baseCardId: string, finish: BaseCardFinish): CardVariant | undefined {
+  const variants = getVariantsByBaseCard().get(baseCardId) ?? [];
+  const exact = variants.find((variant) => mapFinishFromVariantType(variant.variantType) === finish);
+  if (exact) return exact;
+
+  return variants.find((variant) => variant.isDefaultVariant) ?? variants[0];
+}
+
+function applyFinishToCard(card: BaseCard, finish: BaseCardFinish): BaseCard {
+  const variant = getVariantForFinish(card.baseCardId, finish);
+  const variantType = (variant?.variantType ?? finish) as string;
+
+  return {
+    ...card,
+    finish,
+    variantType,
+    variantId: variant?.variantId ?? card.variantId,
+    variantRarity: variant?.variantRarity ?? card.variantRarity,
+    frameStyle: variant?.frameStyle ?? card.frameStyle,
+    variantLabel: VARIANT_LABEL[variantType] ?? VARIANT_LABEL[finish] ?? "STD",
+  };
+}
+
+export function getPackOpeningOdds() {
+  return {
+    slots: PACK_SLOT_TABLE,
+    finishByRarity: FINISH_ODDS_BY_RARITY,
+  };
 }
 
 export function openBasePack(cards: BaseCard[]): BaseCard[] {
-  const pool = weightedCardsPool(cards);
   const pulled: BaseCard[] = [];
-  for (let i = 0; i < CARDS_PER_PACK; i += 1) {
-    pulled.push(drawWeighted(pool));
+  const usedBaseCardIds = new Set<string>();
+
+  for (const slot of PACK_SLOT_TABLE) {
+    const rarity = drawRarityForSlot(slot);
+    const baseCard = pickCardFromRarityBucket(cards, rarity, usedBaseCardIds);
+    usedBaseCardIds.add(baseCard.baseCardId);
+
+    const finish = drawFinishForRarity(rarity);
+    pulled.push(applyFinishToCard(baseCard, finish));
   }
+
   return pulled;
 }
 

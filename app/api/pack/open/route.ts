@@ -22,7 +22,7 @@ export async function POST() {
     await tx.packOpening.create({
       data: {
         userId: user.id,
-        packType: "base_v1",
+        packType: "base_v2_slots",
         result: { cards: pulled.map((c) => c.baseCardId) },
       },
     });
@@ -36,5 +36,5 @@ export async function POST() {
     }
   });
 
-  return NextResponse.json({ pulledCards: pulled });
+  return NextResponse.json({ pulledCards: pulled, packModel: "base_v2_slots" });
 }
