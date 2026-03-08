@@ -69,6 +69,10 @@ Required:
 - `X_CLIENT_SECRET`
 - `X_REDIRECT_URI`
 
+Not required for current login flow:
+
+- `X_BEARER_TOKEN` (not used by this implementation)
+
 ## Setup
 
 ```bash
@@ -83,9 +87,13 @@ Open http://localhost:3000.
 
 1. Import repo in Vercel.
 2. Add `DATABASE_URL` env var.
-3. Build command: `npm run vercel-build` (recommended for V0, ensures tables exist).
+3. Build command: `npm run vercel-build` (MVP reset strategy: wipes and recreates schema each deploy).
 4. Install command: `npm install`.
 
-`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+`npm run vercel-build` runs `prisma generate && prisma db push --force-reset && next build`.
+Because this MVP currently has no important production data, the deployment strategy intentionally resets the database schema on build to avoid non-null migration failures when Prisma models change rapidly.
 
-If you keep `npm run build` as Vercel build command, run `npx prisma db push` manually at least once against the target Neon database before first login/register.
+If you later need data retention, remove `--force-reset` and switch to proper versioned Prisma migrations.
+
+
+If you keep `npm run build` as Vercel build command, run `npx prisma db push --force-reset` manually against the target Neon database when schema changes are incompatible with existing rows.
