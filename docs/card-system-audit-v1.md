@@ -1,4 +1,6 @@
 # MCG — Audit complet système cartes (V1)
+Status: AUDIT
+
 
 ## 1) Diagnostic global du problème actuel
 

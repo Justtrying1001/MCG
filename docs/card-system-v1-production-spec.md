@@ -1,4 +1,6 @@
 # MCG Card System V1 — Production Spec exécutable (asset-driven / semi-génératif)
+Status: SPEC-FUTURE
+
 
 Contexte de base utilisé pour cette spec (repo réel):
 - Rendu carte live unique via `CardFrame.tsx` + bloc `.mcg-*` dans `globals.css`.
