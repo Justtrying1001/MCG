@@ -1,4 +1,6 @@
 # Diagnostic : pourquoi le rendu live seul ne suffit pas
+Status: SPEC-FUTURE
+
 
 Le rendu live (HTML/CSS/React) est excellent pour **interface, états interactifs, et preview**, mais structurellement insuffisant pour livrer une perception “carte collectible premium” à grande échelle.
 

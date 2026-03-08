@@ -36,6 +36,13 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 - Base card source remains `mcg_base_cards.json`.
 - User progression state is persisted in Neon Postgres.
 
+## Card system docs (current runtime vs planning)
+
+- Current runtime entrypoint: `docs/card-runtime-core.md`
+- Forensic audit: `docs/card-repo-audit-forensic.md` and `docs/card-repo-audit-table.md`
+- Cleanup plan: `docs/card-repo-cleanup-plan.md` and `docs/card-repo-cleanup-actions.md`
+- Future specs / vision (not runtime): `docs/card-system-v1-production-spec.md`, `docs/card-pipeline-v1-semi-generatif.md`, `docs/ux-redesign-spec.md`
+
 ## API routes
 
 - `POST /api/auth/register` — create account and start session

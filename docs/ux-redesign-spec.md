@@ -1,4 +1,6 @@
 # MCG UX Redesign — Premium Product Direction
+Status: VISION
+
 
 ## 1) High-fidelity page structure
 - **Home**: cinematic hero, value proposition, conversion-focused CTAs, and product pillars.
