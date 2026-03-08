@@ -8,33 +8,68 @@ type Props = {
   onClick?: () => void;
 };
 
-const VARIANT_LABELS: Record<string, string> = {
-  standard: "STD",
+const FINISH_LABELS: Record<string, string> = {
+  standard: "STANDARD",
   holo: "HOLO",
   full_art: "FULL ART",
   glitch: "GLITCH",
   gold: "GOLD",
 };
 
-const STAT_BARS = 10;
+const RARITY_LABELS: Record<string, string> = {
+  common: "COMMON",
+  rare: "RARE",
+  epic: "EPIC",
+  legendary: "LEGENDARY",
+};
 
-function statSegments(val: number) {
-  return Math.max(0, Math.min(STAT_BARS, Math.round((val || 0) / 10)));
+const STAT_ORDER = [
+  ["ATK", "atk"],
+  ["DEF", "def"],
+  ["SPD", "spd"],
+  ["CTRL", "ctrl"],
+] as const;
+
+function combatScore(card: BaseCard) {
+  if (typeof card.combatScore === "number") return card.combatScore;
+  return Math.max(0, Math.min(100, Math.round(card.ATK * 0.34 + card.DEF * 0.27 + card.SPD * 0.21 + card.CTRL * 0.18)));
+}
+
+function makeCardNumber(card: BaseCard) {
+  if (card.collectorId) {
+    const parts = card.collectorId.split("-");
+    return parts[parts.length - 1] || "00000";
+  }
+  return card.baseCardId.replace(/^base_/, "").slice(0, 6).toUpperCase();
+}
+
+function toBaseRarity(card: BaseCard) {
+  if (card.baseRarity) return card.baseRarity;
+  if (card.projectTier === "S") return "legendary";
+  if (card.projectTier === "A") return "epic";
+  if (card.projectTier === "B") return "rare";
+  return "common";
+}
+
+function toFinish(card: BaseCard) {
+  return card.finish || card.variantType || "standard";
 }
 
 export function CardFrame({ card, quantity, selectable, selected, onClick }: Props) {
-  const variantType = card.variantType || "standard";
-  const variantLabel = card.variantLabel || VARIANT_LABELS[variantType] || "STD";
-  const tier = card.projectTier || "C";
+  const rarity = toBaseRarity(card);
+  const finish = toFinish(card);
+  const finishLabel = FINISH_LABELS[finish] || finish.toUpperCase();
+  const rarityLabel = RARITY_LABELS[rarity] || rarity.toUpperCase();
   const chainColor = card.chainColor || "#64748b";
   const chainGlow = card.chainGlow || "rgba(100,116,139,0.16)";
   const chainArt = card.chainArt || "radial-gradient(ellipse at 50% 65%,#0d1218 0%,#060810 100%)";
-  const isShiny = variantType === "holo" || variantType === "gold" || variantType === "full_art";
-  const powerScore = card.powerScore ?? Math.round((card.ATK + card.DEF + card.SPD + card.CTRL) / 4);
+  const score = combatScore(card);
+  const setCode = "GEN1";
+  const cardNumber = makeCardNumber(card);
 
   return (
     <article
-      className={`mcg-card tier-${tier} vt-${variantType}${selected ? " is-selected" : ""}`}
+      className={`mcg-card br-${rarity} fn-${finish}${selected ? " is-selected" : ""}`}
       onClick={onClick}
       style={{
         cursor: onClick ? "pointer" : undefined,
@@ -44,112 +79,68 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
       }}
     >
       <div className="mcg-card-inner">
-        {/* Top accent band */}
-        <div className="mcg-card-band" />
-
-        {/* Corner bracket accents */}
-        <div className="mcg-corner mcg-corner-tl" />
-        <div className="mcg-corner mcg-corner-tr" />
-        <div className="mcg-corner mcg-corner-bl" />
-        <div className="mcg-corner mcg-corner-br" />
-
-        {/* Inner frame outline */}
-        <div className="mcg-frame-inset" />
-
-        {/* Holo / foil sheen overlay */}
-        {isShiny && <div className="mcg-foil-sheen" />}
-
-        {/* ── HEADER ── */}
         <div className="mcg-card-header">
+          <div className="mcg-card-idline">
+            <span>{setCode}</span>
+            <span>#{cardNumber}</span>
+          </div>
+
           <div className="mcg-card-name-wrap">
             <p className="mcg-card-name">{card.name}</p>
-            <p className="mcg-card-subtitle">
-              {card.primaryChain || "Chain"} · {card.symbol}
-            </p>
+            <p className="mcg-card-symbol">${card.symbol}</p>
           </div>
 
-          <div className="mcg-card-badges">
-            <div className="mcg-tier-badge">{tier}</div>
-            <span className="mcg-variant-badge">{variantLabel}</span>
+          <div className="mcg-rarity-crest" aria-label={rarityLabel}>
+            <span className="mcg-rarity-dot" />
+            <span>{rarityLabel}</span>
           </div>
         </div>
 
-        {/* ── HERO / ART ZONE ── */}
-        <div className="mcg-art-zone">
-          {/* Central medallion emblem */}
-          <div className="mcg-medallion-wrap">
-            <div className="mcg-medallion-outer-ring" />
-            <div className="mcg-medallion-mid-ring" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="mcg-medallion-img"
-              src={card.image}
-              alt={card.name}
-              loading="lazy"
-            />
+        <div className="mcg-hero-zone">
+          <div className="mcg-hero-bg" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="mcg-hero-img" src={card.image} alt={card.name} loading="lazy" />
+          <div className="mcg-hero-vignette" />
+          <div className="mcg-finish-layer" />
+        </div>
+
+        <div className="mcg-type-line">
+          <span>{card.archetype || "balanced"}</span>
+          <span>•</span>
+          <span>{card.primaryChain || "Other"}</span>
+          <span>•</span>
+          <span>{card.faction || "Other"}</span>
+        </div>
+
+        <div className="mcg-combat-panel">
+          <div className="mcg-combat-score">
+            <span className="mcg-combat-score-label">Combat</span>
+            <span className="mcg-combat-score-val">{score}</span>
           </div>
 
-          {/* Bottom meta overlay */}
-          <div className="mcg-art-bottom">
-            <span className="mcg-chain-pill">
-              <span className="mcg-chain-dot" style={{ background: chainColor }} />
-              {card.faction || "Other"}
-            </span>
-            <span className="mcg-rank-badge">#{card.marketCapRank ?? "—"}</span>
+          <div className="mcg-stats-grid">
+            {STAT_ORDER.map(([label, cls]) => {
+              const value = card[label];
+              return (
+                <div className="mcg-stat-pill" key={label}>
+                  <span className={`mcg-stat-pill-label ${cls}`}>{label}</span>
+                  <span className="mcg-stat-pill-val">{value}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── TYPE STRIP ── */}
-        <div className="mcg-type-strip">
-          <span className="mcg-type-label chain">{card.primaryChain || "Other"}</span>
-          <span className="mcg-type-divider" />
-          <span className="mcg-type-label faction">{card.faction || "Other"}</span>
-          <span className="mcg-type-divider" />
-          <span className="mcg-type-label sym">{card.symbol}</span>
-        </div>
-
-        {/* ── STATS ── */}
-        <div className="mcg-stats">
-          {(
-            [
-              ["ATK", card.ATK, "atk"],
-              ["DEF", card.DEF, "def"],
-              ["SPD", card.SPD, "spd"],
-              ["CTRL", card.CTRL, "ctrl"],
-            ] as [string, number, string][]
-          ).map(([label, value, cls]) => (
-            <div className="mcg-stat-row" key={label}>
-              <span className={`mcg-stat-label ${cls}`}>{label}</span>
-              <div className="mcg-stat-track">
-                {Array.from({ length: STAT_BARS }).map((_, idx) => (
-                  <span
-                    key={idx}
-                    className={`mcg-seg ${idx < statSegments(value) ? `on ${cls}` : ""}`}
-                  />
-                ))}
-              </div>
-              <span className={`mcg-stat-val ${cls}`}>{value}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ── FOOTER ── */}
         <div className="mcg-card-footer">
-          <span className="mcg-footer-id">{card.variantId || card.baseCardId}</span>
+          <span className="mcg-footer-collector">{card.collectorId || `${setCode}-${cardNumber}`}</span>
 
           {selectable ? (
             <span className="mcg-select-indicator">{selected ? "✓ Team" : "+ Team"}</span>
           ) : (
-            <span className="mcg-footer-pow">
-              POW <b>{powerScore}</b>
-            </span>
+            <span className="mcg-footer-finish">{finishLabel}</span>
           )}
 
-          {typeof quantity === "number" ? (
-            <span className="mcg-qty">×{quantity}</span>
-          ) : (
-            <span className="mcg-footer-rarity">{card.variantRarity || "common"}</span>
-          )}
+          {typeof quantity === "number" ? <span className="mcg-qty">×{quantity}</span> : <span className="mcg-footer-rarity">{rarityLabel}</span>}
         </div>
       </div>
     </article>
