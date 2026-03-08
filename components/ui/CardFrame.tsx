@@ -64,16 +64,14 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
 
         {/* ── HERO / ART ZONE ── */}
         <div className="mcg-art-zone">
-          {/* Central medallion emblem */}
-          <div className="mcg-medallion-wrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="mcg-medallion-img"
-              src={card.image}
-              alt={card.name}
-              loading="lazy"
-            />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="mcg-hero-img"
+            src={card.image}
+            alt={card.name}
+            loading="lazy"
+          />
+          <div className="mcg-art-vignette" />
         </div>
 
         {/* ── STATS ── */}
