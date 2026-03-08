@@ -44,18 +44,6 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
       }}
     >
       <div className="mcg-card-inner">
-        {/* Top accent band */}
-        <div className="mcg-card-band" />
-
-        {/* Corner bracket accents */}
-        <div className="mcg-corner mcg-corner-tl" />
-        <div className="mcg-corner mcg-corner-tr" />
-        <div className="mcg-corner mcg-corner-bl" />
-        <div className="mcg-corner mcg-corner-br" />
-
-        {/* Inner frame outline */}
-        <div className="mcg-frame-inset" />
-
         {/* Holo / foil sheen overlay */}
         {isShiny && <div className="mcg-foil-sheen" />}
 
@@ -70,7 +58,7 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
 
           <div className="mcg-card-badges">
             <div className="mcg-tier-badge">{tier}</div>
-            <span className="mcg-variant-badge">{variantLabel}</span>
+            {variantType !== "standard" ? <span className="mcg-variant-badge">{variantLabel}</span> : null}
           </div>
         </div>
 
@@ -78,8 +66,6 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
         <div className="mcg-art-zone">
           {/* Central medallion emblem */}
           <div className="mcg-medallion-wrap">
-            <div className="mcg-medallion-outer-ring" />
-            <div className="mcg-medallion-mid-ring" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="mcg-medallion-img"
@@ -88,24 +74,6 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
               loading="lazy"
             />
           </div>
-
-          {/* Bottom meta overlay */}
-          <div className="mcg-art-bottom">
-            <span className="mcg-chain-pill">
-              <span className="mcg-chain-dot" style={{ background: chainColor }} />
-              {card.faction || "Other"}
-            </span>
-            <span className="mcg-rank-badge">#{card.marketCapRank ?? "—"}</span>
-          </div>
-        </div>
-
-        {/* ── TYPE STRIP ── */}
-        <div className="mcg-type-strip">
-          <span className="mcg-type-label chain">{card.primaryChain || "Other"}</span>
-          <span className="mcg-type-divider" />
-          <span className="mcg-type-label faction">{card.faction || "Other"}</span>
-          <span className="mcg-type-divider" />
-          <span className="mcg-type-label sym">{card.symbol}</span>
         </div>
 
         {/* ── STATS ── */}
@@ -136,6 +104,8 @@ export function CardFrame({ card, quantity, selectable, selected, onClick }: Pro
         {/* ── FOOTER ── */}
         <div className="mcg-card-footer">
           <span className="mcg-footer-id">{card.variantId || card.baseCardId}</span>
+
+          <span className="mcg-footer-meta">{card.faction || "Other"}</span>
 
           {selectable ? (
             <span className="mcg-select-indicator">{selected ? "✓ Team" : "+ Team"}</span>
