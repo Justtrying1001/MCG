@@ -32,10 +32,16 @@ export async function clearSession(token: string) {
     .catch(() => null);
 }
 
-export async function getSessionUser() {
+export type SessionLookupStatus =
+  | "cookie_missing"
+  | "session_not_found"
+  | "session_expired"
+  | "user_found";
+
+export async function getSessionUserWithStatus() {
   const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) return { user: null, status: "cookie_missing" as const };
 
   const tokenHash = hashToken(token);
   const now = new Date();
@@ -45,13 +51,18 @@ export async function getSessionUser() {
     include: { user: true },
   });
 
-  if (!session) return null;
+  if (!session) return { user: null, status: "session_not_found" as const };
   if (session.expiresAt <= now) {
     await prisma.userSession.delete({ where: { id: session.id } }).catch(() => null);
-    return null;
+    return { user: null, status: "session_expired" as const };
   }
 
-  return session.user;
+  return { user: session.user, status: "user_found" as const };
+}
+
+export async function getSessionUser() {
+  const result = await getSessionUserWithStatus();
+  return result.user;
 }
 
 export function getSessionCookieName() {

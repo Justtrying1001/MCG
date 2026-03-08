@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionCookieName, getSessionUserWithStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
@@ -9,8 +9,32 @@ import { ensurePveDailyState, getNextPveResetAt } from "@/lib/pve/reset";
 
 export async function GET() {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) return new NextResponse("Unauthorized", { status: 401 });
+    const sessionLookup = await getSessionUserWithStatus();
+
+    if (sessionLookup.status === "cookie_missing") {
+      console.info("[API_ME_SESSION_COOKIE_MISSING]", {
+        cookieName: getSessionCookieName(),
+      });
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (sessionLookup.status === "session_not_found") {
+      console.info("[API_ME_SESSION_NOT_FOUND]");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (sessionLookup.status === "session_expired") {
+      console.info("[API_ME_SESSION_EXPIRED]");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const sessionUser = sessionLookup.user;
+    if (!sessionUser) {
+      console.error("[API_ME_SESSION_LOOKUP_INCONSISTENT]");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    console.info("[API_ME_USER_FOUND]", { userId: sessionUser.id });
 
     const [userCards, openingsCount, pveRunsCount] = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({

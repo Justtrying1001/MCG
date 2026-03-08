@@ -22,8 +22,18 @@ export async function GET(req: Request) {
     response.cookies.set({ name: X_STATE_COOKIE, value: state, ...baseCookie });
     response.cookies.set({ name: X_VERIFIER_COOKIE, value: codeVerifier, ...baseCookie });
 
+    console.info("[X_OAUTH_START_SUCCESS]", {
+      redirectHost: new URL(url).host,
+      secure: baseCookie.secure,
+      sameSite: baseCookie.sameSite,
+      maxAge: baseCookie.maxAge,
+    });
+
     return response;
-  } catch {
+  } catch (error) {
+    console.error("[X_OAUTH_START_ERROR]", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.redirect(new URL("/?auth_error=x_oauth_env", req.url));
   }
 }

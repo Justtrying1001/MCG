@@ -20,6 +20,14 @@ export async function GET(req: Request) {
   const expectedState = cookieStore.get(X_STATE_COOKIE)?.value;
   const codeVerifier = cookieStore.get(X_VERIFIER_COOKIE)?.value;
 
+  console.info("[X_OAUTH_CALLBACK_REACHED]", {
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hasExpectedStateCookie: Boolean(expectedState),
+    hasVerifierCookie: Boolean(codeVerifier),
+    hasProviderError: Boolean(providerError),
+  });
+
   const clearCookies = (response: NextResponse) => {
     response.cookies.set({ name: X_STATE_COOKIE, value: "", path: "/", maxAge: 0 });
     response.cookies.set({ name: X_VERIFIER_COOKIE, value: "", path: "/", maxAge: 0 });
@@ -32,22 +40,66 @@ export async function GET(req: Request) {
       || (providerErrorDescription ?? "").toLowerCase().includes("cancel");
 
     const authError = deniedByCode || deniedByDescription ? "x_oauth_denied" : "x_oauth_failed";
+    console.error("[X_OAUTH_PROVIDER_ERROR]", {
+      providerError,
+      providerErrorDescription,
+      authError,
+    });
+
     const fail = NextResponse.redirect(new URL(`/?auth_error=${authError}`, req.url));
     clearCookies(fail);
     return fail;
   }
 
   if (!code || !state || !expectedState || !codeVerifier || state !== expectedState) {
+    console.error("[X_OAUTH_STATE_INVALID]", {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      hasExpectedStateCookie: Boolean(expectedState),
+      hasVerifierCookie: Boolean(codeVerifier),
+      stateMatches: Boolean(state && expectedState && state === expectedState),
+    });
+
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_state", req.url));
     clearCookies(fail);
     return fail;
   }
 
+  let accessToken: string;
   try {
+    console.info("[X_OAUTH_TOKEN_EXCHANGE_START]");
     const token = await exchangeXCodeForToken(code, codeVerifier);
-    const profile = await fetchXProfile(token.access_token);
+    accessToken = token.access_token;
+    console.info("[X_OAUTH_TOKEN_EXCHANGE_SUCCESS]", { hasAccessToken: Boolean(accessToken) });
+  } catch (error) {
+    console.error("[X_OAUTH_TOKEN_EXCHANGE_ERROR]", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_failed", req.url));
+    clearCookies(fail);
+    return fail;
+  }
 
-    const user = await prisma.user.upsert({
+  let profile: Awaited<ReturnType<typeof fetchXProfile>>;
+  try {
+    console.info("[X_OAUTH_PROFILE_FETCH_START]");
+    profile = await fetchXProfile(accessToken);
+    console.info("[X_OAUTH_PROFILE_FETCH_SUCCESS]", {
+      xUserId: profile.id,
+      username: profile.username,
+    });
+  } catch (error) {
+    console.error("[X_OAUTH_PROFILE_FETCH_ERROR]", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_failed", req.url));
+    clearCookies(fail);
+    return fail;
+  }
+
+  let user;
+  try {
+    user = await prisma.user.upsert({
       where: { xUserId: profile.id },
       update: {
         xUsername: profile.username,
@@ -61,25 +113,57 @@ export async function GET(req: Request) {
         avatarUrl: profile.profile_image_url ?? null,
       },
     });
-
-    const { token: sessionToken } = await createSession(user.id);
-    const response = NextResponse.redirect(new URL("/", req.url));
-    response.cookies.set({
-      name: getSessionCookieName(),
-      value: sessionToken,
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: getSessionMaxAgeSeconds(),
+    console.info("[X_OAUTH_USER_UPSERT_SUCCESS]", {
+      userId: user.id,
+      xUserId: profile.id,
     });
-
-    clearCookies(response);
-    return response;
   } catch (error) {
-    console.error("X OAuth callback failed:", error);
+    console.error("[X_OAUTH_USER_UPSERT_ERROR]", {
+      xUserId: profile.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_failed", req.url));
     clearCookies(fail);
     return fail;
   }
+
+  let sessionToken: string;
+  try {
+    const session = await createSession(user.id);
+    sessionToken = session.token;
+    console.info("[X_OAUTH_SESSION_CREATE_SUCCESS]", {
+      userId: user.id,
+      expiresAt: session.expiresAt.toISOString(),
+    });
+  } catch (error) {
+    console.error("[X_OAUTH_SESSION_CREATE_ERROR]", {
+      userId: user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_failed", req.url));
+    clearCookies(fail);
+    return fail;
+  }
+
+  const response = NextResponse.redirect(new URL("/", req.url));
+  response.cookies.set({
+    name: getSessionCookieName(),
+    value: sessionToken,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: getSessionMaxAgeSeconds(),
+  });
+
+  console.info("[X_OAUTH_SESSION_COOKIE_SET]", {
+    cookieName: getSessionCookieName(),
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: getSessionMaxAgeSeconds(),
+  });
+
+  clearCookies(response);
+  return response;
 }
