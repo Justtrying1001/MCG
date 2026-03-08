@@ -1,4 +1,4 @@
-import { GAME_CONFIG } from "@/lib/cards";
+import { GAME_CONFIG } from "@/lib/game-config";
 import { REWARD_TABLE } from "@/lib/pve/constants";
 import type { PveDifficulty } from "@/lib/pve/types";
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { getBaseCards, openBasePack, GAME_CONFIG } from "@/lib/cards";
+import { getBaseCards, openBasePack } from "@/lib/cards";
+import { GAME_CONFIG } from "@/lib/game-config";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {

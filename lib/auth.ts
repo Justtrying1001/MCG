@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
@@ -8,22 +8,6 @@ const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
-}
-
-export function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const derived = scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${derived}`;
-}
-
-export function verifyPassword(password: string, passwordHash: string) {
-  const [salt, stored] = passwordHash.split(":");
-  if (!salt || !stored) return false;
-  const incoming = scryptSync(password, salt, 64).toString("hex");
-  const storedBuf = Buffer.from(stored, "hex");
-  const incomingBuf = Buffer.from(incoming, "hex");
-  if (storedBuf.length !== incomingBuf.length) return false;
-  return timingSafeEqual(storedBuf, incomingBuf);
 }
 
 export async function createSession(userId: string) {

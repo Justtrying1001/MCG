@@ -88,9 +88,9 @@ export default function CollectionPage() {
       {!me ? (
         <div className="empty-state">
           <div className="empty-state-icon">▦</div>
-          <p className="empty-state-title">Sign in to view your collection</p>
+          <p className="empty-state-title">Connect or start guest mode to view your collection</p>
           <p className="empty-state-desc">
-            Create an account or log in to start building your card roster.
+            Use X for persistent collection, or guest mode for temporary testing.
           </p>
         </div>
       ) : cards.length > 0 ? (

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/lib/auth-validation";
 import { useSession } from "@/components/useSession";
 import { useState } from "react";
 
@@ -18,42 +17,37 @@ const navItems = [
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, loading, refresh, setMe } = useSession();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const { me, loading, refresh, setMe, startGuest, clearGuest } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
 
-  const doAuth = async (path: "/api/auth/register" | "/api/auth/login") => {
-    const res = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+  const loginWithX = () => {
+    window.location.href = "/api/auth/x/start";
+  };
 
-    if (!res.ok) {
-      const txt = await res.text();
-      alert(txt || "Authentication failed");
-      return;
-    }
-
-    setPassword("");
+  const startAsGuest = () => {
+    startGuest();
     closeMenu();
-    await refresh();
   };
 
   const logout = async () => {
+    if (me?.mode === "guest") {
+      clearGuest();
+      closeMenu();
+      return;
+    }
+
     await fetch("/api/auth/logout", { method: "POST" });
     setMe(null);
     closeMenu();
+    await refresh();
   };
 
   return (
     <>
       <div className="noise-layer" />
 
-      {/* ── Top navigation ── */}
       <nav className="topnav">
         <Link href="/" className="nav-logo" onClick={closeMenu}>
           <div className="nav-logo-badge">MCG</div>
@@ -81,39 +75,25 @@ export function SiteShell({ children }: { children: ReactNode }) {
           ) : me ? (
             <>
               <div className="player-pill">
-                <span>{me.user.username}</span>
+                <span>{me.user.displayName}</span>
                 <span className="xp-badge">{me.user.points} XP</span>
               </div>
               <Button variant="ghost" className="btn-sm" onClick={logout}>
-                Logout
+                {me.mode === "guest" ? "Exit Guest" : "Logout"}
               </Button>
             </>
           ) : (
             <>
-              <input
-                className="nav-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={`Username ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH}`}
-              />
-              <input
-                className="nav-input"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={`Password (min ${PASSWORD_MIN_LENGTH})`}
-              />
-              <Button variant="ghost" className="btn-sm" onClick={() => void doAuth("/api/auth/login")}>
-                Login
+              <Button variant="ghost" className="btn-sm" onClick={loginWithX}>
+                Continue with X
               </Button>
-              <Button className="btn-sm" onClick={() => void doAuth("/api/auth/register")}>
-                Sign up
+              <Button className="btn-sm" onClick={startAsGuest}>
+                Continue as Guest
               </Button>
             </>
           )}
         </div>
 
-        {/* ── Mobile hamburger button ── */}
         <button
           className="mobile-menu-btn"
           onClick={() => setMenuOpen((v) => !v)}
@@ -124,17 +104,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </button>
       </nav>
 
-      {/* ── Mobile navigation drawer ── */}
       {menuOpen && (
-        <div
-          className="mobile-nav-overlay"
-          onClick={closeMenu}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Navigation menu"
-        >
+        <div className="mobile-nav-overlay" onClick={closeMenu} role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
-            {/* Nav links */}
             <nav className="mobile-nav-links">
               {navItems.map((item) => (
                 <Link
@@ -149,50 +121,23 @@ export function SiteShell({ children }: { children: ReactNode }) {
               ))}
             </nav>
 
-            {/* Auth section */}
             <div className="mobile-nav-auth">
               {loading ? (
                 <span style={{ fontSize: "0.85rem", color: "var(--text-3)" }}>Loading…</span>
               ) : me ? (
                 <div className="mobile-auth-logged">
                   <div className="player-pill mobile-player-pill">
-                    <span>{me.user.username}</span>
+                    <span>{me.user.displayName}</span>
                     <span className="xp-badge">{me.user.points} XP</span>
                   </div>
                   <Button variant="ghost" onClick={logout} style={{ width: "100%" }}>
-                    Logout
+                    {me.mode === "guest" ? "Exit Guest" : "Logout"}
                   </Button>
                 </div>
               ) : (
-                <div className="mobile-auth-form">
-                  <input
-                    className="filter-input mobile-auth-input"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={`Username ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH}`}
-                  />
-                  <input
-                    className="filter-input mobile-auth-input"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={`Password (min ${PASSWORD_MIN_LENGTH})`}
-                  />
-                  <div className="mobile-auth-buttons">
-                    <Button
-                      variant="ghost"
-                      onClick={() => void doAuth("/api/auth/login")}
-                      style={{ flex: 1 }}
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      onClick={() => void doAuth("/api/auth/register")}
-                      style={{ flex: 1 }}
-                    >
-                      Sign up
-                    </Button>
-                  </div>
+                <div className="mobile-auth-buttons" style={{ display: "grid", gap: "0.6rem" }}>
+                  <Button variant="ghost" onClick={loginWithX}>Continue with X</Button>
+                  <Button onClick={startAsGuest}>Continue as Guest</Button>
                 </div>
               )}
             </div>
@@ -200,7 +145,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* ── App body ── */}
       <div className="app-root">
         <main className="page-content">{children}</main>
 

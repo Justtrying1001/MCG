@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { BaseCard } from "@/types/cards";
+import { GAME_CONFIG } from "@/lib/game-config";
 
 const CARDS_PER_PACK = 5;
 const tierBaseWeight: Record<string, number> = { S: 1, A: 2, B: 4, C: 6, D: 8 };
@@ -144,16 +145,5 @@ export function openBasePack(cards: BaseCard[]): BaseCard[] {
   }
   return pulled;
 }
-
-export const GAME_CONFIG = {
-  STARTING_POINTS: 300,
-  PACK_COST: 100,
-  CARDS_PER_PACK,
-  PVE_DIFFICULTY: {
-    easy: { enemyMult: 0.9, reward: 80 },
-    normal: { enemyMult: 1.0, reward: 120 },
-    hard: { enemyMult: 1.2, reward: 180 },
-  },
-} as const;
 
 export type PveDifficulty = keyof typeof GAME_CONFIG.PVE_DIFFICULTY;
