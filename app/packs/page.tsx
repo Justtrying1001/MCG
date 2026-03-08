@@ -9,10 +9,11 @@ import type { BaseCard } from "@/types/cards";
 import { useState } from "react";
 
 const ODDS = [
-  { label: "Legendary", pct: "2%", color: "var(--gold)" },
-  { label: "Epic", pct: "10%", color: "var(--magenta)" },
-  { label: "Rare", pct: "28%", color: "var(--cyan)" },
-  { label: "Common", pct: "60%", color: "var(--text-3)" },
+  { label: "Legendary", pct: "2%",  color: "var(--rarity-legendary)" },
+  { label: "Epic",      pct: "8%",  color: "var(--rarity-epic)" },
+  { label: "Rare",      pct: "20%", color: "var(--rarity-rare)" },
+  { label: "Uncommon",  pct: "30%", color: "var(--rarity-uncommon)" },
+  { label: "Common",    pct: "40%", color: "var(--rarity-common)" },
 ];
 
 export default function PacksPage() {

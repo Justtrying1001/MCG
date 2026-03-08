@@ -46,16 +46,16 @@ export default function CollectionPage() {
       {me && (
         <div className="collection-stats">
           <div className="stat-pill">
-            <span className="stat-pill-value" style={{ color: "var(--cyan)" }}>{totalCards}</span>
+            <span className="stat-pill-value" style={{ color: "var(--text)" }}>{totalCards}</span>
             <span className="stat-pill-label">Total cards</span>
           </div>
           <div className="stat-pill">
             <span className="stat-pill-value">{uniqueCards}</span>
-            <span className="stat-pill-label">Unique cards</span>
+            <span className="stat-pill-label">Unique</span>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-value" style={{ color: "var(--gold)" }}>{legendaryCount}</span>
-            <span className="stat-pill-label">Legendaries</span>
+            <span className="stat-pill-value" style={{ color: "var(--rarity-legendary)" }}>{legendaryCount}</span>
+            <span className="stat-pill-label">Legendary</span>
           </div>
           <div className="stat-pill">
             <span className="stat-pill-value">{factions.length}</span>
