@@ -110,6 +110,7 @@ export function useSession() {
     const res = await fetch("/api/me", { cache: "no-store" });
     if (res.ok) {
       const payload = (await res.json()) as MeResponse;
+      sessionStorage.removeItem(GUEST_STORAGE_KEY);
       setMe(payload);
       return true;
     }
