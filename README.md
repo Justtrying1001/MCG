@@ -5,7 +5,7 @@ This app keeps the MVP scope:
 - Base cards only
 - Pack opening
 - Collection
-- X OAuth authentication + guest mode
+- X OAuth 1.0a (Log in with X) authentication + guest mode
 - Simple PvE
 - Simple reward loop
 
@@ -45,8 +45,8 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 
 ## API routes
 
-- `GET /api/auth/x/start` — begin OAuth flow with X
-- `GET /api/auth/x/callback` — handle OAuth callback, upsert account, start session
+- `GET /api/auth/x/start` — begin OAuth 1.0a request-token flow with X
+- `GET /api/auth/x/callback` — handle OAuth 1.0a callback, upsert account, start session
 - `POST /api/auth/logout` — logout and clear session cookie
 - `GET /api/me` — profile + persisted collection + counters
 - `POST /api/pack/open` — open base pack for authenticated X users (persistent)
@@ -66,8 +66,8 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL`
-- `X_CLIENT_ID`
-- `X_CLIENT_SECRET`
+- `X_CONSUMER_KEY`
+- `X_CONSUMER_SECRET`
 - `X_REDIRECT_URI`
 
 Not required for current login flow:
@@ -87,7 +87,7 @@ Open http://localhost:3000.
 ## Deploy on Vercel
 
 1. Import repo in Vercel.
-2. Add env vars: `DATABASE_URL`, `X_CLIENT_ID`, `X_CLIENT_SECRET`, `X_REDIRECT_URI`.
+2. Add env vars: `DATABASE_URL`, `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_REDIRECT_URI`.
 3. Build command: `npm run vercel-build` (MVP reset strategy: wipes and recreates schema each deploy).
 4. Install command: `npm install`.
 
