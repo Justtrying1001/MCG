@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,41 @@ import { exchangeXCodeForToken, fetchXProfile } from "@/lib/x-oauth";
 
 const X_STATE_COOKIE = "mcg_x_state";
 const X_VERIFIER_COOKIE = "mcg_x_verifier";
+
+function logPrismaCallbackError(stage: string, error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error(`[X OAuth callback] Prisma known error at ${stage}`, {
+      code: error.code,
+      meta: error.meta,
+      message: error.message,
+    });
+    return;
+  }
+
+  if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+    console.error(`[X OAuth callback] Prisma unknown error at ${stage}`, {
+      message: error.message,
+    });
+    return;
+  }
+
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    console.error(`[X OAuth callback] Prisma initialization error at ${stage}`, {
+      message: error.message,
+      errorCode: error.errorCode,
+    });
+    return;
+  }
+
+  if (error instanceof Prisma.PrismaClientRustPanicError) {
+    console.error(`[X OAuth callback] Prisma panic at ${stage}`, {
+      message: error.message,
+    });
+    return;
+  }
+
+  console.error(`[X OAuth callback] Non-Prisma error at ${stage}`, error);
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -47,22 +83,35 @@ export async function GET(req: Request) {
     const token = await exchangeXCodeForToken(code, codeVerifier);
     const profile = await fetchXProfile(token.access_token);
 
-    const user = await prisma.user.upsert({
-      where: { xUserId: profile.id },
-      update: {
-        xUsername: profile.username,
-        displayName: profile.name,
-        avatarUrl: profile.profile_image_url ?? null,
-      },
-      create: {
-        xUserId: profile.id,
-        xUsername: profile.username,
-        displayName: profile.name,
-        avatarUrl: profile.profile_image_url ?? null,
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.upsert({
+        where: { xUserId: profile.id },
+        update: {
+          xUsername: profile.username,
+          displayName: profile.name,
+          avatarUrl: profile.profile_image_url ?? null,
+        },
+        create: {
+          xUserId: profile.id,
+          xUsername: profile.username,
+          displayName: profile.name,
+          avatarUrl: profile.profile_image_url ?? null,
+        },
+      });
+    } catch (error) {
+      logPrismaCallbackError("user.upsert", error);
+      throw error;
+    }
 
-    const { token: sessionToken } = await createSession(user.id);
+    let sessionToken: string;
+    try {
+      ({ token: sessionToken } = await createSession(user.id));
+    } catch (error) {
+      logPrismaCallbackError("createSession", error);
+      throw error;
+    }
+
     const response = NextResponse.redirect(new URL("/", req.url));
     response.cookies.set({
       name: getSessionCookieName(),
