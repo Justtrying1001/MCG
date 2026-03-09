@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { buildXAuthRequest } from "@/lib/x-oauth";
+import { buildXAuthenticateUrl, getXRequestToken } from "@/lib/x-oauth";
 
 export const dynamic = "force-dynamic";
 
-const X_STATE_COOKIE = "mcg_x_state";
-const X_VERIFIER_COOKIE = "mcg_x_verifier";
+const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
+const X_REQUEST_TOKEN_SECRET_COOKIE = "mcg_x_request_token_secret";
 
 export async function GET(req: Request) {
   try {
-    const { state, codeVerifier, url } = buildXAuthRequest();
-    const response = NextResponse.redirect(url);
+    const { oauthToken, oauthTokenSecret } = await getXRequestToken();
+    const response = NextResponse.redirect(buildXAuthenticateUrl(oauthToken));
 
     const baseCookie = {
       httpOnly: true,
@@ -19,8 +19,8 @@ export async function GET(req: Request) {
       maxAge: 10 * 60,
     };
 
-    response.cookies.set({ name: X_STATE_COOKIE, value: state, ...baseCookie });
-    response.cookies.set({ name: X_VERIFIER_COOKIE, value: codeVerifier, ...baseCookie });
+    response.cookies.set({ name: X_REQUEST_TOKEN_COOKIE, value: oauthToken, ...baseCookie });
+    response.cookies.set({ name: X_REQUEST_TOKEN_SECRET_COOKIE, value: oauthTokenSecret, ...baseCookie });
 
     return response;
   } catch {

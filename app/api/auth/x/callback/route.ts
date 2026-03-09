@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession, getSessionCookieName, getSessionMaxAgeSeconds } from "@/lib/auth";
-import { exchangeXCodeForToken, fetchXProfile } from "@/lib/x-oauth";
+import { exchangeXAccessToken, fetchXProfile } from "@/lib/x-oauth";
 
-const X_STATE_COOKIE = "mcg_x_state";
-const X_VERIFIER_COOKIE = "mcg_x_verifier";
+const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
+const X_REQUEST_TOKEN_SECRET_COOKIE = "mcg_x_request_token_secret";
 
 function logPrismaCallbackError(stage: string, error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -47,41 +47,40 @@ function logPrismaCallbackError(stage: string, error: unknown) {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  const providerError = url.searchParams.get("error");
-  const providerErrorDescription = url.searchParams.get("error_description");
+  const oauthToken = url.searchParams.get("oauth_token");
+  const oauthVerifier = url.searchParams.get("oauth_verifier");
+  const deniedToken = url.searchParams.get("denied");
 
   const cookieStore = cookies();
-  const expectedState = cookieStore.get(X_STATE_COOKIE)?.value;
-  const codeVerifier = cookieStore.get(X_VERIFIER_COOKIE)?.value;
+  const expectedRequestToken = cookieStore.get(X_REQUEST_TOKEN_COOKIE)?.value;
+  const requestTokenSecret = cookieStore.get(X_REQUEST_TOKEN_SECRET_COOKIE)?.value;
 
   const clearCookies = (response: NextResponse) => {
-    response.cookies.set({ name: X_STATE_COOKIE, value: "", path: "/", maxAge: 0 });
-    response.cookies.set({ name: X_VERIFIER_COOKIE, value: "", path: "/", maxAge: 0 });
+    response.cookies.set({ name: X_REQUEST_TOKEN_COOKIE, value: "", path: "/", maxAge: 0 });
+    response.cookies.set({ name: X_REQUEST_TOKEN_SECRET_COOKIE, value: "", path: "/", maxAge: 0 });
   };
 
-  if (providerError) {
-    const deniedErrors = new Set(["access_denied", "authorization_denied", "user_denied"]);
-    const deniedByCode = deniedErrors.has(providerError);
-    const deniedByDescription = (providerErrorDescription ?? "").toLowerCase().includes("denied")
-      || (providerErrorDescription ?? "").toLowerCase().includes("cancel");
-
-    const authError = deniedByCode || deniedByDescription ? "x_oauth_denied" : "x_oauth_failed";
-    const fail = NextResponse.redirect(new URL(`/?auth_error=${authError}`, req.url));
+  if (deniedToken) {
+    const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_denied", req.url));
     clearCookies(fail);
     return fail;
   }
 
-  if (!code || !state || !expectedState || !codeVerifier || state !== expectedState) {
+  if (
+    !oauthToken
+    || !oauthVerifier
+    || !expectedRequestToken
+    || !requestTokenSecret
+    || oauthToken !== expectedRequestToken
+  ) {
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_state", req.url));
     clearCookies(fail);
     return fail;
   }
 
   try {
-    const token = await exchangeXCodeForToken(code, codeVerifier);
-    const profile = await fetchXProfile(token.access_token);
+    const accessToken = await exchangeXAccessToken(oauthToken, oauthVerifier, requestTokenSecret);
+    const profile = await fetchXProfile(accessToken.oauthToken, accessToken.oauthTokenSecret);
 
     let user;
     try {
