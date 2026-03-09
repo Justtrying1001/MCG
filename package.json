@@ -11,7 +11,8 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "vercel-build": "prisma generate && prisma db push --force-reset && next build"
+    "vercel-build": "prisma generate && prisma db push && next build",
+    "prisma:push:reset": "prisma db push --force-reset"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

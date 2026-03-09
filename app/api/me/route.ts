@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
 import { ensurePveDailyState, getNextPveResetAt } from "@/lib/pve/reset";
+import type { UserSessionPayload } from "@/types/session";
 
 export async function GET() {
   try {
@@ -35,14 +36,19 @@ export async function GET() {
     const availablePveCards = payload.collection.filter((c) => !c.pveExhausted).length;
     const exhaustedPveCards = payload.collection.filter((c) => c.pveExhausted).length;
 
-    return NextResponse.json({
+    const response: UserSessionPayload = {
       ...payload,
       openingsCount,
       pveRunsCount,
       availablePveCards,
       exhaustedPveCards,
       nextPveResetAt: getNextPveResetAt().toISOString(),
-    });
+      // Phase 0: keep coexistence undefined to preserve payload compatibility.
+      // Phase 1+ can add additive migration slices under `coexistence.v2`.
+      coexistence: undefined,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     return handleApiError(error, "Cannot load user profile");
   }
