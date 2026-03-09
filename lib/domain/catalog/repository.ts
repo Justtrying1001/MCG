@@ -1,5 +1,3 @@
-import { EditionType, RarityTier } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 import type { CardTemplateSeed } from "./types";
 
@@ -15,10 +13,10 @@ export async function createCardTemplateFoundation(input: CardTemplateSeed) {
         connect: { code: input.cardSetCode },
       },
       rarity: {
-        connect: { code: input.rarityCode as RarityTier },
+        connect: { code: input.rarityCode },
       },
       edition: {
-        connect: { code: input.editionCode as EditionType },
+        connect: { code: input.editionCode },
       },
     },
   });

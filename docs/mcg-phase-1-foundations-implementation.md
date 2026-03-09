@@ -30,3 +30,11 @@ This note documents the **additive foundations** introduced for Phase 1, aligned
 - Legacy models (`UserCard`, `PackOpening`, `PveRun`) are preserved and unchanged.
 - Existing auth/session and legacy API/page flows remain the active product loop.
 - New domain entities are additive foundations for later phases.
+
+## Foundation-ahead-of-use governance note
+
+Some contest/progression models are intentionally introduced as **foundation-ahead-of-use** structures in Phase 1.
+
+- They exist to stabilize domain boundaries early.
+- They are **not** a signal for immediate runtime cutover.
+- Later phases must still follow `docs/mcg-transition-architecture-plan.md` sequencing for backend/frontend rollout and compatibility transitions.

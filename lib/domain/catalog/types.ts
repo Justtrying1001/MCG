@@ -1,8 +1,10 @@
+import type { EditionType, RarityTier } from "@prisma/client";
+
 export type CatalogIdentity = {
   tokenProjectSlug: string;
   cardSetCode: string;
-  rarityCode: string;
-  editionCode: string;
+  rarityCode: RarityTier;
+  editionCode: EditionType;
 };
 
 export type CardTemplateSeed = CatalogIdentity & {
