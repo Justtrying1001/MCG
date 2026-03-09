@@ -11,7 +11,7 @@ export function buildUserPayload(user: User, userCards: UserCard[]) {
       pveExhausted: c.pveExhausted,
       card: cardsMap.get(c.baseCardId),
     }))
-    .filter((c) => Boolean(c.card));
+    .filter((c): c is { baseCardId: string; quantity: number; pveExhausted: boolean; card: NonNullable<typeof c.card> } => Boolean(c.card));
 
   return {
     mode: "user" as const,
@@ -25,8 +25,7 @@ export function buildUserPayload(user: User, userCards: UserCard[]) {
       points: user.points,
       packsOpened: user.packsOpened,
       pveBattleTickets: user.pveBattleTickets,
-      lastPveResetAt: user.lastPveResetAt,
-      createdAt: user.createdAt,
+      lastPveResetAt: user.lastPveResetAt.toISOString(),
     },
     collection,
   };

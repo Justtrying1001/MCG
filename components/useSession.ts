@@ -1,65 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { BaseCard } from "@/types/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { PVE_DAILY_TICKETS } from "@/lib/pve/constants";
 import type { GuestState } from "@/lib/guest";
+import type { GuestSessionPayload, SessionState, UserSessionPayload } from "@/types/session";
 
 const GUEST_STORAGE_KEY = "mcg_guest_state";
-
-export type CollectionItem = {
-  baseCardId: string;
-  quantity: number;
-  pveExhausted: boolean;
-  card: BaseCard;
-};
-
-export type MeResponse = {
-  mode: "user";
-  user: {
-    id: string;
-    xUserId: string;
-    username: string;
-    displayName: string;
-    avatarUrl: string | null;
-    authProvider: string;
-    points: number;
-    packsOpened: number;
-    pveBattleTickets: number;
-    lastPveResetAt: string;
-  };
-  collection: CollectionItem[];
-  openingsCount: number;
-  pveRunsCount: number;
-  availablePveCards: number;
-  exhaustedPveCards: number;
-  nextPveResetAt: string;
-};
-
-export type GuestSession = {
-  mode: "guest";
-  user: {
-    id: "guest";
-    xUserId: null;
-    username: "Guest";
-    displayName: "Guest";
-    avatarUrl: null;
-    authProvider: "guest";
-    points: number;
-    packsOpened: number;
-    pveBattleTickets: number;
-    lastPveResetAt: string;
-  };
-  collection: CollectionItem[];
-  openingsCount: number;
-  pveRunsCount: number;
-  availablePveCards: number;
-  exhaustedPveCards: number;
-  nextPveResetAt: string;
-};
-
-export type SessionState = MeResponse | GuestSession;
 
 function getNextReset(now = new Date()) {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)).toISOString();
@@ -78,7 +25,7 @@ function createDefaultGuestState(now = new Date()): GuestState {
   };
 }
 
-function mapGuestState(state: GuestState): GuestSession {
+function mapGuestState(state: GuestState): GuestSessionPayload {
   return {
     mode: "guest",
     user: {
@@ -107,9 +54,11 @@ export function useSession() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    // Phase 0 boundary: this hook bootstraps auth/session transport only.
+    // Domain-heavy reads should progressively move to dedicated hooks as migration proceeds.
     const res = await fetch("/api/me", { cache: "no-store" });
     if (res.ok) {
-      const payload = (await res.json()) as MeResponse;
+      const payload = (await res.json()) as UserSessionPayload;
       sessionStorage.removeItem(GUEST_STORAGE_KEY);
       setMe(payload);
       return true;
