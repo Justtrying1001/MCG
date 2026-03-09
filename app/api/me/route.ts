@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
+import { buildCollectionProjectionV2 } from "@/lib/domain/projections/collection";
 import { ensurePveDailyState, getNextPveResetAt } from "@/lib/pve/reset";
 import type { UserSessionPayload } from "@/types/session";
 
@@ -36,6 +37,8 @@ export async function GET() {
     const availablePveCards = payload.collection.filter((c) => !c.pveExhausted).length;
     const exhaustedPveCards = payload.collection.filter((c) => c.pveExhausted).length;
 
+    const collectionProjection = await buildCollectionProjectionV2(sessionUser.id);
+
     const response: UserSessionPayload = {
       ...payload,
       openingsCount,
@@ -43,9 +46,11 @@ export async function GET() {
       availablePveCards,
       exhaustedPveCards,
       nextPveResetAt: getNextPveResetAt().toISOString(),
-      // Phase 0: keep coexistence undefined to preserve payload compatibility.
-      // Phase 1+ can add additive migration slices under `coexistence.v2`.
-      coexistence: undefined,
+      coexistence: {
+        v2: {
+          collectionProjection,
+        },
+      },
     };
 
     return NextResponse.json(response);
