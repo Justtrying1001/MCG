@@ -3,27 +3,38 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String        @id @default(cuid())
-  xUserId         String        @unique
-  xUsername       String
-  displayName     String
-  avatarUrl       String?
-  authProvider    String        @default("x")
-  points          Int           @default(300)
-  packsOpened     Int           @default(0)
-  pveBattleTickets Int          @default(3)
-  lastPveResetAt  DateTime      @default(now())
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  cards           UserCard[]
-  packOpenings    PackOpening[]
-  pveRuns         PveRun[]
-  sessions        UserSession[]
+  id               String        @id @default(cuid())
+  xUserId          String        @unique
+  xUsername        String
+  displayName      String
+  avatarUrl        String?
+  authProvider     String        @default("x")
+  points           Int           @default(300)
+  packsOpened      Int           @default(0)
+  pveBattleTickets Int           @default(3)
+  lastPveResetAt   DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  cards            UserCard[]
+  packOpenings     PackOpening[]
+  pveRuns          PveRun[]
+  sessions         UserSession[]
+
+  // Phase 1 additive target-domain foundations
+  ownedCardInstances     OwnedCardInstance[]
+  packOpeningEvents      PackOpeningEvent[]
+  rewardGrants           RewardGrant[]
+  contestEntries         ContestEntry[]
+  contestScores          ContestScore[]
+  contestRankings        ContestRanking[]
+  userProgression        UserProgression?
+  collectionProgressions CollectionProgression[]
+  competitiveProgression CompetitiveProgression?
 }
 
 model UserSession {
@@ -39,14 +50,14 @@ model UserSession {
 }
 
 model UserCard {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   userId         String
   baseCardId     String
-  quantity       Int      @default(0)
-  pveExhausted   Boolean  @default(false)
+  quantity       Int       @default(0)
+  pveExhausted   Boolean   @default(false)
   pveExhaustedAt DateTime?
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, baseCardId])
   @@index([userId])
@@ -64,17 +75,365 @@ model PackOpening {
 }
 
 model PveRun {
-  id              String   @id @default(cuid())
-  userId          String
-  difficulty      String
-  selectedCards   Json
-  enemyCards      Json
-  result          String
-  reward          Int
-  bonusPackAwarded Boolean @default(false)
-  battleMeta      Json
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  userId           String
+  difficulty       String
+  selectedCards    Json
+  enemyCards       Json
+  result           String
+  reward           Int
+  bonusPackAwarded Boolean  @default(false)
+  battleMeta       Json
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// --- Phase 1: Parallel target-domain foundations (additive, no legacy removal) ---
+
+enum RarityTier {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum EditionType {
+  BASE
+  REVERSE
+  BRILLANTE
+  HOLO
+  FULL_ART
+}
+
+enum RewardType {
+  POINTS
+  PACK
+  CARD_INSTANCE
+}
+
+enum ContestStatus {
+  DRAFT
+  OPEN
+  LOCKED
+  LIVE
+  SETTLED
+  CANCELED
+}
+
+enum ContestEntryStatus {
+  SUBMITTED
+  LOCKED
+  SCORED
+  SETTLED
+  CANCELED
+}
+
+model TokenProject {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  displayName String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cardTemplates CardTemplate[]
+}
+
+model CardSet {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  displayName String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cardTemplates      CardTemplate[]
+  packDefinitions    PackDefinition[]
+  contestRules       ContestRule[]
+  collectionProgress CollectionProgression[]
+}
+
+model Rarity {
+  id        String     @id @default(cuid())
+  code      RarityTier @unique
+  weight    Int        @default(1)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  cardTemplates CardTemplate[]
+  dropTableRows DropTableRow[]
+}
+
+model Edition {
+  id        String      @id @default(cuid())
+  code      EditionType @unique
+  weight    Int         @default(1)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  cardTemplates CardTemplate[]
+  dropTableRows DropTableRow[]
+}
+
+model CardTemplate {
+  id             String   @id @default(cuid())
+  tokenProjectId String
+  cardSetId      String
+  rarityId       String
+  editionId      String
+  name           String
+  imageUrl       String?
+  metadata       Json?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
+  cardSet      CardSet      @relation(fields: [cardSetId], references: [id], onDelete: Restrict)
+  rarity       Rarity       @relation(fields: [rarityId], references: [id], onDelete: Restrict)
+  edition      Edition      @relation(fields: [editionId], references: [id], onDelete: Restrict)
+
+  ownedCardInstances OwnedCardInstance[]
+
+  @@unique([tokenProjectId, cardSetId, rarityId, editionId])
+  @@index([tokenProjectId])
+  @@index([cardSetId])
+}
+
+model OwnedCardInstance {
+  id                       String   @id @default(cuid())
+  userId                   String
+  cardTemplateId           String
+  sourcePackOpeningEventId String?
+  acquiredAt               DateTime @default(now())
+  lockState                String?
+  metadata                 Json?
+
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardTemplate           CardTemplate      @relation(fields: [cardTemplateId], references: [id], onDelete: Restrict)
+  sourcePackOpeningEvent PackOpeningEvent? @relation(fields: [sourcePackOpeningEventId], references: [id], onDelete: SetNull)
+  contestRosterLocks     RosterLock[]
+
+  @@index([userId])
+  @@index([cardTemplateId])
+}
+
+model PackDefinition {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  displayName String
+  cardSetId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cardSet           CardSet            @relation(fields: [cardSetId], references: [id], onDelete: Restrict)
+  dropTables        DropTable[]
+  packOpeningEvents PackOpeningEvent[]
+  rewardGrants      RewardGrant[]
+
+  @@index([cardSetId])
+}
+
+model DropTable {
+  id               String   @id @default(cuid())
+  packDefinitionId String
+  name             String
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  packDefinition PackDefinition @relation(fields: [packDefinitionId], references: [id], onDelete: Cascade)
+  rows           DropTableRow[]
+
+  @@index([packDefinitionId])
+}
+
+model DropTableRow {
+  id          String @id @default(cuid())
+  dropTableId String
+  rarityId    String
+  editionId   String
+  weight      Int
+
+  dropTable DropTable @relation(fields: [dropTableId], references: [id], onDelete: Cascade)
+  rarity    Rarity    @relation(fields: [rarityId], references: [id], onDelete: Restrict)
+  edition   Edition   @relation(fields: [editionId], references: [id], onDelete: Restrict)
+
+  @@index([dropTableId])
+  @@index([rarityId])
+  @@index([editionId])
+}
+
+model PackOpeningEvent {
+  id               String   @id @default(cuid())
+  userId           String
+  packDefinitionId String
+  openedAt         DateTime @default(now())
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packDefinition   PackDefinition      @relation(fields: [packDefinitionId], references: [id], onDelete: Restrict)
+  awardedInstances OwnedCardInstance[]
+  rewardGrants     RewardGrant[]
+
+  @@index([userId])
+  @@index([packDefinitionId])
+}
+
+model RewardGrant {
+  id                        String     @id @default(cuid())
+  userId                    String
+  type                      RewardType
+  amount                    Int?
+  packDefinitionId          String?
+  sourcePackOpeningEventId  String?
+  sourceContestSettlementId String?
+  createdAt                 DateTime   @default(now())
+
+  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packDefinition          PackDefinition?    @relation(fields: [packDefinitionId], references: [id], onDelete: SetNull)
+  sourcePackOpeningEvent  PackOpeningEvent?  @relation(fields: [sourcePackOpeningEventId], references: [id], onDelete: SetNull)
+  sourceContestSettlement ContestSettlement? @relation(fields: [sourceContestSettlementId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Contest {
+  id        String        @id @default(cuid())
+  code      String        @unique
+  title     String
+  status    ContestStatus @default(DRAFT)
+  startsAt  DateTime?
+  lockAt    DateTime?
+  endsAt    DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  rules       ContestRule[]
+  entries     ContestEntry[]
+  scores      ContestScore[]
+  rankings    ContestRanking[]
+  settlements ContestSettlement[]
+}
+
+model ContestRule {
+  id            String  @id @default(cuid())
+  contestId     String
+  cardSetId     String?
+  maxRosterSize Int?
+  config        Json?
+
+  contest Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  cardSet CardSet? @relation(fields: [cardSetId], references: [id], onDelete: SetNull)
+
+  @@index([contestId])
+}
+
+model ContestEntry {
+  id          String             @id @default(cuid())
+  contestId   String
+  userId      String
+  status      ContestEntryStatus @default(SUBMITTED)
+  submittedAt DateTime           @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rosterLocks RosterLock[]
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+}
+
+model RosterLock {
+  id                  String   @id @default(cuid())
+  contestEntryId      String
+  ownedCardInstanceId String
+  lockedAt            DateTime @default(now())
+
+  contestEntry      ContestEntry      @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  ownedCardInstance OwnedCardInstance @relation(fields: [ownedCardInstanceId], references: [id], onDelete: Restrict)
+
+  @@unique([contestEntryId, ownedCardInstanceId])
+  @@index([ownedCardInstanceId])
+}
+
+model ContestScore {
+  id        String   @id @default(cuid())
+  contestId String
+  userId    String
+  score     Float
+  scoredAt  DateTime @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+}
+
+model ContestRanking {
+  id        String   @id @default(cuid())
+  contestId String
+  userId    String
+  rank      Int
+  score     Float
+  rankedAt  DateTime @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId, rank])
+}
+
+model ContestSettlement {
+  id        String   @id @default(cuid())
+  contestId String
+  settledAt DateTime @default(now())
+
+  contest      Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  rewardGrants RewardGrant[]
+
+  @@unique([contestId])
+}
+
+model UserProgression {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  level     Int      @default(1)
+  xp        Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CollectionProgression {
+  id            String   @id @default(cuid())
+  userId        String
+  cardSetId     String?
+  completionPct Float    @default(0)
+  updatedAt     DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardSet CardSet? @relation(fields: [cardSetId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, cardSetId])
+  @@index([userId])
+}
+
+model CompetitiveProgression {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  contestsEntered Int      @default(0)
+  contestsWon     Int      @default(0)
+  rating          Int      @default(1000)
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
