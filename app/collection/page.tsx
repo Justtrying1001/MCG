@@ -28,6 +28,7 @@ export default function CollectionPage() {
   const totalCards = me?.collection.reduce((acc, x) => acc + x.quantity, 0) ?? 0;
   const uniqueCards = me?.collection.length ?? 0;
   const legendaryCount = me?.collection.filter((x) => (x.card.marketCapRank ?? 9999) <= 10).length ?? 0;
+  const v2Projection = me?.mode === "user" ? me.coexistence?.v2?.collectionProjection : undefined;
 
   return (
     <SiteShell>
@@ -46,20 +47,20 @@ export default function CollectionPage() {
       {me && (
         <div className="collection-stats">
           <div className="stat-pill">
-            <span className="stat-pill-value" style={{ color: "var(--text)" }}>{totalCards}</span>
-            <span className="stat-pill-label">Total cards</span>
+            <span className="stat-pill-value" style={{ color: "var(--text)" }}>{v2Projection?.totalOwnedInstances ?? totalCards}</span>
+            <span className="stat-pill-label">Total cards {v2Projection ? "(v2)" : ""}</span>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-value">{uniqueCards}</span>
-            <span className="stat-pill-label">Unique</span>
+            <span className="stat-pill-value">{v2Projection?.ownedTemplateCount ?? uniqueCards}</span>
+            <span className="stat-pill-label">Unique owned</span>
           </div>
           <div className="stat-pill">
             <span className="stat-pill-value" style={{ color: "var(--rarity-legendary)" }}>{legendaryCount}</span>
             <span className="stat-pill-label">Legendary</span>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-value">{factions.length}</span>
-            <span className="stat-pill-label">Factions</span>
+            <span className="stat-pill-value">{v2Projection?.missingTemplateCount ?? factions.length}</span>
+            <span className="stat-pill-label">Missing templates</span>
           </div>
         </div>
       )}

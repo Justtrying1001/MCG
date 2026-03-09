@@ -1,4 +1,5 @@
 import type { BaseCard } from "@/types/cards";
+import type { CollectionProjectionV2 } from "@/lib/domain/projections/contracts";
 
 /**
  * Phase 0 contract boundary:
@@ -14,7 +15,9 @@ export type MeCoexistenceEnvelope = {
      * Additive migration payload bucket (Phase 1+).
      * Keep undefined in Phase 0 to preserve wire compatibility.
      */
-    v2?: Record<string, unknown>;
+    v2?: {
+      collectionProjection?: CollectionProjectionV2;
+    };
   };
 };
 
