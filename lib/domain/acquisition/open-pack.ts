@@ -1,4 +1,4 @@
-import { Prisma, type CardTemplate } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import type { BaseCard } from "@/types/cards";
 import { getCardsMap } from "@/lib/cards";
@@ -8,7 +8,12 @@ import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 
-type CardTemplateStockRow = CardTemplate;
+type CardTemplateStockRow = {
+  id: string;
+  plannedSupply: number;
+  issuedSupply: number;
+  metadata: Prisma.JsonValue | null;
+};
 
 function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
   const weighted = candidates
@@ -47,7 +52,6 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
   return prisma.$transaction(async (tx) => {
     const pack = await tx.packDefinition.findUnique({
       where: { code: MVP_SALE_PACK_CODE },
-      include: { cardSet: true },
     });
 
     if (!pack || !pack.isActive) {
@@ -106,7 +110,13 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
             isActive: true,
             plannedSupply: { gt: 0 },
           },
-        }) as CardTemplateStockRow[];
+          select: {
+            id: true,
+            plannedSupply: true,
+            issuedSupply: true,
+            metadata: true,
+          },
+        });
 
         const candidates = rawCandidates.filter((template) => template.issuedSupply < template.plannedSupply);
 
