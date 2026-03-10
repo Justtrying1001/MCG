@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getBaseCards, openBasePack } from "@/lib/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
-import { ensurePhase2PackFoundations } from "@/lib/domain/acquisition/phase2-pack-foundations";
+import { ensurePackFoundations } from "@/lib/domain/acquisition/pack-foundations";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
@@ -29,10 +29,8 @@ export async function POST() {
       },
     });
 
-    // Phase 2 strategy: explicit dual-write.
-    // - Legacy continuity: PackOpening + UserCard quantity writes remain active.
-    // - New ownership truth foundation: PackOpeningEvent + OwnedCardInstance writes are added.
-    const { packDefinitionId, cardTemplateIdByBaseCardId } = await ensurePhase2PackFoundations(tx, pulled);
+    // Explicit dual-write: preserve legacy continuity while writing instance-aware ownership truth.
+    const { packDefinitionId, cardTemplateIdByBaseCardId } = await ensurePackFoundations(tx, pulled);
 
     const openingEvent = await tx.packOpeningEvent.create({
       data: {

@@ -39,7 +39,7 @@ export default function AccountPage() {
 
             {me.mode === "guest" ? (
               <div className="profile-guest-note">
-                Guest mode only keeps temporary legacy session state. Sign in with X for persistent account,
+                Guest mode only keeps temporary local session state. Sign in with X for persistent account,
                 collection, and competitive progression.
               </div>
             ) : null}

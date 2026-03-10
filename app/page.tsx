@@ -31,7 +31,7 @@ export default function HomePage() {
             <Link href="/collection" className="btn btn-ghost btn-lg">My collection</Link>
           </div>
           <div className="hero-pills">
-            <span className="hero-pill">6-tier rarity system</span>
+            <span className="hero-pill">5-tier rarity system</span>
             <span className="hero-pill">Sealed pack ritual</span>
             <span className="hero-pill">Contest progression</span>
           </div>

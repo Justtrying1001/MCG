@@ -32,11 +32,11 @@ Core active models include:
   - `OwnedCardInstance`, `RewardGrant`
   - `UserProgression`, `CollectionProgression`, `CompetitiveProgression`
 
-## Product / migration source-of-truth docs
+## Documentation
 
-- Product foundation: `docs/mcg-pivot-product-foundation.md`
-- Architecture transition plan: `docs/mcg-transition-architecture-plan.md`
-- Phase implementation notes: `docs/mcg-phase-0-preconditions.md` through `docs/mcg-phase-7-final-cleanup-implementation.md`
+- Docs index: `docs/README.md`
+- Product source-of-truth: `docs/mcg-pivot-product-foundation.md`
+- Runtime architecture (current implementation): `docs/current-runtime-architecture.md`
 
 ## API routes (active + explicit retired compatibility)
 
@@ -54,6 +54,8 @@ Core active models include:
   - `GET /api/contests/:contestId/ranking`
   - `POST /api/contests/:contestId/enter`
   - `POST /api/internal/contests`
+  - `POST /api/internal/contests/:contestId/status`
+  - `POST /api/internal/contests/:contestId/score`
   - `POST /api/internal/contests/:contestId/settle`
 - Retired PvE compatibility endpoints (intentional `410 Gone`)
   - `POST /api/pve/battle`
