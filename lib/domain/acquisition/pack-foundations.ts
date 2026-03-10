@@ -69,6 +69,10 @@ async function ensureRarityAndEditionSeed(tx: Prisma.TransactionClient) {
   ]);
 }
 
+/**
+ * @deprecated Legacy transition helper.
+ * Authenticated pack opening runtime uses DB-native controlled emission in `open-pack.ts`.
+ */
 export async function ensurePackFoundations(
   tx: Prisma.TransactionClient,
   pulledCards: BaseCard[]

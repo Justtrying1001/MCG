@@ -4,9 +4,9 @@ import type { BaseCard } from "@/types/cards";
 import { getCardsMap } from "@/lib/cards";
 import { prisma } from "@/lib/prisma";
 import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
+import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
-const SALE_PACK_CODE = "mvp_sale_pack";
 
 type CardTemplateStockRow = CardTemplate;
 
@@ -46,7 +46,7 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
 
   return prisma.$transaction(async (tx) => {
     const pack = await tx.packDefinition.findUnique({
-      where: { code: SALE_PACK_CODE },
+      where: { code: MVP_SALE_PACK_CODE },
       include: { cardSet: true },
     });
 

@@ -139,7 +139,10 @@ function drawWeighted(pool: Array<{ card: BaseCard; weight: number }>): BaseCard
   return pool[pool.length - 1].card;
 }
 
-// Guest/local-only draw helper kept for transitional UX; not the authenticated source-of-truth.
+/**
+ * @deprecated Guest/local-only draw helper kept for transitional UX.
+ * Authenticated pack opening uses DB-native controlled emission runtime.
+ */
 export function openBasePack(cards: BaseCard[]): BaseCard[] {
   const pool = weightedCardsPool(cards);
   const pulled: BaseCard[] = [];

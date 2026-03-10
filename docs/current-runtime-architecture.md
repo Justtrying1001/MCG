@@ -52,6 +52,7 @@ This document describes the **active** architecture of the running product.
   - Legacy dual-write in authenticated opening is still kept temporarily for UI continuity and rollback safety.
 - **Legacy-adjacent local path**
   - Guest pack opening and `lib/cards.ts` weighted draw remain local/session-scoped and are not part of controlled-emission inventory.
+- MVP pack codes are centralized in `lib/domain/acquisition/constants.ts` to reduce runtime/read-model drift.
 
 ## Documentation policy
 - `docs/mcg-pivot-product-foundation.md` is product source-of-truth.

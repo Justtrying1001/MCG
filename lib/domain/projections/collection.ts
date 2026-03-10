@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { CollectionProjectionV2 } from "@/lib/domain/projections/contracts";
 import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
+import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 
-const MVP_SALE_PACK_CODE = "mvp_sale_pack";
 
 export async function buildCollectionProjectionV2(userId: string): Promise<CollectionProjectionV2> {
   const mvpSalePack = await prisma.packDefinition.findUnique({
