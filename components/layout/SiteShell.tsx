@@ -11,6 +11,7 @@ const navItems = [
   { href: "/",          label: "Home",       icon: "⬡" },
   { href: "/packs",     label: "Packs",      icon: "◈" },
   { href: "/collection",label: "Collection", icon: "▦" },
+  { href: "/contests",  label: "Contests",   icon: "🏆" },
   { href: "/combats",   label: "Battle",     icon: "⚔" },
   { href: "/compte",    label: "Profile",    icon: "◎" },
 ];
