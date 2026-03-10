@@ -66,7 +66,6 @@ export type MeCoexistenceEnvelope = {
 export type CollectionItem = {
   baseCardId: string;
   quantity: number;
-  pveExhausted: boolean;
   card: BaseCard;
 };
 

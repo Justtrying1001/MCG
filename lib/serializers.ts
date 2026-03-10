@@ -8,10 +8,9 @@ export function buildUserPayload(user: User, userCards: UserCard[]) {
     .map((c) => ({
       baseCardId: c.baseCardId,
       quantity: c.quantity,
-      pveExhausted: c.pveExhausted,
       card: cardsMap.get(c.baseCardId),
     }))
-    .filter((c): c is { baseCardId: string; quantity: number; pveExhausted: boolean; card: NonNullable<typeof c.card> } => Boolean(c.card));
+    .filter((c): c is { baseCardId: string; quantity: number; card: NonNullable<typeof c.card> } => Boolean(c.card));
 
   return {
     mode: "user" as const,

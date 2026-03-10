@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     if (idx >= 0) {
       collection[idx] = { ...collection[idx], quantity: collection[idx].quantity + 1 };
     } else {
-      collection.push({ baseCardId: card.baseCardId, quantity: 1, pveExhausted: false, card });
+      collection.push({ baseCardId: card.baseCardId, quantity: 1, card });
     }
   }
 
