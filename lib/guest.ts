@@ -3,7 +3,6 @@ import type { BaseCard } from "@/types/cards";
 export type GuestCollectionItem = {
   baseCardId: string;
   quantity: number;
-  pveExhausted: boolean;
   card: BaseCard;
 };
 

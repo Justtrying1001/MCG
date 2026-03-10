@@ -1,15 +1,14 @@
-# MCG MVP V1 — Vercel + Neon Base
+# MCG — Collectible-First, Contest-Driven MVP
 
-This app keeps the MVP scope:
+MCG now centers on:
 
-- Base cards only
 - Pack opening
-- Collection
-- X OAuth 1.0a (Log in with X) authentication + guest mode
-- Simple PvE
-- Simple reward loop
+- Collection progression
+- Contest participation and rankings
+- Profile/progression hub
+- X OAuth 1.0a authentication + guest mode for temporary local play
 
-No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
+PvE has been retired from active gameplay.
 
 ## Stack
 
@@ -20,44 +19,50 @@ No variants product flow, no NFT/on-chain, no marketplace, no PvP, no crafting.
 
 ## Data model (Prisma)
 
+Core active models include:
+
 - `User`
-  - `id`, `xUserId`, `xUsername`, `displayName`, `avatarUrl`, progression fields, timestamps
+  - account identity + points + pack counters
 - `UserSession`
-  - `userId`, hashed session token, expiry
-- `UserCard`
-  - `userId`, `baseCardId`, `quantity`
-- `PackOpening`
-  - `userId`, `packType`, JSON result payload
-- `PveRun`
-  - `userId`, difficulty, selected/enemy payloads, result, reward
+  - hashed session token + expiry
+- `UserCard` / `PackOpening`
+  - legacy-compatible collection and pack history persistence
+- Contest + progression domain models
+  - `Contest`, `ContestEntry`, `ContestScore`, `ContestRanking`, `ContestSettlement`
+  - `OwnedCardInstance`, `RewardGrant`
+  - `UserProgression`, `CollectionProgression`, `CompetitiveProgression`
 
-## Card data source
+## Product / migration source-of-truth docs
 
-- Base card source remains `mcg_base_cards.json`.
-- User progression state is persisted in Neon Postgres.
+- Product foundation: `docs/mcg-pivot-product-foundation.md`
+- Architecture transition plan: `docs/mcg-transition-architecture-plan.md`
+- Phase implementation notes: `docs/mcg-phase-0-preconditions.md` through `docs/mcg-phase-7-final-cleanup-implementation.md`
 
-## Card system docs (current runtime vs planning)
+## API routes (active + explicit retired compatibility)
 
-- Current runtime entrypoint: `docs/card-runtime-core.md`
-- Forensic audit: `docs/card-repo-audit-forensic.md` and `docs/card-repo-audit-table.md`
-- Cleanup plan: `docs/card-repo-cleanup-plan.md` and `docs/card-repo-cleanup-actions.md`
-- Future specs / vision (not runtime): `docs/card-system-v1-production-spec.md`, `docs/card-pipeline-v1-semi-generatif.md`, `docs/ux-redesign-spec.md`
-
-## API routes
-
-- `GET /api/auth/x/start` — begin OAuth 1.0a request-token flow with X
-- `GET /api/auth/x/callback` — handle OAuth 1.0a callback, upsert account, start session
-- `POST /api/auth/logout` — logout and clear session cookie
-- `GET /api/me` — profile + persisted collection + counters
-- `POST /api/pack/open` — open base pack for authenticated X users (persistent)
-- `POST /api/guest/pack/open` — open base pack for guests (ephemeral)
-- `POST /api/pve/battle` — run PvE battle for authenticated X users (persistent)
-- `POST /api/pve/run` — alias of `/api/pve/battle` (compatibility route)
-- `POST /api/guest/pve/battle` — run PvE battle for guests (ephemeral)
+- Auth/session
+  - `GET /api/auth/x/start`
+  - `GET /api/auth/x/callback`
+  - `POST /api/auth/logout`
+  - `GET /api/me`
+- Pack / collection
+  - `POST /api/pack/open`
+  - `POST /api/guest/pack/open`
+- Contests
+  - `GET /api/contests`
+  - `GET /api/contests/:contestId`
+  - `GET /api/contests/:contestId/ranking`
+  - `POST /api/contests/:contestId/enter`
+  - `POST /api/internal/contests`
+  - `POST /api/internal/contests/:contestId/settle`
+- Retired PvE compatibility endpoints (intentional `410 Gone`)
+  - `POST /api/pve/battle`
+  - `POST /api/pve/run`
+  - `POST /api/guest/pve/battle`
 
 ## Environment
 
-Copy `.env.example` to `.env` and set Neon credentials:
+Copy `.env.example` to `.env` and set credentials:
 
 ```bash
 cp .env.example .env
@@ -69,10 +74,6 @@ Required:
 - `X_CONSUMER_KEY`
 - `X_CONSUMER_SECRET`
 - `X_REDIRECT_URI`
-
-Not required for current login flow:
-
-- `X_BEARER_TOKEN` (not used by this implementation)
 
 ## Setup
 
@@ -88,13 +89,13 @@ Open http://localhost:3000.
 
 1. Import repo in Vercel.
 2. Add env vars: `DATABASE_URL`, `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_REDIRECT_URI`.
-3. Build command: `npm run vercel-build` (MVP reset strategy: wipes and recreates schema each deploy).
+3. Build command: `npm run vercel-build`.
 4. Install command: `npm install`.
 
-`npm run vercel-build` runs `prisma generate && prisma db push --force-reset && next build`.
-Because this MVP currently has no important production data, the deployment strategy intentionally resets the database schema on build to avoid non-null migration failures when Prisma models change rapidly.
+`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
 
-If you later need data retention, remove `--force-reset` and switch to proper versioned Prisma migrations.
+For destructive reset during local/dev migration work only, use:
 
-
-If you keep `npm run build` as Vercel build command, run `npx prisma db push --force-reset` manually against the target Neon database when schema changes are incompatible with existing rows.
+```bash
+npm run prisma:push:reset
+```
