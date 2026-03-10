@@ -8,7 +8,6 @@ function normalizeGuestState(state: GuestState): GuestState {
     ...state,
     collection: state.collection ?? [],
     openingsCount: state.openingsCount ?? state.packsOpened,
-    pveRunsCount: state.pveRunsCount ?? 0,
   };
 }
 
