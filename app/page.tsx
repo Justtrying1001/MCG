@@ -33,7 +33,7 @@ export default function HomePage() {
           <div className="hero-pills">
             <span className="hero-pill">6-tier rarity system</span>
             <span className="hero-pill">Sealed pack ritual</span>
-            <span className="hero-pill">PvE progression</span>
+            <span className="hero-pill">Contest progression</span>
           </div>
         </div>
 
@@ -75,11 +75,11 @@ export default function HomePage() {
           </p>
         </article>
         <article className="feature-panel">
-          <div className="feature-panel-icon">⚔</div>
-          <h3>Run the ladder</h3>
+          <div className="feature-panel-icon">🏆</div>
+          <h3>Enter contests</h3>
           <p>
-            Select your squad from your collection, choose your difficulty,
-            and earn XP toward stronger drops and better standing.
+            Build your lineup from owned cards, enter active contests,
+            and climb settled leaderboards with measurable progression.
           </p>
         </article>
       </div>

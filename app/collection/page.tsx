@@ -38,7 +38,7 @@ export default function CollectionPage() {
           <h1 className="page-title">Collection</h1>
           <p className="page-subtitle">
             Your complete card roster. Filter by faction, search by name, and audit your
-            strongest cores before heading into battle.
+            strongest cores before entering contests.
           </p>
         </div>
       </div>

@@ -24,8 +24,6 @@ export function buildUserPayload(user: User, userCards: UserCard[]) {
       authProvider: user.authProvider,
       points: user.points,
       packsOpened: user.packsOpened,
-      pveBattleTickets: user.pveBattleTickets,
-      lastPveResetAt: user.lastPveResetAt.toISOString(),
     },
     collection,
   };

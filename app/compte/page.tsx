@@ -107,21 +107,6 @@ export default function AccountPage() {
             </section>
           ) : null}
 
-          <section className="profile-secondary-panel">
-            <h2 className="profile-secondary-title">Legacy PvE continuity</h2>
-            <div className="profile-stats-grid">
-              <div className="profile-stat-card">
-                <span className="profile-stat-label">PvE runs</span>
-                <span className="profile-stat-value">{me.pveRunsCount}</span>
-                <span className="profile-stat-sub">Encounters completed</span>
-              </div>
-              <div className="profile-stat-card">
-                <span className="profile-stat-label">PvE cards available</span>
-                <span className="profile-stat-value">{me.availablePveCards}</span>
-                <span className="profile-stat-sub">{me.exhaustedPveCards} exhausted today</span>
-              </div>
-            </div>
-          </section>
         </>
       ) : (
         <div className="empty-state">

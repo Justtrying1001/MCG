@@ -12,7 +12,6 @@ const navItems = [
   { href: "/packs",     label: "Packs",      icon: "◈" },
   { href: "/collection",label: "Collection", icon: "▦" },
   { href: "/contests",  label: "Contests",   icon: "🏆" },
-  { href: "/combats",   label: "Battle",     icon: "⚔" },
   { href: "/compte",    label: "Profile",    icon: "◎" },
 ];
 
@@ -55,7 +54,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="nav-logo-badge">MCG</div>
           <div>
             <span className="nav-logo-name">Meme Card Game</span>
-            <span className="nav-logo-tagline">Collect · Battle · Dominate</span>
+            <span className="nav-logo-tagline">Collect · Compete · Dominate</span>
           </div>
         </Link>
 

@@ -38,12 +38,8 @@ export default function PacksPage() {
     const guestState = me.mode === "guest" ? {
       points: me.user.points,
       packsOpened: me.user.packsOpened,
-      pveBattleTickets: me.user.pveBattleTickets,
-      lastPveResetAt: me.user.lastPveResetAt,
       collection: me.collection,
       openingsCount: me.openingsCount,
-      pveRunsCount: me.pveRunsCount,
-      nextPveResetAt: me.nextPveResetAt,
     } : undefined;
 
     const res = await fetch(me.mode === "guest" ? "/api/guest/pack/open" : "/api/pack/open", {
