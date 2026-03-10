@@ -37,6 +37,7 @@ This document describes the **active** architecture of the running product.
   - `PackDefinition.source` (`SALE`/`REWARD`)
   - `PackDefinition.plannedPackCount` / `openedPackCount` / `cardsPerPack`
 - These fields are intentionally scaffold-only at this stage; runtime opening logic is not cut over yet.
+- Bootstrap script for Phase C data initialization: `prisma/seed-mvp-controlled-emission.mjs` (`npm run seed:mvp:controlled-emission`).
 
 ## Documentation policy
 - `docs/mcg-pivot-product-foundation.md` is product source-of-truth.
