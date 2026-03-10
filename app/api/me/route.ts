@@ -14,15 +14,35 @@ export async function GET() {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return new NextResponse("Unauthorized", { status: 401 });
 
-    const [userCards, openingsCount] = await prisma.$transaction([
-      prisma.userCard.findMany({ where: { userId: sessionUser.id } }),
-      prisma.packOpening.count({ where: { userId: sessionUser.id } }),
+    const [user, ownedInstances, openingsCountV2] = await prisma.$transaction([
+      prisma.user.findUnique({ where: { id: sessionUser.id } }),
+      prisma.ownedCardInstance.findMany({
+        where: { userId: sessionUser.id },
+        include: { cardTemplate: { select: { metadata: true } } },
+      }),
+      prisma.packOpeningEvent.count({ where: { userId: sessionUser.id } }),
     ]);
 
-    const user = await prisma.user.findUnique({ where: { id: sessionUser.id } });
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const payload = buildUserPayload(user, userCards);
+    // Legacy reads are now lazy fallback only (Phase F):
+    // only used for historical users that still have zero instance-aware collection.
+    const legacyUserCards =
+      ownedInstances.length === 0
+        ? await prisma.userCard.findMany({ where: { userId: sessionUser.id } })
+        : undefined;
+
+    const openingsCountLegacy =
+      openingsCountV2 === 0
+        ? await prisma.packOpening.count({ where: { userId: sessionUser.id } })
+        : 0;
+
+    const payload = buildUserPayload({
+      user,
+      ownedInstances,
+      legacyUserCards,
+    });
+
     const collectionProjection = await buildCollectionProjectionV2(sessionUser.id);
 
     const progressionSummaries = await buildProgressionSummariesV2(
@@ -33,7 +53,7 @@ export async function GET() {
 
     const response: UserSessionPayload = {
       ...payload,
-      openingsCount,
+      openingsCount: openingsCountV2 || openingsCountLegacy,
       coexistence: {
         v2: {
           collectionProjection,

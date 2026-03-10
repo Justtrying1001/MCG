@@ -8,19 +8,19 @@ datasource db {
 }
 
 model User {
-  id               String        @id @default(cuid())
-  xUserId          String        @unique
-  xUsername        String
-  displayName      String
-  avatarUrl        String?
-  authProvider     String        @default("x")
-  points           Int           @default(300)
-  packsOpened      Int           @default(0)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  cards            UserCard[]
-  packOpenings     PackOpening[]
-  sessions         UserSession[]
+  id           String        @id @default(cuid())
+  xUserId      String        @unique
+  xUsername    String
+  displayName  String
+  avatarUrl    String?
+  authProvider String        @default("x")
+  points       Int           @default(300)
+  packsOpened  Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  cards        UserCard[]
+  packOpenings PackOpening[]
+  sessions     UserSession[]
 
   // Target-domain foundations (active)
   ownedCardInstances     OwnedCardInstance[]
@@ -47,12 +47,12 @@ model UserSession {
 }
 
 model UserCard {
-  id             String    @id @default(cuid())
-  userId         String
-  baseCardId     String
-  quantity       Int       @default(0)
-  updatedAt      DateTime  @updatedAt
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  baseCardId String
+  quantity   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, baseCardId])
   @@index([userId])
@@ -68,7 +68,6 @@ model PackOpening {
 
   @@index([userId])
 }
-
 
 // --- Target-domain foundations (currently active alongside legacy continuity models) ---
 
@@ -86,6 +85,11 @@ enum EditionType {
   BRILLANTE
   HOLO
   FULL_ART
+}
+
+enum PackSource {
+  SALE
+  REWARD
 }
 
 enum RewardType {
@@ -167,6 +171,8 @@ model CardTemplate {
   name           String
   imageUrl       String?
   metadata       Json?
+  plannedSupply  Int      @default(0)
+  issuedSupply   Int      @default(0)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -202,13 +208,17 @@ model OwnedCardInstance {
 }
 
 model PackDefinition {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  displayName String
-  cardSetId   String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String     @id @default(cuid())
+  code             String     @unique
+  displayName      String
+  cardSetId        String
+  source           PackSource @default(SALE)
+  plannedPackCount Int        @default(0)
+  openedPackCount  Int        @default(0)
+  cardsPerPack     Int        @default(5)
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   cardSet           CardSet            @relation(fields: [cardSetId], references: [id], onDelete: Restrict)
   dropTables        DropTable[]

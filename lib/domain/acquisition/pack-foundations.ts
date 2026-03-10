@@ -1,8 +1,13 @@
+// LEGACY TRANSITION MODULE (Phase F):
+// This helper remains for historical continuity/migration tooling only.
+// Authenticated pack opening runtime now uses `lib/domain/acquisition/open-pack.ts` with DB-native controlled emission.
+
 import type { EditionType, Prisma, RarityTier } from "@prisma/client";
 import type { BaseCard } from "@/types/cards";
 
 const ACTIVE_CARD_SET_CODE = "BASE_SET_V1";
 const ACTIVE_PACK_DEFINITION_CODE = "BASE_PACK_V1";
+const DEFAULT_CARDS_PER_PACK = 5;
 
 const RARITY_BY_TIER: Record<string, RarityTier> = {
   S: "LEGENDARY",
@@ -64,6 +69,10 @@ async function ensureRarityAndEditionSeed(tx: Prisma.TransactionClient) {
   ]);
 }
 
+/**
+ * @deprecated Legacy transition helper.
+ * Authenticated pack opening runtime uses DB-native controlled emission in `open-pack.ts`.
+ */
 export async function ensurePackFoundations(
   tx: Prisma.TransactionClient,
   pulledCards: BaseCard[]
@@ -78,11 +87,19 @@ export async function ensurePackFoundations(
 
   const packDefinition = await tx.packDefinition.upsert({
     where: { code: ACTIVE_PACK_DEFINITION_CODE },
-    update: { isActive: true, displayName: "Genesis Booster Base Pack v1", cardSetId: cardSet.id },
+    // Phase B compatibility note:
+    // supply counters remain at zero until controlled-emission bootstrap (Phase C) initializes them.
+    update: {
+      isActive: true,
+      displayName: "Genesis Booster Base Pack v1",
+      cardSetId: cardSet.id,
+      cardsPerPack: DEFAULT_CARDS_PER_PACK,
+    },
     create: {
       code: ACTIVE_PACK_DEFINITION_CODE,
       displayName: "Genesis Booster Base Pack v1",
       cardSetId: cardSet.id,
+      cardsPerPack: DEFAULT_CARDS_PER_PACK,
       isActive: true,
     },
   });

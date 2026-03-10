@@ -4,6 +4,8 @@ import type { BaseCard } from "@/types/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
 
 const CARDS_PER_PACK = 5;
+// Legacy-adjacent catalog helper: still required for guest/local pack simulation and card rendering lookups.
+// Authenticated pack opening no longer uses this runtime draw path (Phase D+).
 const tierBaseWeight: Record<string, number> = { S: 1, A: 2, B: 4, C: 6, D: 8 };
 
 const CHAIN_THEME: Record<string, { color: string; glow: string; art: string }> = {
@@ -137,6 +139,10 @@ function drawWeighted(pool: Array<{ card: BaseCard; weight: number }>): BaseCard
   return pool[pool.length - 1].card;
 }
 
+/**
+ * @deprecated Guest/local-only draw helper kept for transitional UX.
+ * Authenticated pack opening uses DB-native controlled emission runtime.
+ */
 export function openBasePack(cards: BaseCard[]): BaseCard[] {
   const pool = weightedCardsPool(cards);
   const pulled: BaseCard[] = [];
