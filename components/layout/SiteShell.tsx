@@ -161,7 +161,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </div>
             Meme Card Game
           </div>
-          <span>© 2025 MCG · Premium Collectible TCG</span>
+          <span>© 2025 MCG · Premium Collectible TCG · <Link href="/admin" className="contest-inline-note">Internal admin</Link></span>
         </footer>
       </div>
     </>

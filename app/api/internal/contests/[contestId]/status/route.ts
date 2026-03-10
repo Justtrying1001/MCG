@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, updateContestStatusMvp } from "@/lib/domain/contests/runtime";
-import { requireInternalAdmin } from "@/lib/internal-auth";
+import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
 export async function POST(request: NextRequest, { params }: { params: { contestId: string } }) {
-  const auth = requireInternalAdmin(request);
+  const auth = requireInternalAdminAccess(request);
   if (!auth.ok) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
