@@ -3,31 +3,12 @@ import { Prisma, type CardTemplate } from "@prisma/client";
 import type { BaseCard } from "@/types/cards";
 import { getCardsMap } from "@/lib/cards";
 import { prisma } from "@/lib/prisma";
+import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 const SALE_PACK_CODE = "mvp_sale_pack";
 
 type CardTemplateStockRow = CardTemplate;
-
-function extractBaseCardId(metadata: Prisma.JsonValue | null): string | null {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
-
-  const root = metadata as Record<string, unknown>;
-  const legacy = root.legacy;
-
-  if (typeof root.baseCardId === "string" && root.baseCardId.trim().length > 0) {
-    return root.baseCardId;
-  }
-
-  if (legacy && typeof legacy === "object" && !Array.isArray(legacy)) {
-    const legacyBaseCardId = (legacy as Record<string, unknown>).baseCardId;
-    if (typeof legacyBaseCardId === "string" && legacyBaseCardId.trim().length > 0) {
-      return legacyBaseCardId;
-    }
-  }
-
-  return null;
-}
 
 function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
   const weighted = candidates
@@ -158,7 +139,7 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
           },
         });
 
-        const baseCardId = extractBaseCardId(selected.metadata);
+        const baseCardId = extractBaseCardIdFromTemplateMetadata(selected.metadata);
         if (!baseCardId) {
           throw new PackOpenRuntimeError("Selected card template is missing legacy baseCardId mapping", 500);
         }

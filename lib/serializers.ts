@@ -1,28 +1,55 @@
-import type { User, UserCard } from "@prisma/client";
+import type { OwnedCardInstance, Prisma, User, UserCard } from "@prisma/client";
 import { getCardsMap } from "@/lib/cards";
+import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
 
-export function buildUserPayload(user: User, userCards: UserCard[]) {
+type OwnedInstanceWithTemplate = OwnedCardInstance & {
+  cardTemplate: {
+    metadata: unknown;
+  };
+};
+
+export function buildUserPayload(params: {
+  user: User;
+  ownedInstances: OwnedInstanceWithTemplate[];
+  legacyUserCards?: UserCard[];
+}) {
   const cardsMap = getCardsMap();
-  const collection = userCards
-    .filter((c) => c.quantity > 0)
-    .map((c) => ({
-      baseCardId: c.baseCardId,
-      quantity: c.quantity,
-      card: cardsMap.get(c.baseCardId),
+
+  const quantityByBaseCardId = new Map<string, number>();
+
+  for (const instance of params.ownedInstances) {
+    const baseCardId = extractBaseCardIdFromTemplateMetadata(instance.cardTemplate.metadata as Prisma.JsonValue | null);
+    if (!baseCardId) continue;
+    quantityByBaseCardId.set(baseCardId, (quantityByBaseCardId.get(baseCardId) ?? 0) + 1);
+  }
+
+  // Transitional fallback for legacy-only users created before instance-aware ownership existed.
+  if (quantityByBaseCardId.size === 0 && params.legacyUserCards) {
+    for (const card of params.legacyUserCards) {
+      if (card.quantity <= 0) continue;
+      quantityByBaseCardId.set(card.baseCardId, (quantityByBaseCardId.get(card.baseCardId) ?? 0) + card.quantity);
+    }
+  }
+
+  const collection = Array.from(quantityByBaseCardId.entries())
+    .map(([baseCardId, quantity]) => ({
+      baseCardId,
+      quantity,
+      card: cardsMap.get(baseCardId),
     }))
-    .filter((c): c is { baseCardId: string; quantity: number; card: NonNullable<typeof c.card> } => Boolean(c.card));
+    .filter((row): row is { baseCardId: string; quantity: number; card: NonNullable<typeof row.card> } => Boolean(row.card));
 
   return {
     mode: "user" as const,
     user: {
-      id: user.id,
-      xUserId: user.xUserId,
-      username: user.xUsername,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl,
-      authProvider: user.authProvider,
-      points: user.points,
-      packsOpened: user.packsOpened,
+      id: params.user.id,
+      xUserId: params.user.xUserId,
+      username: params.user.xUsername,
+      displayName: params.user.displayName,
+      avatarUrl: params.user.avatarUrl,
+      authProvider: params.user.authProvider,
+      points: params.user.points,
+      packsOpened: params.user.packsOpened,
     },
     collection,
   };

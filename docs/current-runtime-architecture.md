@@ -31,6 +31,10 @@ This document describes the **active** architecture of the running product.
 - Runtime opening allocates from remaining template stock, increments `PackDefinition.openedPackCount`, writes `PackOpeningEvent` + `OwnedCardInstance`, and preserves temporary legacy dual-write (`PackOpening`, `UserCard`) for UI continuity.
 - Guest opening remains local/temporary and is not part of controlled-emission inventory.
 
+## Read-model status (Phase E)
+- `/api/me` now reads primarily from instance-aware models (`OwnedCardInstance`, `PackOpeningEvent`) and treats legacy (`UserCard`, `PackOpening`) as compatibility fallback only.
+- Collection projection is aligned to active MVP catalog templates (from `CardTemplate`) and computes completion on template ownership, not legacy base-card inventory.
+
 ## Phase B status (data-model alignment)
 - Prisma now carries controlled-emission preparation fields:
   - `CardTemplate.plannedSupply` / `CardTemplate.issuedSupply`

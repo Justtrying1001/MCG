@@ -14,15 +14,25 @@ export async function GET() {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return new NextResponse("Unauthorized", { status: 401 });
 
-    const [userCards, openingsCount] = await prisma.$transaction([
+    const [user, ownedInstances, openingsCountV2, legacyUserCards, openingsCountLegacy] = await prisma.$transaction([
+      prisma.user.findUnique({ where: { id: sessionUser.id } }),
+      prisma.ownedCardInstance.findMany({
+        where: { userId: sessionUser.id },
+        include: { cardTemplate: { select: { metadata: true } } },
+      }),
+      prisma.packOpeningEvent.count({ where: { userId: sessionUser.id } }),
       prisma.userCard.findMany({ where: { userId: sessionUser.id } }),
       prisma.packOpening.count({ where: { userId: sessionUser.id } }),
     ]);
 
-    const user = await prisma.user.findUnique({ where: { id: sessionUser.id } });
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const payload = buildUserPayload(user, userCards);
+    const payload = buildUserPayload({
+      user,
+      ownedInstances,
+      legacyUserCards,
+    });
+
     const collectionProjection = await buildCollectionProjectionV2(sessionUser.id);
 
     const progressionSummaries = await buildProgressionSummariesV2(
@@ -33,7 +43,7 @@ export async function GET() {
 
     const response: UserSessionPayload = {
       ...payload,
-      openingsCount,
+      openingsCount: openingsCountV2 || openingsCountLegacy,
       coexistence: {
         v2: {
           collectionProjection,
