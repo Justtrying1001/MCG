@@ -129,7 +129,18 @@ A card is a collectible object with premium identity and contest utility.
 - The same owned card instance cannot be entered into multiple active contests simultaneously.
 
 ### 4.3 Pool logic (MVP)
-**[DECIDED]** MVP pool is curated to ~50–100 tokens.
+**[DECIDED]** MVP pool is fixed to **50 tokens**.
+
+### 4.5 Quantitative catalog decision (MVP)
+**[DECIDED]** MVP card catalog is built on:
+- 50 tokens
+- 5 rarities
+- 5 editions
+
+**[DECIDED]** Every token exists in every rarity and every edition.
+
+Therefore:
+- total `CardTemplate` catalog target = **50 × 5 × 5 = 1,250 templates**.
 
 ### 4.4 Collection logic
 Collection UX/system should support:
@@ -204,11 +215,25 @@ Packs are the primary acquisition and excitement mechanism feeding collection an
 - **[MVP PRINCIPLE] Instance generation:** opening produces **Owned Card Instances** tied to valid Card Templates.
 - **[MVP PRINCIPLE] Weighted outcomes:** token/rarity/edition probabilities are weighted and tunable.
 - **[MVP PRINCIPLE] Controlled transparency:** high-level odds communication can be exposed, while exact low-level weighting may remain non-fully public.
+- **[DECIDED] Controlled emission model:** pack opening must consume real remaining inventory from DB-managed emission budgets, not generate cards from a runtime-only JSON probability table.
 
 ### What is decided vs left open
-- **[DECIDED]** MVP uses a curated 50–100 token pool.
+- **[DECIDED]** MVP uses a curated pool of exactly 50 tokens.
 - **[DECIDED]** major-token high-rarity results are intentionally harder to pull.
 - **[INTENTIONALLY OPEN]** exact drop formulas, table granularity, and publication detail level remain configurable.
+
+### 7.1 Supply envelope decision (MVP)
+**[DECIDED]** pack and issuance envelope:
+- total packs: **16,000**
+- sale packs: **11,000**
+- reward packs: **5,000**
+- cards per pack: **5**
+- maximum card emission: **80,000**
+
+**[DECIDED]** working token-average basis:
+- 1,558 cards/token
+- 1,558 × 50 = **77,900 cards**
+- margin vs max envelope = **2,100 cards**.
 
 ### Live-ops configurability (future-ready)
 **[FUTURE-READY]** pack operations should be admin-configurable for:

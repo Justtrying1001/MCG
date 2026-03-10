@@ -26,7 +26,19 @@ This document describes the **active** architecture of the running product.
   - target ownership truth (`OwnedCardInstance`, `PackOpeningEvent`)
 - `/api/me` includes `coexistence.v2` because active profile/collection UI consumes it.
 
+## Current limitation (important)
+- Pack opening is **not yet** controlled-emission DB-native.
+- Current opening flow still starts from runtime weighted draws in `lib/cards.ts`, then persists outcomes.
+- Controlled emission migration scope is documented in `docs/mvp-controlled-emission-transformation.md`.
+
+## Phase B status (data-model alignment)
+- Prisma now carries controlled-emission preparation fields:
+  - `CardTemplate.plannedSupply` / `CardTemplate.issuedSupply`
+  - `PackDefinition.source` (`SALE`/`REWARD`)
+  - `PackDefinition.plannedPackCount` / `openedPackCount` / `cardsPerPack`
+- These fields are intentionally scaffold-only at this stage; runtime opening logic is not cut over yet.
+
 ## Documentation policy
 - `docs/mcg-pivot-product-foundation.md` is product source-of-truth.
 - This file is implementation/runtime source-of-truth.
-- Historical migration step logs and exploratory card-system audits were removed to reduce repository noise.
+- `docs/mvp-controlled-emission-transformation.md` is transformation source-of-truth for migration from current runtime to controlled emission MVP.
