@@ -1,8 +1,8 @@
 import type { EditionType, Prisma, RarityTier } from "@prisma/client";
 import type { BaseCard } from "@/types/cards";
 
-const PHASE2_CARD_SET_CODE = "BASE_SET_V1";
-const PHASE2_PACK_DEFINITION_CODE = "BASE_PACK_V1";
+const ACTIVE_CARD_SET_CODE = "BASE_SET_V1";
+const ACTIVE_PACK_DEFINITION_CODE = "BASE_PACK_V1";
 
 const RARITY_BY_TIER: Record<string, RarityTier> = {
   S: "LEGENDARY",
@@ -64,23 +64,23 @@ async function ensureRarityAndEditionSeed(tx: Prisma.TransactionClient) {
   ]);
 }
 
-export async function ensurePhase2PackFoundations(
+export async function ensurePackFoundations(
   tx: Prisma.TransactionClient,
   pulledCards: BaseCard[]
 ): Promise<{ packDefinitionId: string; cardTemplateIdByBaseCardId: Map<string, string> }> {
   await ensureRarityAndEditionSeed(tx);
 
   const cardSet = await tx.cardSet.upsert({
-    where: { code: PHASE2_CARD_SET_CODE },
-    update: { isActive: true, displayName: "Base Set v1 (Phase 2)" },
-    create: { code: PHASE2_CARD_SET_CODE, displayName: "Base Set v1 (Phase 2)", isActive: true },
+    where: { code: ACTIVE_CARD_SET_CODE },
+    update: { isActive: true, displayName: "Base Set v1" },
+    create: { code: ACTIVE_CARD_SET_CODE, displayName: "Base Set v1", isActive: true },
   });
 
   const packDefinition = await tx.packDefinition.upsert({
-    where: { code: PHASE2_PACK_DEFINITION_CODE },
+    where: { code: ACTIVE_PACK_DEFINITION_CODE },
     update: { isActive: true, displayName: "Genesis Booster Base Pack v1", cardSetId: cardSet.id },
     create: {
-      code: PHASE2_PACK_DEFINITION_CODE,
+      code: ACTIVE_PACK_DEFINITION_CODE,
       displayName: "Genesis Booster Base Pack v1",
       cardSetId: cardSet.id,
       isActive: true,
@@ -118,7 +118,7 @@ export async function ensurePhase2PackFoundations(
         metadata: {
           baseCardId: card.baseCardId,
           projectTier: card.projectTier,
-          legacySource: "phase2_pack_dual_write",
+          legacySource: "pack_dual_write",
         },
       },
       create: {
@@ -132,7 +132,7 @@ export async function ensurePhase2PackFoundations(
         metadata: {
           baseCardId: card.baseCardId,
           projectTier: card.projectTier,
-          legacySource: "phase2_pack_dual_write",
+          legacySource: "pack_dual_write",
         },
       },
     });

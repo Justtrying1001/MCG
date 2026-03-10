@@ -22,7 +22,7 @@ model User {
   packOpenings     PackOpening[]
   sessions         UserSession[]
 
-  // Phase 1 additive target-domain foundations
+  // Target-domain foundations (active)
   ownedCardInstances     OwnedCardInstance[]
   packOpeningEvents      PackOpeningEvent[]
   rewardGrants           RewardGrant[]
@@ -70,7 +70,7 @@ model PackOpening {
 }
 
 
-// --- Phase 1: Parallel target-domain foundations (additive, no legacy removal) ---
+// --- Target-domain foundations (currently active alongside legacy continuity models) ---
 
 enum RarityTier {
   COMMON

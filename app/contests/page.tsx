@@ -137,8 +137,7 @@ function ContestMeta({ label, value }: { label: string; value: string }) {
 function GuestNotice() {
   return (
     <div className="contest-guest-notice">
-      Contest participation requires an authenticated account with owned card instances. Guest mode can browse legacy flows,
-      but cannot enter contests.
+      Contest participation requires an authenticated account with owned card instances. Guest mode can open packs and preview collection data, but cannot enter contests.
     </div>
   );
 }
