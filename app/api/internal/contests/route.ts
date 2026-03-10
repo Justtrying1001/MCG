@@ -3,10 +3,39 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, createContestMvp } from "@/lib/domain/contests/runtime";
-import { requireInternalAdmin } from "@/lib/internal-auth";
+import { requireInternalAdminAccess } from "@/lib/internal-auth";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(request: NextRequest) {
+  const auth = requireInternalAdminAccess(request);
+  if (!auth.ok) {
+    return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const contests = await prisma.contest.findMany({
+      include: {
+        rules: true,
+        _count: {
+          select: {
+            entries: true,
+            rankings: true,
+            settlements: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 200,
+    });
+
+    return NextResponse.json({ contests });
+  } catch (error) {
+    return handleApiError(error, "Cannot load internal contests");
+  }
+}
 
 export async function POST(request: NextRequest) {
-  const auth = requireInternalAdmin(request);
+  const auth = requireInternalAdminAccess(request);
   if (!auth.ok) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }

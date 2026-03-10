@@ -45,6 +45,8 @@ Core active models include:
   - `GET /api/auth/x/callback`
   - `POST /api/auth/logout`
   - `GET /api/me`
+  - `POST /api/admin/login`
+  - `POST /api/admin/logout`
 - Pack / collection
   - `POST /api/pack/open`
   - `POST /api/guest/pack/open`
@@ -53,6 +55,8 @@ Core active models include:
   - `GET /api/contests/:contestId`
   - `GET /api/contests/:contestId/ranking`
   - `POST /api/contests/:contestId/enter`
+  - `GET /api/internal/contests`
+  - `GET /api/internal/contests/:contestId`
   - `POST /api/internal/contests`
   - `POST /api/internal/contests/:contestId/status`
   - `POST /api/internal/contests/:contestId/score`
@@ -76,6 +80,29 @@ Required:
 - `X_CONSUMER_KEY`
 - `X_CONSUMER_SECRET`
 - `X_REDIRECT_URI`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD_HASH`
+- `ADMIN_SESSION_SECRET`
+
+Optional (recommended for machine-to-machine/internal scripts):
+
+- `INTERNAL_ADMIN_KEY`
+
+Generate `ADMIN_PASSWORD_HASH` locally (replace `<PASSWORD>`):
+
+```bash
+node -e "const c=require('node:crypto');const p='<PASSWORD>';const s=c.randomBytes(16).toString('hex');const i=210000;const d=c.pbkdf2Sync(p,s,i,32,'sha256').toString('hex');console.log(`pbkdf2_sha256$${i}$${s}$${d}`)"
+```
+
+Admin UI flow:
+
+1. Open `/admin/login`
+2. Log in with `ADMIN_USERNAME` + password matching `ADMIN_PASSWORD_HASH`
+3. Manage contests at `/admin/contests`
+
+Internal contest APIs now accept:
+- valid admin cookie session **OR**
+- `x-internal-admin-key` matching `INTERNAL_ADMIN_KEY`.
 
 ## Setup
 
