@@ -1,71 +1,28 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
 import { getSessionUser } from "@/lib/auth";
-import { getBaseCards, openBasePack } from "@/lib/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
-import { ensurePackFoundations } from "@/lib/domain/acquisition/pack-foundations";
-import { prisma } from "@/lib/prisma";
+import { handleApiError } from "@/lib/api-error";
+import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 
 export async function POST() {
-  const user = await getSessionUser();
-  if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  try {
+    const user = await getSessionUser();
+    if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-  const pulled = openBasePack(getBaseCards());
-
-  const result = await prisma.$transaction(async (tx) => {
-    const spend = await tx.user.updateMany({
-      where: { id: user.id, points: { gte: GAME_CONFIG.PACK_COST } },
-      data: { points: { decrement: GAME_CONFIG.PACK_COST }, packsOpened: { increment: 1 } },
+    const result = await openSalePackMvpDbNative({
+      userId: user.id,
+      packCost: GAME_CONFIG.PACK_COST,
     });
 
-    if (spend.count !== 1) {
-      return { ok: false as const };
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof PackOpenRuntimeError) {
+      return new NextResponse(error.message, { status: error.status });
     }
 
-    await tx.packOpening.create({
-      data: {
-        userId: user.id,
-        packType: "base_v1",
-        result: { cards: pulled.map((c) => c.baseCardId) },
-      },
-    });
-
-    // Explicit dual-write: preserve legacy continuity while writing instance-aware ownership truth.
-    const { packDefinitionId, cardTemplateIdByBaseCardId } = await ensurePackFoundations(tx, pulled);
-
-    const openingEvent = await tx.packOpeningEvent.create({
-      data: {
-        userId: user.id,
-        packDefinitionId,
-      },
-    });
-
-    for (const card of pulled) {
-      await tx.userCard.upsert({
-        where: { userId_baseCardId: { userId: user.id, baseCardId: card.baseCardId } },
-        create: { userId: user.id, baseCardId: card.baseCardId, quantity: 1 },
-        update: { quantity: { increment: 1 } },
-      });
-
-      const cardTemplateId = cardTemplateIdByBaseCardId.get(card.baseCardId);
-      if (cardTemplateId) {
-        await tx.ownedCardInstance.create({
-          data: {
-            userId: user.id,
-            cardTemplateId,
-            sourcePackOpeningEventId: openingEvent.id,
-          },
-        });
-      }
-    }
-
-    return { ok: true as const };
-  });
-
-  if (!result.ok) {
-    return new NextResponse("Not enough points", { status: 400 });
+    return handleApiError(error, "Cannot open pack");
   }
-
-  return NextResponse.json({ pulledCards: pulled });
 }

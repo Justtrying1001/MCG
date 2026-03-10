@@ -26,17 +26,17 @@ This document describes the **active** architecture of the running product.
   - target ownership truth (`OwnedCardInstance`, `PackOpeningEvent`)
 - `/api/me` includes `coexistence.v2` because active profile/collection UI consumes it.
 
-## Current limitation (important)
-- Pack opening is **not yet** controlled-emission DB-native.
-- Current opening flow still starts from runtime weighted draws in `lib/cards.ts`, then persists outcomes.
-- Controlled emission migration scope is documented in `docs/mvp-controlled-emission-transformation.md`.
+## Acquisition runtime status (Phase D)
+- Authenticated pack opening (`/api/pack/open`) is now DB-native and uses controlled-emission supply from `CardTemplate.plannedSupply` / `issuedSupply`.
+- Runtime opening allocates from remaining template stock, increments `PackDefinition.openedPackCount`, writes `PackOpeningEvent` + `OwnedCardInstance`, and preserves temporary legacy dual-write (`PackOpening`, `UserCard`) for UI continuity.
+- Guest opening remains local/temporary and is not part of controlled-emission inventory.
 
 ## Phase B status (data-model alignment)
 - Prisma now carries controlled-emission preparation fields:
   - `CardTemplate.plannedSupply` / `CardTemplate.issuedSupply`
   - `PackDefinition.source` (`SALE`/`REWARD`)
   - `PackDefinition.plannedPackCount` / `openedPackCount` / `cardsPerPack`
-- These fields are intentionally scaffold-only at this stage; runtime opening logic is not cut over yet.
+- These fields were introduced as scaffold in Phase B and are now consumed by authenticated opening in Phase D.
 - Bootstrap script for Phase C data initialization: `prisma/seed-mvp-controlled-emission.mjs` (`npm run seed:mvp:controlled-emission`).
 
 ## Documentation policy
