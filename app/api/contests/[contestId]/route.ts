@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";

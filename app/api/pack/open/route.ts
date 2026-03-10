@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { getSessionUser } from "@/lib/auth";
 import { getBaseCards, openBasePack } from "@/lib/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
