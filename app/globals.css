@@ -1725,6 +1725,73 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-2);
 }
 
+.profile-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.profile-secondary-panel {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.88);
+  padding: 1rem 1.1rem;
+  margin-top: 1rem;
+}
+
+.profile-secondary-title {
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 0.75rem;
+}
+
+.profile-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.profile-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.65rem 0.8rem;
+}
+
+.profile-result-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.profile-result-sub {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.profile-result-rank {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.profile-guest-note {
+  margin-top: 1rem;
+  position: relative;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(216, 166, 62, 0.28);
+  background: rgba(216, 166, 62, 0.08);
+  padding: 0.75rem 0.8rem;
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+
 /* Progress bar */
 .progress-wrap {
   display: flex;
@@ -2071,6 +2138,7 @@ a { color: inherit; text-decoration: none; }
   .profile-banner       { padding: 1.2rem; }
   .profile-stats-grid   { grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 1.1rem; }
   .profile-stat-value   { font-size: 1.4rem; }
+  .profile-hub-grid     { grid-template-columns: 1fr; }
 
   /* Battle — sort tabs scrollable row */
   .pve-sort-tabs               { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; scrollbar-width: none; }
