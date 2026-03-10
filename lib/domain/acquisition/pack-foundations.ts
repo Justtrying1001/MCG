@@ -1,3 +1,7 @@
+// LEGACY TRANSITION MODULE (Phase F):
+// This helper remains for historical continuity/migration tooling only.
+// Authenticated pack opening runtime now uses `lib/domain/acquisition/open-pack.ts` with DB-native controlled emission.
+
 import type { EditionType, Prisma, RarityTier } from "@prisma/client";
 import type { BaseCard } from "@/types/cards";
 

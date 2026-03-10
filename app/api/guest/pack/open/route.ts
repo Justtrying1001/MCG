@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+// Guest mode intentionally remains local/session-scoped and outside controlled-emission DB inventory.
 import { getBaseCards, openBasePack } from "@/lib/cards";
 import { GAME_CONFIG } from "@/lib/game-config";
 import type { GuestState } from "@/lib/guest";

@@ -43,6 +43,16 @@ This document describes the **active** architecture of the running product.
 - These fields were introduced as scaffold in Phase B and are now consumed by authenticated opening in Phase D.
 - Bootstrap script for Phase C data initialization: `prisma/seed-mvp-controlled-emission.mjs` (`npm run seed:mvp:controlled-emission`).
 
+## Boundary clarification (Phase F)
+- **Active source-of-truth**
+  - Authenticated acquisition write path: `PackDefinition` stock + `CardTemplate` supply + `PackOpeningEvent` + `OwnedCardInstance`.
+  - Authenticated read path (`/api/me`, collection projection): instance-aware models first.
+- **Transitional compatibility**
+  - Legacy `UserCard` / `PackOpening` reads are lazy fallbacks only for historical accounts with no instance-aware rows.
+  - Legacy dual-write in authenticated opening is still kept temporarily for UI continuity and rollback safety.
+- **Legacy-adjacent local path**
+  - Guest pack opening and `lib/cards.ts` weighted draw remain local/session-scoped and are not part of controlled-emission inventory.
+
 ## Documentation policy
 - `docs/mcg-pivot-product-foundation.md` is product source-of-truth.
 - This file is implementation/runtime source-of-truth.
