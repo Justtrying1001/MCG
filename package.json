@@ -13,7 +13,9 @@
     "prisma:push": "prisma db push",
     "vercel-build": "prisma generate && prisma db push && next build",
     "prisma:push:reset": "prisma db push --force-reset",
-    "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs"
+    "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -28,6 +30,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "prisma": "^5.22.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^4.0.18"
   }
 }

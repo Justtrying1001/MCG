@@ -1,0 +1,172 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+const { getCardsMapMock, prismaTransactionMock } = vi.hoisted(() => ({
+  getCardsMapMock: vi.fn(),
+  prismaTransactionMock: vi.fn(),
+}));
+
+vi.mock("@/lib/cards", () => ({
+  getCardsMap: getCardsMapMock,
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    $transaction: prismaTransactionMock,
+  },
+}));
+
+import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
+
+type InMemoryState = {
+  user: { id: string; points: number; packsOpened: number };
+  pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number };
+  templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; metadata: { baseCardId: string } }>;
+  openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
+  ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
+  legacyOpenings: Array<{ userId: string; packType: string; cards: string[] }>;
+  legacyUserCard: Map<string, number>;
+};
+
+function createTx(state: InMemoryState) {
+  return {
+    packDefinition: {
+      findUnique: vi.fn(async ({ where }: any) => (where.code === state.pack.code ? state.pack : null)),
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        if (where.id === state.pack.id && where.isActive === true && state.pack.openedPackCount < where.openedPackCount.lt) {
+          state.pack.openedPackCount += data.openedPackCount.increment;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      }),
+    },
+    user: {
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        if (where.id === state.user.id && state.user.points >= where.points.gte) {
+          state.user.points -= data.points.decrement;
+          state.user.packsOpened += data.packsOpened.increment;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      }),
+    },
+    packOpeningEvent: {
+      create: vi.fn(async ({ data }: any) => {
+        const created = { id: `evt_${state.openingEvents.length + 1}`, ...data };
+        state.openingEvents.push(created);
+        return created;
+      }),
+    },
+    cardTemplate: {
+      findMany: vi.fn(async () => state.templates.map((t) => ({ id: t.id, plannedSupply: t.plannedSupply, issuedSupply: t.issuedSupply, metadata: t.metadata }))),
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        const row = state.templates.find((t) => t.id === where.id);
+        if (!row) return { count: 0 };
+        if (row.issuedSupply < where.issuedSupply.lt) {
+          row.issuedSupply += data.issuedSupply.increment;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      }),
+    },
+    ownedCardInstance: {
+      create: vi.fn(async ({ data }: any) => {
+        state.ownedInstances.push({ id: `oci_${state.ownedInstances.length + 1}`, ...data });
+      }),
+    },
+    userCard: {
+      upsert: vi.fn(async ({ where, create, update }: any) => {
+        const key = `${where.userId_baseCardId.userId}:${where.userId_baseCardId.baseCardId}`;
+        if (state.legacyUserCard.has(key)) {
+          state.legacyUserCard.set(key, (state.legacyUserCard.get(key) ?? 0) + update.quantity.increment);
+        } else {
+          state.legacyUserCard.set(key, create.quantity);
+        }
+      }),
+    },
+    packOpening: {
+      create: vi.fn(async ({ data }: any) => {
+        state.legacyOpenings.push({ userId: data.userId, packType: data.packType, cards: data.result.cards });
+      }),
+    },
+  };
+}
+
+function createState(overrides?: Partial<InMemoryState>): InMemoryState {
+  return {
+    user: { id: "u1", points: 500, packsOpened: 0 },
+    pack: { id: "p1", code: "mvp_sale_pack", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    templates: [
+      { id: "t1", plannedSupply: 100, issuedSupply: 0, metadata: { baseCardId: "base_dogecoin" } },
+      { id: "t2", plannedSupply: 100, issuedSupply: 0, metadata: { baseCardId: "base_shiba-inu" } },
+      { id: "t3", plannedSupply: 100, issuedSupply: 0, metadata: { baseCardId: "base_pepe" } },
+    ],
+    openingEvents: [],
+    ownedInstances: [],
+    legacyOpenings: [],
+    legacyUserCard: new Map(),
+    ...overrides,
+  };
+}
+
+describe("openSalePackMvpDbNative", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getCardsMapMock.mockReturnValue(
+      new Map([
+        ["base_dogecoin", { baseCardId: "base_dogecoin", name: "Dogecoin" }],
+        ["base_shiba-inu", { baseCardId: "base_shiba-inu", name: "Shiba Inu" }],
+        ["base_pepe", { baseCardId: "base_pepe", name: "Pepe" }],
+      ])
+    );
+  });
+
+  it("applies points debit, pack stock, event, instances, issued supply on successful open", async () => {
+    const state = createState();
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    const result = await openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 });
+
+    expect(result.pulledCards).toHaveLength(5);
+    expect(state.user.points).toBe(400);
+    expect(state.pack.openedPackCount).toBe(1);
+    expect(state.openingEvents).toHaveLength(1);
+    expect(state.ownedInstances).toHaveLength(5);
+    const totalIssued = state.templates.reduce((sum, t) => sum + t.issuedSupply, 0);
+    expect(totalIssued).toBe(5);
+    expect(state.templates.every((t) => t.issuedSupply <= t.plannedSupply)).toBe(true);
+  });
+
+  it("fails atomically when user has insufficient points", async () => {
+    const state = createState({ user: { id: "u1", points: 50, packsOpened: 0 } });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toBeInstanceOf(PackOpenRuntimeError);
+
+    expect(state.user.points).toBe(50);
+    expect(state.pack.openedPackCount).toBe(0);
+    expect(state.openingEvents).toHaveLength(0);
+    expect(state.ownedInstances).toHaveLength(0);
+    expect(state.templates.every((t) => t.issuedSupply === 0)).toBe(true);
+  });
+
+  it("keeps supply and pack invariants under parallel opens", async () => {
+    const state = createState({
+      user: { id: "u1", points: 1000, packsOpened: 0 },
+      pack: { id: "p1", code: "mvp_sale_pack", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 2, openedPackCount: 0 },
+      templates: [{ id: "t1", plannedSupply: 10, issuedSupply: 0, metadata: { baseCardId: "base_dogecoin" } }],
+    });
+
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    const results = await Promise.allSettled([
+      openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 }),
+      openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 }),
+      openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 }),
+    ]);
+
+    const fulfilledCount = results.filter((r) => r.status === "fulfilled").length;
+    expect(fulfilledCount).toBeLessThanOrEqual(2);
+    expect(state.pack.openedPackCount).toBeLessThanOrEqual(state.pack.plannedPackCount);
+    expect(state.templates[0].issuedSupply).toBeLessThanOrEqual(state.templates[0].plannedSupply);
+  });
+});

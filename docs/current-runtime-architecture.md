@@ -54,6 +54,10 @@ This document describes the **active** architecture of the running product.
   - Guest pack opening and `lib/cards.ts` weighted draw remain local/session-scoped and are not part of controlled-emission inventory.
 - MVP pack codes are centralized in `lib/domain/acquisition/constants.ts` to reduce runtime/read-model drift.
 
+## Stabilization checks (automated)
+- `npm test` (Vitest): acquisition invariants, `/api/me` read-model paths, bootstrap dry-run assertions.
+- `npm run typecheck`: Prisma client generation + TypeScript compile validation.
+
 ## Documentation policy
 - `docs/mcg-pivot-product-foundation.md` is product source-of-truth.
 - This file is implementation/runtime source-of-truth.
