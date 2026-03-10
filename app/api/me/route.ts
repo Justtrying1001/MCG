@@ -7,6 +7,7 @@ import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
 import { buildCollectionProjectionV2 } from "@/lib/domain/projections/collection";
 import { ensurePveDailyState, getNextPveResetAt } from "@/lib/pve/reset";
+import { buildProgressionSummariesV2 } from "@/lib/domain/progression/profile-summary";
 import type { UserSessionPayload } from "@/types/session";
 
 export async function GET() {
@@ -39,6 +40,12 @@ export async function GET() {
 
     const collectionProjection = await buildCollectionProjectionV2(sessionUser.id);
 
+    const progressionSummaries = await buildProgressionSummariesV2(
+      sessionUser.id,
+      user.points,
+      collectionProjection
+    );
+
     const response: UserSessionPayload = {
       ...payload,
       openingsCount,
@@ -49,6 +56,7 @@ export async function GET() {
       coexistence: {
         v2: {
           collectionProjection,
+          ...progressionSummaries,
         },
       },
     };

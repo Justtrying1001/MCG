@@ -1,6 +1,44 @@
 import type { BaseCard } from "@/types/cards";
 import type { CollectionProjectionV2 } from "@/lib/domain/projections/contracts";
 
+export type AccountProgressionSummaryV2 = {
+  level: number;
+  xp: number;
+  levelXpFloor: number;
+  levelXpCeil: number;
+  progressPct: number;
+  nextMilestoneLevel: number;
+  pointsBalance: number;
+};
+
+export type CollectionProgressionSummaryV2 = {
+  totalOwnedInstances: number;
+  ownedTemplateCount: number;
+  missingTemplateCount: number;
+  completionPct: number;
+  topRarityCode: string | null;
+  topEditionCode: string | null;
+};
+
+export type CompetitiveProgressionRecentResultV2 = {
+  contestId: string;
+  contestTitle: string;
+  rank: number;
+  score: number;
+  rankedAt: string;
+};
+
+export type CompetitiveProgressionSummaryV2 = {
+  contestsEntered: number;
+  activeEntries: number;
+  settledEntries: number;
+  contestsWon: number;
+  bestRank: number | null;
+  averageRank: number | null;
+  rating: number | null;
+  recentResults: CompetitiveProgressionRecentResultV2[];
+};
+
 /**
  * Phase 0 contract boundary:
  * - Keep legacy top-level fields stable for current UI.
@@ -17,6 +55,9 @@ export type MeCoexistenceEnvelope = {
      */
     v2?: {
       collectionProjection?: CollectionProjectionV2;
+      accountProgression?: AccountProgressionSummaryV2;
+      collectionProgression?: CollectionProgressionSummaryV2;
+      competitiveProgression?: CompetitiveProgressionSummaryV2;
     };
   };
 };
