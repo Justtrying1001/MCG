@@ -65,6 +65,8 @@ export type MeCoexistenceEnvelope = {
   };
 };
 
+// Legacy compatibility card collection shape (BaseCard path).
+// Authenticated MVP surfaces should consume coexistence.v2.mvpCollection.
 export type CollectionItem = {
   baseCardId: string;
   quantity: number;
@@ -83,7 +85,7 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
     points: number;
     packsOpened: number;
   };
-  collection: CollectionItem[];
+  collection: CollectionItem[]; // legacy compatibility payload kept for coexistence/migration
   openingsCount: number;
 };
 
@@ -99,7 +101,7 @@ export type GuestSessionPayload = {
     points: number;
     packsOpened: number;
   };
-  collection: CollectionItem[];
+  collection: CollectionItem[]; // legacy compatibility payload kept for coexistence/migration
   openingsCount: number;
 };
 

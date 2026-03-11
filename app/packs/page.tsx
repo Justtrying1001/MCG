@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useSession } from "@/components/useSession";
 import type { BaseCard, MvpCardView } from "@/types/cards";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
@@ -22,12 +22,13 @@ const ODDS = [
 
 export default function PacksPage() {
   const { me, refresh, updateGuestState } = useSession();
-  const [result, setResult] = useState<BaseCard[]>([]);
+  const [resultLegacy, setResultLegacy] = useState<BaseCard[]>([]);
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
 
+  const revealSize = me?.mode === "guest" ? resultLegacy.length : resultMvp.length;
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
   const revealedCount = revealed.filter(Boolean).length;
   const nextRevealIndex = revealed.findIndex((isRevealed) => !isRevealed);
@@ -37,7 +38,7 @@ export default function PacksPage() {
 
     setIsOpening(true);
     setOpeningPhase("tearing");
-    setResult([]);
+    setResultLegacy([]);
     setResultMvp([]);
     setRevealed([]);
 
@@ -62,22 +63,38 @@ export default function PacksPage() {
     }
 
     const payload = await res.json();
-    const pulled = payload.pulledCards as BaseCard[];
+
+    if (me.mode === "guest") {
+      const pulled = payload.pulledCards as BaseCard[];
+      setTimeout(() => {
+        setResultLegacy(pulled);
+        setResultMvp([]);
+        setRevealed(new Array(pulled.length).fill(false));
+        setOpeningPhase("revealing");
+        setIsOpening(false);
+      }, 1000);
+      updateGuestState(payload.state);
+      return;
+    }
+
     const pulledMvp = (payload.pulledCardsMvp ?? []) as MvpCardView[];
+    if (pulledMvp.length === 0) {
+      alert("Pack opened but MVP reveal payload is missing. Please refresh and retry.");
+      setIsOpening(false);
+      setOpeningPhase("idle");
+      await refresh();
+      return;
+    }
 
     setTimeout(() => {
-      setResult(pulled);
+      setResultLegacy([]);
       setResultMvp(pulledMvp);
-      setRevealed(new Array(pulled.length).fill(false));
+      setRevealed(new Array(pulledMvp.length).fill(false));
       setOpeningPhase("revealing");
       setIsOpening(false);
     }, 1000);
 
-    if (me.mode === "guest") {
-      updateGuestState(payload.state);
-    } else {
-      await refresh();
-    }
+    await refresh();
   };
 
   const handleReveal = (index: number) => {
@@ -86,13 +103,25 @@ export default function PacksPage() {
   };
 
   const closeReveal = () => {
-    setResult([]);
+    setResultLegacy([]);
     setResultMvp([]);
     setRevealed([]);
     setOpeningPhase("idle");
   };
 
-  const showMvpReveal = resultMvp.length === result.length && resultMvp.length > 0;
+  const revealCards = useMemo(() => {
+    if (me?.mode === "guest") {
+      return resultLegacy.map((card, index) => ({
+        key: `${card.baseCardId}_${index}`,
+        render: <CardFrame card={card} />,
+      }));
+    }
+
+    return resultMvp.map((card, index) => ({
+      key: `${card.templateId}_${index}`,
+      render: <MvpCardTile card={card} quantity={1} />,
+    }));
+  }, [me?.mode, resultLegacy, resultMvp]);
 
   return (
     <SiteShell>
@@ -112,12 +141,13 @@ export default function PacksPage() {
           {openingPhase === "tearing" && <p className="pack-opening-status">Foil tearing... cards incoming.</p>}
           {!me && <p className="pack-tip">Continue with X or start as guest to open packs.</p>}
           {me?.mode === "guest" && <p className="pack-tip">Guest mode is temporary. Progress is not persisted server-side.</p>}
+          {me?.mode === "user" && <p className="pack-tip">Authenticated reveal renders MVP DTO cards only.</p>}
         </div>
       </div>
 
-      <Modal title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - flip cards in order"} open={result.length > 0 && openingPhase === "revealing"} onClose={closeReveal}>
-        <div className="reveal-progress-wrap"><p className="reveal-progress-text">Revealed {revealedCount}/{result.length}</p><div className="reveal-progress-track"><div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(result.length, 1)) * 100}%` }} /></div>{!allRevealed && <p className="reveal-next-copy">Next card to flip: #{nextRevealIndex + 1}</p>}</div>
-        <div className="pack-reveal-grid">{result.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={`${card.baseCardId}_${index}`} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => handleReveal(index)} disabled={isCardRevealed || !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><Image src={versoImage} alt="Card back" className="reveal-slot-back-image" /><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front">{showMvpReveal ? <MvpCardTile card={resultMvp[index]} quantity={1} /> : <CardFrame card={card} />}</div></div></button>); })}</div>
+      <Modal title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - flip cards in order"} open={revealSize > 0 && openingPhase === "revealing"} onClose={closeReveal}>
+        <div className="reveal-progress-wrap"><p className="reveal-progress-text">Revealed {revealedCount}/{revealSize}</p><div className="reveal-progress-track"><div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(revealSize, 1)) * 100}%` }} /></div>{!allRevealed && <p className="reveal-next-copy">Next card to flip: #{nextRevealIndex + 1}</p>}</div>
+        <div className="pack-reveal-grid">{revealCards.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={card.key} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => handleReveal(index)} disabled={isCardRevealed || !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><Image src={versoImage} alt="Card back" className="reveal-slot-back-image" /><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front">{card.render}</div></div></button>); })}</div>
         {allRevealed && (<div className="reveal-complete-row"><p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p><Button onClick={closeReveal}>Done</Button></div>)}
       </Modal>
     </SiteShell>

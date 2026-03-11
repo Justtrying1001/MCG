@@ -11,49 +11,54 @@ export default function CollectionPage() {
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
 
-  const mvpCollection = me?.mode === "user" ? me.coexistence?.v2?.mvpCollection : undefined;
-  const useMvpCollection = me?.mode === "user" && Array.isArray(mvpCollection);
+  const isAuthUser = me?.mode === "user";
+  const mvpCollection = isAuthUser ? me.coexistence?.v2?.mvpCollection : undefined;
+  const useMvpCollection = isAuthUser && Array.isArray(mvpCollection);
 
   const factions = useMemo(() => {
     if (!me) return [];
-    if (useMvpCollection) {
-      return [...new Set((mvpCollection ?? []).map((x) => x.card.faction).filter(Boolean) as string[])].sort();
-    }
-    return [...new Set(me.collection.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
-  }, [me, mvpCollection, useMvpCollection]);
 
-  const legacyCards = useMemo(() => {
-    if (!me || useMvpCollection) return [];
-    return me.collection
-      .filter((item) => !faction || item.card.faction === faction)
-      .filter((item) =>
-        `${item.card.name} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
-      )
-      .sort((a, b) => (a.card.marketCapRank ?? 9999) - (b.card.marketCapRank ?? 9999));
-  }, [me, faction, search, useMvpCollection]);
+    if (isAuthUser) {
+      const source = mvpCollection ?? [];
+      return [...new Set(source.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
+    }
+
+    return [...new Set(me.collection.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
+  }, [isAuthUser, me, mvpCollection]);
 
   const mvpCards = useMemo(() => {
-    if (!useMvpCollection) return [];
+    if (!isAuthUser) return [];
+
     return (mvpCollection ?? [])
       .filter((item) => !faction || item.card.faction === faction)
       .filter((item) =>
         `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
       )
       .sort((a, b) => a.card.displayName.localeCompare(b.card.displayName));
-  }, [faction, mvpCollection, search, useMvpCollection]);
+  }, [faction, isAuthUser, mvpCollection, search]);
 
-  const totalCards = useMvpCollection
+  const guestCards = useMemo(() => {
+    if (!me || me.mode !== "guest") return [];
+
+    return me.collection
+      .filter((item) => !faction || item.card.faction === faction)
+      .filter((item) =>
+        `${item.card.name} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
+      )
+      .sort((a, b) => (a.card.marketCapRank ?? 9999) - (b.card.marketCapRank ?? 9999));
+  }, [me, faction, search]);
+
+  const totalCards = isAuthUser
     ? (mvpCollection ?? []).reduce((acc, x) => acc + x.instanceCount, 0)
     : me?.collection.reduce((acc, x) => acc + x.quantity, 0) ?? 0;
-  const uniqueCards = useMvpCollection ? (mvpCollection ?? []).length : me?.collection.length ?? 0;
-  const legendaryCount = useMvpCollection
+  const uniqueCards = isAuthUser ? (mvpCollection ?? []).length : me?.collection.length ?? 0;
+  const legendaryCount = isAuthUser
     ? (mvpCollection ?? []).filter((x) => x.card.rarity === "LEGENDARY").length
     : me?.collection.filter((x) => (x.card.marketCapRank ?? 9999) <= 10).length ?? 0;
-  const v2Projection = me?.mode === "user" ? me.coexistence?.v2?.collectionProjection : undefined;
+  const v2Projection = isAuthUser ? me.coexistence?.v2?.collectionProjection : undefined;
 
   return (
     <SiteShell>
-      {/* Page header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Collection</h1>
@@ -61,11 +66,10 @@ export default function CollectionPage() {
             Your complete card roster. Filter by faction, search by name, and audit your
             strongest cores before entering contests.
           </p>
-          {useMvpCollection ? <p className="contest-inline-note">MVP DTO mode enabled (`coexistence.v2.mvpCollection`).</p> : null}
+          {isAuthUser ? <p className="contest-inline-note">Auth collection runs on MVP DTO (`coexistence.v2.mvpCollection`).</p> : null}
         </div>
       </div>
 
-      {/* Stats strip */}
       {me && (
         <div className="collection-stats">
           <div className="stat-pill">
@@ -87,7 +91,6 @@ export default function CollectionPage() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="filters-bar">
         <input
           className="filter-input"
@@ -107,7 +110,6 @@ export default function CollectionPage() {
         </select>
       </div>
 
-      {/* Card grid */}
       {!me ? (
         <div className="empty-state">
           <div className="empty-state-icon">▦</div>
@@ -116,8 +118,17 @@ export default function CollectionPage() {
             Use X for persistent collection, or guest mode for temporary testing.
           </p>
         </div>
-      ) : useMvpCollection ? (
-        mvpCards.length > 0 ? (
+      ) : isAuthUser ? (
+        !useMvpCollection ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">⚠</div>
+            <p className="empty-state-title">MVP collection payload unavailable</p>
+            <p className="empty-state-desc">
+              Auth collection no longer falls back to legacy cards. Refresh your session and verify `/api/me` returns
+              `coexistence.v2.mvpCollection`.
+            </p>
+          </div>
+        ) : mvpCards.length > 0 ? (
           <div className="card-grid">
             {mvpCards.map((item) => (
               <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} />
@@ -136,9 +147,9 @@ export default function CollectionPage() {
             </p>
           </div>
         )
-      ) : legacyCards.length > 0 ? (
+      ) : guestCards.length > 0 ? (
         <div className="card-grid">
-          {legacyCards.map((item) => (
+          {guestCards.map((item) => (
             <CardFrame key={item.baseCardId} card={item.card} quantity={item.quantity} />
           ))}
         </div>
@@ -151,7 +162,7 @@ export default function CollectionPage() {
           <p className="empty-state-desc">
             {search || faction
               ? "Try adjusting your search or removing the faction filter."
-              : "Head to Packs and crack open your first booster to get started."}
+              : "Open a guest pack to start filling this temporary collection."}
           </p>
         </div>
       )}

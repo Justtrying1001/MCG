@@ -17,6 +17,10 @@ export async function POST() {
       packCost: GAME_CONFIG.PACK_COST,
     });
 
+    if (result.pulledCardsMvp.length === 0 || result.pulledCardsMvp.length !== result.pulledCards.length) {
+      throw new PackOpenRuntimeError("Invalid MVP pack payload", 500);
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof PackOpenRuntimeError) {

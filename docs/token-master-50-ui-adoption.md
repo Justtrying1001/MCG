@@ -64,3 +64,13 @@ Fixes applied:
 Net effect:
 - Auth reveal/collection paths are now MVP-first by payload availability, not by fragile legacy/session gates.
 - Legacy card rendering remains as compatibility fallback for guest and non-MVP payload paths.
+
+## 2026-03 legacy cleanup pass (auth MVP-only rendering)
+
+Additional cleanup in this pass:
+- `app/collection/page.tsx` now treats authenticated collection as **MVP-only**; it does not render legacy `CardFrame` for auth users anymore.
+- `app/packs/page.tsx` now treats authenticated reveal as **MVP-only** (`pulledCardsMvp`) and uses legacy render strictly for guest path.
+- `/api/pack/open` now validates that `pulledCardsMvp` exists and matches pull cardinality before returning success.
+
+Compatibility still retained:
+- `CardFrame` and legacy payload remain for guest-only route and temporary compatibility (`pulledCards`, `collection`).

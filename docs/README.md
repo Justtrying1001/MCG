@@ -11,6 +11,7 @@
 - `token-master-50-adoption-plan.md` — concrete replacement/adoption plan to move seed and runtime toward token-master-first flows.
 - `token-master-50-runtime-adoption.md` — concrete runtime/read-model migration status for token-master-first card identity and DTO adoption.
 - `token-master-50-ui-adoption.md` — UI migration status for consuming `MvpCardView`/`MvpCollectionItem` on auth MVP surfaces.
+- `cards-legacy-removal-status.md` — removal/replacement status of legacy card paths (what is removed, replaced, guest-only, or compat-only).
 
 ## Historical / contextual docs (read with caution)
 
