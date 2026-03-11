@@ -8,6 +8,7 @@ import { useSession } from "@/components/useSession";
 import type { BaseCard } from "@/types/cards";
 import Image from "next/image";
 import { useState } from "react";
+import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
 const ODDS = [
@@ -93,7 +94,10 @@ export default function PacksPage() {
         <div className="pack-info"><div><p className="pack-info-title">Genesis Booster</p><p className="pack-info-desc">A sealed Series-1 MCG product containing 5 cards drawn from the complete base pool with weighted rarity distribution.</p></div><div className="pack-odds"><p className="pack-odds-label">Drop rates</p>{ODDS.map((o) => (<div key={o.label} className="pack-odds-row"><span className="pack-odds-rarity" style={{ color: o.color }}>{o.label}</span><span className="pack-odds-pct">{o.pct}</span></div>))}</div></div>
 
         <div className="pack-center">
-          <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>{/* visual unchanged */}<div className="pack-top-crimp" /><div className="pack-bottom-crimp" /><div className="pack-side-seam pack-side-seam-left" /><div className="pack-side-seam pack-side-seam-right" /><div className="pack-border-bevel" /><div className="pack-front-panel" /><div className="pack-top-lip" /><div className="pack-bottom-lip" /><div className="pack-material-grain" /><div className="pack-glint" /><div className="pack-open-flash" /><div className="pack-visual-inner"><div className="pack-zone pack-zone-header"><span className="pack-brand-lockup">MCG</span><span className="pack-visual-edition">GENESIS SET · SERIES 01</span><span className="pack-booster-line">SEALED TRADING CARD BOOSTER</span></div><div className="pack-zone pack-zone-title"><span className="pack-visual-name">GENESIS</span><span className="pack-visual-type">COLLECTOR BOOSTER PACK</span></div><div className="pack-content-band"><span>5 Cards</span><span>Base Pull</span><span>Factory Sealed</span></div><div className="pack-art-field"><div className="pack-art-core" /><div className="pack-art-ring" /><div className="pack-art-lines" /></div><div className="pack-footer-strip"><span>Official MCG product</span><span>1st Edition</span><span>Crypto collectible</span></div></div></div>
+          <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>
+            <Image src={officialPackImage} alt="Official MCG booster pack" className="pack-visual-image" priority />
+            <div className="pack-open-flash" />
+          </div>
           <div className="pack-action-copy"><p className="pack-action-title">Genesis Booster — Standard pull</p><p className="pack-action-desc">Open one pack now and reveal all 5 cards manually, one at a time.</p></div>
 
           <Button onClick={() => void openPack()} disabled={!me || isOpening || openingPhase === "tearing"} className="btn-lg">{openingPhase === "tearing" ? "Breaking seal..." : isOpening ? "Preparing reveal..." : "Open pack"}</Button>
