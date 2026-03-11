@@ -22,6 +22,7 @@ type SubmissionRow = {
 };
 
 const FILTERS: Array<"ALL" | SubmissionStatus> = ["ALL", "SUBMITTED", "APPROVED", "REJECTED"];
+const REJECT_REASON_OPTIONS = ["PROOF_NOT_VALID", "OUT_OF_SCOPE", "DUPLICATE_SUBMISSION", "MISSING_REQUIREMENTS"];
 
 export default function AdminQuestSubmissionsPage() {
   const [rows, setRows] = useState<SubmissionRow[]>([]);
@@ -29,6 +30,7 @@ export default function AdminQuestSubmissionsPage() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | SubmissionStatus>("SUBMITTED");
   const [actionMessage, setActionMessage] = useState("");
+  const [rejectReasonCode, setRejectReasonCode] = useState("PROOF_NOT_VALID");
 
   const loadRows = async () => {
     setLoading(true);
@@ -58,7 +60,10 @@ export default function AdminQuestSubmissionsPage() {
     const response = await fetch(`/api/internal/quests/submissions/${submissionId}/review`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({
+        action,
+        ...(action === "REJECT" ? { decisionCode: rejectReasonCode } : {}),
+      }),
     });
 
     if (!response.ok) {
@@ -67,7 +72,7 @@ export default function AdminQuestSubmissionsPage() {
       return;
     }
 
-    setActionMessage(`Submission ${action === "APPROVE" ? "approved" : "rejected"}.`);
+    setActionMessage(`Submission ${action === "APPROVE" ? "approved" : `rejected (${rejectReasonCode})`}.`);
     await loadRows();
   };
 
@@ -89,6 +94,13 @@ export default function AdminQuestSubmissionsPage() {
             {FILTERS.map((filter) => <option key={filter} value={filter}>{filter}</option>)}
           </select>
         </div>
+      </section>
+
+      <section className="contest-section" style={{ marginBottom: "1rem", display: "grid", gap: "0.4rem", maxWidth: 420 }}>
+        <span className="contest-inline-note">Reject reason code</span>
+        <select className="input" value={rejectReasonCode} onChange={(event) => setRejectReasonCode(event.target.value)}>
+          {REJECT_REASON_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
       </section>
 
       {actionMessage ? <p className="contest-inline-note">{actionMessage}</p> : null}
@@ -115,7 +127,7 @@ export default function AdminQuestSubmissionsPage() {
                 {row.status === "SUBMITTED" ? (
                   <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.6rem" }}>
                     <Button onClick={() => void review(row.id, "APPROVE")}>Approve</Button>
-                    <Button variant="ghost" onClick={() => void review(row.id, "REJECT")}>Reject</Button>
+                    <Button variant="ghost" onClick={() => void review(row.id, "REJECT")}>Reject ({rejectReasonCode})</Button>
                   </div>
                 ) : null}
               </div>
