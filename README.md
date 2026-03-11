@@ -80,8 +80,6 @@ Core active models include:
   - account identity + points + pack counters
 - `UserSession`
   - hashed session token + expiry
-- `UserCard` / `PackOpening`
-  - legacy-compatible collection and pack history persistence
 - Contest + progression domain models
   - `Contest`, `ContestEntry`, `ContestScore`, `ContestRanking`, `ContestSettlement`
   - `OwnedCardInstance`, `RewardGrant`
@@ -93,9 +91,13 @@ Core active models include:
 ## Documentation
 
 - Docs index: `docs/README.md`
-- Product source-of-truth: `docs/mcg-pivot-product-foundation.md`
-- Runtime architecture (current implementation): `docs/current-runtime-architecture.md`
-- Rewards/quests audit: `docs/reward-system-audit-2026-03.md`
+- Runtime implementation source-of-truth: `docs/current-runtime-architecture.md`
+- Final cards system source-of-truth: `docs/cards-system-source-of-truth.md`
+- Repo/docs consolidation source-of-truth: `docs/repo-and-docs-consolidation-audit-2026-03.md`
+- Product intent source-of-truth: `docs/mcg-pivot-product-foundation.md`
+- Card/template/pack data deep audit: `docs/cards-data-runtime-audit-2026-03.md`
+- Token master canonical spec: `docs/token-master-50-source-of-truth.md`
+- Historical context: `docs/repo-cartography-2026-03.md`, `docs/mvp-controlled-emission-transformation.md`, `docs/reward-system-audit-2026-03.md`
 
 ## API routes (active + explicit retired compatibility)
 

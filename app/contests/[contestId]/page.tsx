@@ -46,7 +46,6 @@ type LineupOption = {
   cardSetName: string;
   rarityCode: string;
   editionCode: string;
-  baseCardId: string | null;
   name: string;
 };
 

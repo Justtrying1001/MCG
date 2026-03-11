@@ -1,9 +1,8 @@
 import { Prisma, RewardLedgerReasonType } from "@prisma/client";
 
-import type { BaseCard } from "@/types/cards";
-import { getCardsMap } from "@/lib/cards";
+import type { MvpCardView } from "@/types/cards";
 import { prisma } from "@/lib/prisma";
-import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
+import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
 import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
@@ -14,7 +13,9 @@ type CardTemplateStockRow = {
   id: string;
   plannedSupply: number;
   issuedSupply: number;
-  metadata: Prisma.JsonValue | null;
+  rarity: { code: string };
+  edition: { code: string };
+  tokenProject: { slug: string };
 };
 
 function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
@@ -48,8 +49,7 @@ export class PackOpenRuntimeError extends Error {
   }
 }
 
-export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCards: BaseCard[] }> {
-  const cardsMap = getCardsMap();
+export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCardsMvp: MvpCardView[] }> {
 
   return prisma.$transaction(async (tx) => {
     const pack = await tx.packDefinition.findUnique({
@@ -106,8 +106,7 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       },
     });
 
-    const pulledCards: BaseCard[] = [];
-    const pulledBaseCardIds: string[] = [];
+    const pulledCardsMvp: MvpCardView[] = [];
 
     for (let slotIndex = 0; slotIndex < pack.cardsPerPack; slotIndex += 1) {
       let slotAwarded = false;
@@ -123,7 +122,9 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
             id: true,
             plannedSupply: true,
             issuedSupply: true,
-            metadata: true,
+            rarity: { select: { code: true } },
+            edition: { select: { code: true } },
+            tokenProject: { select: { slug: true } },
           },
         });
 
@@ -158,24 +159,22 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
           },
         });
 
-        const baseCardId = extractBaseCardIdFromTemplateMetadata(selected.metadata);
-        if (!baseCardId) {
-          throw new PackOpenRuntimeError("Selected card template is missing legacy baseCardId mapping", 500);
+        const token = findTokenMasterBySlug(selected.tokenProject.slug);
+        if (!token) {
+          throw new PackOpenRuntimeError(`Token master row not found for slug mapping: ${selected.tokenProject.slug}`, 500);
         }
 
-        const card = cardsMap.get(baseCardId);
-        if (!card) {
-          throw new PackOpenRuntimeError(`Base card not found for template mapping: ${baseCardId}`, 500);
-        }
-
-        pulledCards.push(card);
-        pulledBaseCardIds.push(baseCardId);
-
-        await tx.userCard.upsert({
-          where: { userId_baseCardId: { userId: params.userId, baseCardId } },
-          create: { userId: params.userId, baseCardId, quantity: 1 },
-          update: { quantity: { increment: 1 } },
-        });
+        pulledCardsMvp.push(
+          toMvpCardViewFromTokenMasterRow({
+            token,
+            templateId: selected.id,
+            rarityCode: selected.rarity.code,
+            editionCode: selected.edition.code,
+            plannedSupply: selected.plannedSupply,
+            issuedSupply: selected.issuedSupply + 1,
+            instanceCount: 1,
+          })
+        );
 
         slotAwarded = true;
         break;
@@ -186,14 +185,6 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       }
     }
 
-    await tx.packOpening.create({
-      data: {
-        userId: params.userId,
-        packType: pack.code,
-        result: { cards: pulledBaseCardIds },
-      },
-    });
-
-    return { pulledCards };
+    return { pulledCardsMvp };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
