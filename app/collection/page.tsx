@@ -63,9 +63,8 @@ export default function CollectionPage() {
           <h1 className="page-title">Collection</h1>
           <p className="page-subtitle">
             Your complete card roster. Filter by faction, search by name, and audit your
-            strongest cores before entering contests.
+            strongest cores with a premium TCG face-front card layout.
           </p>
-          {isAuthUser ? <p className="contest-inline-note">Auth collection runs on MVP DTO (`mvpCollection`).</p> : null}
         </div>
       </div>
 
