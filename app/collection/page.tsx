@@ -63,7 +63,7 @@ export default function CollectionPage() {
           <h1 className="page-title">Collection</h1>
           <p className="page-subtitle">
             Your complete card roster. Filter by faction, search by name, and audit your
-            strongest cores with a premium collectible card view.
+            strongest cores with a premium TCG face-front card layout.
           </p>
         </div>
       </div>

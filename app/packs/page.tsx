@@ -109,7 +109,7 @@ export default function PacksPage() {
 
   return (
     <SiteShell>
-      <div className="page-header"><div><h1 className="page-title">Pack opening</h1><p className="page-subtitle">Open a Genesis Booster through a full collectible ritual: break the seal, lay out 5 face-down cards, and reveal each pull in sequence.</p></div></div>
+      <div className="page-header"><div><h1 className="page-title">Pack opening</h1><p className="page-subtitle">Open a Genesis Booster through a full collectible ritual: break the seal, lay out 5 face-down cards, and reveal each premium card face in sequence.</p></div></div>
 
       <div className={`pack-stage${openingPhase === "tearing" ? " is-opening" : ""}`}>
         <div className="pack-info"><div><p className="pack-info-title">Genesis Booster</p><p className="pack-info-desc">A sealed Series-1 MCG product containing 5 cards drawn from the complete base pool with weighted rarity distribution.</p></div><div className="pack-odds"><p className="pack-odds-label">Drop rates</p>{ODDS.map((o) => (<div key={o.label} className="pack-odds-row"><span className="pack-odds-rarity" style={{ color: o.color }}>{o.label}</span><span className="pack-odds-pct">{o.pct}</span></div>))}</div></div>
