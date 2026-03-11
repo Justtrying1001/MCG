@@ -6,7 +6,9 @@ import { CardFrame } from "@/components/ui/CardFrame";
 import { Modal } from "@/components/ui/Modal";
 import { useSession } from "@/components/useSession";
 import type { BaseCard } from "@/types/cards";
+import Image from "next/image";
 import { useState } from "react";
+import versoImage from "../../verso.png";
 
 const ODDS = [
   { label: "Legendary", pct: "2%", color: "var(--rarity-legendary)" },
@@ -103,7 +105,7 @@ export default function PacksPage() {
 
       <Modal title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - flip cards in order"} open={result.length > 0 && openingPhase === "revealing"} onClose={closeReveal}>
         <div className="reveal-progress-wrap"><p className="reveal-progress-text">Revealed {revealedCount}/{result.length}</p><div className="reveal-progress-track"><div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(result.length, 1)) * 100}%` }} /></div>{!allRevealed && <p className="reveal-next-copy">Next card to flip: #{nextRevealIndex + 1}</p>}</div>
-        <div className="pack-reveal-grid">{result.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={`${card.baseCardId}_${index}`} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => handleReveal(index)} disabled={isCardRevealed || !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><span className="back-mark">◈</span><span className="back-brand">MCG GENESIS</span><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front"><CardFrame card={card} /></div></div></button>); })}</div>
+        <div className="pack-reveal-grid">{result.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={`${card.baseCardId}_${index}`} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => handleReveal(index)} disabled={isCardRevealed || !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><Image src={versoImage} alt="Card back" className="reveal-slot-back-image" /><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front"><CardFrame card={card} /></div></div></button>); })}</div>
         {allRevealed && (<div className="reveal-complete-row"><p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p><Button onClick={closeReveal}>Done</Button></div>)}
       </Modal>
     </SiteShell>
