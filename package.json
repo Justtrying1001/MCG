@@ -15,7 +15,9 @@
     "prisma:push:reset": "prisma db push --force-reset",
     "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:token-master-50": "node scripts/build-token-master-50.mjs",
+    "check:mvp:bootstrap": "node prisma/check-mvp-bootstrap.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

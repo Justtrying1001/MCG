@@ -9,8 +9,8 @@ export type CollectionProjectionV2 = {
   ownedTemplateCount: number;
   missingTemplateCount: number;
   completionPct: number;
-  byBaseCard: Array<{
-    baseCardId: string;
+  byTokenId: Array<{
+    tokenId: string;
     ownedCount: number;
     owned: boolean;
   }>;

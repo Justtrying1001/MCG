@@ -82,8 +82,6 @@ Core active models include:
   - account identity + points + pack counters
 - `UserSession`
   - hashed session token + expiry
-- `UserCard` / `PackOpening`
-  - legacy-compatible collection and pack history persistence
 - Contest + progression domain models
   - `Contest`, `ContestEntry`, `ContestScore`, `ContestRanking`, `ContestSettlement`
   - `OwnedCardInstance`, `RewardGrant`
@@ -95,9 +93,13 @@ Core active models include:
 ## Documentation
 
 - Docs index: `docs/README.md`
-- Product source-of-truth: `docs/mcg-pivot-product-foundation.md`
-- Runtime architecture (current implementation): `docs/current-runtime-architecture.md`
-- Rewards/quests audit: `docs/reward-system-audit-2026-03.md`
+- Runtime implementation source-of-truth: `docs/current-runtime-architecture.md`
+- Final cards system source-of-truth: `docs/cards-system-source-of-truth.md`
+- Repo/docs consolidation source-of-truth: `docs/repo-and-docs-consolidation-audit-2026-03.md`
+- Product intent source-of-truth: `docs/mcg-pivot-product-foundation.md`
+- Card/template/pack data deep audit: `docs/cards-data-runtime-audit-2026-03.md`
+- Token master canonical spec: `docs/token-master-50-source-of-truth.md`
+- Historical context: `docs/repo-cartography-2026-03.md`, `docs/mvp-controlled-emission-transformation.md`, `docs/reward-system-audit-2026-03.md`
 
 ## API routes (active + explicit retired compatibility)
 
@@ -124,6 +126,7 @@ Core active models include:
   - `POST /api/internal/contests/:contestId/settle` (now requires `planId` from settlement validate + `Idempotency-Key`)
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
+  - `POST /api/internal/rewards/pack-grant`
   - `GET /api/internal/users/search`
   - `GET /api/rewards/ledger`
   - `GET /api/quests`
@@ -220,8 +223,27 @@ Open http://localhost:3000.
 
 `npm run vercel-build` runs `prisma generate && prisma db push && next build`.
 
+Important: schema push/build does **not** seed controlled-emission inventory. On each new cloud database (or if pack/card tables were reset), run:
+
+```bash
+npm run seed:mvp:controlled-emission
+npm run check:mvp:bootstrap
+```
+
+`check:mvp:bootstrap` verifies that `MVP_SET_V1`, `mvp_sale_pack`, `mvp_reward_pack`, and active template supply are present.
+
 For destructive reset during local/dev migration work only, use:
 
 ```bash
 npm run prisma:push:reset
 ```
+
+
+## Reward packs (GENESIS Edition 1)
+
+Admin can now distribute `mvp_reward_pack` via `/admin/rewards` in two delivery modes:
+
+- `GRANT_ONLY`: consume reward-pack stock and log `RewardGrant(PACK)` without immediate opening.
+- `GRANT_AND_OPEN`: consume reward-pack stock, create `PackOpeningEvent`, allocate 5 cards from DB supply, create `OwnedCardInstance` rows, and log `RewardGrant(PACK)`.
+
+These operations are backed by `/api/internal/rewards/pack-grant`.

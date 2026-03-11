@@ -16,6 +16,7 @@ const MVP_PACKS = [
 
 const CARDS_PER_PACK = 5;
 const MVP_TOKEN_COUNT = 50;
+const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-50.json");
 
 const SUPPLY_MATRIX = {
   COMMON: { BASE: 520, REVERSE: 160, BRILLANTE: 60, HOLO: 20, FULL_ART: 6 },
@@ -41,31 +42,32 @@ const EDITION_SEED = [
   { code: "FULL_ART", weight: 5 },
 ];
 
-function loadMvpTokens() {
-  const jsonPath = path.join(process.cwd(), "mcg_base_cards.json");
-  const cards = JSON.parse(readFileSync(jsonPath, "utf8"));
+function loadMvpTokensFromMaster() {
+  const payload = JSON.parse(readFileSync(TOKEN_MASTER_PATH, "utf8"));
+  const rows = Array.isArray(payload?.tokens) ? payload.tokens : [];
 
-  const eligible = cards.filter((card) => card?.isEligible !== false);
+  if (rows.length !== MVP_TOKEN_COUNT) {
+    throw new Error(`Expected ${MVP_TOKEN_COUNT} tokens in token master, found ${rows.length}`);
+  }
 
-  const sorted = eligible.sort((a, b) => {
-    const rankA = Number.isFinite(a.marketCapRank) ? a.marketCapRank : Number.MAX_SAFE_INTEGER;
-    const rankB = Number.isFinite(b.marketCapRank) ? b.marketCapRank : Number.MAX_SAFE_INTEGER;
-    if (rankA !== rankB) return rankA - rankB;
-    return String(a.slug ?? a.name).localeCompare(String(b.slug ?? b.name));
-  });
+  const reviewRequired = rows.filter((row) => row?.manualReviewRequired);
+  if (reviewRequired.length > 0) {
+    throw new Error(`Token master contains ${reviewRequired.length} manual-review rows; resolve before seeding.`);
+  }
 
-  return sorted.slice(0, MVP_TOKEN_COUNT).map((card) => ({
-    slug: card.slug ?? card.coingeckoId ?? card.baseCardId,
-    displayName: card.name,
-    imageUrl: card.image ?? null,
-    baseCardId: card.baseCardId,
-    projectId: card.projectId ?? null,
-    coingeckoId: card.coingeckoId ?? null,
-    symbol: card.symbol ?? null,
-    marketCapRank: Number.isFinite(card.marketCapRank) ? card.marketCapRank : null,
-    projectTier: card.projectTier ?? null,
-    primaryChain: card.primaryChain ?? null,
-    faction: card.faction ?? null,
+  return rows.map((row) => ({
+    slug: row.slug ?? row.coingeckoId ?? row.baseCardId,
+    displayName: row.displayName,
+    imageUrl: row.imageUrl ?? null,
+    baseCardId: row.baseCardId,
+    projectId: row.projectId ?? null,
+    coingeckoId: row.coingeckoId ?? null,
+    symbol: row.symbol ?? null,
+    marketCapRank: Number.isFinite(row.marketCapRank) ? row.marketCapRank : null,
+    projectTier: row.projectTier ?? null,
+    primaryChain: row.primaryChain ?? null,
+    faction: row.faction ?? null,
+    isMvpEligible: row.isMvpEligible !== false,
   }));
 }
 
@@ -77,7 +79,7 @@ function supplyPerToken() {
 
 async function run() {
   const dryRun = process.argv.includes("--dry-run");
-  const mvpTokens = loadMvpTokens();
+  const mvpTokens = loadMvpTokensFromMaster();
 
   if (mvpTokens.length !== MVP_TOKEN_COUNT) {
     throw new Error(`Expected ${MVP_TOKEN_COUNT} tokens, found ${mvpTokens.length}`);
@@ -92,6 +94,7 @@ async function run() {
     console.log("[dry-run] planned supply per token:", perToken);
     console.log("[dry-run] total planned supply:", perToken * MVP_TOKEN_COUNT);
     console.log("[dry-run] first 5 tokens:", mvpTokens.slice(0, 5).map((x) => x.slug));
+    console.log("[dry-run] source:", TOKEN_MASTER_PATH);
     return;
   }
 
@@ -158,8 +161,9 @@ async function run() {
               issuedSupply: 0,
               metadata: {
                 source: "phase_c_mvp_controlled_emission_seed",
-                legacy: {
-                  baseCardId: token.baseCardId,
+                tokenIdentity: {
+                  tokenId: token.tokenId,
+                  slug: token.slug,
                   projectId: token.projectId,
                   coingeckoId: token.coingeckoId,
                 },
@@ -184,8 +188,9 @@ async function run() {
               issuedSupply: 0,
               metadata: {
                 source: "phase_c_mvp_controlled_emission_seed",
-                legacy: {
-                  baseCardId: token.baseCardId,
+                tokenIdentity: {
+                  tokenId: token.tokenId,
+                  slug: token.slug,
                   projectId: token.projectId,
                   coingeckoId: token.coingeckoId,
                 },
