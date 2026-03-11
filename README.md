@@ -124,6 +124,7 @@ Core active models include:
   - `POST /api/internal/contests/:contestId/settle`
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
+  - `POST /api/internal/rewards/pack-grant`
   - `GET /api/internal/users/search`
   - `GET /api/rewards/ledger`
   - `GET /api/quests`
@@ -196,8 +197,27 @@ Open http://localhost:3000.
 
 `npm run vercel-build` runs `prisma generate && prisma db push && next build`.
 
+Important: schema push/build does **not** seed controlled-emission inventory. On each new cloud database (or if pack/card tables were reset), run:
+
+```bash
+npm run seed:mvp:controlled-emission
+npm run check:mvp:bootstrap
+```
+
+`check:mvp:bootstrap` verifies that `MVP_SET_V1`, `mvp_sale_pack`, `mvp_reward_pack`, and active template supply are present.
+
 For destructive reset during local/dev migration work only, use:
 
 ```bash
 npm run prisma:push:reset
 ```
+
+
+## Reward packs (GENESIS Edition 1)
+
+Admin can now distribute `mvp_reward_pack` via `/admin/rewards` in two delivery modes:
+
+- `GRANT_ONLY`: consume reward-pack stock and log `RewardGrant(PACK)` without immediate opening.
+- `GRANT_AND_OPEN`: consume reward-pack stock, create `PackOpeningEvent`, allocate 5 cards from DB supply, create `OwnedCardInstance` rows, and log `RewardGrant(PACK)`.
+
+These operations are backed by `/api/internal/rewards/pack-grant`.

@@ -33,11 +33,11 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
+import { grantRewardPackMvpDbNative, openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 
 type InMemoryState = {
   user: { id: string; points: number; packsOpened: number };
-  pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number } | null;
+  pack: { id: string; code: string; source: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number } | null;
   templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; tokenProject: { slug: string }; rarity?: { code: string }; edition?: { code: string } }>;
   cardSet: { id: string; code: string } | null;
   openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
@@ -64,7 +64,12 @@ function createTx(state: InMemoryState) {
       }),
     },
     cardSet: {
-      findUnique: vi.fn(async ({ where }: any) => (state.cardSet && where.code === state.cardSet.code ? { id: state.cardSet.id } : null)),
+      findUnique: vi.fn(async ({ where }: any) => {
+        if (!state.cardSet) return null;
+        if (where.code && where.code === state.cardSet.code) return { id: state.cardSet.id };
+        if (where.id && where.id === state.cardSet.id) return { id: state.cardSet.id, code: state.cardSet.code, isActive: true };
+        return null;
+      }),
     },
     user: {
       updateMany: vi.fn(async ({ where, data }: any) => {
@@ -82,6 +87,10 @@ function createTx(state: InMemoryState) {
 
         throw new Error("User not found");
       }),
+    },
+
+    rewardGrant: {
+      create: vi.fn(async ({ data }: any) => ({ id: `rg_${state.ledgerEntries.length + 1}`, ...data })),
     },
     rewardLedgerEntry: {
       findUnique: vi.fn(async ({ where }: any) => state.ledgerEntries.find((entry) => entry.idempotencyKey === where.idempotencyKey) ?? null),
@@ -128,7 +137,7 @@ function createTx(state: InMemoryState) {
 function createState(overrides?: Partial<InMemoryState>): InMemoryState {
   return {
     user: { id: "u1", points: 500, packsOpened: 0 },
-    pack: { id: "p1", code: "mvp_sale_pack", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     cardSet: { id: "set1", code: "MVP_SET_V1" },
     templates: [
       { id: "t1", plannedSupply: 100, issuedSupply: 0, tokenProject: { slug: "dogecoin" } },
@@ -192,12 +201,12 @@ describe("openSalePackMvpDbNative", () => {
 
   it("throws explicit error when sale pack exists but is inactive", async () => {
     const state = createState({
-      pack: { id: "p1", code: "mvp_sale_pack", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+      pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     });
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
 
     await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
-      message: "MVP sale pack is not available: inactive pack definition",
+      message: "Pack mvp_sale_pack is not available: inactive pack definition",
       status: 503,
     });
   });
@@ -218,7 +227,18 @@ describe("openSalePackMvpDbNative", () => {
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
 
     await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
-      message: "MVP sale pack is not available: missing MVP card set",
+      message:
+        "MVP sale pack is not available: missing MVP card set (cloud bootstrap missing; run `npm run seed:mvp:controlled-emission`)",
+      status: 503,
+    });
+  });
+
+  it("fails with explicit bootstrap error when pack exists but templates are missing", async () => {
+    const state = createState({ templates: [] });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
+      message: "Pack mvp_sale_pack is not available: no active template supply remaining (cloud bootstrap missing or exhausted)",
       status: 503,
     });
   });
@@ -226,7 +246,7 @@ describe("openSalePackMvpDbNative", () => {
   it("keeps supply and pack invariants under parallel opens", async () => {
     const state = createState({
       user: { id: "u1", points: 1000, packsOpened: 0 },
-      pack: { id: "p1", code: "mvp_sale_pack", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 2, openedPackCount: 0 },
+      pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 2, openedPackCount: 0 },
       templates: [{ id: "t1", plannedSupply: 10, issuedSupply: 0, tokenProject: { slug: "dogecoin" } }],
     });
 
@@ -242,5 +262,62 @@ describe("openSalePackMvpDbNative", () => {
     expect(fulfilledCount).toBeLessThanOrEqual(2);
     expect(state.pack?.openedPackCount).toBeLessThanOrEqual(state.pack?.plannedPackCount ?? 0);
     expect(state.templates[0].issuedSupply).toBeLessThanOrEqual(state.templates[0].plannedSupply);
+  });
+});
+
+
+describe("grantRewardPackMvpDbNative", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    findTokenMasterBySlugMock.mockImplementation((slug: string) => ({
+      tokenId: `tok_${slug}`,
+      displayName: slug,
+      symbol: "SYM",
+      slug,
+      imageUrl: null,
+      primaryChain: null,
+      faction: null,
+    }));
+  });
+
+  it("grants and opens reward pack while consuming reward stock", async () => {
+    const state = createState({
+      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    });
+
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    const result = await grantRewardPackMvpDbNative({ userId: state.user.id, deliveryMode: "GRANT_AND_OPEN" });
+
+    expect(result.mode).toBe("GRANT_AND_OPEN");
+    expect(result.pulledCardsMvp).toHaveLength(5);
+    expect(state.pack?.openedPackCount).toBe(1);
+    expect(state.ownedInstances).toHaveLength(5);
+    expect(state.ledgerEntries).toHaveLength(0);
+  });
+
+  it("supports GRANT_ONLY reward delivery and still consumes reward stock", async () => {
+    const state = createState({
+      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    });
+
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    const result = await grantRewardPackMvpDbNative({ userId: state.user.id, deliveryMode: "GRANT_ONLY" });
+
+    expect(result.mode).toBe("GRANT_ONLY");
+    expect(result.pulledCardsMvp).toHaveLength(0);
+    expect(state.pack?.openedPackCount).toBe(1);
+    expect(state.ownedInstances).toHaveLength(0);
+  });
+
+  it("fails on inactive reward pack", async () => {
+    const state = createState({
+      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    });
+
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(grantRewardPackMvpDbNative({ userId: state.user.id, deliveryMode: "GRANT_AND_OPEN" })).rejects.toBeInstanceOf(PackOpenRuntimeError);
   });
 });

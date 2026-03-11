@@ -133,3 +133,14 @@ Removed active legacy payload dependence:
 
 Still present but non-runtime for cards flow:
 - `mcg_base_cards.json`, `mcg_projects.json`, `mcg_card_variants.json` (historical/provenance for migration tooling)
+
+
+## I) Reward pack distribution
+
+- Runtime pack codes:
+  - sale: `mvp_sale_pack`
+  - reward: `mvp_reward_pack`
+- Product labels (from token master editorial fields) map to GENESIS / Edition 1 set identity, while runtime uses `MVP_SET_V1` + pack codes.
+- Admin reward distribution endpoint: `POST /api/internal/rewards/pack-grant`
+  - `GRANT_ONLY`: consume reward stock + log `RewardGrant(PACK)`
+  - `GRANT_AND_OPEN`: consume reward stock + open immediately + create instances + log `RewardGrant(PACK)`
