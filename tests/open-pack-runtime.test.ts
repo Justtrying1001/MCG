@@ -37,8 +37,9 @@ import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acqu
 
 type InMemoryState = {
   user: { id: string; points: number; packsOpened: number };
-  pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number };
+  pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number } | null;
   templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; tokenProject: { slug: string }; rarity?: { code: string }; edition?: { code: string } }>;
+  cardSet: { id: string; code: string } | null;
   openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
   ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
   ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>;
@@ -47,14 +48,23 @@ type InMemoryState = {
 function createTx(state: InMemoryState) {
   return {
     packDefinition: {
-      findUnique: vi.fn(async ({ where }: any) => (where.code === state.pack.code ? state.pack : null)),
+      findUnique: vi.fn(async ({ where }: any) => (state.pack && where.code === state.pack.code ? state.pack : null)),
+      create: vi.fn(async ({ data }: any) => {
+        const created = { id: "p_created", ...data };
+        state.pack = created as any;
+        return created;
+      }),
       updateMany: vi.fn(async ({ where, data }: any) => {
+        if (!state.pack) return { count: 0 };
         if (where.id === state.pack.id && where.isActive === true && state.pack.openedPackCount < where.openedPackCount.lt) {
           state.pack.openedPackCount += data.openedPackCount.increment;
           return { count: 1 };
         }
         return { count: 0 };
       }),
+    },
+    cardSet: {
+      findUnique: vi.fn(async ({ where }: any) => (state.cardSet && where.code === state.cardSet.code ? { id: state.cardSet.id } : null)),
     },
     user: {
       updateMany: vi.fn(async ({ where, data }: any) => {
@@ -119,6 +129,7 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
   return {
     user: { id: "u1", points: 500, packsOpened: 0 },
     pack: { id: "p1", code: "mvp_sale_pack", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    cardSet: { id: "set1", code: "MVP_SET_V1" },
     templates: [
       { id: "t1", plannedSupply: 100, issuedSupply: 0, tokenProject: { slug: "dogecoin" } },
       { id: "t2", plannedSupply: 100, issuedSupply: 0, tokenProject: { slug: "shiba-inu" } },
@@ -153,7 +164,7 @@ describe("openSalePackMvpDbNative", () => {
 
     expect(result.pulledCardsMvp).toHaveLength(5);
     expect(state.user.points).toBe(400);
-    expect(state.pack.openedPackCount).toBe(1);
+    expect(state.pack?.openedPackCount).toBe(1);
     expect(state.openingEvents).toHaveLength(1);
     expect(state.ownedInstances).toHaveLength(5);
     expect(state.ledgerEntries).toHaveLength(1);
@@ -172,10 +183,44 @@ describe("openSalePackMvpDbNative", () => {
     await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toBeInstanceOf(PackOpenRuntimeError);
 
     expect(state.user.points).toBe(50);
-    expect(state.pack.openedPackCount).toBe(0);
+    expect(state.pack?.openedPackCount).toBe(0);
     expect(state.openingEvents).toHaveLength(0);
     expect(state.ownedInstances).toHaveLength(0);
     expect(state.templates.every((t) => t.issuedSupply === 0)).toBe(true);
+  });
+
+
+  it("throws explicit error when sale pack exists but is inactive", async () => {
+    const state = createState({
+      pack: { id: "p1", code: "mvp_sale_pack", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
+      message: "MVP sale pack is not available: inactive pack definition",
+      status: 503,
+    });
+  });
+
+  it("auto-creates the sale pack definition when missing but MVP card set exists", async () => {
+    const state = createState({ pack: null });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    const result = await openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 });
+
+    expect(result.pulledCardsMvp).toHaveLength(5);
+    expect(state.pack?.code).toBe("mvp_sale_pack");
+    expect(state.pack?.isActive).toBe(true);
+  });
+
+  it("fails when sale pack is missing and MVP card set cannot be found", async () => {
+    const state = createState({ pack: null, cardSet: null });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
+      message: "MVP sale pack is not available: missing MVP card set",
+      status: 503,
+    });
   });
 
   it("keeps supply and pack invariants under parallel opens", async () => {
@@ -195,7 +240,7 @@ describe("openSalePackMvpDbNative", () => {
 
     const fulfilledCount = results.filter((r) => r.status === "fulfilled").length;
     expect(fulfilledCount).toBeLessThanOrEqual(2);
-    expect(state.pack.openedPackCount).toBeLessThanOrEqual(state.pack.plannedPackCount);
+    expect(state.pack?.openedPackCount).toBeLessThanOrEqual(state.pack?.plannedPackCount ?? 0);
     expect(state.templates[0].issuedSupply).toBeLessThanOrEqual(state.templates[0].plannedSupply);
   });
 });
