@@ -26,6 +26,9 @@ model User {
   ownedCardInstances     OwnedCardInstance[]
   packOpeningEvents      PackOpeningEvent[]
   rewardGrants           RewardGrant[]
+  rewardLedgerEntries    RewardLedgerEntry[]
+  userQuestProgress      UserQuestProgress[]
+  questSubmissions       QuestSubmission[]
   contestEntries         ContestEntry[]
   contestScores          ContestScore[]
   contestRankings        ContestRanking[]
@@ -96,6 +99,48 @@ enum RewardType {
   POINTS
   PACK
   CARD_INSTANCE
+}
+
+enum RewardLedgerEntryType {
+  CREDIT
+  DEBIT
+}
+
+enum RewardLedgerReasonType {
+  WELCOME_REWARD
+  PACK_OPEN
+  QUEST_REWARD
+  CONTEST_REWARD
+  ADMIN_GRANT
+  ADJUSTMENT
+}
+
+enum QuestType {
+  WELCOME
+  SOCIAL_FOLLOW_X
+  SOCIAL_ENGAGEMENT_X
+  CONTEST_COUNT_MILESTONE
+  MANUAL
+}
+
+enum QuestValidationMode {
+  AUTO
+  SUBMIT
+  MANUAL_REVIEW
+}
+
+enum UserQuestStatus {
+  AVAILABLE
+  IN_PROGRESS
+  CLAIMABLE
+  COMPLETED
+  REJECTED
+}
+
+enum QuestSubmissionStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
 }
 
 enum ContestStatus {
@@ -290,6 +335,82 @@ model RewardGrant {
 
   @@index([userId])
   @@index([type])
+}
+
+model RewardLedgerEntry {
+  id             String                @id @default(cuid())
+  userId         String
+  entryType      RewardLedgerEntryType
+  amount         Int
+  reasonType     RewardLedgerReasonType
+  reasonRef      String?
+  idempotencyKey String?               @unique
+  metadata       Json?
+  createdAt      DateTime              @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([reasonType])
+}
+
+model QuestDefinition {
+  id             String              @id @default(cuid())
+  code           String              @unique
+  type           QuestType
+  title          String
+  description    String?
+  rewardPoints   Int                 @default(0)
+  validationMode QuestValidationMode
+  oneTime        Boolean             @default(true)
+  isActive       Boolean             @default(true)
+  startAt        DateTime?
+  endAt          DateTime?
+  config         Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  userProgressions UserQuestProgress[]
+  submissions      QuestSubmission[]
+}
+
+model UserQuestProgress {
+  id           String         @id @default(cuid())
+  userId       String
+  questId      String
+  status       UserQuestStatus @default(AVAILABLE)
+  progressValue Int           @default(0)
+  completedAt  DateTime?
+  claimedAt    DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest QuestDefinition @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questId])
+  @@index([userId])
+  @@index([questId])
+}
+
+model QuestSubmission {
+  id              String                @id @default(cuid())
+  userId          String
+  questId         String
+  status          QuestSubmissionStatus @default(SUBMITTED)
+  proofUrl        String?
+  note            String?
+  reviewedByAdmin String?
+  reviewedAt      DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest QuestDefinition @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([questId])
+  @@index([status])
 }
 
 model Contest {
