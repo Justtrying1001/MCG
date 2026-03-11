@@ -1,9 +1,9 @@
-import { Prisma, RewardLedgerReasonType } from "@prisma/client";
+import { PackSource, Prisma, RewardLedgerReasonType } from "@prisma/client";
 
 import type { MvpCardView } from "@/types/cards";
 import { prisma } from "@/lib/prisma";
 import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
-import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
+import { MVP_CARD_SET_CODE, MVP_SALE_PACK_CODE, MVP_SALE_PACK_DEFAULTS } from "@/lib/domain/acquisition/constants";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 
@@ -39,6 +39,37 @@ function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplate
   return weighted[weighted.length - 1]?.template ?? null;
 }
 
+
+async function resolveSalePackDefinition(tx: Prisma.TransactionClient) {
+  const existingPack = await tx.packDefinition.findUnique({
+    where: { code: MVP_SALE_PACK_CODE },
+  });
+
+  if (existingPack) return existingPack;
+
+  const mvpCardSet = await tx.cardSet.findUnique({
+    where: { code: MVP_CARD_SET_CODE },
+    select: { id: true },
+  });
+
+  if (!mvpCardSet) {
+    throw new PackOpenRuntimeError("MVP sale pack is not available: missing MVP card set", 503);
+  }
+
+  return tx.packDefinition.create({
+    data: {
+      code: MVP_SALE_PACK_CODE,
+      displayName: MVP_SALE_PACK_DEFAULTS.displayName,
+      cardSetId: mvpCardSet.id,
+      source: PackSource.SALE,
+      plannedPackCount: MVP_SALE_PACK_DEFAULTS.plannedPackCount,
+      openedPackCount: 0,
+      cardsPerPack: MVP_SALE_PACK_DEFAULTS.cardsPerPack,
+      isActive: true,
+    },
+  });
+}
+
 export class PackOpenRuntimeError extends Error {
   status: number;
 
@@ -52,12 +83,10 @@ export class PackOpenRuntimeError extends Error {
 export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCardsMvp: MvpCardView[] }> {
 
   return prisma.$transaction(async (tx) => {
-    const pack = await tx.packDefinition.findUnique({
-      where: { code: MVP_SALE_PACK_CODE },
-    });
+    const pack = await resolveSalePackDefinition(tx);
 
-    if (!pack || !pack.isActive) {
-      throw new PackOpenRuntimeError("MVP sale pack is not available", 503);
+    if (!pack.isActive) {
+      throw new PackOpenRuntimeError("MVP sale pack is not available: inactive pack definition", 503);
     }
 
     if (pack.cardsPerPack <= 0) {
