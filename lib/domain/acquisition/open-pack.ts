@@ -1,8 +1,9 @@
 import { Prisma, RewardLedgerReasonType } from "@prisma/client";
 
 import type { BaseCard } from "@/types/cards";
-import { getCardsMap } from "@/lib/cards";
+import type { MvpCardView } from "@/types/cards";
 import { prisma } from "@/lib/prisma";
+import { findTokenMasterByBaseCardId, toLegacyBaseCardFromTokenMaster, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
 import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
 import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
@@ -48,8 +49,7 @@ export class PackOpenRuntimeError extends Error {
   }
 }
 
-export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCards: BaseCard[] }> {
-  const cardsMap = getCardsMap();
+export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCards: BaseCard[]; pulledCardsMvp: MvpCardView[] }> {
 
   return prisma.$transaction(async (tx) => {
     const pack = await tx.packDefinition.findUnique({
@@ -106,7 +106,7 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       },
     });
 
-    const pulledCards: BaseCard[] = [];
+    const pulledCardsBaseCardIds: string[] = [];
     const pulledBaseCardIds: string[] = [];
 
     for (let slotIndex = 0; slotIndex < pack.cardsPerPack; slotIndex += 1) {
@@ -163,12 +163,12 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
           throw new PackOpenRuntimeError("Selected card template is missing legacy baseCardId mapping", 500);
         }
 
-        const card = cardsMap.get(baseCardId);
-        if (!card) {
-          throw new PackOpenRuntimeError(`Base card not found for template mapping: ${baseCardId}`, 500);
+        const token = findTokenMasterByBaseCardId(baseCardId);
+        if (!token) {
+          throw new PackOpenRuntimeError(`Token master row not found for template mapping: ${baseCardId}`, 500);
         }
 
-        pulledCards.push(card);
+        pulledCardsBaseCardIds.push(baseCardId);
         pulledBaseCardIds.push(baseCardId);
 
         await tx.userCard.upsert({
@@ -194,6 +194,54 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       },
     });
 
-    return { pulledCards };
+    const awardedInstances = await tx.ownedCardInstance.findMany({
+      where: { sourcePackOpeningEventId: openingEvent.id },
+      include: {
+        cardTemplate: {
+          include: {
+            rarity: { select: { code: true } },
+            edition: { select: { code: true } },
+          },
+        },
+      },
+      orderBy: [{ acquiredAt: "asc" }],
+    });
+
+    const pulledCardsMvp: MvpCardView[] = [];
+    const pulledCards: BaseCard[] = [];
+
+    for (const instance of awardedInstances) {
+      const baseCardId = extractBaseCardIdFromTemplateMetadata(instance.cardTemplate.metadata);
+      if (!baseCardId) continue;
+
+      const token = findTokenMasterByBaseCardId(baseCardId);
+      if (!token) continue;
+
+      pulledCards.push(toLegacyBaseCardFromTokenMaster(token));
+      pulledCardsMvp.push(
+        toMvpCardViewFromTokenMasterRow({
+          token,
+          templateId: instance.cardTemplateId,
+          rarityCode: instance.cardTemplate.rarity.code,
+          editionCode: instance.cardTemplate.edition.code,
+          plannedSupply: instance.cardTemplate.plannedSupply,
+          issuedSupply: instance.cardTemplate.issuedSupply,
+          instanceCount: 1,
+        })
+      );
+    }
+
+    if (pulledCards.length !== pulledCardsBaseCardIds.length) {
+      // Fallback guard: keep deterministic cardinality even if some rows are unexpectedly missing.
+      for (const baseCardId of pulledCardsBaseCardIds) {
+        if (pulledCards.some((row) => row.baseCardId === baseCardId)) continue;
+        const token = findTokenMasterByBaseCardId(baseCardId);
+        if (token) {
+          pulledCards.push(toLegacyBaseCardFromTokenMaster(token));
+        }
+      }
+    }
+
+    return { pulledCards, pulledCardsMvp };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }

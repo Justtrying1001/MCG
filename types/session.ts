@@ -1,4 +1,5 @@
 import type { BaseCard } from "@/types/cards";
+import type { MvpCollectionItem } from "@/types/cards";
 
 export type CollectionProjectionV2 = {
   totalOwnedInstances: number;
@@ -59,6 +60,7 @@ export type MeCoexistenceEnvelope = {
       accountProgression?: AccountProgressionSummaryV2;
       collectionProgression?: CollectionProgressionSummaryV2;
       competitiveProgression?: CompetitiveProgressionSummaryV2;
+      mvpCollection?: MvpCollectionItem[];
     };
   };
 };

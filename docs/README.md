@@ -9,6 +9,7 @@
 - `csv-50-canonical-migration-audit-2026-03.md` — CSV-50 to legacy-JSON mapping audit with field-level migration plan for canonical card data.
 - `token-master-50-source-of-truth.md` — specification for `data/token-master-50.json` canonical dataset and generation workflow.
 - `token-master-50-adoption-plan.md` — concrete replacement/adoption plan to move seed and runtime toward token-master-first flows.
+- `token-master-50-runtime-adoption.md` — concrete runtime/read-model migration status for token-master-first card identity and DTO adoption.
 
 ## Historical / contextual docs (read with caution)
 

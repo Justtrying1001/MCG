@@ -1,12 +1,32 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { getCardsMapMock, prismaTransactionMock } = vi.hoisted(() => ({
-  getCardsMapMock: vi.fn(),
+const { findTokenMasterByBaseCardIdMock, toLegacyBaseCardFromTokenMasterMock, toMvpCardViewFromTokenMasterRowMock, prismaTransactionMock } = vi.hoisted(() => ({
+  findTokenMasterByBaseCardIdMock: vi.fn(),
+  toLegacyBaseCardFromTokenMasterMock: vi.fn((token: any) => ({ baseCardId: token.baseCardId, name: token.displayName ?? token.name })),
+  toMvpCardViewFromTokenMasterRowMock: vi.fn((input: any) => ({
+    templateId: input.templateId,
+    tokenId: input.token?.tokenId ?? "tok",
+    displayName: input.token?.displayName ?? "Token",
+    symbol: input.token?.symbol ?? "SYM",
+    slug: input.token?.slug ?? "slug",
+    imageUrl: null,
+    primaryChain: null,
+    faction: null,
+    rarity: input.rarityCode,
+    edition: input.editionCode,
+    plannedSupply: input.plannedSupply,
+    issuedSupply: input.issuedSupply,
+    remainingSupply: Math.max((input.plannedSupply ?? 0) - (input.issuedSupply ?? 0), 0),
+    owned: true,
+    instanceCount: input.instanceCount ?? 1,
+  })),
   prismaTransactionMock: vi.fn(),
 }));
 
-vi.mock("@/lib/cards", () => ({
-  getCardsMap: getCardsMapMock,
+vi.mock("@/lib/domain/cards/token-master", () => ({
+  findTokenMasterByBaseCardId: findTokenMasterByBaseCardIdMock,
+  toLegacyBaseCardFromTokenMaster: toLegacyBaseCardFromTokenMasterMock,
+  toMvpCardViewFromTokenMasterRow: toMvpCardViewFromTokenMasterRowMock,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -22,7 +42,7 @@ type InMemoryState = {
   pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number };
   templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; metadata: { baseCardId: string } }>;
   openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
-  ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
+    ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
   legacyOpenings: Array<{ userId: string; packType: string; cards: string[] }>;
   legacyUserCard: Map<string, number>;
   ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>;
@@ -88,6 +108,23 @@ function createTx(state: InMemoryState) {
       create: vi.fn(async ({ data }: any) => {
         state.ownedInstances.push({ id: `oci_${state.ownedInstances.length + 1}`, ...data });
       }),
+      findMany: vi.fn(async ({ where }: any) =>
+        state.ownedInstances
+          .filter((row) => row.sourcePackOpeningEventId === where.sourcePackOpeningEventId)
+          .map((row) => {
+            const template = state.templates.find((t) => t.id === row.cardTemplateId)!;
+            return {
+              ...row,
+              cardTemplate: {
+                metadata: template.metadata,
+                plannedSupply: template.plannedSupply,
+                issuedSupply: template.issuedSupply,
+                rarity: { code: "COMMON" },
+                edition: { code: "BASE" },
+              },
+            };
+          })
+      ),
     },
     userCard: {
       upsert: vi.fn(async ({ where, create, update }: any) => {
@@ -128,13 +165,14 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
 describe("openSalePackMvpDbNative", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getCardsMapMock.mockReturnValue(
-      new Map([
-        ["base_dogecoin", { baseCardId: "base_dogecoin", name: "Dogecoin" }],
-        ["base_shiba-inu", { baseCardId: "base_shiba-inu", name: "Shiba Inu" }],
-        ["base_pepe", { baseCardId: "base_pepe", name: "Pepe" }],
-      ])
-    );
+    findTokenMasterByBaseCardIdMock.mockImplementation((baseCardId: string) => ({
+      tokenId: `tok_${baseCardId}`,
+      baseCardId,
+      displayName: baseCardId,
+      name: baseCardId,
+      symbol: "SYM",
+      slug: baseCardId,
+    }));
   });
 
   it("applies points debit, pack stock, event, instances, issued supply on successful open", async () => {

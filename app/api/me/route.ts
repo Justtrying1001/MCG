@@ -18,7 +18,18 @@ export async function GET() {
       prisma.user.findUnique({ where: { id: sessionUser.id } }),
       prisma.ownedCardInstance.findMany({
         where: { userId: sessionUser.id },
-        include: { cardTemplate: { select: { metadata: true } } },
+        include: {
+          cardTemplate: {
+            select: {
+              id: true,
+              metadata: true,
+              plannedSupply: true,
+              issuedSupply: true,
+              rarity: { select: { code: true } },
+              edition: { select: { code: true } },
+            },
+          },
+        },
       }),
       prisma.packOpeningEvent.count({ where: { userId: sessionUser.id } }),
     ]);
@@ -57,6 +68,7 @@ export async function GET() {
       coexistence: {
         v2: {
           collectionProjection,
+          mvpCollection: payload.mvpCollection,
           ...progressionSummaries,
         },
       },
