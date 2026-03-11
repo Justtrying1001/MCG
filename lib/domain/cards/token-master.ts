@@ -23,6 +23,10 @@ type TokenMasterRow = {
     cardTitle?: string;
     cardSubtitle?: string;
     flavorText?: string;
+    cardNumber?: string;
+    setCode?: string;
+    collectionCode?: string;
+    editionLabel?: string;
   };
   legacyVariantBridge?: {
     variantId?: string;
@@ -121,6 +125,11 @@ export function toMvpCardViewFromTokenMasterRow(input: {
     remainingSupply,
     owned: (input.instanceCount ?? 0) > 0,
     instanceCount: input.instanceCount ?? 0,
+    cardText: input.token.editorial?.flavorText ?? null,
+    cardNumber: input.token.editorial?.cardNumber ?? null,
+    setCode: input.token.editorial?.collectionCode ?? input.token.editorial?.setCode ?? null,
+    setEditionLabel: input.token.editorial?.editionLabel ?? null,
+    setOrder: input.token.setOrder ?? null,
   };
 }
 
