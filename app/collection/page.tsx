@@ -11,13 +11,13 @@ export default function CollectionPage() {
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
 
-  const mvpCollection = me?.mode === "user" ? me.coexistence?.v2?.mvpCollection ?? [] : [];
-  const useMvpCollection = me?.mode === "user" && mvpCollection.length > 0;
+  const mvpCollection = me?.mode === "user" ? me.coexistence?.v2?.mvpCollection : undefined;
+  const useMvpCollection = me?.mode === "user" && Array.isArray(mvpCollection);
 
   const factions = useMemo(() => {
     if (!me) return [];
     if (useMvpCollection) {
-      return [...new Set(mvpCollection.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
+      return [...new Set((mvpCollection ?? []).map((x) => x.card.faction).filter(Boolean) as string[])].sort();
     }
     return [...new Set(me.collection.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
   }, [me, mvpCollection, useMvpCollection]);
@@ -34,7 +34,7 @@ export default function CollectionPage() {
 
   const mvpCards = useMemo(() => {
     if (!useMvpCollection) return [];
-    return mvpCollection
+    return (mvpCollection ?? [])
       .filter((item) => !faction || item.card.faction === faction)
       .filter((item) =>
         `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
@@ -43,11 +43,11 @@ export default function CollectionPage() {
   }, [faction, mvpCollection, search, useMvpCollection]);
 
   const totalCards = useMvpCollection
-    ? mvpCollection.reduce((acc, x) => acc + x.instanceCount, 0)
+    ? (mvpCollection ?? []).reduce((acc, x) => acc + x.instanceCount, 0)
     : me?.collection.reduce((acc, x) => acc + x.quantity, 0) ?? 0;
-  const uniqueCards = useMvpCollection ? mvpCollection.length : me?.collection.length ?? 0;
+  const uniqueCards = useMvpCollection ? (mvpCollection ?? []).length : me?.collection.length ?? 0;
   const legendaryCount = useMvpCollection
-    ? mvpCollection.filter((x) => x.card.rarity === "LEGENDARY").length
+    ? (mvpCollection ?? []).filter((x) => x.card.rarity === "LEGENDARY").length
     : me?.collection.filter((x) => (x.card.marketCapRank ?? 9999) <= 10).length ?? 0;
   const v2Projection = me?.mode === "user" ? me.coexistence?.v2?.collectionProjection : undefined;
 

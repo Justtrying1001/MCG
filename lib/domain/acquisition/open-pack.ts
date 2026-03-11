@@ -16,6 +16,8 @@ type CardTemplateStockRow = {
   plannedSupply: number;
   issuedSupply: number;
   metadata: Prisma.JsonValue | null;
+  rarity: { code: string };
+  edition: { code: string };
 };
 
 function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
@@ -106,7 +108,8 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       },
     });
 
-    const pulledCardsBaseCardIds: string[] = [];
+    const pulledCards: BaseCard[] = [];
+    const pulledCardsMvp: MvpCardView[] = [];
     const pulledBaseCardIds: string[] = [];
 
     for (let slotIndex = 0; slotIndex < pack.cardsPerPack; slotIndex += 1) {
@@ -124,6 +127,8 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
             plannedSupply: true,
             issuedSupply: true,
             metadata: true,
+            rarity: { select: { code: true } },
+            edition: { select: { code: true } },
           },
         });
 
@@ -168,7 +173,18 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
           throw new PackOpenRuntimeError(`Token master row not found for template mapping: ${baseCardId}`, 500);
         }
 
-        pulledCardsBaseCardIds.push(baseCardId);
+        pulledCards.push(toLegacyBaseCardFromTokenMaster(token));
+        pulledCardsMvp.push(
+          toMvpCardViewFromTokenMasterRow({
+            token,
+            templateId: selected.id,
+            rarityCode: selected.rarity.code,
+            editionCode: selected.edition.code,
+            plannedSupply: selected.plannedSupply,
+            issuedSupply: selected.issuedSupply + 1,
+            instanceCount: 1,
+          })
+        );
         pulledBaseCardIds.push(baseCardId);
 
         await tx.userCard.upsert({
@@ -193,54 +209,6 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
         result: { cards: pulledBaseCardIds },
       },
     });
-
-    const awardedInstances = await tx.ownedCardInstance.findMany({
-      where: { sourcePackOpeningEventId: openingEvent.id },
-      include: {
-        cardTemplate: {
-          include: {
-            rarity: { select: { code: true } },
-            edition: { select: { code: true } },
-          },
-        },
-      },
-      orderBy: [{ acquiredAt: "asc" }],
-    });
-
-    const pulledCardsMvp: MvpCardView[] = [];
-    const pulledCards: BaseCard[] = [];
-
-    for (const instance of awardedInstances) {
-      const baseCardId = extractBaseCardIdFromTemplateMetadata(instance.cardTemplate.metadata);
-      if (!baseCardId) continue;
-
-      const token = findTokenMasterByBaseCardId(baseCardId);
-      if (!token) continue;
-
-      pulledCards.push(toLegacyBaseCardFromTokenMaster(token));
-      pulledCardsMvp.push(
-        toMvpCardViewFromTokenMasterRow({
-          token,
-          templateId: instance.cardTemplateId,
-          rarityCode: instance.cardTemplate.rarity.code,
-          editionCode: instance.cardTemplate.edition.code,
-          plannedSupply: instance.cardTemplate.plannedSupply,
-          issuedSupply: instance.cardTemplate.issuedSupply,
-          instanceCount: 1,
-        })
-      );
-    }
-
-    if (pulledCards.length !== pulledCardsBaseCardIds.length) {
-      // Fallback guard: keep deterministic cardinality even if some rows are unexpectedly missing.
-      for (const baseCardId of pulledCardsBaseCardIds) {
-        if (pulledCards.some((row) => row.baseCardId === baseCardId)) continue;
-        const token = findTokenMasterByBaseCardId(baseCardId);
-        if (token) {
-          pulledCards.push(toLegacyBaseCardFromTokenMaster(token));
-        }
-      }
-    }
 
     return { pulledCards, pulledCardsMvp };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

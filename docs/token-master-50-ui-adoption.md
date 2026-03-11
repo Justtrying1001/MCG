@@ -48,3 +48,19 @@ Related data bridges:
 2. Move additional auth card surfaces (contests lineup cards, detail cards) to `MvpCardView` where feasible.
 3. Introduce API contracts that explicitly distinguish MVP DTO vs legacy compatibility payloads.
 4. Reduce/retire `BaseCard` dependence once UI migration reaches full auth coverage.
+
+## 2026-03 Debug pass: why legacy visuals were still showing
+
+Root causes found in live branches:
+- `app/collection/page.tsx` used `mvpCollection.length > 0` to enable MVP rendering, so authenticated users with an empty MVP projection fell back to legacy `BaseCard` branch.
+- `app/packs/page.tsx` gated MVP reveal on `me.mode === "user"`; when session mode/state was temporarily unavailable after open, reveal could still take the legacy card path despite `pulledCardsMvp` being present.
+- `lib/domain/acquisition/open-pack.ts` was rebuilding reveal payload from a post-query of awarded instances; this made MVP reveal construction less direct than the actual template selection loop.
+
+Fixes applied:
+- Collection gating is now based on `Array.isArray(me.coexistence?.v2?.mvpCollection)` and keeps empty-state in MVP branch.
+- Pack reveal now prefers MVP rendering whenever `pulledCardsMvp` exists with matching cardinality to `pulledCards`.
+- Pack-open service now constructs `pulledCardsMvp` directly from selected templates (including rarity/edition/planned/issued supply), while still emitting legacy-compatible `pulledCards` for coexistence.
+
+Net effect:
+- Auth reveal/collection paths are now MVP-first by payload availability, not by fragile legacy/session gates.
+- Legacy card rendering remains as compatibility fallback for guest and non-MVP payload paths.

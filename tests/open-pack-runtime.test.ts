@@ -40,7 +40,7 @@ import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acqu
 type InMemoryState = {
   user: { id: string; points: number; packsOpened: number };
   pack: { id: string; code: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number };
-  templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; metadata: { baseCardId: string } }>;
+  templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; metadata: { baseCardId: string }; rarity?: { code: string }; edition?: { code: string } }>;
   openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
     ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
   legacyOpenings: Array<{ userId: string; packType: string; cards: string[] }>;
@@ -93,7 +93,14 @@ function createTx(state: InMemoryState) {
       }),
     },
     cardTemplate: {
-      findMany: vi.fn(async () => state.templates.map((t) => ({ id: t.id, plannedSupply: t.plannedSupply, issuedSupply: t.issuedSupply, metadata: t.metadata }))),
+      findMany: vi.fn(async () => state.templates.map((t) => ({
+        id: t.id,
+        plannedSupply: t.plannedSupply,
+        issuedSupply: t.issuedSupply,
+        metadata: t.metadata,
+        rarity: t.rarity ?? { code: "COMMON" },
+        edition: t.edition ?? { code: "BASE" },
+      }))),
       updateMany: vi.fn(async ({ where, data }: any) => {
         const row = state.templates.find((t) => t.id === where.id);
         if (!row) return { count: 0 };

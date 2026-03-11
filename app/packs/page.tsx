@@ -92,7 +92,7 @@ export default function PacksPage() {
     setOpeningPhase("idle");
   };
 
-  const showMvpReveal = me?.mode === "user" && resultMvp.length === result.length && resultMvp.length > 0;
+  const showMvpReveal = resultMvp.length === result.length && resultMvp.length > 0;
 
   return (
     <SiteShell>
