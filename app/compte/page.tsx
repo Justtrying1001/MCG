@@ -73,7 +73,9 @@ export default function AccountPage() {
               <span className="profile-stat-sub">
                 {collection
                   ? `Top rarity: ${collection.topRarityCode ?? "-"} · Top edition: ${collection.topEditionCode ?? "-"}`
-                  : `Legacy cards tracked: ${me.collection.length}`}
+                  : me.mode === "guest"
+                    ? `Guest MVP cards tracked: ${me.mvpCollection.length}`
+                    : "MVP collection projection pending"}
               </span>
             </section>
 

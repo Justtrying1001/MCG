@@ -2021,7 +2021,7 @@ a { color: inherit; text-decoration: none; }
 
 /* --------------------------------------------------------------------------
    MCG PREMIUM CARD SYSTEM — live rendering path
-   CardFrame.tsx + this CSS = the active card rendering engine
+   MvpCardTile.tsx + this CSS = active card rendering engine
    -------------------------------------------------------------------------- */
 
 /* ── VARIANT THEMES — aligned with MCG rarity material system ── */

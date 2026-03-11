@@ -32,10 +32,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
 
     const options = instances
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)
-      .map((instance) => {
-        const metadata = instance.cardTemplate.metadata as { baseCardId?: string } | null;
-
-        return {
+      .map((instance) => ({
           instanceId: instance.id,
           cardTemplateId: instance.cardTemplateId,
           lockState: instance.lockState,
@@ -44,10 +41,8 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           cardSetName: instance.cardTemplate.cardSet.displayName,
           rarityCode: instance.cardTemplate.rarity.code,
           editionCode: instance.cardTemplate.edition.code,
-          baseCardId: metadata?.baseCardId ?? null,
           name: instance.cardTemplate.name,
-        };
-      });
+      }));
 
     return NextResponse.json({ options });
   } catch (error) {

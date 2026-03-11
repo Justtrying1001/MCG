@@ -1,5 +1,7 @@
 # MCG Repo Cartography
 
+> ⚠️ Historical snapshot: this document contains pre-rewards/quests assumptions and is **not** the runtime source-of-truth. Use `docs/current-runtime-architecture.md` and `docs/repo-and-docs-consolidation-audit-2026-03.md` first.
+
 ## 1. Executive overview
 
 ### 1.1 What this repo is
