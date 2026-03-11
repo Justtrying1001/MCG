@@ -58,6 +58,7 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
 
   const [scoresText, setScoresText] = useState('[{"userId":"","score":0}]');
   const [scoreMessage, setScoreMessage] = useState("");
+  const [autoScoring, setAutoScoring] = useState(false);
 
   const [rewards, setRewards] = useState<RewardRow[]>([{ userId: "", type: "POINTS", amount: "", packDefinitionId: "" }]);
   const [settleMessage, setSettleMessage] = useState("");
@@ -134,6 +135,31 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
 
     const payload = (await response.json()) as { rankingsCount: number };
     setScoreMessage(`Scores submitted. Rankings count: ${payload.rankingsCount}.`);
+    await loadDetail();
+  };
+
+  const autoScoreContest = async () => {
+    setScoreMessage("");
+    setAutoScoring(true);
+
+    const response = await fetch(`/api/internal/contests/${params.contestId}/score/auto`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: false }),
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setScoreMessage(payload?.error ?? "Automatic scoring failed");
+      setAutoScoring(false);
+      return;
+    }
+
+    const payload = (await response.json()) as { rankingsCount: number; entriesScored?: number; tokensScored?: number };
+    setScoreMessage(
+      `Auto scoring done. rankings=${payload.rankingsCount}, entries=${payload.entriesScored ?? "n/a"}, tokens=${payload.tokensScored ?? "n/a"}.`
+    );
+    setAutoScoring(false);
     await loadDetail();
   };
 
@@ -237,10 +263,13 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
 
             <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
               <h3 className="contest-section-title">Score injection</h3>
-              <p className="contest-inline-note">Paste JSON array of score rows.</p>
+              <p className="contest-inline-note">Manual: paste JSON score rows. Automatic: run CoinGecko-based scoring over contest lockAt→endsAt.</p>
               <textarea className="input" rows={8} value={scoresText} onChange={(event) => setScoresText(event.target.value)} />
               <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
                 <Button onClick={() => void submitScores()}>Submit scores</Button>
+                <Button variant="ghost" onClick={() => void autoScoreContest()} disabled={autoScoring}>
+                  {autoScoring ? "Auto scoring…" : "Auto score (CoinGecko)"}
+                </Button>
                 {scoreMessage ? <span className="contest-inline-note">{scoreMessage}</span> : null}
               </div>
             </section>

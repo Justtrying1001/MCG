@@ -16,6 +16,7 @@ This document describes the **active** architecture of the running product.
   - player routes: `/api/contests/*`
   - internal ops routes: `/api/internal/contests/*`
   - runtime orchestrator: `lib/domain/contests/runtime.ts`
+  - scoring ops now support both manual score injection and CoinGecko-based automatic score generation (`/api/internal/contests/:contestId/score/auto`)
 - **Collection/progression projections**:
   - `lib/domain/projections/collection.ts`
   - `lib/domain/progression/profile-summary.ts`

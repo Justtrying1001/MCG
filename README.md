@@ -119,6 +119,7 @@ Core active models include:
   - `POST /api/internal/contests`
   - `POST /api/internal/contests/:contestId/status`
   - `POST /api/internal/contests/:contestId/score`
+  - `POST /api/internal/contests/:contestId/score/auto`
   - `POST /api/internal/contests/:contestId/settle`
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
@@ -158,6 +159,8 @@ Required:
 Optional (recommended for machine-to-machine/internal scripts):
 
 - `INTERNAL_ADMIN_KEY`
+- `COINGECKO_API_KEY` (optional; demo/pro key for contest auto scoring)
+- `COINGECKO_API_BASE_URL` (optional; defaults to `https://api.coingecko.com/api/v3`)
 
 Generate `ADMIN_PASSWORD_HASH` locally (replace `<PASSWORD>`):
 

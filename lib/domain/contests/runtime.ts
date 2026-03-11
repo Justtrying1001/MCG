@@ -7,6 +7,7 @@ import {
 } from "@prisma/client";
 
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
+import { extractCoinGeckoIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
 
 const DEFAULT_LINEUP_SIZE = 5;
 const ACTIVE_LOCK_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
@@ -29,6 +30,19 @@ export type RewardGrantInput = {
   packDefinitionId?: string;
 };
 
+type CoinGeckoRangePoint = [number, number];
+
+type CoinGeckoRangeResponse = {
+  prices?: CoinGeckoRangePoint[];
+  market_caps?: CoinGeckoRangePoint[];
+  total_volumes?: CoinGeckoRangePoint[];
+};
+
+type AutoScoreRow = {
+  userId: string;
+  score: number;
+};
+
 export class ContestRuntimeError extends Error {
   status: number;
 
@@ -43,6 +57,64 @@ function assertFiniteScore(score: number) {
   if (!Number.isFinite(score)) {
     throw new ContestRuntimeError("Score must be a finite number", 400);
   }
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function average(values: number[]) {
+  if (values.length === 0) return 0;
+  return values.reduce((acc, value) => acc + value, 0) / values.length;
+}
+
+function percentile(values: number[], value: number) {
+  if (values.length === 0) return 50;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = sorted.findIndex((x) => x >= value);
+  if (idx < 0) return 100;
+  return clamp((idx / Math.max(sorted.length - 1, 1)) * 100, 0, 100);
+}
+
+function getMaxDrawdownFraction(prices: number[]) {
+  if (prices.length < 2) return 0;
+
+  let peak = prices[0] ?? 0;
+  let maxDrawdown = 0;
+
+  for (const price of prices) {
+    if (price > peak) peak = price;
+    if (peak <= 0) continue;
+
+    const drawdown = (peak - price) / peak;
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown;
+    }
+  }
+
+  return clamp(maxDrawdown, 0, 1);
+}
+
+async function fetchCoinGeckoRange(params: { coingeckoId: string; fromSec: number; toSec: number; vsCurrency?: string }) {
+  const base = process.env.COINGECKO_API_BASE_URL?.trim() || "https://api.coingecko.com/api/v3";
+  const vsCurrency = params.vsCurrency ?? "usd";
+  const url = `${base}/coins/${encodeURIComponent(params.coingeckoId)}/market_chart/range?vs_currency=${encodeURIComponent(vsCurrency)}&from=${params.fromSec}&to=${params.toSec}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ...(process.env.COINGECKO_API_KEY ? { "x-cg-demo-api-key": process.env.COINGECKO_API_KEY } : {}),
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new ContestRuntimeError(`CoinGecko request failed for ${params.coingeckoId} (${response.status})`, 502);
+  }
+
+  const payload = (await response.json()) as CoinGeckoRangeResponse;
+  return payload;
 }
 
 function normalizeLineupIds(lineupInstanceIds: unknown): string[] {
@@ -287,6 +359,174 @@ export async function recordContestScoresMvp(params: { contestId: string; scores
 
     return { contestId: params.contestId, rankingsCount: scoredRows.length };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
+
+export async function autoScoreContestWithCoinGeckoMvp(params: { contestId: string; force?: boolean }) {
+  const now = new Date();
+
+  const contestPayload = await prismaSafe(async (tx) => {
+    const contest = await tx.contest.findUnique({
+      where: { id: params.contestId },
+      include: {
+        entries: {
+          include: {
+            rosterLocks: {
+              include: {
+                ownedCardInstance: {
+                  include: {
+                    cardTemplate: {
+                      select: { id: true, metadata: true, name: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!contest) {
+      throw new ContestRuntimeError("Contest not found", 404);
+    }
+
+    if (contest.status !== ContestStatus.LOCKED && contest.status !== ContestStatus.LIVE) {
+      throw new ContestRuntimeError("Contest must be LOCKED or LIVE for automatic scoring", 400);
+    }
+
+    if (!contest.lockAt || !contest.endsAt) {
+      throw new ContestRuntimeError("Contest must define lockAt and endsAt for automatic scoring", 400);
+    }
+
+    if (contest.endsAt <= contest.lockAt) {
+      throw new ContestRuntimeError("Contest endsAt must be after lockAt", 400);
+    }
+
+    if (!params.force && now < contest.endsAt) {
+      throw new ContestRuntimeError("Contest has not ended yet. Use force=true to override.", 400);
+    }
+
+    return contest;
+  });
+
+  const tokenByTemplateId = new Map<string, string>();
+
+  for (const entry of contestPayload.entries) {
+    for (const lock of entry.rosterLocks) {
+      const template = lock.ownedCardInstance.cardTemplate;
+      if (!tokenByTemplateId.has(template.id)) {
+        const coingeckoId = extractCoinGeckoIdFromTemplateMetadata(template.metadata as Prisma.JsonValue | null);
+        if (!coingeckoId) {
+          throw new ContestRuntimeError(
+            `Missing CoinGecko ID on template ${template.id} (${template.name})`,
+            422
+          );
+        }
+
+        tokenByTemplateId.set(template.id, coingeckoId);
+      }
+    }
+  }
+
+  const uniqueCoinGeckoIds = [...new Set(tokenByTemplateId.values())];
+
+  const marketByCoinId = new Map<
+    string,
+    { movementPct: number; avgVolume: number; avgMarketCap: number; maxDrawdownPct: number; score: number }
+  >();
+
+  const fromSec = Math.floor((contestPayload.lockAt?.getTime() ?? 0) / 1000);
+  const toSec = Math.floor((contestPayload.endsAt?.getTime() ?? 0) / 1000);
+
+  const rawRows: Array<{ id: string; movementPct: number; avgVolume: number; avgMarketCap: number; maxDrawdownPct: number }> = [];
+
+  for (const coinId of uniqueCoinGeckoIds) {
+    const payload = await fetchCoinGeckoRange({ coingeckoId: coinId, fromSec, toSec });
+    const prices = (payload.prices ?? []).map((row) => row[1]).filter((value) => Number.isFinite(value));
+    const volumes = (payload.total_volumes ?? []).map((row) => row[1]).filter((value) => Number.isFinite(value));
+    const marketCaps = (payload.market_caps ?? []).map((row) => row[1]).filter((value) => Number.isFinite(value));
+
+    if (prices.length < 2) {
+      throw new ContestRuntimeError(`Not enough price points from CoinGecko for ${coinId}`, 502);
+    }
+
+    const firstPrice = prices[0] as number;
+    const lastPrice = prices[prices.length - 1] as number;
+
+    const movementPct = firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0;
+    const avgVolume = average(volumes);
+    const avgMarketCap = average(marketCaps);
+    const maxDrawdownPct = getMaxDrawdownFraction(prices) * 100;
+
+    rawRows.push({ id: coinId, movementPct, avgVolume, avgMarketCap, maxDrawdownPct });
+  }
+
+  const movementValues = rawRows.map((row) => row.movementPct);
+  const volumeValues = rawRows.map((row) => row.avgVolume);
+  const marketCapValues = rawRows.map((row) => row.avgMarketCap);
+
+  for (const row of rawRows) {
+    const movementScore = clamp(50 + row.movementPct * 2, 0, 100);
+    const volumeScore = percentile(volumeValues, row.avgVolume);
+    const marketCapScore = percentile(marketCapValues, row.avgMarketCap);
+    const stabilityScore = clamp(100 - row.maxDrawdownPct, 0, 100);
+
+    const finalCardScore =
+      movementScore * 0.5 +
+      volumeScore * 0.2 +
+      marketCapScore * 0.2 +
+      stabilityScore * 0.1;
+
+    marketByCoinId.set(row.id, {
+      movementPct: row.movementPct,
+      avgVolume: row.avgVolume,
+      avgMarketCap: row.avgMarketCap,
+      maxDrawdownPct: row.maxDrawdownPct,
+      score: Number(finalCardScore.toFixed(4)),
+    });
+  }
+
+  const entryScores: AutoScoreRow[] = [];
+
+  for (const entry of contestPayload.entries) {
+    let total = 0;
+    for (const lock of entry.rosterLocks) {
+      const templateId = lock.ownedCardInstance.cardTemplate.id;
+      const coinId = tokenByTemplateId.get(templateId);
+      if (!coinId) {
+        throw new ContestRuntimeError(`Missing CoinGecko ID mapping for template ${templateId}`, 500);
+      }
+
+      const metrics = marketByCoinId.get(coinId);
+      if (!metrics) {
+        throw new ContestRuntimeError(`Missing market metrics for ${coinId}`, 500);
+      }
+
+      total += metrics.score;
+    }
+
+    entryScores.push({ userId: entry.userId, score: Number(total.toFixed(4)) });
+  }
+
+  const scored = await recordContestScoresMvp({ contestId: params.contestId, scores: entryScores });
+
+  return {
+    ...scored,
+    scoringWindow: {
+      from: contestPayload.lockAt?.toISOString() ?? null,
+      to: contestPayload.endsAt?.toISOString() ?? null,
+    },
+    tokensScored: uniqueCoinGeckoIds.length,
+    entriesScored: entryScores.length,
+    formula: {
+      movementWeight: 0.5,
+      volumeWeight: 0.2,
+      marketCapWeight: 0.2,
+      stabilityWeight: 0.1,
+      movementTransform: "score = clamp(50 + movementPct*2, 0, 100)",
+      stabilitySignal: "max drawdown over contest window",
+    },
+  };
 }
 
 export async function settleContestMvp(params: { contestId: string; rewards: RewardGrantInput[] }) {

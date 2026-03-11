@@ -7,6 +7,7 @@
 - `mvp-controlled-emission-transformation.md` — transformation source-of-truth (repo audit, current-vs-target mapping, docs-first migration plan).
 - `reward-system-audit-2026-03.md` — rewards/quests audit (Phase 1→4, ledger + quests + social submit/review).
 - `repo-cartography-2026-03.md` — exhaustive repo architecture and domain cartography.
+- `contest-scoring-coingecko-audit-2026-03.md` — contest automatic scoring feasibility + MVP strategy using CoinGecko IDs.
 
 ## Reading order for ongoing transformation
 
