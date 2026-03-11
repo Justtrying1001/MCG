@@ -124,8 +124,8 @@ export default function PacksPage() {
           <Button onClick={() => void openPack()} disabled={!me || isOpening || openingPhase === "tearing"} className="btn-lg">{openingPhase === "tearing" ? "Breaking seal..." : isOpening ? "Preparing reveal..." : "Open pack"}</Button>
           {openingPhase === "tearing" && <p className="pack-opening-status">Foil tearing... cards incoming.</p>}
           {!me && <p className="pack-tip">Continue with X or start as guest to open packs.</p>}
-          {me?.mode === "guest" && <p className="pack-tip">Guest mode is temporary and local, but uses MVP DTO cards.</p>}
-          {me?.mode === "user" && <p className="pack-tip">Authenticated reveal renders MVP DTO cards only.</p>}
+          {me?.mode === "guest" && <p className="pack-tip">Guest mode is temporary and local. Connect X for persistent ownership.</p>}
+          {me?.mode === "user" && <p className="pack-tip">Authenticated mode saves every revealed card directly to your collection.</p>}
         </div>
       </div>
 
