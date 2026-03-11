@@ -5,6 +5,7 @@ import {
   getChainAccent,
   getEditionTheme,
   getFactionAccent,
+  getRarityOrnament,
   getRarityTheme,
   prettyEditionLabel,
 } from "@/components/ui/mvpCardTheme";
@@ -14,12 +15,18 @@ type Props = {
   quantity?: number;
 };
 
-const SET_NAME = "GENESIS";
-const SET_EDITION = "Edition 1";
+const DEFAULT_SET_NAME = "GENESIS";
+const DEFAULT_SET_EDITION = "Edition 1";
 
 const padCardNumber = (value: number) => value.toString().padStart(3, "0");
 
 const getPrintedCardNumber = (card: MvpCardView) => {
+  if (card.cardNumber) return card.cardNumber;
+  if (card.setOrder && card.setOrder > 0) return `S01-${padCardNumber(card.setOrder)}`;
+  return null;
+};
+
+const getFallbackIndex = (card: MvpCardView) => {
   if (card.issuedSupply > 0) {
     return Math.min(card.issuedSupply, card.plannedSupply || card.issuedSupply);
   }
@@ -27,10 +34,11 @@ const getPrintedCardNumber = (card: MvpCardView) => {
   const digits = `${card.templateId}${card.tokenId}`.replace(/\D/g, "");
   if (!digits) return 1;
   const raw = Number.parseInt(digits.slice(-6), 10);
-  return (raw % Math.max(card.plannedSupply, 1)) + 1;
+  return (raw % Math.max(card.plannedSupply || 999, 1)) + 1;
 };
 
-const buildCardText = (card: MvpCardView, quantity: number) => {
+const getCardText = (card: MvpCardView, quantity: number) => {
+  if (card.cardText && card.cardText.trim().length > 0) return card.cardText;
   const faction = card.faction ?? "Unaligned";
   const chain = card.primaryChain ?? "Multichain";
   return `${card.symbol} channels ${faction} resonance on ${chain}. Owned copies: ${quantity}.`;
@@ -42,9 +50,14 @@ export function MvpCardTile({ card, quantity }: Props) {
   const frameTheme = getCardFrameTheme(card.rarity, card.edition);
   const factionColor = getFactionAccent(card.faction);
   const chainColor = getChainAccent(card.primaryChain);
+  const ornament = getRarityOrnament(card.rarity);
   const isFullArt = card.edition.toUpperCase() === "FULL_ART";
   const ownedCount = quantity ?? card.instanceCount;
-  const cardNumber = getPrintedCardNumber(card);
+  const canonicalCardNumber = getPrintedCardNumber(card);
+  const fallbackIndex = getFallbackIndex(card);
+
+  const setName = card.setCode ?? DEFAULT_SET_NAME;
+  const setEdition = card.setEditionLabel ?? DEFAULT_SET_EDITION;
 
   const cardStyle = {
     "--mvp-accent": rarityTheme.accent,
@@ -60,6 +73,7 @@ export function MvpCardTile({ card, quantity }: Props) {
     "--mvp-frame-inner": frameTheme.inner,
     "--mvp-divider": frameTheme.divider,
     "--mvp-footer": editionTheme.footer,
+    "--mvp-ornament": ornament,
   } as CSSProperties;
 
   return (
@@ -89,14 +103,15 @@ export function MvpCardTile({ card, quantity }: Props) {
       </div>
 
       <section className="mvp-zone mvp-card-textbox">
-        <p>{buildCardText(card, ownedCount)}</p>
+        <p>{getCardText(card, ownedCount)}</p>
       </section>
 
       <footer className="mvp-zone mvp-card-footer">
-        <span className="mvp-footer-pill">#{padCardNumber(cardNumber)}</span>
-        <span className="mvp-footer-pill">{SET_NAME}</span>
-        <span className="mvp-footer-pill">{SET_EDITION}</span>
-        <span className="mvp-footer-pill mvp-footer-pill-strong">{padCardNumber(cardNumber)} / {card.plannedSupply}</span>
+        <span className="mvp-footer-code">{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
+        <span className="mvp-footer-meta">{setName} · {setEdition}</span>
+        <span className="mvp-footer-supply">
+          {card.plannedSupply > 0 ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}` : "Unnumbered test mint"}
+        </span>
       </footer>
     </article>
   );

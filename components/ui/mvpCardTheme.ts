@@ -6,6 +6,7 @@ export type RarityTheme = {
   foil: string;
   frameTop: string;
   frameBottom: string;
+  ornament: string;
 };
 
 export type EditionTheme = {
@@ -31,6 +32,7 @@ const rarityAccentMap: Record<string, RarityTheme> = {
     foil: "linear-gradient(130deg, transparent 12%, rgba(240, 244, 255, 0.08) 47%, transparent 76%)",
     frameTop: "rgba(196, 201, 210, 0.35)",
     frameBottom: "rgba(93, 101, 112, 0.34)",
+    ornament: "rgba(202, 209, 220, 0.24)",
   },
   UNCOMMON: {
     accent: "#4FA39A",
@@ -40,6 +42,7 @@ const rarityAccentMap: Record<string, RarityTheme> = {
     foil: "linear-gradient(130deg, transparent 12%, rgba(94, 197, 184, 0.13) 47%, transparent 76%)",
     frameTop: "rgba(118, 212, 198, 0.36)",
     frameBottom: "rgba(53, 107, 102, 0.38)",
+    ornament: "rgba(106, 218, 202, 0.28)",
   },
   RARE: {
     accent: "#4D7EFF",
@@ -49,6 +52,7 @@ const rarityAccentMap: Record<string, RarityTheme> = {
     foil: "linear-gradient(130deg, transparent 12%, rgba(117, 164, 255, 0.18) 47%, transparent 76%)",
     frameTop: "rgba(135, 170, 255, 0.42)",
     frameBottom: "rgba(45, 73, 146, 0.42)",
+    ornament: "rgba(145, 179, 255, 0.32)",
   },
   EPIC: {
     accent: "#7D5DE4",
@@ -58,6 +62,7 @@ const rarityAccentMap: Record<string, RarityTheme> = {
     foil: "linear-gradient(130deg, transparent 12%, rgba(177, 130, 255, 0.2) 47%, transparent 76%)",
     frameTop: "rgba(186, 150, 255, 0.42)",
     frameBottom: "rgba(81, 56, 145, 0.44)",
+    ornament: "rgba(188, 151, 255, 0.34)",
   },
   LEGENDARY: {
     accent: "#D8A63E",
@@ -67,6 +72,7 @@ const rarityAccentMap: Record<string, RarityTheme> = {
     foil: "linear-gradient(130deg, transparent 12%, rgba(255, 222, 145, 0.24) 47%, transparent 76%)",
     frameTop: "rgba(255, 226, 157, 0.48)",
     frameBottom: "rgba(135, 98, 33, 0.48)",
+    ornament: "rgba(255, 225, 154, 0.36)",
   },
 };
 
@@ -149,3 +155,6 @@ export const getCardFrameTheme = (rarity: string, edition: string): CardFrameThe
 export const getFactionAccent = (faction: string | null) => factionAccent[normalize(faction)] ?? "#76808F";
 export const getChainAccent = (chain: string | null) => chainAccent[normalize(chain)] ?? "#5D708C";
 export const prettyEditionLabel = (edition: string) => getEditionTheme(edition).label;
+
+
+export const getRarityOrnament = (rarity: string) => getRarityTheme(rarity).ornament;

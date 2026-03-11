@@ -14,6 +14,11 @@ export type MvpCardView = {
   remainingSupply: number;
   owned: boolean;
   instanceCount: number;
+  cardText?: string | null;
+  cardNumber?: string | null;
+  setCode?: string | null;
+  setEditionLabel?: string | null;
+  setOrder?: number | null;
 };
 
 export type MvpCollectionItem = {
