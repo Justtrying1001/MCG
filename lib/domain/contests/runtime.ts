@@ -6,6 +6,8 @@ import {
   RewardType,
 } from "@prisma/client";
 
+import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
+
 const DEFAULT_LINEUP_SIZE = 5;
 const ACTIVE_LOCK_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
 
@@ -216,6 +218,8 @@ export async function enterContestMvp(params: {
       where: { id: { in: lineupInstanceIds }, userId: params.userId },
       data: { lockState: `CONTEST:${params.contestId}:ENTRY:${entry.id}` },
     });
+
+    await applyContestEntryQuestProgressionTx(tx, params.userId);
 
     return { contestId: params.contestId, entry };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

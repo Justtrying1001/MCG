@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession, getSessionCookieName, getSessionMaxAgeSeconds } from "@/lib/auth";
+import { upsertUserFromXProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { exchangeXAccessToken, fetchXProfile } from "@/lib/x-oauth";
 
 const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
@@ -84,19 +85,9 @@ export async function GET(req: Request) {
 
     let user;
     try {
-      user = await prisma.user.upsert({
-        where: { xUserId: profile.id },
-        update: {
-          xUsername: profile.username,
-          displayName: profile.name,
-          avatarUrl: profile.profile_image_url ?? null,
-        },
-        create: {
-          xUserId: profile.id,
-          xUsername: profile.username,
-          displayName: profile.name,
-          avatarUrl: profile.profile_image_url ?? null,
-        },
+      user = await prisma.$transaction(async (tx) => {
+        const { user: upsertedUser } = await upsertUserFromXProfileWithWelcome(tx, profile);
+        return upsertedUser;
       });
     } catch (error) {
       logPrismaCallbackError("user.upsert", error);

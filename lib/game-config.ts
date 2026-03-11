@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
-  STARTING_POINTS: 300,
-  PACK_COST: 100,
+  STARTING_POINTS: 500,
+  PACK_COST: 500,
   CARDS_PER_PACK: 5,
   PVE_DIFFICULTY: {
     easy: { enemyMult: 0.9, reward: 80 },

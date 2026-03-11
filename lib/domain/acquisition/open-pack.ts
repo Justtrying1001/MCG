@@ -1,10 +1,12 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, RewardLedgerReasonType } from "@prisma/client";
 
 import type { BaseCard } from "@/types/cards";
 import { getCardsMap } from "@/lib/cards";
 import { prisma } from "@/lib/prisma";
 import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
 import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
+import { LedgerConventions } from "@/lib/domain/rewards/conventions";
+import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 
@@ -62,20 +64,27 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
       throw new PackOpenRuntimeError("Pack configuration is invalid", 500);
     }
 
-    const spend = await tx.user.updateMany({
-      where: {
-        id: params.userId,
-        points: { gte: params.packCost },
-      },
-      data: {
-        points: { decrement: params.packCost },
-        packsOpened: { increment: 1 },
-      },
-    });
-
-    if (spend.count !== 1) {
-      throw new PackOpenRuntimeError("Not enough points", 400);
+    try {
+      await debitPointsWithLedger(tx, {
+        userId: params.userId,
+        amount: params.packCost,
+        reasonType: RewardLedgerReasonType.PACK_OPEN,
+        reasonRef: LedgerConventions.packOpen.reasonRef(pack.code),
+        metadata: {
+          packCode: pack.code,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "Not enough points") {
+        throw new PackOpenRuntimeError("Not enough points", 400);
+      }
+      throw error;
     }
+
+    await tx.user.update({
+      where: { id: params.userId },
+      data: { packsOpened: { increment: 1 } },
+    });
 
     const reservePack = await tx.packDefinition.updateMany({
       where: {

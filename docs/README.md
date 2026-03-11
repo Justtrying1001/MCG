@@ -5,6 +5,8 @@
 - `mcg-pivot-product-foundation.md` — product source-of-truth (vision, loop, pillars).
 - `current-runtime-architecture.md` — current runtime source-of-truth (what is actually running now).
 - `mvp-controlled-emission-transformation.md` — transformation source-of-truth (repo audit, current-vs-target mapping, docs-first migration plan).
+- `reward-system-audit-2026-03.md` — rewards/quests audit (Phase 1→4, ledger + quests + social submit/review).
+- `repo-cartography-2026-03.md` — exhaustive repo architecture and domain cartography.
 
 ## Reading order for ongoing transformation
 

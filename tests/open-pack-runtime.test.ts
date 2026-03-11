@@ -25,6 +25,7 @@ type InMemoryState = {
   ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
   legacyOpenings: Array<{ userId: string; packType: string; cards: string[] }>;
   legacyUserCard: Map<string, number>;
+  ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>;
 };
 
 function createTx(state: InMemoryState) {
@@ -43,10 +44,25 @@ function createTx(state: InMemoryState) {
       updateMany: vi.fn(async ({ where, data }: any) => {
         if (where.id === state.user.id && state.user.points >= where.points.gte) {
           state.user.points -= data.points.decrement;
-          state.user.packsOpened += data.packsOpened.increment;
           return { count: 1 };
         }
         return { count: 0 };
+      }),
+      update: vi.fn(async ({ where, data }: any) => {
+        if (where.id === state.user.id) {
+          state.user.packsOpened += data.packsOpened.increment;
+          return state.user;
+        }
+
+        throw new Error("User not found");
+      }),
+    },
+    rewardLedgerEntry: {
+      findUnique: vi.fn(async ({ where }: any) => state.ledgerEntries.find((entry) => entry.idempotencyKey === where.idempotencyKey) ?? null),
+      create: vi.fn(async ({ data }: any) => {
+        const created = { id: `led_${state.ledgerEntries.length + 1}`, ...data };
+        state.ledgerEntries.push(created);
+        return created;
       }),
     },
     packOpeningEvent: {
@@ -104,6 +120,7 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
     ownedInstances: [],
     legacyOpenings: [],
     legacyUserCard: new Map(),
+    ledgerEntries: [],
     ...overrides,
   };
 }
@@ -131,6 +148,10 @@ describe("openSalePackMvpDbNative", () => {
     expect(state.pack.openedPackCount).toBe(1);
     expect(state.openingEvents).toHaveLength(1);
     expect(state.ownedInstances).toHaveLength(5);
+    expect(state.ledgerEntries).toHaveLength(1);
+    expect(state.ledgerEntries[0].entryType).toBe("DEBIT");
+    expect(state.ledgerEntries[0].reasonType).toBe("PACK_OPEN");
+    expect(state.ledgerEntries[0].amount).toBe(100);
     const totalIssued = state.templates.reduce((sum, t) => sum + t.issuedSupply, 0);
     expect(totalIssued).toBe(5);
     expect(state.templates.every((t) => t.issuedSupply <= t.plannedSupply)).toBe(true);
