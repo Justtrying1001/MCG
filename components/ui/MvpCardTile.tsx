@@ -3,6 +3,7 @@ import type { MvpCardView } from "@/types/cards";
 import {
   getCardFrameTheme,
   getChainAccent,
+  getCardSizePreset,
   getEditionTheme,
   getEditionThemeKey,
   getFactionAccent,
@@ -54,6 +55,7 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
   const chainColor = getChainAccent(card.primaryChain);
   const ornament = getRarityOrnament(card.rarity);
   const editionKey = getEditionThemeKey(card.edition);
+  const sizePreset = getCardSizePreset(size);
   const isFullArt = editionKey === "full-art";
   const ownedCount = quantity ?? card.instanceCount;
   const canonicalCardNumber = getPrintedCardNumber(card);
@@ -73,7 +75,7 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
     "--mvp-edition-foil": editionTheme.foilOverlay,
     "--mvp-art-treatment": editionTheme.artTreatment,
     "--mvp-gloss-opacity": `${editionTheme.glossOpacity}`,
-    "--mvp-art-scale": `${editionTheme.artScale}`,
+    "--mvp-art-scale": `${editionTheme.artScale * sizePreset.artScaleBoost}`,
     "--mvp-edition-badge": editionTheme.badgeTint,
     "--mvp-faction": factionColor,
     "--mvp-chain": chainColor,
@@ -82,45 +84,54 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
     "--mvp-divider": frameTheme.divider,
     "--mvp-footer": editionTheme.footer,
     "--mvp-ornament": ornament,
+    "--mvp-card-min-width": sizePreset.minWidth,
+    "--mvp-card-max-width": sizePreset.maxWidth,
+    "--mvp-template-rows": sizePreset.templateRows,
+    "--mvp-template-gap": sizePreset.templateGap,
   } as CSSProperties;
 
   return (
-    <article className={`mvp-premium-card mvp-size-${size} mvp-edition-${editionKey}${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
+    <article className={`mvp-premium-card mvp-template-locked mvp-size-${size} mvp-edition-${editionKey}${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
+      <div className="mvp-card-layer mvp-card-bg-layer" />
+      <div className="mvp-card-layer mvp-card-frame-layer" />
+      <div className="mvp-card-layer mvp-card-inner-layer" />
       <div className="mvp-card-noise" />
       <div className="mvp-card-gloss" />
 
-      <header className="mvp-zone mvp-card-header">
-        <div className="mvp-card-name-wrap">
-          <h3 className="mvp-card-name">{card.displayName}</h3>
-          <p className="mvp-token-symbol">{card.symbol}</p>
-        </div>
-        <div className="mvp-header-badges">
-          <span className="mvp-chip mvp-chip-rarity">{card.rarity}</span>
-          <span className="mvp-chip mvp-chip-edition">{prettyEditionLabel(card.edition)}</span>
-        </div>
-      </header>
+      <div className="mvp-card-template" role="presentation">
+        <header className="mvp-zone mvp-card-header">
+          <div className="mvp-card-name-wrap">
+            <h3 className="mvp-card-name">{card.displayName}</h3>
+            <p className="mvp-token-symbol">{card.symbol}</p>
+          </div>
+          <div className="mvp-header-badges">
+            <span className="mvp-chip mvp-chip-rarity">{card.rarity}</span>
+            <span className="mvp-chip mvp-chip-edition">{prettyEditionLabel(card.edition)}</span>
+          </div>
+        </header>
 
-      <div className="mvp-zone mvp-card-art-shell">
-        <div className="mvp-card-art-glow" />
-        {card.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt={card.displayName} loading="lazy" className="mvp-card-art" />
-        ) : (
-          <div className="mvp-card-art-placeholder">MCG</div>
-        )}
+        <div className="mvp-zone mvp-card-art-shell">
+          <div className="mvp-card-art-glow" />
+          {card.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={card.imageUrl} alt={card.displayName} loading="lazy" className="mvp-card-art" />
+          ) : (
+            <div className="mvp-card-art-placeholder">MCG</div>
+          )}
+        </div>
+
+        <section className="mvp-zone mvp-card-textbox">
+          <p>{getCardText(card, ownedCount)}</p>
+        </section>
+
+        <footer className="mvp-zone mvp-card-footer">
+          <span className="mvp-footer-code">{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
+          <span className="mvp-footer-meta">{setName} · {setEdition}</span>
+          <span className="mvp-footer-supply">
+            {card.plannedSupply > 0 ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}` : "Unnumbered test mint"}
+          </span>
+        </footer>
       </div>
-
-      <section className="mvp-zone mvp-card-textbox">
-        <p>{getCardText(card, ownedCount)}</p>
-      </section>
-
-      <footer className="mvp-zone mvp-card-footer">
-        <span className="mvp-footer-code">{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
-        <span className="mvp-footer-meta">{setName} · {setEdition}</span>
-        <span className="mvp-footer-supply">
-          {card.plannedSupply > 0 ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}` : "Unnumbered test mint"}
-        </span>
-      </footer>
     </article>
   );
 }
