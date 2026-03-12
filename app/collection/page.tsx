@@ -2,8 +2,12 @@
 
 import { SiteShell } from "@/components/layout/SiteShell";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { MvpCardTileV2 } from "@/components/ui/MvpCardTileV2";
 import { useSession } from "@/components/useSession";
+import type { MvpCardView } from "@/types/cards";
 import { useMemo, useState } from "react";
+
+const USE_MVP_CARD_TILE_V2 = true;
 
 export default function CollectionPage() {
   const { me } = useSession();
@@ -53,8 +57,16 @@ export default function CollectionPage() {
   const uniqueCards = isAuthUser ? (mvpCollection ?? []).length : me?.mvpCollection.length ?? 0;
   const legendaryCount = isAuthUser
     ? (mvpCollection ?? []).filter((x) => x.card.rarity === "LEGENDARY").length
-     : me?.mvpCollection.filter((x) => x.card.rarity === "LEGENDARY").length ?? 0;
+    : me?.mvpCollection.filter((x) => x.card.rarity === "LEGENDARY").length ?? 0;
   const v2Projection = isAuthUser ? me.coexistence?.v2?.collectionProjection : undefined;
+
+  const renderCardTile = (templateId: string, card: MvpCardView, quantity: number) => {
+    if (USE_MVP_CARD_TILE_V2) {
+      return <MvpCardTileV2 key={templateId} card={card} quantity={quantity} variant="collection" />;
+    }
+
+    return <MvpCardTile key={templateId} card={card} quantity={quantity} variant="collection" />;
+  };
 
   return (
     <SiteShell>
@@ -128,9 +140,7 @@ export default function CollectionPage() {
           </div>
         ) : mvpCards.length > 0 ? (
           <div className="card-grid">
-            {mvpCards.map((item) => (
-              <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
-            ))}
+            {mvpCards.map((item) => renderCardTile(item.templateId, item.card, item.instanceCount))}
           </div>
         ) : (
           <div className="empty-state">
@@ -147,9 +157,7 @@ export default function CollectionPage() {
         )
       ) : guestCards.length > 0 ? (
         <div className="card-grid">
-          {guestCards.map((item) => (
-            <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
-          ))}
+          {guestCards.map((item) => renderCardTile(item.templateId, item.card, item.instanceCount))}
         </div>
       ) : (
         <div className="empty-state">

@@ -3,6 +3,7 @@
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { MvpCardTileV2 } from "@/components/ui/MvpCardTileV2";
 import { Modal } from "@/components/ui/Modal";
 import { useSession } from "@/components/useSession";
 import type { MvpCardView } from "@/types/cards";
@@ -26,6 +27,8 @@ type PackConfigPayload = {
   };
   slots: Array<{ index: number; type: string; label: string; rarityOdds: SlotOdds[] }>;
 };
+
+const USE_MVP_CARD_TILE_V2 = true;
 
 export default function PacksPage() {
   const { me, refresh, updateGuestState } = useSession();
@@ -129,7 +132,7 @@ export default function PacksPage() {
   const revealCards = useMemo(
     () => resultMvp.map((card, index) => ({
       key: `${card.templateId}_${index}`,
-      render: <MvpCardTile card={card} quantity={1} variant="reveal" />,
+      render: USE_MVP_CARD_TILE_V2 ? <MvpCardTileV2 card={card} quantity={1} variant="reveal" /> : <MvpCardTile card={card} quantity={1} variant="reveal" />,
     })),
     [resultMvp]
   );
