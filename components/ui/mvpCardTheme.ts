@@ -23,6 +23,9 @@ export type CardFrameTheme = {
   divider: string;
 };
 
+// Canonical collectible portrait ratio (~2.5" x 3.5").
+export const MVP_CARD_RATIO_CSS = "63 / 88";
+
 const rarityAccentMap: Record<string, RarityTheme> = {
   COMMON: {
     accent: "#9099A6",

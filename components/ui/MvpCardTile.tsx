@@ -13,6 +13,7 @@ import {
 type Props = {
   card: MvpCardView;
   quantity?: number;
+  size?: "collection" | "reveal";
 };
 
 const DEFAULT_SET_NAME = "GENESIS";
@@ -44,7 +45,7 @@ const getCardText = (card: MvpCardView, quantity: number) => {
   return `${card.symbol} channels ${faction} resonance on ${chain}. Owned copies: ${quantity}.`;
 };
 
-export function MvpCardTile({ card, quantity }: Props) {
+export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
   const frameTheme = getCardFrameTheme(card.rarity, card.edition);
@@ -77,7 +78,7 @@ export function MvpCardTile({ card, quantity }: Props) {
   } as CSSProperties;
 
   return (
-    <article className={`mvp-premium-card${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
+    <article className={`mvp-premium-card mvp-card-size-${size}${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
       <div className="mvp-card-noise" />
       <div className="mvp-card-gloss" />
 
