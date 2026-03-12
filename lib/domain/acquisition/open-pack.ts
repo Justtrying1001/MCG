@@ -9,6 +9,7 @@ import {
   MVP_SALE_PACK_CODE,
   MVP_SALE_PACK_DEFAULTS,
 } from "@/lib/domain/acquisition/constants";
+import { drawWeightForTemplate, slotTypeForIndex, type PackSlotType } from "@/lib/domain/acquisition/slot-weights";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 
@@ -36,21 +37,32 @@ type RuntimePackDefinition = {
 
 export type RewardPackDeliveryMode = "GRANT_ONLY" | "GRANT_AND_OPEN";
 
-function pickByRemainingSupply(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
+function pickBySlotWeight(candidates: CardTemplateStockRow[], slotType: PackSlotType): CardTemplateStockRow | null {
   const weighted = candidates
     .map((template) => {
       const remainingSupply = template.plannedSupply - template.issuedSupply;
-      return { template, remainingSupply };
+      const weight = drawWeightForTemplate({
+        slotType,
+        remainingSupply,
+        rarityCode: template.rarity.code,
+        editionCode: template.edition.code,
+      });
+      return { template, weight, remainingSupply };
     })
     .filter((row) => row.remainingSupply > 0);
 
   if (weighted.length === 0) return null;
 
-  const totalRemaining = weighted.reduce((sum, row) => sum + row.remainingSupply, 0);
-  let roll = Math.random() * totalRemaining;
+  const totalWeight = weighted.reduce((sum, row) => sum + row.weight, 0);
+  const useFallback = totalWeight <= 0;
+
+  const total = useFallback
+    ? weighted.reduce((sum, row) => sum + row.remainingSupply, 0)
+    : totalWeight;
+  let roll = Math.random() * total;
 
   for (const row of weighted) {
-    roll -= row.remainingSupply;
+    roll -= useFallback ? row.remainingSupply : row.weight;
     if (roll <= 0) return row.template;
   }
 
@@ -151,6 +163,7 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
   const pulledCardsMvp: MvpCardView[] = [];
 
   for (let slotIndex = 0; slotIndex < params.pack.cardsPerPack; slotIndex += 1) {
+    const slotType = slotTypeForIndex(slotIndex, params.pack.cardsPerPack);
     let slotAwarded = false;
 
     for (let attempt = 0; attempt < MAX_DRAW_ATTEMPTS_PER_CARD; attempt += 1) {
@@ -176,7 +189,7 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
         throw new PackOpenRuntimeError("No remaining template supply for this pack", 409);
       }
 
-      const selected = pickByRemainingSupply(candidates);
+      const selected = pickBySlotWeight(candidates, slotType);
       if (!selected) {
         throw new PackOpenRuntimeError("No remaining template supply for this pack", 409);
       }

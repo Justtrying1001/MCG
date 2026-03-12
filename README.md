@@ -3,6 +3,7 @@
 MCG now centers on:
 
 - Pack opening
+- Sale pack runtime info API (`GET /api/pack/config`) with stock remaining and dynamic slot-odds snapshot
 - Collection progression
 - Contest participation and rankings
 - Profile/progression hub
@@ -99,6 +100,7 @@ Core active models include:
 - Repo/docs consolidation source-of-truth: `docs/repo-and-docs-consolidation-audit-2026-03.md`
 - Product intent source-of-truth: `docs/mcg-pivot-product-foundation.md`
 - Card/template/pack data deep audit: `docs/cards-data-runtime-audit-2026-03.md`
+- Pack draw & economic balancing audit (slot-aware): `docs/pack-draw-supply-audit-2026-03.md`
 - Token master canonical spec: `docs/token-master-50-source-of-truth.md`
 - Historical context: `docs/repo-cartography-2026-03.md`, `docs/mvp-controlled-emission-transformation.md`, `docs/reward-system-audit-2026-03.md`
 
@@ -113,6 +115,7 @@ Core active models include:
   - `POST /api/admin/logout`
 - Pack / collection
   - `POST /api/pack/open`
+  - `GET /api/pack/config`
   - `POST /api/guest/pack/open`
 - Contests
   - `GET /api/contests`

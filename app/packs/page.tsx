@@ -8,16 +8,24 @@ import { useSession } from "@/components/useSession";
 import type { MvpCardView } from "@/types/cards";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { useEffect } from "react";
 import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
-const ODDS = [
-  { label: "Legendary", pct: "2%", color: "var(--rarity-legendary)" },
-  { label: "Epic", pct: "8%", color: "var(--rarity-epic)" },
-  { label: "Rare", pct: "20%", color: "var(--rarity-rare)" },
-  { label: "Uncommon", pct: "30%", color: "var(--rarity-uncommon)" },
-  { label: "Common", pct: "40%", color: "var(--rarity-common)" },
-];
+type SlotOdds = { rarityCode: string; pct: number };
+type PackConfigPayload = {
+  exists: boolean;
+  pack: null | {
+    code: string;
+    displayName: string;
+    cardsPerPack: number;
+    plannedPackCount: number;
+    openedPackCount: number;
+    remainingPackCount: number;
+    isActive: boolean;
+  };
+  slots: Array<{ index: number; type: string; label: string; rarityOdds: SlotOdds[] }>;
+};
 
 export default function PacksPage() {
   const { me, refresh, updateGuestState } = useSession();
@@ -25,6 +33,25 @@ export default function PacksPage() {
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
+  const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/pack/config")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (!active) return;
+        setPackConfig(payload as PackConfigPayload | null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setPackConfig(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const revealSize = resultMvp.length;
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
@@ -112,7 +139,7 @@ export default function PacksPage() {
       <div className="page-header"><div><h1 className="page-title">Pack opening</h1><p className="page-subtitle">Open a Genesis Booster through a full collectible ritual: break the seal, lay out 5 face-down cards, and reveal each premium card face in sequence.</p></div></div>
 
       <div className={`pack-stage${openingPhase === "tearing" ? " is-opening" : ""}`}>
-        <div className="pack-info"><div><p className="pack-info-title">Genesis Booster</p><p className="pack-info-desc">A sealed Series-1 MCG product containing 5 cards drawn from the complete base pool with weighted rarity distribution.</p></div><div className="pack-odds"><p className="pack-odds-label">Drop rates</p>{ODDS.map((o) => (<div key={o.label} className="pack-odds-row"><span className="pack-odds-rarity" style={{ color: o.color }}>{o.label}</span><span className="pack-odds-pct">{o.pct}</span></div>))}</div></div>
+        <div className="pack-info"><div><p className="pack-info-title">Genesis Booster</p><p className="pack-info-desc">Opening uses DB-controlled supply with slot-based weighting: 3 standard slots, 1 premium-edition slot, 1 hit slot.</p><p className="pack-tip">{packConfig?.pack ? `Sale packs remaining: ${packConfig.pack.remainingPackCount}/${packConfig.pack.plannedPackCount}` : "Pack stock is loaded from runtime when available."}</p></div><div className="pack-odds"><p className="pack-odds-label">Runtime slot odds (dynamic)</p>{packConfig?.slots?.map((slot) => (<div key={slot.index} style={{ marginBottom: 10 }}><p className="pack-odds-label">#{slot.index + 1} {slot.label}</p>{slot.rarityOdds.slice(0, 3).map((o) => (<div key={`${slot.index}_${o.rarityCode}`} className="pack-odds-row"><span className="pack-odds-rarity">{o.rarityCode}</span><span className="pack-odds-pct">{o.pct}%</span></div>))}</div>))}<p className="pack-tip">Odds evolve with remaining supply and are not fixed static rates.</p></div></div>
 
         <div className="pack-center">
           <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>
