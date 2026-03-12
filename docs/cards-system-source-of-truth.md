@@ -115,6 +115,9 @@ Legacy card frame rendering is removed from active cards flow.
 3. Validate with tests:
    - `npm run typecheck`
    - `npm test`
+4. Cloud bootstrap/remediation:
+   - `npm run bootstrap:mvp:cloud`
+
 
 ---
 
@@ -133,3 +136,17 @@ Removed active legacy payload dependence:
 
 Still present but non-runtime for cards flow:
 - `mcg_base_cards.json`, `mcg_projects.json`, `mcg_card_variants.json` (historical/provenance for migration tooling)
+
+
+## I) Reward pack distribution
+
+- Runtime pack codes:
+  - sale: `mvp_sale_pack`
+  - reward: `mvp_reward_pack`
+- Product labels (from token master editorial fields) map to GENESIS / Edition 1 set identity, while runtime uses `MVP_SET_V1` + pack codes.
+- Admin reward distribution endpoint: `POST /api/internal/rewards/pack-grant`
+  - `GRANT_ONLY`: consume reward stock + log `RewardGrant(PACK)`
+  - `GRANT_AND_OPEN`: consume reward stock + open immediately + create instances + log `RewardGrant(PACK)`
+
+- Cloud bootstrap command: `npm run bootstrap:mvp:cloud` (seed + strict check).
+- Seed upserts preserve live runtime counters on existing rows (`issuedSupply`, `openedPackCount`) to avoid resetting production inventory history.
