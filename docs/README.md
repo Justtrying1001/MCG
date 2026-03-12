@@ -4,6 +4,7 @@
 
 - `current-runtime-architecture.md` — runtime implementation truth (what is actually live now).
 - `cards-system-source-of-truth.md` — final cards source-of-truth reference (data, DB runtime, APIs, UI, seed/maintenance).
+- `mvp-cloud-bootstrap-runbook.md` — operational runbook for cloud bootstrap/remediation of MVP packs/cards data.
 - `mcg-pivot-product-foundation.md` — product intent/source-of-truth (vision, loop, pillars).
 - `repo-and-docs-consolidation-audit-2026-03.md` — consolidated repo+docs truth audit (implementation vs docs alignment, corrections, remaining debt).
 - `cards-data-runtime-audit-2026-03.md` — deep audit of card/template/pack/emission data sources, runtime dependencies, and target source-of-truth architecture.

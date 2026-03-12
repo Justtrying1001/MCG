@@ -49,11 +49,11 @@ This document describes what is currently implemented in runtime.
 - Some legacy DB structures may still exist in schema for compatibility/data retention, but are not active card runtime sources.
 
 ## Cloud bootstrap requirement
-- `prisma db push` (or app build) creates schema only; it does not initialize pack/template inventory.
-- Required one-time/bootstrap commands for each cloud DB:
-  - `npm run seed:mvp:controlled-emission`
-  - `npm run check:mvp:bootstrap`
-- If missing, `/api/pack/open` will return an explicit `MVP sale pack is not available` bootstrap-drift error.
+- `prisma db push` creates schema only; bootstrap data still needs explicit initialization/validation.
+- `npm run vercel-build` now includes deploy bootstrap: `npm run bootstrap:mvp:cloud:deploy` (seed + deploy-safe check).
+- Deploy-safe check (`check:mvp:bootstrap --allow-exhausted`) validates structures even when all supply has been consumed, so deploys do not fail on successful sellout states.
+- For manual strict operations checks, use `npm run bootstrap:mvp:cloud` (fails if no remaining supply).
+- If bootstrap structures are missing, `/api/pack/open` returns explicit bootstrap-drift errors (`MVP sale pack is not available`, `missing MVP card set`, etc.).
 - Bootstrap seed is idempotent for cloud drift repair and preserves live counters (`CardTemplate.issuedSupply`, `PackDefinition.openedPackCount`) when rows already exist.
 
 

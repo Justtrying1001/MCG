@@ -1,5 +1,7 @@
 import { PrismaClient, PackSource, RarityTier, EditionType } from "@prisma/client";
 
+const allowExhausted = process.argv.includes("--allow-exhausted");
+
 const EXPECTED = {
   cardSetCode: "MVP_SET_V1",
   salePackCode: "mvp_sale_pack",
@@ -130,7 +132,7 @@ async function run() {
       tokenTemplateMatrix.set(key, (tokenTemplateMatrix.get(key) ?? 0) + 1);
     }
 
-    if (!hasRemainingSupply) {
+    if (!hasRemainingSupply && !allowExhausted) {
       failures.push(`No remaining template supply for ${EXPECTED.cardSetCode}`);
     }
 
@@ -155,6 +157,8 @@ async function run() {
     console.log(`- rewardPack=${rewardPack.code} source=${rewardPack.source} opened=${rewardPack.openedPackCount}/${rewardPack.plannedPackCount}`);
     console.log(`- activeTokenProjects=${tokenProjectCount}`);
     console.log(`- activeTemplatesWithSupply=${cardSetTemplates.length}`);
+    console.log(`- hasRemainingSupply=${hasRemainingSupply}`);
+    console.log(`- allowExhausted=${allowExhausted}`);
   } finally {
     await prisma.$disconnect();
   }

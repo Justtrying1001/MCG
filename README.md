@@ -95,6 +95,7 @@ Core active models include:
 - Docs index: `docs/README.md`
 - Runtime implementation source-of-truth: `docs/current-runtime-architecture.md`
 - Final cards system source-of-truth: `docs/cards-system-source-of-truth.md`
+- Cloud bootstrap runbook: `docs/mvp-cloud-bootstrap-runbook.md`
 - Repo/docs consolidation source-of-truth: `docs/repo-and-docs-consolidation-audit-2026-03.md`
 - Product intent source-of-truth: `docs/mcg-pivot-product-foundation.md`
 - Card/template/pack data deep audit: `docs/cards-data-runtime-audit-2026-03.md`
@@ -221,18 +222,20 @@ Open http://localhost:3000.
 3. Build command: `npm run vercel-build`.
 4. Install command: `npm install`.
 
-`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+`npm run vercel-build` runs `prisma generate && prisma db push && npm run bootstrap:mvp:cloud:deploy && next build`.
 
-Important: schema push/build does **not** seed controlled-emission inventory. On each new cloud database (or if pack/card tables were reset), run:
+This means every Vercel build now enforces cloud bootstrap idempotently:
+- `seed:mvp:controlled-emission` upserts pack/card MVP runtime data
+- `check:mvp:bootstrap:allow-exhausted` validates required structures even if inventory is fully exhausted
+
+For manual cloud remediation (or first bootstrap from a local terminal), run:
 
 ```bash
-npm run seed:mvp:controlled-emission
-npm run check:mvp:bootstrap
-# shortcut:
 npm run bootstrap:mvp:cloud
 ```
 
-`check:mvp:bootstrap` verifies that `MVP_SET_V1`, `mvp_sale_pack`, `mvp_reward_pack`, and active template supply are present.
+`bootstrap:mvp:cloud` is strict and fails if no remaining supply is available.
+`bootstrap:mvp:cloud:deploy` is deploy-safe and allows fully exhausted inventory while still validating structure integrity.
 
 For destructive reset during local/dev migration work only, use:
 
