@@ -4,6 +4,7 @@ import {
   getCardFrameTheme,
   getChainAccent,
   getEditionTheme,
+  getEditionThemeKey,
   getFactionAccent,
   getRarityOrnament,
   getRarityTheme,
@@ -52,7 +53,8 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
   const factionColor = getFactionAccent(card.faction);
   const chainColor = getChainAccent(card.primaryChain);
   const ornament = getRarityOrnament(card.rarity);
-  const isFullArt = card.edition.toUpperCase() === "FULL_ART";
+  const editionKey = getEditionThemeKey(card.edition);
+  const isFullArt = editionKey === "full-art";
   const ownedCount = quantity ?? card.instanceCount;
   const canonicalCardNumber = getPrintedCardNumber(card);
   const fallbackIndex = getFallbackIndex(card);
@@ -68,6 +70,11 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
     "--mvp-bg": editionTheme.treatment,
     "--mvp-sheen": editionTheme.sheen,
     "--mvp-foil": rarityTheme.foil,
+    "--mvp-edition-foil": editionTheme.foilOverlay,
+    "--mvp-art-treatment": editionTheme.artTreatment,
+    "--mvp-gloss-opacity": `${editionTheme.glossOpacity}`,
+    "--mvp-art-scale": `${editionTheme.artScale}`,
+    "--mvp-edition-badge": editionTheme.badgeTint,
     "--mvp-faction": factionColor,
     "--mvp-chain": chainColor,
     "--mvp-frame-shell": frameTheme.shell,
@@ -78,7 +85,7 @@ export function MvpCardTile({ card, quantity, size = "collection" }: Props) {
   } as CSSProperties;
 
   return (
-    <article className={`mvp-premium-card mvp-size-${size}${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
+    <article className={`mvp-premium-card mvp-size-${size} mvp-edition-${editionKey}${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
       <div className="mvp-card-noise" />
       <div className="mvp-card-gloss" />
 
