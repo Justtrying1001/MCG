@@ -43,7 +43,7 @@ const getCardText = (card: MvpCardView, quantity: number) => {
   if (card.cardText && card.cardText.trim().length > 0) return card.cardText;
   const faction = card.faction ?? "Unaligned";
   const chain = card.primaryChain ?? "Multichain";
-  return `${card.symbol} channels ${faction} resonance on ${chain}. Owned copies: ${quantity}.`;
+  return `${card.symbol} of the ${faction} line, anchored on ${chain}. Collection copy ${quantity}.`;
 };
 
 export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
@@ -65,9 +65,13 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
     "--mvp-accent": rarityTheme.accent,
     "--mvp-glow": rarityTheme.glow,
     "--mvp-border": rarityTheme.border,
+    "--mvp-edge": rarityTheme.edge,
     "--mvp-badge": rarityTheme.badge,
+    "--mvp-badge-text": rarityTheme.badgeText,
     "--mvp-bg": editionTheme.treatment,
     "--mvp-sheen": editionTheme.sheen,
+    "--mvp-finish": editionTheme.finish,
+    "--mvp-art-overlay": editionTheme.artOverlay,
     "--mvp-foil": rarityTheme.foil,
     "--mvp-faction": factionColor,
     "--mvp-chain": chainColor,

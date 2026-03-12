@@ -1085,7 +1085,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .pack-reveal-grid {
-  --slot-width: clamp(150px, 17vw, 180px);
+  --slot-width: clamp(168px, 18vw, 208px);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--slot-width), var(--slot-width)));
   justify-content: center;
@@ -1883,7 +1883,7 @@ a { color: inherit; text-decoration: none; }
   .modal-head         { padding: 0.9rem 1rem; }
 
   /* Pack reveal grid — 2 cards per row */
-  .pack-reveal-grid   { --slot-width: clamp(128px, 42vw, 156px); gap: 0.55rem; }
+  .pack-reveal-grid   { --slot-width: clamp(136px, 43vw, 172px); gap: 0.55rem; }
 
   /* Profile */
   .profile-banner       { padding: 1.2rem; }
