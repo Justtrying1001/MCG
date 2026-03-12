@@ -1,64 +1,66 @@
-# MCG Current Runtime Architecture
+# Current Runtime Architecture (Source of Truth)
 
-This document describes the **active** architecture of the running product.
+This document describes what is currently implemented in runtime.
 
-## Product runtime (current)
-- Collectible-first acquisition via pack opening.
-- Collection browsing over owned cards.
-- Contest-driven gameplay (entry, lineup lock, ranking, settlement).
-- Profile/progression hub using v2 summary projections.
-- PvE is retired from active flow (legacy compatibility endpoints return `410 Gone`).
+## Product/runtime scope
+- Auth + guest session flows
+- Pack opening with controlled emission model
+- Collection/read-model surfaces
+- Contests and progression
+- Rewards/quests/admin reward operations
 
-## Runtime boundaries
-- **Auth/session transport**: `GET /api/me` + `useSession`.
-- **Pack acquisition**: `/api/pack/open` (authenticated), `/api/guest/pack/open` (temporary local guest state).
-- **Contest domain**:
-  - player routes: `/api/contests/*`
-  - internal ops routes: `/api/internal/contests/*`
-  - runtime orchestrator: `lib/domain/contests/runtime.ts`
-- **Collection/progression projections**:
-  - `lib/domain/projections/collection.ts`
-  - `lib/domain/progression/profile-summary.ts`
+## Cards system (single active path)
 
-## Coexistence still intentional
-- Dual-write in pack opening remains intentional:
-  - legacy continuity (`UserCard`, `PackOpening`)
-  - target ownership truth (`OwnedCardInstance`, `PackOpeningEvent`)
-- `/api/me` includes `coexistence.v2` because active profile/collection UI consumes it.
+### Canonical card identity
+- `data/token-master-50.json`
+- Runtime loader: `lib/domain/cards/token-master.ts`
 
-## Acquisition runtime status (Phase D)
-- Authenticated pack opening (`/api/pack/open`) is now DB-native and uses controlled-emission supply from `CardTemplate.plannedSupply` / `issuedSupply`.
-- Runtime opening allocates from remaining template stock, increments `PackDefinition.openedPackCount`, writes `PackOpeningEvent` + `OwnedCardInstance`, and preserves temporary legacy dual-write (`PackOpening`, `UserCard`) for UI continuity.
-- Guest opening remains local/temporary and is not part of controlled-emission inventory.
+### Controlled emission inventory
+- Prisma models: `CardTemplate`, `OwnedCardInstance`, `PackDefinition`, `PackOpeningEvent`
+- Auth pack opening (`/api/pack/open`) uses DB-native inventory and weighted draw by remaining supply.
 
-## Read-model status (Phase E)
-- `/api/me` now reads primarily from instance-aware models (`OwnedCardInstance`, `PackOpeningEvent`) and treats legacy (`UserCard`, `PackOpening`) as compatibility fallback only.
-- Collection projection is aligned to active MVP catalog templates (from `CardTemplate`) and computes completion on template ownership, not legacy base-card inventory.
+### API payloads
+- `/api/pack/open` returns `pulledCardsMvp`.
+- `/api/me` returns `mvpCollection` (also mirrored in `coexistence.v2.mvpCollection` envelope).
+- `/api/guest/pack/open` returns `pulledCardsMvp` and guest `mvpCollection` state.
 
-## Phase B status (data-model alignment)
-- Prisma now carries controlled-emission preparation fields:
-  - `CardTemplate.plannedSupply` / `CardTemplate.issuedSupply`
-  - `PackDefinition.source` (`SALE`/`REWARD`)
-  - `PackDefinition.plannedPackCount` / `openedPackCount` / `cardsPerPack`
-- These fields were introduced as scaffold in Phase B and are now consumed by authenticated opening in Phase D.
-- Bootstrap script for Phase C data initialization: `prisma/seed-mvp-controlled-emission.mjs` (`npm run seed:mvp:controlled-emission`).
+### UI rendering
+- `/packs` reveal uses `MvpCardTile` + `MvpCardView`.
+- `/collection` uses `MvpCardTile` + `MvpCollectionItem`.
 
-## Boundary clarification (Phase F)
-- **Active source-of-truth**
-  - Authenticated acquisition write path: `PackDefinition` stock + `CardTemplate` supply + `PackOpeningEvent` + `OwnedCardInstance`.
-  - Authenticated read path (`/api/me`, collection projection): instance-aware models first.
-- **Transitional compatibility**
-  - Legacy `UserCard` / `PackOpening` reads are lazy fallbacks only for historical accounts with no instance-aware rows.
-  - Legacy dual-write in authenticated opening is still kept temporarily for UI continuity and rollback safety.
-- **Legacy-adjacent local path**
-  - Guest pack opening and `lib/cards.ts` weighted draw remain local/session-scoped and are not part of controlled-emission inventory.
-- MVP pack codes are centralized in `lib/domain/acquisition/constants.ts` to reduce runtime/read-model drift.
+## Pack constraints (MVP)
+- 5 cards per pack
+- 16,000 packs total
+  - 11,000 `SALE`
+  - 5,000 `REWARD`
+- 50 tokens
+- 5 rarities
+- 5 editions
+- 1,250 templates
+- Draw weighted by remaining supply; depleted templates cannot be drawn.
 
-## Stabilization checks (automated)
-- `npm test` (Vitest): acquisition invariants, `/api/me` read-model paths, bootstrap dry-run assertions.
-- `npm run typecheck`: Prisma client generation + TypeScript compile validation.
+## Progression/rewards/contests
+- Rewards and quests are ledger-backed.
+- Contest entry uses owned instance IDs (`OwnedCardInstance`) as ownership truth.
+- Progression summaries are exposed in `coexistence.v2` envelope.
 
-## Documentation policy
-- `docs/mcg-pivot-product-foundation.md` is product source-of-truth.
-- This file is implementation/runtime source-of-truth.
-- `docs/mvp-controlled-emission-transformation.md` is transformation source-of-truth for migration from current runtime to controlled emission MVP.
+## Notes
+- Legacy card runtime modules/components were removed from active pack/collection flow.
+- Some legacy DB structures may still exist in schema for compatibility/data retention, but are not active card runtime sources.
+
+## Cloud bootstrap requirement
+- `prisma db push` (or app build) creates schema only; it does not initialize pack/template inventory.
+- Required one-time/bootstrap commands for each cloud DB:
+  - `npm run seed:mvp:controlled-emission`
+  - `npm run check:mvp:bootstrap`
+- If missing, `/api/pack/open` will return an explicit `MVP sale pack is not available` bootstrap-drift error.
+- Bootstrap seed is idempotent for cloud drift repair and preserves live counters (`CardTemplate.issuedSupply`, `PackDefinition.openedPackCount`) when rows already exist.
+
+
+
+## Reward pack admin flow
+- `mvp_reward_pack` is now operational through admin runtime (`/api/internal/rewards/pack-grant`).
+- Delivery modes:
+  - `GRANT_ONLY`: reserves reward-pack stock and records `RewardGrant(PACK)`.
+  - `GRANT_AND_OPEN`: reserves reward-pack stock, opens pack immediately, emits `PackOpeningEvent`, and awards `OwnedCardInstance` cards from controlled supply.
+- Sale and reward packs share the same DB-native card allocation path and remaining-supply weighted draw.

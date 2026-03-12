@@ -1,12 +1,12 @@
-import type { BaseCard } from "@/types/cards";
+import type { MvpCollectionItem } from "@/types/cards";
 
 export type CollectionProjectionV2 = {
   totalOwnedInstances: number;
   ownedTemplateCount: number;
   missingTemplateCount: number;
   completionPct: number;
-  byBaseCard: Array<{
-    baseCardId: string;
+  byTokenId: Array<{
+    tokenId: string;
     ownedCount: number;
     owned: boolean;
   }>;
@@ -59,14 +59,9 @@ export type MeCoexistenceEnvelope = {
       accountProgression?: AccountProgressionSummaryV2;
       collectionProgression?: CollectionProgressionSummaryV2;
       competitiveProgression?: CompetitiveProgressionSummaryV2;
+      mvpCollection?: MvpCollectionItem[];
     };
   };
-};
-
-export type CollectionItem = {
-  baseCardId: string;
-  quantity: number;
-  card: BaseCard;
 };
 
 export type UserSessionPayload = MeCoexistenceEnvelope & {
@@ -81,7 +76,7 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
     points: number;
     packsOpened: number;
   };
-  collection: CollectionItem[];
+  mvpCollection: MvpCollectionItem[];
   openingsCount: number;
 };
 
@@ -97,7 +92,7 @@ export type GuestSessionPayload = {
     points: number;
     packsOpened: number;
   };
-  collection: CollectionItem[];
+  mvpCollection: MvpCollectionItem[];
   openingsCount: number;
 };
 

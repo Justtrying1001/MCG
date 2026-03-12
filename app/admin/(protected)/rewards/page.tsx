@@ -16,6 +16,13 @@ type GrantRow = {
   user: { displayName: string | null; xUsername: string | null };
 };
 
+type CompensationValidation = {
+  blocking: boolean;
+  issues: Array<{ code: string; severity: "ERROR" | "WARN"; field: string | null; message: string; operatorHint: string }>;
+  validationToken: string;
+  impactSummary: { pointsDelta: number };
+};
+
 export default function AdminRewardsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<CandidateUser[]>([]);
@@ -60,6 +67,7 @@ export default function AdminRewardsPage() {
 
   useEffect(() => {
     void loadRows();
+    void loadRewardPackRows();
   }, []);
 
   const submit = async () => {
@@ -130,6 +138,48 @@ export default function AdminRewardsPage() {
     setReasonCode("");
     setSubmitting(false);
     await loadRows();
+  };
+
+  const submitRewardPack = async () => {
+    setRewardPackMessage("");
+    if (!userId.trim()) {
+      setRewardPackMessage("Provide userId before granting reward pack.");
+      return;
+    }
+
+    setRewardPackSubmitting(true);
+    const response = await fetch("/api/internal/rewards/pack-grant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: userId.trim(),
+        deliveryMode: rewardMode,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+      rewardGrantId?: string;
+      openingEventId?: string | null;
+      pulledCardsMvp?: Array<{ templateId: string }>;
+    } | null;
+
+    if (!response.ok) {
+      setRewardPackMessage(payload?.error ?? "Reward pack grant failed");
+      setRewardPackSubmitting(false);
+      return;
+    }
+
+    if (rewardMode === "GRANT_AND_OPEN") {
+      setRewardPackMessage(
+        `Reward pack opened. grant=${payload?.rewardGrantId ?? "?"} event=${payload?.openingEventId ?? "?"} cards=${payload?.pulledCardsMvp?.length ?? 0}`
+      );
+    } else {
+      setRewardPackMessage(`Reward pack granted (not opened). grant=${payload?.rewardGrantId ?? "?"}`);
+    }
+
+    setRewardPackSubmitting(false);
+    await loadRewardPackRows();
   };
 
   return (
