@@ -57,10 +57,30 @@ export default function AdminContestsCatalogPage() {
     <div className="admin-page">
       <section className="admin-page-header">
         <div>
-          <h1 className="admin-title">Contest Catalog</h1>
-          <p className="admin-subtitle">Dense operations table for lifecycle state, scoring readiness, settlement status, and quick navigation.</p>
+          <h1 className="admin-title">Contest Operations</h1>
+          <p className="admin-subtitle">Canonical flow: create draft → validate/publish → run lifecycle/scoring/settlement from contest overview.</p>
         </div>
-        <Link href="/admin/contests/legacy" className="admin-badge neutral">Legacy create</Link>
+        <div className="admin-actions-row">
+          <Link href="/admin/contests/create" className="admin-badge success">New contest setup</Link>
+        </div>
+      </section>
+
+      <section className="admin-panel contest-create-hero">
+        <div>
+          <p className="admin-section-title">Start here</p>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 800 }}>Create a new contest with the structured setup wizard</h2>
+          <p className="contest-inline-note">Use the canonical flow to define timing, participation and reward policy before publish.</p>
+        </div>
+        <div className="admin-actions-row">
+          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>Create New Contest</Link>
+          <Button type="button" variant="ghost" onClick={() => void loadContests()}>Refresh catalog</Button>
+        </div>
+      </section>
+
+      <section className="admin-callout warn">
+        <p style={{ fontWeight: 700, fontSize: "0.8rem" }}>Legacy flow is deprecated</p>
+        <p className="contest-inline-note">Use legacy contests only for historical/manual operations. New contests must use structured setup.</p>
+        <Link href="/admin/contests/legacy" className="contest-inline-note">Open legacy contests (restricted fallback)</Link>
       </section>
 
       <section className="admin-toolbar">
@@ -74,7 +94,6 @@ export default function AdminContestsCatalogPage() {
           <option value="SETTLED">SETTLED</option>
           <option value="CANCELED">CANCELED</option>
         </select>
-        <Button type="button" variant="ghost" onClick={() => void loadContests()}>Refresh</Button>
         <span className="admin-badge neutral">{filtered.length} rows</span>
       </section>
 
@@ -105,7 +124,7 @@ export default function AdminContestsCatalogPage() {
                 <span>{contest._count.entries}</span>
                 <span>{contest._count.rankings}</span>
                 <span>{contest._count.settlements > 0 ? "Yes" : "No"}</span>
-                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div className="admin-actions-row">
                   <Link href={links.overview} className="admin-badge neutral">Overview</Link>
                   <Link href={links.scoring} className="admin-badge neutral">Scoring</Link>
                   <Link href={links.settlement} className="admin-badge neutral">Settlement</Link>

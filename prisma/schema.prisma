@@ -32,6 +32,7 @@ model User {
   contestEntries         ContestEntry[]
   contestScores          ContestScore[]
   contestRankings        ContestRanking[]
+  contestSettlementPlanItems ContestSettlementPlanItem[]
   userProgression        UserProgression?
   collectionProgressions CollectionProgression[]
   competitiveProgression CompetitiveProgression?
@@ -111,8 +112,42 @@ enum RewardLedgerReasonType {
   PACK_OPEN
   QUEST_REWARD
   CONTEST_REWARD
+  CONTEST_ENTRY_FEE
   ADMIN_GRANT
   ADJUSTMENT
+}
+
+enum ContestTeamSizeMode {
+  EXACT
+}
+
+enum ContestEligibilityMode {
+  ANY
+  CARD_SET_ONLY
+}
+
+enum ContestRewardPolicyStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ContestRewardType {
+  POINTS
+  PACK
+  XP
+}
+
+enum ContestRewardDistributionRuleType {
+  FIXED_RANKS
+  TOP_N
+  TOP_PERCENT
+}
+
+enum ContestSettlementPlanStatus {
+  DRAFT
+  APPROVED
+  EXECUTED
+  CANCELED
 }
 
 enum QuestType {
@@ -269,6 +304,7 @@ model PackDefinition {
   dropTables        DropTable[]
   packOpeningEvents PackOpeningEvent[]
   rewardGrants      RewardGrant[]
+  contestRewardComponents ContestRewardComponent[]
 
   @@index([cardSetId])
 }
@@ -417,7 +453,9 @@ model Contest {
   id        String        @id @default(cuid())
   code      String        @unique
   title     String
+  description String?
   status    ContestStatus @default(DRAFT)
+  configPublishedAt DateTime?
   startsAt  DateTime?
   lockAt    DateTime?
   endsAt    DateTime?
@@ -429,6 +467,8 @@ model Contest {
   scores      ContestScore[]
   rankings    ContestRanking[]
   settlements ContestSettlement[]
+  rewardPolicy ContestRewardPolicy?
+  settlementPlans ContestSettlementPlan[]
 }
 
 model ContestRule {
@@ -436,12 +476,76 @@ model ContestRule {
   contestId     String
   cardSetId     String?
   maxRosterSize Int?
+  teamSizeMode  ContestTeamSizeMode @default(EXACT)
+  teamSizeValue Int?
+  eligibilityMode ContestEligibilityMode @default(ANY)
+  entryFeeEnabled Boolean @default(false)
+  entryFeeCurrency String @default("POINTS")
+  entryFeeAmount Int?
   config        Json?
 
   contest Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
   cardSet CardSet? @relation(fields: [cardSetId], references: [id], onDelete: SetNull)
 
   @@index([contestId])
+}
+
+model ContestRewardPolicy {
+  id        String   @id @default(cuid())
+  contestId String   @unique
+  status    ContestRewardPolicyStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contest           Contest                         @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  bundles           ContestRewardBundle[]
+  distributionRules ContestRewardDistributionRule[]
+}
+
+model ContestRewardBundle {
+  id             String   @id @default(cuid())
+  rewardPolicyId String
+  name           String
+  priority       Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  rewardPolicy ContestRewardPolicy      @relation(fields: [rewardPolicyId], references: [id], onDelete: Cascade)
+  components   ContestRewardComponent[]
+  distributionRules ContestRewardDistributionRule[]
+
+  @@index([rewardPolicyId])
+}
+
+model ContestRewardComponent {
+  id               String            @id @default(cuid())
+  bundleId         String
+  type             ContestRewardType
+  pointsAmount     Int?
+  xpAmount         Int?
+  packDefinitionId String?
+  packQuantity     Int?
+
+  bundle         ContestRewardBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  packDefinition PackDefinition?     @relation(fields: [packDefinitionId], references: [id], onDelete: SetNull)
+
+  @@index([bundleId])
+}
+
+model ContestRewardDistributionRule {
+  id             String                            @id @default(cuid())
+  rewardPolicyId String
+  bundleId       String
+  priority       Int
+  ruleType       ContestRewardDistributionRuleType
+  rankFrom       Int?
+  rankTo         Int?
+  topN           Int?
+  topPercent     Float?
+
+  rewardPolicy ContestRewardPolicy @relation(fields: [rewardPolicyId], references: [id], onDelete: Cascade)
+  bundle       ContestRewardBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@index([rewardPolicyId, priority])
 }
 
 model ContestEntry {
@@ -512,6 +616,46 @@ model ContestSettlement {
   rewardGrants RewardGrant[]
 
   @@unique([contestId])
+}
+
+model ContestSettlementPlan {
+  id                 String                    @id @default(cuid())
+  contestId          String
+  status             ContestSettlementPlanStatus @default(DRAFT)
+  source             String                    @default("AUTO_POLICY_V1")
+  policySnapshot     Json?
+  rankingSnapshotSize Int                      @default(0)
+  generatedAt        DateTime                  @default(now())
+  executedAt         DateTime?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  items   ContestSettlementPlanItem[]
+
+  @@index([contestId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ContestSettlementPlanItem {
+  id               String   @id @default(cuid())
+  planId           String
+  userId           String
+  rank             Int
+  sourceRuleId     String?
+  sourceRuleType   String?
+  sourceBundleId   String?
+  rewardComponents Json
+  pointsTotal      Int      @default(0)
+  xpTotal          Int      @default(0)
+  packsTotal       Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  plan ContestSettlementPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, userId])
+  @@index([planId, rank])
 }
 
 model UserProgression {

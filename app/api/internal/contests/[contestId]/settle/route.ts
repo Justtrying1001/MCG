@@ -4,6 +4,7 @@ import { ADMIN_ROLES, claimIdempotencyKey, getAdminArtifact, requireAdminRole, s
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, settleContestMvp } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest, { params }: { params: { contestId: string } }) {
   const auth = requireInternalAdminAccess(request);
@@ -23,6 +24,18 @@ export async function POST(request: NextRequest, { params }: { params: { contest
     const planId = body?.planId?.trim() ?? "";
     if (!planId) {
       return NextResponse.json({ ok: false, error: "planId is required. Call settlement/plan/validate first." }, { status: 400 });
+    }
+
+    const contest = await prisma.contest.findUnique({
+      where: { id: params.contestId },
+      select: { id: true, configPublishedAt: true, rewardPolicy: { select: { id: true, status: true } } },
+    });
+    if (!contest) {
+      return NextResponse.json({ ok: false, error: "Contest not found" }, { status: 404 });
+    }
+
+    if (contest.configPublishedAt && contest.rewardPolicy?.status === "PUBLISHED") {
+      return NextResponse.json({ ok: false, error: "Manual settlement execute is disabled for policy-based contests. Use settlement-plan/:planId/execute." }, { status: 409 });
     }
 
     const artifact = await getAdminArtifact(planId, "contest_settlement_plan");

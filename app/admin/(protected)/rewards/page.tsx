@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
+import {
+  buildCompensationValidatePayload,
+  isCompensationValidationBlocked,
+  listBlockingCompensationIssues,
+} from "@/lib/admin/rewards-workbench";
 
 type CandidateUser = { id: string; xUsername: string | null; displayName: string | null; points: number };
 type GrantRow = {
@@ -13,7 +18,7 @@ type GrantRow = {
   reasonRef: string | null;
   metadata: { reasonLabel?: string; reasonCode?: string } | null;
   createdAt: string;
-  user: { displayName: string | null; xUsername: string | null };
+  user: { displayName: string | null; xUsername: string | null } | null;
 };
 
 export default function AdminRewardsPage() {
@@ -26,10 +31,9 @@ export default function AdminRewardsPage() {
   const [reasonCode, setReasonCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  // Backward-compatible state used by prior reward-pack grant panel variants.
-  const [rewardPackMessage, setRewardPackMessage] = useState("");
   const [rows, setRows] = useState<GrantRow[]>([]);
   const [loadingRows, setLoadingRows] = useState(true);
+  const [rowsError, setRowsError] = useState("");
 
   useEffect(() => {
     const run = async () => {
@@ -52,38 +56,34 @@ export default function AdminRewardsPage() {
 
   const loadRows = async () => {
     setLoadingRows(true);
-    const response = await fetch("/api/rewards/ledger?reasonType=ADMIN_GRANT&limit=30", { cache: "no-store" });
-    if (response.ok) {
-      const payload = (await response.json()) as { entries: GrantRow[] };
-      setRows(payload.entries ?? []);
-    }
-    setLoadingRows(false);
-  };
+    setRowsError("");
 
-  // Backward-compatible alias for previous UI version naming used in older effects.
-  const loadRewardPackRows = async () => {
-    await loadRows();
-  };
-
-  useEffect(() => {
-    void loadRewardPackRows();
-  }, []);
-
-  // Backward-compatible reward-pack action used by older UI variants; delegates to compensation flow.
-  const submitRewardPack = async () => {
-    setRewardPackMessage("");
-    if (!userId.trim()) {
-      setRewardPackMessage("Provide userId before granting reward pack.");
+    const response = await fetch("/api/internal/rewards/manual-grant", { cache: "no-store" });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setRowsError(payload?.error ?? "Cannot load recent manual grants");
+      setRows([]);
+      setLoadingRows(false);
       return;
     }
 
-    await submit();
+    const payload = (await response.json()) as { grants: GrantRow[] };
+    setRows(payload.grants ?? []);
+    setLoadingRows(false);
   };
+
+  useEffect(() => {
+    void loadRows();
+  }, []);
 
   const submit = async () => {
     const parsedAmount = Number(amount);
     if (!userId.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setMessage("Enter valid user + amount");
+      return;
+    }
+    if (!reasonLabel.trim()) {
+      setMessage("reason label is required");
       return;
     }
     if (!reasonCode.trim()) {
@@ -97,18 +97,24 @@ export default function AdminRewardsPage() {
     const validateResponse = await fetch("/api/internal/compensations/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: userId.trim(),
-        reasonType: "ADMIN_GRANT",
-        reasonRef: reasonLabel.trim() || `manual:${Date.now()}`,
-        rewardComponents: [{ type: "POINTS", amount: parsedAmount }],
-        metadata: { reasonLabel: reasonLabel.trim() || null, reasonCode: reasonCode.trim() },
-      }),
+      body: JSON.stringify(buildCompensationValidatePayload({
+        userId,
+        amount: parsedAmount,
+        reasonLabel,
+        reasonCode,
+      })),
     });
 
-    const validation = (await validateResponse.json().catch(() => null)) as { validationToken?: string; error?: string } | null;
+    const validation = (await validateResponse.json().catch(() => null)) as { validationToken?: string; error?: string; blocking?: boolean; issues?: Array<{ severity?: string; message?: string }> } | null;
     if (!validateResponse.ok || !validation?.validationToken) {
       setMessage(validation?.error ?? "Compensation validation failed");
+      setSubmitting(false);
+      return;
+    }
+
+    if (isCompensationValidationBlocked(validation)) {
+      const blockingMessages = listBlockingCompensationIssues(validation);
+      setMessage(`Compensation blocked: ${blockingMessages.join("; ") || "Fix blocking issues"}`);
       setSubmitting(false);
       return;
     }
@@ -154,15 +160,23 @@ export default function AdminRewardsPage() {
     <div className="admin-page">
       <section className="admin-page-header">
         <div>
-          <h1 className="admin-title">Rewards & Compensation</h1>
-          <p className="admin-subtitle">Financial-ops style compensation flow with validate → preview → execute and auditable receipts.</p>
+          <h1 className="admin-title">Rewards & Compensation Ops</h1>
+          <p className="admin-subtitle">Critical flow: search user → validate compensation → preview impact → execute with idempotency.</p>
         </div>
-        <Link href="/admin/activity-log" className="admin-badge neutral">Audit log</Link>
+        <div className="admin-actions-row">
+          <Link href="/admin/users" className="admin-badge neutral">User context</Link>
+          <Link href="/admin/activity-log" className="admin-badge neutral">Audit log</Link>
+        </div>
+      </section>
+
+      <section className="admin-callout danger">
+        <p style={{ fontWeight: 700, fontSize: "0.8rem" }}>High-risk action</p>
+        <p className="contest-inline-note">Manual grants change user economy immediately. Always verify reason label/code and preview impact before apply.</p>
       </section>
 
       <section className="admin-split">
-        <div className="admin-panel">
-          <p className="admin-section-title">1. Select user</p>
+        <div className="admin-panel admin-section-stack">
+          <p className="admin-section-title">1) Select recipient</p>
           <input className="input" placeholder="Search by id / @username / display name" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
           {searching ? <p className="contest-inline-note">Searching users…</p> : null}
           {searchResults.length > 0 ? (
@@ -176,33 +190,36 @@ export default function AdminRewardsPage() {
             </div>
           ) : null}
 
-          <p className="admin-section-title" style={{ marginTop: "0.2rem" }}>2. Compensation payload</p>
-          <div style={{ display: "grid", gap: "0.5rem" }}>
+          <p className="admin-section-title">2) Compensation payload</p>
+          <div className="admin-field-grid">
             <input className="input" placeholder="userId" value={userId} onChange={(event) => setUserId(event.target.value)} />
             <input className="input" type="number" min={1} placeholder="amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
             <input className="input" placeholder="reason label" value={reasonLabel} onChange={(event) => setReasonLabel(event.target.value)} />
             <input className="input" placeholder="reason code (required)" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
           </div>
 
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div className="admin-actions-row">
             <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Validate + Preview + Apply"}</Button>
             {message ? <span className="contest-inline-note">{message}</span> : null}
-            {rewardPackMessage ? <span className="contest-inline-note">{rewardPackMessage}</span> : null}
           </div>
         </div>
 
-        <div className="admin-panel">
-          <p className="admin-section-title">Recent manual grants</p>
+        <div className="admin-panel admin-section-stack">
+          <div className="admin-actions-row" style={{ justifyContent: "space-between" }}>
+            <p className="admin-section-title">Recent manual grants</p>
+            <Button variant="ghost" type="button" onClick={() => void loadRows()}>Refresh</Button>
+          </div>
           {loadingRows ? <p className="contest-inline-note">Loading grants…</p> : null}
+          {rowsError ? <p className="contest-error">{rowsError}</p> : null}
           {!loadingRows ? (
             <div style={{ display: "grid", gap: "0.45rem" }}>
               {rows.map((row) => (
-                <div key={row.id} className="admin-panel" style={{ padding: "0.5rem", gap: "0.3rem", background: "rgba(255,255,255,0.02)" }}>
+                <div key={row.id} className="admin-callout">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <p className="contest-code">ADMIN_GRANT</p>
                     <span className="admin-badge success">+{row.amount}</span>
                   </div>
-                  <p className="contest-inline-note">{row.user.displayName || "—"} @{row.user.xUsername || "—"}</p>
+                  <p className="contest-inline-note">{row.user?.displayName || "—"} @{row.user?.xUsername || "—"}</p>
                   <p className="contest-inline-note">{row.metadata?.reasonLabel || row.reasonRef || "—"} · {row.metadata?.reasonCode || "—"}</p>
                   <p className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</p>
                 </div>

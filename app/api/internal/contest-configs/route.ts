@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { handleApiError } from "@/lib/api-error";
+import { createContestDraft } from "@/lib/domain/contests/config-runtime";
+import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
+import { requireInternalAdminAccess } from "@/lib/internal-auth";
+
+const createSchema = z.object({
+  code: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  description: z.string().optional().nullable(),
+  startsAt: z.string().nullable().optional(),
+  lockAt: z.string().nullable().optional(),
+  endsAt: z.string().nullable().optional(),
+  entryFeeEnabled: z.boolean().optional(),
+  entryFeeCurrency: z.literal("POINTS").optional(),
+  entryFeeAmount: z.number().int().nullable().optional(),
+  teamSizeMode: z.literal("EXACT").optional(),
+  teamSizeValue: z.number().int().optional(),
+  eligibilityMode: z.enum(["ANY", "CARD_SET_ONLY"]).optional(),
+  cardSetId: z.string().nullable().optional(),
+  rewardBundles: z.array(z.object({
+    name: z.string(),
+    priority: z.number().int().optional(),
+    components: z.array(z.object({
+      type: z.enum(["POINTS", "PACK", "XP"]),
+      pointsAmount: z.number().int().optional(),
+      xpAmount: z.number().int().optional(),
+      packDefinitionId: z.string().nullable().optional(),
+      packQuantity: z.number().int().optional(),
+    })),
+  })).optional(),
+  distributionRules: z.array(z.object({
+    priority: z.number().int(),
+    ruleType: z.enum(["FIXED_RANKS", "TOP_N", "TOP_PERCENT"]),
+    bundleRef: z.string(),
+    rankFrom: z.number().int().optional(),
+    rankTo: z.number().int().optional(),
+    topN: z.number().int().optional(),
+    topPercent: z.number().optional(),
+  })).optional(),
+}).superRefine((value, ctx) => {
+  const asDate = (raw: string | null | undefined) => {
+    if (!raw) return null;
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const startsAt = asDate(value.startsAt);
+  const lockAt = asDate(value.lockAt);
+  const endsAt = asDate(value.endsAt);
+
+  if (value.startsAt && !startsAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startsAt"], message: "Invalid startsAt datetime" });
+  }
+  if (value.lockAt && !lockAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["lockAt"], message: "Invalid lockAt datetime" });
+  }
+  if (value.endsAt && !endsAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["endsAt"], message: "Invalid endsAt datetime" });
+  }
+});
+
+export async function POST(request: NextRequest) {
+  const auth = requireInternalAdminAccess(request);
+  if (!auth.ok) {
+    return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = createSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ ok: false, error: "Invalid payload", issues: parsed.error.issues }, { status: 400 });
+    }
+
+    const result = await createContestDraft(parsed.data);
+    return NextResponse.json({ ok: true, contest: result.contest }, { status: 201 });
+  } catch (error) {
+    if (error instanceof ContestRuntimeError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
+    }
+    return handleApiError(error, "Cannot create contest draft");
+  }
+}

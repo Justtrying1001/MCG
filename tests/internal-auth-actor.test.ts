@@ -19,13 +19,13 @@ describe("internal-auth actor normalization", () => {
 
   it("returns nominative admin session actor with default role", () => {
     getAdminSessionFromRequestMock.mockReturnValue({ username: "alice" });
-    process.env.ADMIN_DEFAULT_ROLE = "ADMIN_OPS";
+    delete process.env.ADMIN_DEFAULT_ROLE;
 
     const result = requireInternalAdminAccess({} as any);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.actor.id).toBe("admin:alice");
-    expect(result.actor.role).toBe("ADMIN_OPS");
+    expect(result.actor.role).toBe("ADMIN_SUPERVISOR");
     expect(result.actor.authMode).toBe("session");
   });
 
@@ -43,4 +43,15 @@ describe("internal-auth actor normalization", () => {
     expect(result.actor.label).toBe("service-key:svc-main");
     expect(result.actor.role).toBe("ADMIN_SUPERVISOR");
   });
+
+  it("supports explicit session role override via env", () => {
+    getAdminSessionFromRequestMock.mockReturnValue({ username: "alice" });
+    process.env.ADMIN_DEFAULT_ROLE = "ADMIN_OPS";
+
+    const result = requireInternalAdminAccess({} as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.actor.role).toBe("ADMIN_OPS");
+  });
+
 });

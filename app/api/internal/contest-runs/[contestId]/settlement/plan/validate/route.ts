@@ -20,6 +20,18 @@ export async function POST(request: NextRequest, { params }: { params: { contest
     const body = (await request.json().catch(() => null)) as { rewards?: RewardRow[] } | null;
     const rewards = Array.isArray(body?.rewards) ? body.rewards : [];
 
+    const contest = await prisma.contest.findUnique({
+      where: { id: params.contestId },
+      select: { id: true, configPublishedAt: true, rewardPolicy: { select: { id: true, status: true } } },
+    });
+    if (!contest) {
+      return NextResponse.json({ ok: false, error: "Contest not found" }, { status: 404 });
+    }
+
+    if (contest.configPublishedAt && contest.rewardPolicy?.status === "PUBLISHED") {
+      return NextResponse.json({ ok: false, error: "Manual settlement plan is disabled for policy-based contests. Use settlement-plan/generate." }, { status: 409 });
+    }
+
     const issues: Array<{ code: string; severity: "ERROR" | "WARN"; field: string | null; message: string; operatorHint: string }> = [];
     const normalized: Array<{ userId: string; type: RewardType; amount?: number; packDefinitionId?: string }> = [];
     const seenUsers = new Set<string>();
