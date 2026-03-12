@@ -59,6 +59,7 @@ describe("manual grant runtime", () => {
       userId: "u1",
       amount: 200,
       reasonLabel: "support-compensation",
+      reasonCode: "SUPPORT_COMP",
       idempotencyKey: "manual:1",
       grantedByAdmin: "session",
     });
@@ -67,6 +68,7 @@ describe("manual grant runtime", () => {
       userId: "u1",
       amount: 200,
       reasonLabel: "support-compensation",
+      reasonCode: "SUPPORT_COMP",
       idempotencyKey: "manual:1",
       grantedByAdmin: "session",
     });
@@ -83,7 +85,7 @@ describe("manual grant runtime", () => {
     const state: State = { user: null, entries: [] };
     prismaMock.$transaction.mockImplementation(async (fn: any) => fn(createTx(state), {}));
 
-    await expect(grantManualPointsMvp({ userId: "u1", amount: 0, reasonLabel: "x" })).rejects.toBeInstanceOf(ManualGrantError);
-    await expect(grantManualPointsMvp({ userId: "u1", amount: 50, reasonLabel: "x" })).rejects.toBeInstanceOf(ManualGrantError);
+    await expect(grantManualPointsMvp({ userId: "u1", amount: 0, reasonLabel: "x", reasonCode: "X" })).rejects.toBeInstanceOf(ManualGrantError);
+    await expect(grantManualPointsMvp({ userId: "u1", amount: 50, reasonLabel: "x", reasonCode: "X" })).rejects.toBeInstanceOf(ManualGrantError);
   });
 });
