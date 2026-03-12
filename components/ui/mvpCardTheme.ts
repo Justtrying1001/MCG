@@ -1,184 +1,214 @@
+import type { CSSProperties } from "react";
+
+export type ClaudeRarityCode = "B" | "A" | "S" | "S+";
+export type ClaudeEditionCode = "BASE" | "REVERSE" | "BRILLANTE" | "HOLO" | "MCG_ART";
+
 export type RarityTheme = {
+  code: ClaudeRarityCode;
   accent: string;
-  glow: string;
-  border: string;
-  edge: string;
-  badge: string;
-  badgeText: string;
-  foil: string;
-  frameTop: string;
-  frameBottom: string;
-  ornament: string;
+  glowCol: string;
+  borderOut: string;
+  borderIn: string;
+  wire: string;
+  wireAcc: string;
+  bgCard: string;
+  bgHeader: string;
+  bgFooter: string;
+  txtName: string;
+  txtSub: string;
+  txtFlavor: string;
+  cornerStroke: string;
+  cornerDetail: boolean;
+  cornerDot: boolean;
 };
 
 export type EditionTheme = {
-  treatment: string;
-  sheen: string;
-  finish: string;
-  artOverlay: string;
+  code: ClaudeEditionCode;
   label: string;
-  textBox: string;
-  footer: string;
+  editionClass: "ed-base" | "ed-reverse" | "ed-brillante" | "ed-holo" | "ed-mcgart";
+  needsReverseLayers: boolean;
+  needsBrillanteLayer: boolean;
+  needsHoloLayer: boolean;
+  needsMcgArtLayer: boolean;
 };
 
-export type CardFrameTheme = {
-  shell: string;
-  inner: string;
-  divider: string;
+const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
+  B: {
+    code: "B",
+    accent: "#3d4a5c",
+    glowCol: "rgba(61,74,92,0)",
+    borderOut: "#181e27",
+    borderIn: "#1f2733",
+    wire: "rgba(255,255,255,0.05)",
+    wireAcc: "rgba(255,255,255,0.07)",
+    bgCard: "#11111b",
+    bgHeader: "#0d0d16",
+    bgFooter: "#0b0b14",
+    txtName: "#c8d0dc",
+    txtSub: "#2e3848",
+    txtFlavor: "#4a5568",
+    cornerStroke: "#2a3545",
+    cornerDetail: false,
+    cornerDot: false,
+  },
+  A: {
+    code: "A",
+    accent: "#5a7a8a",
+    glowCol: "rgba(90,122,138,0.12)",
+    borderOut: "#1e2d38",
+    borderIn: "#253545",
+    wire: "rgba(90,122,138,0.1)",
+    wireAcc: "rgba(90,122,138,0.18)",
+    bgCard: "#0f1318",
+    bgHeader: "#0c1015",
+    bgFooter: "#0a120e",
+    txtName: "#d4dde6",
+    txtSub: "#3a5060",
+    txtFlavor: "#556070",
+    cornerStroke: "#3a5060",
+    cornerDetail: false,
+    cornerDot: false,
+  },
+  S: {
+    code: "S",
+    accent: "#7090b8",
+    glowCol: "rgba(112,144,184,0.22)",
+    borderOut: "#243050",
+    borderIn: "#2d3d60",
+    wire: "rgba(112,144,184,0.12)",
+    wireAcc: "rgba(112,144,184,0.22)",
+    bgCard: "#0d1220",
+    bgHeader: "#0a0f1a",
+    bgFooter: "#090d16",
+    txtName: "#dce6f4",
+    txtSub: "#4a6080",
+    txtFlavor: "#607080",
+    cornerStroke: "#4a6888",
+    cornerDetail: true,
+    cornerDot: false,
+  },
+  "S+": {
+    code: "S+",
+    accent: "#b89a60",
+    glowCol: "rgba(184,154,96,0.35)",
+    borderOut: "#3a2e18",
+    borderIn: "#4a3c22",
+    wire: "rgba(184,154,96,0.12)",
+    wireAcc: "rgba(184,154,96,0.25)",
+    bgCard: "#0e0b04",
+    bgHeader: "#0b0802",
+    bgFooter: "#090703",
+    txtName: "#ece0c8",
+    txtSub: "#7a6040",
+    txtFlavor: "#806a50",
+    cornerStroke: "#8a7040",
+    cornerDetail: true,
+    cornerDot: true,
+  },
 };
 
-const rarityAccentMap: Record<string, RarityTheme> = {
-  COMMON: {
-    accent: "#9099A6",
-    glow: "rgba(144, 153, 166, 0.2)",
-    border: "rgba(144, 153, 166, 0.4)",
-    edge: "rgba(196, 201, 210, 0.32)",
-    badge: "rgba(144, 153, 166, 0.25)",
-    badgeText: "#d7dde8",
-    foil: "linear-gradient(130deg, transparent 12%, rgba(240, 244, 255, 0.08) 47%, transparent 76%)",
-    frameTop: "rgba(196, 201, 210, 0.35)",
-    frameBottom: "rgba(93, 101, 112, 0.34)",
-    ornament: "rgba(202, 209, 220, 0.24)",
-  },
-  UNCOMMON: {
-    accent: "#4FA39A",
-    glow: "rgba(79, 163, 154, 0.24)",
-    border: "rgba(79, 163, 154, 0.45)",
-    edge: "rgba(126, 212, 201, 0.34)",
-    badge: "rgba(79, 163, 154, 0.28)",
-    badgeText: "#c6f3ed",
-    foil: "linear-gradient(130deg, transparent 12%, rgba(94, 197, 184, 0.13) 47%, transparent 76%)",
-    frameTop: "rgba(118, 212, 198, 0.36)",
-    frameBottom: "rgba(53, 107, 102, 0.38)",
-    ornament: "rgba(106, 218, 202, 0.28)",
-  },
-  RARE: {
-    accent: "#4D7EFF",
-    glow: "rgba(77, 126, 255, 0.3)",
-    border: "rgba(77, 126, 255, 0.52)",
-    edge: "rgba(154, 183, 255, 0.4)",
-    badge: "rgba(77, 126, 255, 0.3)",
-    badgeText: "#d8e6ff",
-    foil: "linear-gradient(130deg, transparent 12%, rgba(117, 164, 255, 0.18) 47%, transparent 76%)",
-    frameTop: "rgba(135, 170, 255, 0.42)",
-    frameBottom: "rgba(45, 73, 146, 0.42)",
-    ornament: "rgba(145, 179, 255, 0.32)",
-  },
-  EPIC: {
-    accent: "#7D5DE4",
-    glow: "rgba(125, 93, 228, 0.35)",
-    border: "rgba(125, 93, 228, 0.55)",
-    edge: "rgba(198, 173, 255, 0.42)",
-    badge: "rgba(125, 93, 228, 0.31)",
-    badgeText: "#efe2ff",
-    foil: "linear-gradient(130deg, transparent 12%, rgba(177, 130, 255, 0.2) 47%, transparent 76%)",
-    frameTop: "rgba(186, 150, 255, 0.42)",
-    frameBottom: "rgba(81, 56, 145, 0.44)",
-    ornament: "rgba(188, 151, 255, 0.34)",
-  },
-  LEGENDARY: {
-    accent: "#D8A63E",
-    glow: "rgba(216, 166, 62, 0.4)",
-    border: "rgba(216, 166, 62, 0.6)",
-    edge: "rgba(255, 227, 165, 0.48)",
-    badge: "rgba(216, 166, 62, 0.35)",
-    badgeText: "#fff1cf",
-    foil: "linear-gradient(130deg, transparent 12%, rgba(255, 222, 145, 0.24) 47%, transparent 76%)",
-    frameTop: "rgba(255, 226, 157, 0.48)",
-    frameBottom: "rgba(135, 98, 33, 0.48)",
-    ornament: "rgba(255, 225, 154, 0.36)",
-  },
-};
-
-const editionToneMap: Record<string, EditionTheme> = {
+const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   BASE: {
-    treatment: "linear-gradient(176deg, rgba(15, 18, 24, 0.98), rgba(8, 10, 14, 0.99))",
-    sheen: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01) 45%, transparent)",
-    finish: "linear-gradient(130deg, transparent 20%, rgba(255,255,255,0.04) 50%, transparent 78%)",
-    artOverlay: "linear-gradient(170deg, rgba(13,16,22,0.24), rgba(4,6,9,0.32))",
+    code: "BASE",
     label: "Base",
-    textBox: "rgba(11, 14, 19, 0.78)",
-    footer: "rgba(6, 9, 13, 0.88)",
+    editionClass: "ed-base",
+    needsReverseLayers: false,
+    needsBrillanteLayer: false,
+    needsHoloLayer: false,
+    needsMcgArtLayer: false,
   },
   REVERSE: {
-    treatment: "linear-gradient(176deg, rgba(9, 11, 15, 0.99), rgba(18, 22, 30, 0.98))",
-    sheen: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08) 45%, transparent)",
-    finish: "linear-gradient(130deg, transparent 15%, rgba(163, 191, 255, 0.08) 48%, transparent 78%)",
-    artOverlay: "linear-gradient(170deg, rgba(20,24,33,0.4), rgba(6,9,13,0.24))",
+    code: "REVERSE",
     label: "Reverse",
-    textBox: "rgba(13, 17, 24, 0.74)",
-    footer: "rgba(5, 7, 10, 0.9)",
+    editionClass: "ed-reverse",
+    needsReverseLayers: true,
+    needsBrillanteLayer: false,
+    needsHoloLayer: false,
+    needsMcgArtLayer: false,
   },
   BRILLANTE: {
-    treatment: "linear-gradient(176deg, rgba(14, 17, 23, 0.98), rgba(8, 10, 13, 0.99), rgba(16, 18, 24, 0.97))",
-    sheen: "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 45%, transparent)",
-    finish: "linear-gradient(130deg, transparent 14%, rgba(255,255,255,0.1) 48%, transparent 80%)",
-    artOverlay: "linear-gradient(170deg, rgba(30,34,43,0.28), rgba(7,10,15,0.2))",
+    code: "BRILLANTE",
     label: "Brillante",
-    textBox: "rgba(12, 16, 21, 0.76)",
-    footer: "rgba(7, 10, 14, 0.9)",
+    editionClass: "ed-brillante",
+    needsReverseLayers: false,
+    needsBrillanteLayer: true,
+    needsHoloLayer: false,
+    needsMcgArtLayer: false,
   },
   HOLO: {
-    treatment: "linear-gradient(170deg, rgba(13, 16, 22, 0.99), rgba(10, 12, 17, 0.98))",
-    sheen: "linear-gradient(115deg, rgba(90, 165, 255, 0.17), rgba(192, 131, 255, 0.17), rgba(108, 255, 214, 0.13))",
-    finish: "linear-gradient(120deg, rgba(110,192,255,0.14), rgba(221,170,255,0.12), rgba(146,255,222,0.12))",
-    artOverlay: "linear-gradient(170deg, rgba(24,32,45,0.3), rgba(6,9,14,0.12))",
+    code: "HOLO",
     label: "Holo",
-    textBox: "rgba(12, 15, 22, 0.76)",
-    footer: "rgba(6, 10, 15, 0.9)",
+    editionClass: "ed-holo",
+    needsReverseLayers: false,
+    needsBrillanteLayer: false,
+    needsHoloLayer: true,
+    needsMcgArtLayer: false,
   },
-  FULL_ART: {
-    treatment: "linear-gradient(176deg, rgba(14, 16, 21, 0.97), rgba(8, 9, 12, 0.99))",
-    sheen: "linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02) 48%, transparent)",
-    finish: "linear-gradient(125deg, transparent 16%, rgba(255,255,255,0.08) 47%, transparent 76%)",
-    artOverlay: "linear-gradient(170deg, rgba(12,15,22,0.16), rgba(5,8,12,0.1))",
-    label: "Full Art",
-    textBox: "rgba(10, 13, 18, 0.72)",
-    footer: "rgba(5, 8, 12, 0.88)",
+  MCG_ART: {
+    code: "MCG_ART",
+    label: "MCG Art",
+    editionClass: "ed-mcgart",
+    needsReverseLayers: false,
+    needsBrillanteLayer: false,
+    needsHoloLayer: false,
+    needsMcgArtLayer: true,
   },
-};
-
-const factionAccent: Record<string, string> = {
-  NECRO: "#A75CF6",
-  AETHER: "#57B0FF",
-  SOLAR: "#F0AA57",
-  WILD: "#54B587",
-  ARCANE: "#8F7EFF",
-};
-
-const chainAccent: Record<string, string> = {
-  ETHEREUM: "#6C7CFF",
-  POLYGON: "#8B5CFF",
-  BASE: "#2E6BFF",
-  SOLANA: "#39D0C2",
-  ARBITRUM: "#59A4FF",
 };
 
 const normalize = (value: string | null | undefined) => (value ?? "").trim().toUpperCase();
 
-const fallbackRarity = rarityAccentMap.COMMON;
-const fallbackEdition = editionToneMap.BASE;
-
-export const getRarityTheme = (rarity: string): RarityTheme => rarityAccentMap[normalize(rarity)] ?? fallbackRarity;
-
-export const getEditionTheme = (edition: string): EditionTheme => {
-  const normalized = normalize(edition);
-  return editionToneMap[normalized] ?? { ...fallbackEdition, label: edition || "Base" };
-};
-
-export const getCardFrameTheme = (rarity: string, edition: string): CardFrameTheme => {
-  const rarityTheme = getRarityTheme(rarity);
-  const editionTheme = getEditionTheme(edition);
-  return {
-    shell: `linear-gradient(180deg, ${rarityTheme.frameTop}, ${rarityTheme.frameBottom})`,
-    inner: editionTheme.textBox,
-    divider: `color-mix(in oklab, ${rarityTheme.accent} 60%, rgba(255,255,255,0.38))`,
+export const resolveRarity = (rarity: string): ClaudeRarityCode => {
+  const normalized = normalize(rarity);
+  const map: Record<string, ClaudeRarityCode> = {
+    B: "B",
+    COMMON: "B",
+    A: "A",
+    UNCOMMON: "A",
+    S: "S",
+    RARE: "S",
+    EPIC: "S",
+    "S+": "S+",
+    LEGENDARY: "S+",
   };
+
+  return map[normalized] ?? "B";
 };
 
-export const getFactionAccent = (faction: string | null) => factionAccent[normalize(faction)] ?? "#76808F";
-export const getChainAccent = (chain: string | null) => chainAccent[normalize(chain)] ?? "#5D708C";
+export const resolveEdition = (edition: string): ClaudeEditionCode => {
+  const normalized = normalize(edition);
+  const map: Record<string, ClaudeEditionCode> = {
+    BASE: "BASE",
+    STANDARD: "BASE",
+    REVERSE: "REVERSE",
+    BRILLANTE: "BRILLANTE",
+    HOLO: "HOLO",
+    HOLOGRAPHIC: "HOLO",
+    HOLOGRAPHIQUE: "HOLO",
+    FULL_ART: "MCG_ART",
+    MCG_ART: "MCG_ART",
+  };
+
+  return map[normalized] ?? "BASE";
+};
+
+export const getRarityTheme = (rarity: string): RarityTheme => RARITY_THEMES[resolveRarity(rarity)];
+
+export const getEditionTheme = (edition: string): EditionTheme => EDITION_THEMES[resolveEdition(edition)];
+
+export const getRarityVars = (theme: RarityTheme): CSSProperties =>
+  ({
+    "--accent": theme.accent,
+    "--glow-col": theme.glowCol,
+    "--border-out": theme.borderOut,
+    "--border-in": theme.borderIn,
+    "--wire": theme.wire,
+    "--wire-acc": theme.wireAcc,
+    "--bg-card": theme.bgCard,
+    "--bg-header": theme.bgHeader,
+    "--bg-footer": theme.bgFooter,
+    "--txt-name": theme.txtName,
+    "--txt-sub": theme.txtSub,
+    "--txt-flavor": theme.txtFlavor,
+  }) as CSSProperties;
+
 export const prettyEditionLabel = (edition: string) => getEditionTheme(edition).label;
-
-
-export const getRarityOrnament = (rarity: string) => getRarityTheme(rarity).ornament;

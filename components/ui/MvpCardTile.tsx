@@ -1,15 +1,6 @@
 import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
-import {
-  getCardFrameTheme,
-  getChainAccent,
-  getEditionTheme,
-  getFactionAccent,
-  getRarityOrnament,
-  getRarityTheme,
-  prettyEditionLabel,
-} from "@/components/ui/mvpCardTheme";
-import styles from "@/components/ui/MvpCardTile.module.css";
+import { getEditionTheme, getRarityTheme, getRarityVars, prettyEditionLabel } from "@/components/ui/mvpCardTheme";
 
 type Props = {
   card: MvpCardView;
@@ -44,82 +35,116 @@ const getCardText = (card: MvpCardView) => {
   return "No flavor text available in token-master.";
 };
 
+function Corner({ stroke, detail, dot }: { stroke: string; detail: boolean; dot: boolean }) {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 13V1H13" stroke={stroke} strokeWidth={dot ? "1" : "0.9"} />
+      {detail && <rect x="1" y="1" width="3" height="3" stroke={stroke} strokeWidth="0.6" opacity="0.7" fill="none" />}
+      {dot && <circle cx="2.5" cy="2.5" r="0.7" fill={stroke} opacity="0.6" />}
+    </svg>
+  );
+}
+
 export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
-  const frameTheme = getCardFrameTheme(card.rarity, card.edition);
-  const factionColor = getFactionAccent(card.faction);
-  const chainColor = getChainAccent(card.primaryChain);
-  const ornament = getRarityOrnament(card.rarity);
-  const isFullArt = card.edition.toUpperCase() === "FULL_ART";
   const canonicalCardNumber = getPrintedCardNumber(card);
   const fallbackIndex = getFallbackIndex(card);
 
   const setName = card.setCode ?? DEFAULT_SET_NAME;
   const setEdition = card.setEditionLabel ?? DEFAULT_SET_EDITION;
 
-  const cardStyle = {
-    "--mvp-accent": rarityTheme.accent,
-    "--mvp-glow": rarityTheme.glow,
-    "--mvp-border": rarityTheme.border,
-    "--mvp-edge": rarityTheme.edge,
-    "--mvp-badge": rarityTheme.badge,
-    "--mvp-badge-text": rarityTheme.badgeText,
-    "--mvp-bg": editionTheme.treatment,
-    "--mvp-sheen": editionTheme.sheen,
-    "--mvp-finish": editionTheme.finish,
-    "--mvp-art-overlay": editionTheme.artOverlay,
-    "--mvp-foil": rarityTheme.foil,
-    "--mvp-faction": factionColor,
-    "--mvp-chain": chainColor,
-    "--mvp-frame-shell": frameTheme.shell,
-    "--mvp-frame-inner": frameTheme.inner,
-    "--mvp-divider": frameTheme.divider,
-    "--mvp-footer": editionTheme.footer,
-    "--mvp-ornament": ornament,
-  } as CSSProperties;
+  const cardStyle = getRarityVars(rarityTheme) as CSSProperties;
 
   return (
-    <article
-      className={`${styles.card} ${variant === "reveal" ? styles.variantReveal : styles.variantCollection}${isFullArt ? ` ${styles.fullArt}` : ""}`}
-      style={cardStyle}
-      data-card-variant={variant}
-    >
-      <div className={styles.noise} />
-      <div className={styles.gloss} />
+    <article className={`mvp-premium-card ${editionTheme.editionClass} variant-${variant}`} style={cardStyle} data-card-variant={variant}>
+      <div className="mvp-card-grain" aria-hidden="true" />
 
-      <header className={`${styles.zone} ${styles.header}`}>
-        <div className={styles.nameWrap}>
-          <h3 className={styles.name}>{card.displayName}</h3>
-          <p className={styles.tokenSymbol}>{card.symbol}</p>
+      {editionTheme.needsReverseLayers && (
+        <>
+          <div className="mvp-reverse-foil" aria-hidden="true" />
+          <div className="mvp-reverse-art-mask" aria-hidden="true" />
+          <div className="mvp-reverse-art-reveal" aria-hidden="true">
+            {card.imageUrl && <img src={card.imageUrl} alt="" />}
+          </div>
+        </>
+      )}
+
+      {editionTheme.needsBrillanteLayer && (
+        <>
+          <div className="mvp-brill-foil" aria-hidden="true" />
+          <div className="mvp-brill-glitter" aria-hidden="true" />
+          <div className="mvp-brill-sweep" aria-hidden="true" />
+        </>
+      )}
+
+      {editionTheme.needsHoloLayer && (
+        <>
+          <div className="mvp-holo-layer" aria-hidden="true" />
+          <div className="mvp-holo-lines" aria-hidden="true" />
+        </>
+      )}
+
+      {editionTheme.needsMcgArtLayer && (
+        <>
+          <div className="mvp-mcgart-pattern" aria-hidden="true" />
+          <div className="mvp-mcgart-art-mask" aria-hidden="true" />
+          <div className="mvp-mcgart-art-reveal" aria-hidden="true">
+            {card.imageUrl && <img src={card.imageUrl} alt="" />}
+          </div>
+        </>
+      )}
+
+      <span className="mvp-corner mvp-corner-tl" aria-hidden="true">
+        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
+      </span>
+      <span className="mvp-corner mvp-corner-tr" aria-hidden="true">
+        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
+      </span>
+      <span className="mvp-corner mvp-corner-bl" aria-hidden="true">
+        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
+      </span>
+      <span className="mvp-corner mvp-corner-br" aria-hidden="true">
+        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
+      </span>
+
+      <header className="mvp-card-header">
+        <div className="mvp-card-header-left">
+          <span className="mvp-card-name">{card.displayName}</span>
+          <span className="mvp-card-ticker">${card.symbol}</span>
         </div>
-        <div className={styles.headerBadges}>
-          <span className={styles.chip}>{card.rarity}</span>
-          <span className={styles.chip}>{prettyEditionLabel(card.edition)}</span>
+        <div className="mvp-card-header-right">
+          <span className="mvp-badge-rarity">{card.rarity}</span>
+          <span className="mvp-badge-edition">{prettyEditionLabel(card.edition)}</span>
         </div>
       </header>
 
-      <div className={`${styles.zone} ${styles.artShell}`}>
-        <div className={styles.artGlow} />
+      <div className="mvp-card-art-shell" style={editionTheme.needsMcgArtLayer || editionTheme.needsReverseLayers ? { visibility: "hidden" } : undefined}>
         {card.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt={card.displayName} loading="lazy" className={styles.art} />
+          <img src={card.imageUrl} alt={card.displayName} loading={variant === "reveal" ? "eager" : "lazy"} />
         ) : (
-          <div className={styles.artPlaceholder}>MCG</div>
+          <div className="mvp-card-art-placeholder">MCG</div>
         )}
       </div>
 
-      <section className={`${styles.zone} ${styles.textbox}`}>
-        <p className={styles.textboxText}>{getCardText(card)}</p>
+      <section className="mvp-card-textbox">
+        <p>{getCardText(card)}</p>
       </section>
 
-      <footer className={`${styles.zone} ${styles.footer}`}>
-        <span className={styles.footerCode}>{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
-        <span className={styles.footerMeta}>{setName} · {setEdition}</span>
-        <span className={styles.footerSupply}>
-          {card.plannedSupply > 0 ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}` : "Unnumbered test mint"}
+      <footer className="mvp-card-footer">
+        <span className="mvp-footer-code">{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
+        <span className="mvp-footer-sep" aria-hidden="true" />
+        <span className="mvp-footer-set">{setName} · {setEdition}</span>
+        <span className="mvp-footer-sep" aria-hidden="true" />
+        <span className="mvp-footer-set mvp-footer-supply">
+          {card.plannedSupply > 0
+            ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}`
+            : "Unnumbered test mint"}
         </span>
       </footer>
+
+      {typeof quantity === "number" && quantity > 1 && <div className="mvp-qty-chip">x{quantity}</div>}
     </article>
   );
 }
