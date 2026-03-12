@@ -2,15 +2,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   requireInternalAdminAccessMock,
+  requireAdminRoleMock,
+  safeLogAdminActionMock,
   grantManualPointsMvpMock,
   listRecentManualGrantsMvpMock,
 } = vi.hoisted(() => ({
   requireInternalAdminAccessMock: vi.fn(),
+  requireAdminRoleMock: vi.fn(),
+  safeLogAdminActionMock: vi.fn(),
   grantManualPointsMvpMock: vi.fn(),
   listRecentManualGrantsMvpMock: vi.fn(),
 }));
 
 vi.mock("@/lib/internal-auth", () => ({ requireInternalAdminAccess: requireInternalAdminAccessMock }));
+vi.mock("@/lib/admin-ops", () => ({
+  ADMIN_ROLES: { ADMIN_FINANCE_OPS: "ADMIN_FINANCE_OPS", ADMIN_SUPERVISOR: "ADMIN_SUPERVISOR" },
+  requireAdminRole: requireAdminRoleMock,
+  safeLogAdminAction: safeLogAdminActionMock,
+}));
 vi.mock("@/lib/domain/rewards/manual-grants", () => ({
   ManualGrantError: class ManualGrantError extends Error {
     status: number;
@@ -28,6 +37,8 @@ import { GET, POST } from "@/app/api/internal/rewards/manual-grant/route";
 describe("/api/internal/rewards/manual-grant", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requireAdminRoleMock.mockImplementation((auth: any) => auth);
+    safeLogAdminActionMock.mockResolvedValue(undefined);
   });
 
   it("returns 403 when admin auth missing", async () => {
@@ -38,7 +49,7 @@ describe("/api/internal/rewards/manual-grant", () => {
   });
 
   it("creates manual grant and includes admin mode", async () => {
-    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session", actor: { id: "admin:a", label: "alice", type: "admin_user", username: "alice", authMode: "session", role: "ADMIN_FINANCE_OPS" } });
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, actor: { id: "admin:a", label: "alice", role: "ADMIN_FINANCE_OPS" } });
     grantManualPointsMvpMock.mockResolvedValue({
       applied: true,
       user: { id: "u1", points: 900 },
@@ -58,7 +69,7 @@ describe("/api/internal/rewards/manual-grant", () => {
   });
 
   it("returns recent grants", async () => {
-    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "key", actor: { id: "service-key:svc", label: "service-key:svc", type: "service_key", username: null, authMode: "key", role: "ADMIN_FINANCE_OPS" } });
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, actor: { id: "service-key:svc", label: "service-key:svc", role: "ADMIN_FINANCE_OPS" } });
     listRecentManualGrantsMvpMock.mockResolvedValue([
       {
         id: "led1",

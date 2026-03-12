@@ -3,12 +3,16 @@ import {
   ContestEntryStatus,
   ContestStatus,
   Prisma,
+  RewardLedgerReasonType,
   RewardType,
 } from "@prisma/client";
 
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
+import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 
 const DEFAULT_LINEUP_SIZE = 5;
+const TEAM_SIZE_MODE_EXACT = "EXACT";
+const ELIGIBILITY_MODE_CARD_SET_ONLY = "CARD_SET_ONLY";
 const ACTIVE_LOCK_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
 
 export type ContestLineupValidationResult = {
@@ -143,7 +147,12 @@ export async function enterContestMvp(params: {
     }
 
     const rule = await getContestRule(tx, params.contestId);
-    const maxRosterSize = rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
+    const teamSizeMode = rule?.teamSizeMode ?? TEAM_SIZE_MODE_EXACT;
+    const maxRosterSize = rule?.teamSizeValue ?? rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
+
+    if (teamSizeMode !== TEAM_SIZE_MODE_EXACT) {
+      throw new ContestRuntimeError("Only EXACT team size mode is currently supported", 400);
+    }
 
     if (lineupInstanceIds.length !== maxRosterSize) {
       throw new ContestRuntimeError(`Lineup must contain exactly ${maxRosterSize} cards`, 400);
@@ -164,7 +173,8 @@ export async function enterContestMvp(params: {
       );
     }
 
-    if (rule?.cardSetId) {
+    const effectiveEligibilityMode = rule?.eligibilityMode ?? "ANY";
+    if ((effectiveEligibilityMode === ELIGIBILITY_MODE_CARD_SET_ONLY || rule?.cardSetId) && rule?.cardSetId) {
       const templateIds = ownedInstances.map((instance) => instance.cardTemplateId);
       const allowedTemplates = await tx.cardTemplate.findMany({
         where: {
@@ -213,6 +223,34 @@ export async function enterContestMvp(params: {
       },
       include: { rosterLocks: true },
     });
+
+    const entryFeeEnabled = rule?.entryFeeEnabled ?? false;
+    const entryFeeAmount = rule?.entryFeeAmount ?? 0;
+    if (entryFeeEnabled) {
+      if (!Number.isInteger(entryFeeAmount) || entryFeeAmount <= 0) {
+        throw new ContestRuntimeError("Contest entry fee is misconfigured", 500);
+      }
+
+      try {
+        await debitPointsWithLedger(tx, {
+          userId: params.userId,
+          amount: entryFeeAmount,
+          reasonType: RewardLedgerReasonType.CONTEST_ENTRY_FEE,
+          reasonRef: params.contestId,
+          idempotencyKey: `contest-entry-fee:${params.contestId}:${params.userId}`,
+          metadata: {
+            contestId: params.contestId,
+            entryId: entry.id,
+          },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Entry fee debit failed";
+        if (message.toLowerCase().includes("not enough points")) {
+          throw new ContestRuntimeError("Insufficient points for contest entry fee", 409);
+        }
+        throw new ContestRuntimeError("Contest entry fee debit failed", 500);
+      }
+    }
 
     await tx.ownedCardInstance.updateMany({
       where: { id: { in: lineupInstanceIds }, userId: params.userId },

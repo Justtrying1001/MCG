@@ -31,6 +31,7 @@ PvE has been retired from active gameplay.
   - Admin panels: `/admin/campaigns`, `/admin/quests`, `/admin/quests/builder`, `/admin/moderation`, `/admin/moderation/:submissionId`, `/admin/moderation/history` (legacy fallback `/admin/quests/submissions`)
   - Admin shell/navigation Phase 2: `/admin` dashboard + `/admin/contests`, `/admin/campaigns`, `/admin/moderation`, `/admin/rewards`, `/admin/users`, `/admin/analytics`, `/admin/activity-log`
   - Phase 3 contest surfaces: `/admin/contests/:contestId` (overview), `/lifecycle`, `/scoring`, `/settlement`, `/audit` with legacy fallback at `/admin/contests/legacy/:contestId`
+  - Phase 1 contest setup refactor surface: `/admin/contests/create` (structured create/validate/publish flow)
 - Live quest runtime types:
   - `CONTEST_COUNT_MILESTONE` (AUTO progression/completion/credit, points-only reward, idempotent ledger credit)
   - `SOCIAL_FOLLOW_X` and `SOCIAL_ENGAGEMENT_X` in submit/review mode (no X auto-verification)
@@ -127,7 +128,16 @@ Core active models include:
   - `POST /api/internal/contests`
   - `POST /api/internal/contests/:contestId/status` (now requires `validationToken` from transition validate + `Idempotency-Key`)
   - `POST /api/internal/contests/:contestId/score` (now requires `importId` from scoring validate + `Idempotency-Key`)
-  - `POST /api/internal/contests/:contestId/settle` (now requires `planId` from settlement validate + `Idempotency-Key`)
+  - `POST /api/internal/contests/:contestId/settle` (legacy manual path; blocked for policy-configured contests)
+  - `POST /api/internal/contest-configs`
+  - `GET /api/internal/contest-configs/:contestId`
+  - `PATCH /api/internal/contest-configs/:contestId`
+  - `POST /api/internal/contest-configs/:contestId/validate`
+  - `POST /api/internal/contest-configs/:contestId/publish`
+  - `POST /api/internal/contest-runs/:contestId/settlement-plan/generate`
+  - `GET /api/internal/contest-runs/:contestId/settlement-plan/:planId`
+  - `GET /api/internal/contest-runs/:contestId/settlement-plan/:planId/preview`
+  - `POST /api/internal/contest-runs/:contestId/settlement-plan/:planId/execute` (`Idempotency-Key` required)
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
   - `POST /api/internal/rewards/pack-grant`

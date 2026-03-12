@@ -1,110 +1,101 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { summarizeSettlementTotals } from "@/lib/admin/contest-workbench";
-
-type RewardType = "POINTS" | "PACK" | "CARD_INSTANCE";
-type RewardRow = { userId: string; type: RewardType; amount: string; packDefinitionId: string };
 
 function newIdempotencyKey(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+type PreviewRow = {
+  id: string;
+  rank: number;
+  userId: string;
+  displayName: string | null;
+  sourceRuleId: string | null;
+  sourceRuleType: string | null;
+  sourceBundleId: string | null;
+  rewardComponents: Array<{ type: "POINTS" | "XP" | "PACK"; amount?: number; quantity?: number; packDefinitionId?: string }>;
+  pointsTotal: number;
+  xpTotal: number;
+  packsTotal: number;
+};
+
 export default function ContestSettlementWorkbenchPage({ params }: { params: { contestId: string } }) {
-  const [rows, setRows] = useState<RewardRow[]>([{ userId: "", type: "POINTS", amount: "", packDefinitionId: "" }]);
-  const [issues, setIssues] = useState<Array<{ severity: string; message: string }>>([]);
   const [planId, setPlanId] = useState("");
-  const [preview, setPreview] = useState<{ totals?: { usersCount: number; pointsCreditTotal: number; rewardActionsCount: number } } | null>(null);
   const [message, setMessage] = useState("");
+  const [preview, setPreview] = useState<{
+    status: string;
+    rankingSnapshotSize: number;
+    totals: { usersCount: number; pointsCreditTotal: number; xpCreditTotal: number; packsGrantTotal: number; rewardActionsCount: number };
+    rows: PreviewRow[];
+  } | null>(null);
 
-  const normalized = useMemo(
-    () => rows
-      .filter((row) => row.userId.trim())
-      .map((row) => ({
-        userId: row.userId.trim(),
-        type: row.type,
-        amount: row.amount.trim() ? Number(row.amount) : undefined,
-        packDefinitionId: row.packDefinitionId.trim() || undefined,
-      })),
-    [rows]
-  );
-
-  const localTotals = summarizeSettlementTotals(normalized.map((row) => ({ type: row.type, amount: row.amount })));
-
-  const validateAndPreview = async () => {
+  const generatePlan = async () => {
     setMessage("");
-    setIssues([]);
-    setPlanId("");
     setPreview(null);
 
-    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/settlement/plan/validate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rewards: normalized }),
-    });
-
-    const validation = (await response.json().catch(() => null)) as {
-      error?: string;
-      blocking?: boolean;
-      issues?: Array<{ severity: string; message: string }>;
-      planId?: string;
-    } | null;
-
-    if (!response.ok || !validation || !validation.planId) {
-      setMessage(validation?.error ?? "Settlement validation failed");
+    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/settlement-plan/generate`, { method: "POST" });
+    const payload = (await response.json().catch(() => null)) as { error?: string; planId?: string; totals?: any } | null;
+    if (!response.ok || !payload?.planId) {
+      setMessage(payload?.error ?? "Cannot generate settlement plan");
       return;
     }
 
-    setIssues(validation.issues ?? []);
-    setPlanId(validation.planId);
-
-    if (validation.blocking) {
-      setMessage("Validation blocked. Fix errors before execute.");
-      return;
-    }
-
-    const previewResponse = await fetch(`/api/internal/contest-runs/${params.contestId}/settlement/preview/${validation.planId}`, { cache: "no-store" });
-    const previewPayload = (await previewResponse.json().catch(() => null)) as {
-      preview?: { totals?: { usersCount: number; pointsCreditTotal: number; rewardActionsCount: number } };
-      error?: string;
-    } | null;
-
-    if (!previewResponse.ok || !previewPayload?.preview) {
-      setMessage(previewPayload?.error ?? "Settlement preview failed");
-      return;
-    }
-
-    setPreview(previewPayload.preview);
-    setMessage("Validation and preview ready.");
+    setPlanId(payload.planId);
+    setMessage(`Settlement plan generated: ${payload.planId}`);
+    await loadPreview(payload.planId);
   };
 
-  const executeSettlement = async () => {
+  const loadPreview = async (forcedPlanId?: string) => {
+    const nextPlanId = forcedPlanId ?? planId;
+    if (!nextPlanId) {
+      setMessage("Generate a plan first.");
+      return;
+    }
+
+    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/settlement-plan/${nextPlanId}/preview`, { cache: "no-store" });
+    const payload = (await response.json().catch(() => null)) as { error?: string; preview?: any } | null;
+    if (!response.ok || !payload?.preview) {
+      setMessage(payload?.error ?? "Cannot preview settlement plan");
+      return;
+    }
+
+    setPlanId(nextPlanId);
+    setPreview(payload.preview);
+    setMessage(`Preview loaded for plan ${nextPlanId}.`);
+  };
+
+  const executePlan = async () => {
     if (!planId) {
-      setMessage("Validate first.");
+      setMessage("Generate a plan first.");
       return;
     }
 
-    const totals = preview?.totals ?? localTotals;
-    if (!window.confirm(`Confirm settlement? users=${totals.usersCount}, rewards=${totals.rewardActionsCount}, points=${totals.pointsCreditTotal}`)) {
+    const totals = preview?.totals;
+    if (!window.confirm(`Execute settlement plan ${planId}? users=${totals?.usersCount ?? "?"}, points=${totals?.pointsCreditTotal ?? "?"}, xp=${totals?.xpCreditTotal ?? "?"}, packs=${totals?.packsGrantTotal ?? "?"}`)) {
       return;
     }
 
-    const response = await fetch(`/api/internal/contests/${params.contestId}/settle`, {
+    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/settlement-plan/${planId}/execute`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey("contest-settlement") },
-      body: JSON.stringify({ planId }),
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": newIdempotencyKey("contest-settlement-plan"),
+      },
+      body: JSON.stringify({}),
     });
 
-    const payload = (await response.json().catch(() => null)) as { error?: string; settlementId?: string; rewardCount?: number } | null;
+    const payload = (await response.json().catch(() => null)) as { error?: string; settlementId?: string; rewardCount?: number; executed?: boolean } | null;
     if (!response.ok) {
-      setMessage(payload?.error ?? "Settlement execute failed");
+      setMessage(payload?.error ?? "Settlement plan execute failed");
       return;
     }
 
-    setMessage(`Settlement executed. settlementId=${payload?.settlementId}, rewards=${payload?.rewardCount}`);
+    setMessage(`Settlement plan executed. settlementId=${payload?.settlementId ?? "n/a"}, rewards=${payload?.rewardCount ?? "?"}, executed=${String(payload?.executed)}`);
+    await loadPreview(planId);
   };
 
   return (
@@ -114,36 +105,45 @@ export default function ContestSettlementWorkbenchPage({ params }: { params: { c
       </section>
 
       <section className="contest-section" style={{ display: "grid", gap: "0.7rem" }}>
-        <h1 className="page-title">Settlement Workbench</h1>
-        <p className="contest-inline-note">Build reward rows in table form, validate plan, preview impact, then execute with token and idempotency key.</p>
-
-        {rows.map((row, index) => (
-          <div key={index} style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr 180px 160px 1fr auto" }}>
-            <input className="input" placeholder="userId" value={row.userId} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, userId: event.target.value } : r))} />
-            <select className="input" value={row.type} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, type: event.target.value as RewardType } : r))}>
-              <option value="POINTS">POINTS</option>
-              <option value="PACK">PACK</option>
-              <option value="CARD_INSTANCE">CARD_INSTANCE</option>
-            </select>
-            <input className="input" placeholder="amount" value={row.amount} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, amount: event.target.value } : r))} />
-            <input className="input" placeholder="packDefinitionId" value={row.packDefinitionId} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, packDefinitionId: event.target.value } : r))} />
-            <Button variant="ghost" onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}>Remove</Button>
-          </div>
-        ))}
+        <h1 className="page-title">Settlement Workbench (Policy-driven)</h1>
+        <p className="contest-inline-note">Primary path for Phase 2: generate settlement plan from final ranking + published reward policy, preview, then execute.</p>
 
         <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <Button variant="ghost" onClick={() => setRows((prev) => [...prev, { userId: "", type: "POINTS", amount: "", packDefinitionId: "" }])}>Add row</Button>
-          <Button onClick={() => void validateAndPreview()}>Validate + Preview</Button>
-          <Button onClick={() => void executeSettlement()} disabled={!planId}>Execute settlement</Button>
+          <Button onClick={() => void generatePlan()}>Generate plan from ranking + policy</Button>
+          <Button variant="ghost" onClick={() => void loadPreview()}>Reload preview</Button>
+          <Button onClick={() => void executePlan()} disabled={!planId}>Execute plan</Button>
+          {planId ? <span className="admin-badge neutral">planId={planId}</span> : null}
         </div>
 
-        <p className="contest-inline-note">Draft totals: users={localTotals.usersCount}, rewards={localTotals.rewardActionsCount}, points={localTotals.pointsCreditTotal}</p>
         {message ? <p className="contest-inline-note">{message}</p> : null}
-        {issues.map((issue, index) => (
-          <p key={`${issue.message}-${index}`} className={issue.severity === "ERROR" ? "contest-error" : "contest-inline-note"}>{issue.message}</p>
-        ))}
 
-        {preview?.totals ? <p className="contest-inline-note">Preview totals: users={preview.totals.usersCount}, rewards={preview.totals.rewardActionsCount}, points={preview.totals.pointsCreditTotal}</p> : null}
+        {preview ? (
+          <>
+            <p className="contest-inline-note">Plan status: <strong>{preview.status}</strong> · ranking size: {preview.rankingSnapshotSize}</p>
+            <p className="contest-inline-note">Totals → users={preview.totals.usersCount}, points={preview.totals.pointsCreditTotal}, xp={preview.totals.xpCreditTotal}, packs={preview.totals.packsGrantTotal}, actions={preview.totals.rewardActionsCount}</p>
+
+            <div style={{ display: "grid", gap: "0.5rem" }}>
+              {preview.rows.slice(0, 50).map((row) => (
+                <div key={row.id} className="contest-card" style={{ padding: "0.6rem" }}>
+                  <p className="contest-inline-note">#{row.rank} · {row.displayName ?? row.userId} ({row.userId})</p>
+                  <p className="contest-inline-note">Rule={row.sourceRuleType ?? "n/a"} ({row.sourceRuleId ?? "n/a"}) · Bundle={row.sourceBundleId ?? "n/a"}</p>
+                  <p className="contest-inline-note">Rewards: {row.rewardComponents.map((component) => {
+                    if (component.type === "POINTS") return `POINTS:${component.amount ?? 0}`;
+                    if (component.type === "XP") return `XP:${component.amount ?? 0}`;
+                    return `PACK:${component.packDefinitionId ?? "?"}x${component.quantity ?? 0}`;
+                  }).join(" | ")}</p>
+                </div>
+              ))}
+              {preview.rows.length > 50 ? <p className="contest-inline-note">Showing 50 / {preview.rows.length} rows.</p> : null}
+            </div>
+          </>
+        ) : null}
+      </section>
+
+      <section className="contest-section" style={{ display: "grid", gap: "0.4rem" }}>
+        <h2 className="contest-section-title">Legacy fallback</h2>
+        <p className="contest-inline-note">Legacy manual settlement remains available only for old contests without published policy config.</p>
+        <Link href={`/admin/contests/legacy/${params.contestId}`} className="contest-inline-note">Open legacy contest detail</Link>
       </section>
     </div>
   );

@@ -130,7 +130,8 @@ export default function AdminContestsPage() {
       <div className="page-header" style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center" }}>
         <div>
           <h1 className="page-title">Contest Admin</h1>
-          <p className="page-subtitle">Internal ops panel for contest lifecycle management.</p>
+          <p className="page-subtitle">Legacy internal ops panel for contest lifecycle management.</p>
+          <p className="contest-error" style={{ marginTop: "0.4rem" }}>Deprecated: use the new structured create flow at /admin/contests/create.</p>
         </div>
         <AdminLogoutButton />
       </div>

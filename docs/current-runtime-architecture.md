@@ -43,6 +43,10 @@ This document describes what is currently implemented in runtime.
 ## Progression/rewards/contests
 - Rewards and quests are ledger-backed.
 - Contest entry uses owned instance IDs (`OwnedCardInstance`) as ownership truth.
+- Contest setup has a new structured admin config path (`/api/internal/contest-configs*`) with draft/validate/publish runtime.
+- Contest entry now supports optional points entry-fee debit through `RewardLedgerEntry` when configured.
+- Contest settlement now has a policy-driven auto-plan runtime (`/api/internal/contest-runs/:contestId/settlement-plan/*`) for new structured contests (generate → preview → execute).
+- Legacy manual settlement (`/api/internal/contests/:contestId/settle`) remains for old contests but is blocked for policy-configured contests to avoid bypassing configured distribution rules.
 - Progression summaries are exposed in `coexistence.v2` envelope.
 
 ## Notes

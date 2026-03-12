@@ -5,17 +5,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
-
-const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", hint: "Ops cockpit" },
-  { href: "/admin/contests", label: "Contests", hint: "Lifecycle & runs" },
-  { href: "/admin/campaigns", label: "Campaigns & Quests", hint: "Catalog + builder" },
-  { href: "/admin/moderation", label: "Moderation", hint: "Queue & review" },
-  { href: "/admin/rewards", label: "Rewards", hint: "Compensation ops" },
-  { href: "/admin/users", label: "Users", hint: "Context lookup" },
-  { href: "/admin/analytics", label: "Analytics", hint: "Operational metrics" },
-  { href: "/admin/activity-log", label: "Activity Log", hint: "Audit timeline" },
-] as const;
+import { ADMIN_NAV_GROUPS, isNavItemActive } from "@/lib/admin/navigation";
 
 export function AdminShell({ children, username }: { children: ReactNode; username: string }) {
   const pathname = usePathname();
@@ -27,7 +17,7 @@ export function AdminShell({ children, username }: { children: ReactNode; userna
           <span className="admin-brand-badge">MCG</span>
           <div>
             <p className="admin-brand-title">Admin Control Center</p>
-            <p className="admin-brand-subtitle">Operations workbench</p>
+            <p className="admin-brand-subtitle">Operate · Configure · Audit</p>
           </div>
         </div>
 
@@ -39,18 +29,28 @@ export function AdminShell({ children, username }: { children: ReactNode; userna
 
       <div className="admin-layout-grid">
         <aside className="admin-sidebar">
-          <p className="admin-sidebar-label">Modules</p>
-          <nav className="admin-nav-list">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
-              return (
-                <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? "is-active" : ""}`}>
-                  <span className="admin-nav-label">{item.label}</span>
-                  <span className="admin-nav-hint">{item.hint}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          {ADMIN_NAV_GROUPS.map((group) => (
+            <div key={group.id} className="admin-nav-group">
+              <p className="admin-sidebar-label" style={{ color: group.deprecated ? "#fca5a5" : undefined }}>
+                {group.label}
+              </p>
+              <nav className="admin-nav-list">
+                {group.items.map((item) => {
+                  const active = isNavItemActive(pathname, item.href);
+                  return (
+                    <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? "is-active" : ""} ${group.deprecated ? "is-legacy" : ""}`}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "0.35rem", alignItems: "center" }}>
+                        <span className="admin-nav-label">{item.label}</span>
+                        {item.critical ? <span className="admin-badge warn">critical</span> : null}
+                        {group.deprecated ? <span className="admin-badge danger">legacy</span> : null}
+                      </div>
+                      <span className="admin-nav-hint">{item.hint}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          ))}
         </aside>
 
         <main className="admin-content">{children}</main>
