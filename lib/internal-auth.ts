@@ -33,7 +33,7 @@ export function requireInternalAdminAccess(request: NextRequest): AdminAccessCon
         label: username,
         username,
         authMode: "session",
-        role: parseAdminRole(process.env.ADMIN_DEFAULT_ROLE ?? "ADMIN_OPS"),
+        role: parseAdminRole(process.env.ADMIN_DEFAULT_ROLE ?? "ADMIN_SUPERVISOR"),
       },
     };
   }

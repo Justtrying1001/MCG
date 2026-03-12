@@ -198,7 +198,7 @@ Required:
 Optional (recommended for machine-to-machine/internal scripts):
 
 - `INTERNAL_ADMIN_KEY`
-- `ADMIN_DEFAULT_ROLE` (optional, default `ADMIN_OPS`)
+- `ADMIN_DEFAULT_ROLE` (optional, default `ADMIN_SUPERVISOR`)
 - `INTERNAL_ADMIN_KEY_ID` (optional stable service actor id, default `internal-admin-service`)
 - `INTERNAL_ADMIN_KEY_ROLE` (optional, default `ADMIN_SUPERVISOR`)
 
