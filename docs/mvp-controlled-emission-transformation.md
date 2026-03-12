@@ -1,5 +1,7 @@
 # MCG — Audit Repository + Transformation Docs-First (MVP Controlled Emission)
 
+> ⚠️ Historical transformation plan: this document was written pre-implementation for controlled-emission migration and should be read as context, not current runtime truth. Use `docs/current-runtime-architecture.md` and `docs/repo-and-docs-consolidation-audit-2026-03.md` for live state.
+
 ## 0) Scope de ce document
 
 Ce document devient la référence de transformation **avant implémentation** pour aligner le repo actuel avec la cible produit MVP suivante :
