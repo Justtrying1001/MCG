@@ -49,79 +49,73 @@ export default function ModerationQueuePage() {
     void load();
   }, [campaign, questId, statusFilter]);
 
-  const filtered = useMemo(() => {
-    if (slaFilter === "ALL") return items;
-    return items.filter((item) => item.slaLevel === slaFilter);
-  }, [items, slaFilter]);
+  const filtered = useMemo(() => (slaFilter === "ALL" ? items : items.filter((item) => item.slaLevel === slaFilter)), [items, slaFilter]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Moderation Queue</h1>
-        <p className="page-subtitle">Queue-first moderation with SLA health, evidence completeness, and direct review links.</p>
-        {questId ? <p className="contest-inline-note">Quest filter: {questId}</p> : null}
-        {campaign ? <p className="contest-inline-note">Campaign filter: {campaign}</p> : null}
-      </section>
-
-      <section className="contest-section" style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center" }}>
-        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
-          <option value="SUBMITTED">SUBMITTED</option>
-          <option value="APPROVED">APPROVED</option>
-          <option value="REJECTED">REJECTED</option>
-          <option value="ALL">ALL</option>
-        </select>
-        <select className="input" value={slaFilter} onChange={(event) => setSlaFilter(event.target.value as typeof slaFilter)}>
-          <option value="ALL">All SLA levels</option>
-          <option value="OK">OK</option>
-          <option value="AT_RISK">AT_RISK</option>
-          <option value="BREACH">BREACH</option>
-        </select>
-        <Link href="/admin/moderation/history" className="contest-inline-note">Open decision history</Link>
-        <Link href="/admin/quests/submissions" className="contest-inline-note">Legacy moderation fallback</Link>
-      </section>
-
-      <section className="contest-section">
-        <div className="contest-meta-grid">
-          <Stat label="Items" value={String(filtered.length)} />
-          <Stat label="SLA BREACH" value={String(filtered.filter((item) => item.slaLevel === "BREACH").length)} />
-          <Stat label="At risk" value={String(filtered.filter((item) => item.slaLevel === "AT_RISK").length)} />
-          <Stat label="Missing evidence" value={String(filtered.filter((item) => item.evidenceCompleteness === "EMPTY").length)} />
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Moderation Queue</h1>
+          <p className="admin-subtitle">Work queue with SLA and evidence quality signals to speed consistent reviewer decisions.</p>
+          {questId ? <p className="contest-inline-note">Quest filter: {questId}</p> : null}
+          {campaign ? <p className="contest-inline-note">Campaign filter: {campaign}</p> : null}
+        </div>
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+          <Link href="/admin/moderation/history" className="admin-badge neutral">Decision history</Link>
+          <Link href="/admin/quests/submissions" className="admin-badge neutral">Legacy fallback</Link>
         </div>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading queue…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      <section className="admin-toolbar">
+        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+          <option value="SUBMITTED">SUBMITTED</option><option value="APPROVED">APPROVED</option><option value="REJECTED">REJECTED</option><option value="ALL">ALL</option>
+        </select>
+        <select className="input" value={slaFilter} onChange={(event) => setSlaFilter(event.target.value as typeof slaFilter)}>
+          <option value="ALL">All SLA levels</option><option value="OK">OK</option><option value="AT_RISK">AT_RISK</option><option value="BREACH">BREACH</option>
+        </select>
+        <span className="admin-badge neutral">{filtered.length} rows</span>
+      </section>
+
+      <section className="admin-kpi-grid">
+        <Kpi label="Breach" value={String(filtered.filter((item) => item.slaLevel === "BREACH").length)} tone="danger" />
+        <Kpi label="At risk" value={String(filtered.filter((item) => item.slaLevel === "AT_RISK").length)} tone="warn" />
+        <Kpi label="Missing evidence" value={String(filtered.filter((item) => item.evidenceCompleteness === "EMPTY").length)} tone="warn" />
+      </section>
+
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading queue…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading && !error ? (
-        <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
+        <section className="admin-table">
+          <div className="admin-table-head" style={{ gridTemplateColumns: "0.9fr 1.6fr 1fr 0.8fr 0.9fr 1.6fr" }}>
+            <span>Quest</span><span>User</span><span>Status</span><span>SLA</span><span>Evidence</span><span>Actions</span>
+          </div>
           {filtered.map((item) => (
-            <div key={item.id} className="contest-card">
-              <div className="contest-card-top">
+            <div key={item.id} className="admin-table-row" style={{ gridTemplateColumns: "0.9fr 1.6fr 1fr 0.8fr 0.9fr 1.6fr" }}>
+              <div>
                 <p className="contest-code">{item.quest.code}</p>
-                <span className={`contest-status status-${item.status.toLowerCase()}`}>{item.status}</span>
+                <p className="contest-inline-note">{item.quest.title}</p>
               </div>
-              <h3 className="contest-title">{item.quest.title}</h3>
-              <p className="contest-inline-note">User: {item.user.displayName || "Unknown"} @{item.user.xUsername || "—"}</p>
-              <p className="contest-inline-note">Age: {item.ageHours}h · SLA: {item.slaLevel} · Evidence: {item.evidenceCompleteness}</p>
-              <p className="contest-inline-note">Submitted: {new Date(item.createdAt).toLocaleString()}</p>
-              <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap", marginTop: "0.45rem" }}>
-                <Link href={`/admin/moderation/${item.id}`} className="contest-inline-note">Open review detail</Link>
-                <Link href={`/admin/quests/${item.quest.id}`} className="contest-inline-note">Open quest detail</Link>
+              <div>
+                <p style={{ fontWeight: 700 }}>{item.user.displayName || "Unknown"}</p>
+                <p className="contest-inline-note">@{item.user.xUsername || "—"} · {item.ageHours}h</p>
+              </div>
+              <span className={`admin-badge ${item.status === "SUBMITTED" ? "warn" : item.status === "APPROVED" ? "success" : "danger"}`}>{item.status}</span>
+              <span className={`admin-badge ${item.slaLevel === "BREACH" ? "danger" : item.slaLevel === "AT_RISK" ? "warn" : "success"}`}>{item.slaLevel}</span>
+              <span className="contest-inline-note" style={{ color: "#d1d5db" }}>{item.evidenceCompleteness}</span>
+              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <Link href={`/admin/moderation/${item.id}`} className="admin-badge neutral">Review</Link>
+                <Link href={`/admin/quests/${item.quest.id}`} className="admin-badge neutral">Quest</Link>
               </div>
             </div>
           ))}
-          {filtered.length === 0 ? <p className="contest-inline-note">No submissions for current filters.</p> : null}
+          {filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No submissions for current filters.</p></div> : null}
         </section>
       ) : null}
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
-  );
+function Kpi({ label, value, tone }: { label: string; value: string; tone: "success" | "warn" | "danger" }) {
+  return <div className="admin-kpi"><p className="admin-kpi-label">{label}</p><p className="admin-kpi-value">{value}</p><span className={`admin-badge ${tone}`}>{tone.toUpperCase()}</span></div>;
 }

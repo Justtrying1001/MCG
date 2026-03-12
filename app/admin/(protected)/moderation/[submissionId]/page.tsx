@@ -87,36 +87,36 @@ export default function ModerationSubmissionDetailPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
+    <div className="admin-page">
+      <section className="admin-panel">
         <Link href="/admin/moderation" className="contest-inline-note">← Back to moderation queue</Link>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading submission context…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading submission context…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
         <>
-          <section className="contest-section">
+          <section className="admin-panel">
             <div className="contest-card-top">
               <p className="contest-code">{data.submission.quest.code}</p>
               <span className={`contest-status status-${data.submission.status.toLowerCase()}`}>{data.submission.status}</span>
             </div>
-            <h1 className="page-title">Submission review</h1>
+            <h1 className="admin-title">Submission review</h1>
             <p className="contest-inline-note">User: {data.submission.user.displayName || "Unknown"} @{data.submission.user.xUsername || "—"}</p>
             <p className="contest-inline-note">Quest: {data.submission.quest.title} · Reward: {data.submission.quest.rewardPoints} pts</p>
             <p className="contest-inline-note">Submitted: {new Date(data.submission.createdAt).toLocaleString()}</p>
             <p className="contest-inline-note">Evidence: {data.submission.proofUrl ? <a href={data.submission.proofUrl} target="_blank" rel="noreferrer">{data.submission.proofUrl}</a> : data.submission.note || "—"}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Projected reward impact</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Projected reward impact</p>
             <p className="contest-inline-note">Points delta on APPROVE: +{data.context.approvalImpactPreview.pointsDelta}</p>
             <p className="contest-inline-note">Ledger write: {data.context.approvalImpactPreview.ledgerEntryWouldBeCreated ? "Yes" : "No"}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Previous submissions by user</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Previous submissions by user</p>
             <div style={{ display: "grid", gap: "0.4rem" }}>
               {data.context.userRecentSubmissions.map((row) => (
                 <div key={row.id} className="contest-card" style={{ padding: "0.6rem" }}>
@@ -127,8 +127,8 @@ export default function ModerationSubmissionDetailPage() {
             </div>
           </section>
 
-          <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
-            <h2 className="contest-section-title">Decision</h2>
+          <section className="admin-panel" style={{ display: "grid", gap: "0.6rem" }}>
+            <p className="admin-section-title">Decision</p>
             <textarea className="input" rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Reviewer note (optional)" />
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
               <select className="input" value={decisionCode} onChange={(event) => setDecisionCode(event.target.value)} style={{ maxWidth: "280px" }}>

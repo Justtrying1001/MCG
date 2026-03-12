@@ -33,36 +33,38 @@ export default function ActivityLogPage() {
   }, [statusFilter]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Activity Log</h1>
-        <p className="page-subtitle">Trace critical admin actions with actor attribution and status.</p>
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Activity Log</h1>
+          <p className="admin-subtitle">Audit timeline for actor attribution, execution outcomes, and failure diagnostics.</p>
+        </div>
       </section>
 
-      <section className="contest-section" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-        <label className="contest-inline-note">Status filter</label>
+      <section className="admin-toolbar">
+        <label className="contest-inline-note">Status</label>
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
-          <option value="ALL">ALL</option>
-          <option value="VALIDATED">VALIDATED</option>
-          <option value="EXECUTED">EXECUTED</option>
-          <option value="FAILED">FAILED</option>
+          <option value="ALL">ALL</option><option value="VALIDATED">VALIDATED</option><option value="EXECUTED">EXECUTED</option><option value="FAILED">FAILED</option>
         </select>
+        <span className="admin-badge neutral">{rows.length} events</span>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
+      <section className="admin-table">
+        <div className="admin-table-head" style={{ gridTemplateColumns: "0.9fr 1.2fr 0.9fr 1.2fr 1.1fr 1fr" }}>
+          <span>Module</span><span>Action</span><span>Status</span><span>Actor</span><span>Target</span><span>Time</span>
+        </div>
         {rows.map((row) => (
-          <div key={row.id} className="contest-card" style={{ padding: "0.6rem" }}>
-            <div className="contest-card-top">
-              <p className="contest-code">{row.module}</p>
-              <span className={`contest-status status-${row.status === "FAILED" ? "canceled" : "live"}`}>{row.status}</span>
-            </div>
-            <p className="contest-inline-note">{row.actionType} · actor={row.actorLabel}</p>
-            <p className="contest-inline-note">target={row.targetType ?? "—"}/{row.targetId ?? "—"}</p>
-            <p className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</p>
-            {row.errorCode ? <p className="contest-error">{row.errorCode}: {row.errorMessage ?? ""}</p> : null}
+          <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "0.9fr 1.2fr 0.9fr 1.2fr 1.1fr 1fr" }}>
+            <span className="contest-code">{row.module}</span>
+            <span>{row.actionType}</span>
+            <span className={`admin-badge ${row.status === "FAILED" ? "danger" : row.status === "EXECUTED" ? "success" : "warn"}`}>{row.status}</span>
+            <span>{row.actorLabel}</span>
+            <span className="contest-inline-note">{row.targetType ?? "—"}/{row.targetId ?? "—"}</span>
+            <span className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</span>
+            {row.errorCode ? <p className="contest-error" style={{ gridColumn: "1 / -1" }}>{row.errorCode}: {row.errorMessage ?? ""}</p> : null}
           </div>
         ))}
-        {rows.length === 0 ? <p className="contest-inline-note">No actions found for this filter.</p> : null}
+        {rows.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No actions found for this filter.</p></div> : null}
       </section>
     </div>
   );

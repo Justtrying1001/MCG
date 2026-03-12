@@ -79,28 +79,28 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
   }, [data]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
+    <div className="admin-page">
+      <section className="admin-panel">
         <Link href="/admin/quests" className="contest-inline-note">← Back to quest library</Link>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading quest detail…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading quest detail…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
         <>
-          <section className="contest-section">
+          <section className="admin-panel">
             <div className="contest-card-top">
               <p className="contest-code">{data.quest.code}</p>
               <span className={`contest-status status-${data.quest.isActive ? "live" : "canceled"}`}>{data.quest.isActive ? "ACTIVE" : "INACTIVE"}</span>
             </div>
-            <h1 className="page-title">{data.quest.title}</h1>
+            <h1 className="admin-title">{data.quest.title}</h1>
             <p className="contest-inline-note">Objective: {data.quest.type} · Validation: {data.quest.validationMode} · Reward: {data.quest.rewardPoints} pts</p>
             <p className="contest-inline-note">Window: {formatDate(data.quest.startAt)} → {formatDate(data.quest.endAt)}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Quest config summary</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Quest config summary</p>
             <p className="contest-inline-note">Threshold: {configSummary.threshold ?? "—"}</p>
             <p className="contest-inline-note">Social action: {configSummary.socialAction ?? "—"}</p>
             <p className="contest-inline-note">Target URL: {configSummary.targetUrl ?? "—"}</p>
@@ -108,8 +108,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             <p className="contest-inline-note">Proof required: {configSummary.proofRequired === null ? "—" : configSummary.proofRequired ? "Yes" : "No"}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Performance funnel</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Performance funnel</p>
             <div className="contest-meta-grid">
               <Metric label="Progress records" value={String(data.analytics.progressCount)} />
               <Metric label="Completed" value={String(data.analytics.completedCount)} />
@@ -123,8 +123,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             </div>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Latest submissions</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Latest submissions</p>
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestSubmissions.map((row) => (
                 <div key={row.id} className="contest-card">
@@ -138,8 +138,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             </div>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Reward distribution snapshot</h2>
+          <section className="admin-panel">
+            <p className="admin-section-title">Reward distribution snapshot</p>
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestLedgerCredits.map((row) => (
                 <div key={row.id} className="contest-card">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type DashboardPayload = {
   summary: {
@@ -45,71 +45,67 @@ export default function AdminHomePage() {
     void load();
   }, []);
 
+  const contestStatusCards = useMemo(() => Object.entries(data?.summary.contestsByStatus ?? {}), [data]);
+
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Operations Dashboard</h1>
-        <p className="page-subtitle">High-signal admin state for contest ops, moderation health, compensations, and incident visibility.</p>
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Operations Dashboard</h1>
+          <p className="admin-subtitle">Compact cockpit for incidents, queue pressure, and critical admin workload.</p>
+        </div>
+        <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+          <Link className="admin-badge neutral" href="/admin/activity-log">Full log</Link>
+          <Link className="admin-badge neutral" href="/admin/moderation">Moderation queue</Link>
+        </div>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading dashboard…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading dashboard…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
         <>
-          <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
-            <h2 className="contest-section-title">Priority actions</h2>
-            <div style={{ display: "grid", gap: "0.4rem" }}>
-              <DashboardAction
-                label="Moderation queue"
-                value={`${data.summary.pendingModerationCount} pending submissions`}
-                href="/admin/moderation"
-                critical={data.summary.pendingModerationCount > 20}
-              />
-              <DashboardAction
-                label="Live contests"
-                value={`${data.summary.contestsByStatus.LIVE ?? 0} currently LIVE`}
-                href="/admin/contests"
-              />
-              <DashboardAction
-                label="Failed admin actions (24h)"
-                value={String(data.summary.failedAdminActionsLast24h)}
-                href="/admin/activity-log"
-                critical={data.summary.failedAdminActionsLast24h > 0}
-              />
-            </div>
+          <section className="admin-kpi-grid">
+            <Kpi label="Pending moderation" value={String(data.summary.pendingModerationCount)} tone={data.summary.pendingModerationCount > 20 ? "danger" : "warn"} />
+            <Kpi label="Failed admin actions (24h)" value={String(data.summary.failedAdminActionsLast24h)} tone={data.summary.failedAdminActionsLast24h > 0 ? "danger" : "success"} />
+            <Kpi label="Manual grants (24h)" value={String(data.summary.manualGrantsLast24h)} tone="neutral" />
+            <Kpi label="Live contests" value={String(data.summary.contestsByStatus.LIVE ?? 0)} tone="success" />
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Queue health</h2>
-            <div className="contest-meta-grid">
-              {Object.entries(data.summary.contestsByStatus).map(([status, count]) => (
-                <div key={status}>
-                  <p className="contest-meta-label">{status}</p>
-                  <p className="contest-meta-value">{count}</p>
-                </div>
-              ))}
-              <div>
-                <p className="contest-meta-label">Manual grants (24h)</p>
-                <p className="contest-meta-value">{data.summary.manualGrantsLast24h}</p>
+          <section className="admin-split">
+            <div className="admin-panel">
+              <p className="admin-section-title">Priority actions</p>
+              <ActionRow href="/admin/moderation" label="Clear moderation backlog" detail={`${data.summary.pendingModerationCount} items pending review`} critical={data.summary.pendingModerationCount > 20} />
+              <ActionRow href="/admin/contests" label="Watch live contests" detail={`${data.summary.contestsByStatus.LIVE ?? 0} contests in LIVE state`} />
+              <ActionRow href="/admin/rewards" label="Review compensations" detail={`${data.summary.manualGrantsLast24h} grant events in 24h`} />
+              <ActionRow href="/admin/activity-log" label="Investigate failures" detail={`${data.summary.failedAdminActionsLast24h} failed actions in 24h`} critical={data.summary.failedAdminActionsLast24h > 0} />
+            </div>
+
+            <div className="admin-panel">
+              <p className="admin-section-title">Contest state health</p>
+              <div className="admin-kpi-grid">
+                {contestStatusCards.map(([status, count]) => (
+                  <Kpi key={status} label={status} value={String(count)} tone={status === "LIVE" ? "success" : "neutral"} />
+                ))}
               </div>
             </div>
           </section>
 
-          <section className="contest-section">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem" }}>
-              <h2 className="contest-section-title">Recent critical events</h2>
-              <Link href="/admin/activity-log" className="contest-inline-note">Open full log</Link>
+          <section className="admin-panel">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem" }}>
+              <p className="admin-section-title">Recent critical events</p>
+              <Link href="/admin/activity-log" className="admin-badge neutral">Open full log</Link>
             </div>
-            <div style={{ display: "grid", gap: "0.5rem" }}>
+
+            <div style={{ display: "grid", gap: "0.45rem" }}>
               {data.recentCriticalEvents.map((event) => (
-                <div key={event.id} className="contest-card" style={{ padding: "0.6rem" }}>
-                  <div className="contest-card-top">
-                    <p className="contest-code">{event.module}</p>
-                    <span className={`contest-status status-${event.status === "FAILED" ? "canceled" : "live"}`}>{event.status}</span>
+                <div key={event.id} className="admin-panel" style={{ padding: "0.55rem", gap: "0.35rem", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.6rem", alignItems: "center" }}>
+                    <p className="contest-code">{event.module} · {event.actionType}</p>
+                    <span className={`admin-badge ${event.status === "FAILED" ? "danger" : "success"}`}>{event.status}</span>
                   </div>
-                  <p className="contest-inline-note" style={{ marginTop: "0.4rem" }}>{event.actionType} · actor={event.actorLabel}</p>
-                  <p className="contest-inline-note">{new Date(event.createdAt).toLocaleString()} · {event.targetType ?? "—"}/{event.targetId ?? "—"}</p>
+                  <p className="contest-inline-note">actor: {event.actorLabel} · target: {event.targetType ?? "—"}/{event.targetId ?? "—"}</p>
+                  <p className="contest-inline-note">{new Date(event.createdAt).toLocaleString()}</p>
                   {event.errorCode ? <p className="contest-error">errorCode: {event.errorCode}</p> : null}
                 </div>
               ))}
@@ -122,14 +118,24 @@ export default function AdminHomePage() {
   );
 }
 
-function DashboardAction({ label, value, href, critical }: { label: string; value: string; href: string; critical?: boolean }) {
+function Kpi({ label, value, tone }: { label: string; value: string; tone: "success" | "warn" | "danger" | "neutral" }) {
   return (
-    <Link href={href} className="contest-card" style={{ textDecoration: "none", borderColor: critical ? "#ef4444" : undefined }}>
-      <div className="contest-card-top">
-        <p className="contest-code">{critical ? "PRIORITY" : "OPS"}</p>
+    <div className="admin-kpi">
+      <p className="admin-kpi-label">{label}</p>
+      <p className="admin-kpi-value">{value}</p>
+      <span className={`admin-badge ${tone}`}>{tone.toUpperCase()}</span>
+    </div>
+  );
+}
+
+function ActionRow({ href, label, detail, critical }: { href: string; label: string; detail: string; critical?: boolean }) {
+  return (
+    <Link href={href} className="admin-panel" style={{ padding: "0.55rem", gap: "0.3rem", textDecoration: "none", borderColor: critical ? "rgba(248,113,113,0.5)" : undefined }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem" }}>
+        <p style={{ fontSize: "0.86rem", fontWeight: 700 }}>{label}</p>
+        <span className={`admin-badge ${critical ? "danger" : "neutral"}`}>{critical ? "priority" : "action"}</span>
       </div>
-      <h3 className="contest-title">{label}</h3>
-      <p className="contest-inline-note">{value}</p>
+      <p className="contest-inline-note">{detail}</p>
     </Link>
   );
 }

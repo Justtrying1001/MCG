@@ -11,7 +11,6 @@ type CampaignRow = {
   status: "ACTIVE" | "INACTIVE";
   activeQuests: number;
   questCount: number;
-  questIds: string[];
 };
 
 export default function CampaignsCatalogPage() {
@@ -49,44 +48,51 @@ export default function CampaignsCatalogPage() {
   }, [query, rows, statusFilter]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Campaign Catalog</h1>
-        <p className="page-subtitle">Campaign entrypoint grouped from quests with activity status, active window and moderation shortcuts.</p>
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Campaign Catalog</h1>
+          <p className="admin-subtitle">Compact campaign surface with quest volume and fast routing to moderation and quest library.</p>
+        </div>
       </section>
 
-      <section className="contest-section" style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center" }}>
+      <section className="admin-toolbar">
         <input className="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search campaign code/name" style={{ maxWidth: "260px" }} />
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | "ACTIVE" | "INACTIVE")}>
           <option value="ALL">All statuses</option>
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>
         </select>
-        <Link href="/admin/quests" className="contest-inline-note">Open quest library</Link>
+        <Link href="/admin/quests" className="admin-badge neutral">Quest library</Link>
+        <span className="admin-badge neutral">{filtered.length} campaigns</span>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading campaign catalog…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading campaign catalog…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading && !error ? (
-        <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
+        <section className="admin-table">
+          <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.4fr 0.8fr 0.8fr 0.8fr 1.6fr" }}>
+            <span>Code</span><span>Name</span><span>Status</span><span>Quests</span><span>Active</span><span>Actions</span>
+          </div>
           {filtered.map((row) => (
-            <div key={row.code} className="contest-card">
-              <div className="contest-card-top">
-                <p className="contest-code">{row.code}</p>
-                <span className={`contest-status status-${row.status === "ACTIVE" ? "live" : "canceled"}`}>{row.status}</span>
+            <div key={row.code} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.4fr 0.8fr 0.8fr 0.8fr 1.6fr" }}>
+              <span className="contest-code">{row.code}</span>
+              <div>
+                <p style={{ fontWeight: 700 }}>{row.name}</p>
+                <p className="contest-inline-note">{formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
               </div>
-              <h3 className="contest-title">{row.name}</h3>
-              <p className="contest-inline-note">Period: {formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
-              <p className="contest-inline-note">Quests: {row.questCount} total · {row.activeQuests} active</p>
-              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.45rem" }}>
-                <Link href={`/admin/quests?campaign=${encodeURIComponent(row.code)}`} className="contest-inline-note">Open linked quests</Link>
-                <Link href={`/admin/moderation?campaign=${encodeURIComponent(row.code)}`} className="contest-inline-note">Open moderation queue</Link>
-                <Link href={`/admin/moderation/history?campaign=${encodeURIComponent(row.code)}`} className="contest-inline-note">Decision history</Link>
+              <span className={`admin-badge ${row.status === "ACTIVE" ? "success" : "neutral"}`}>{row.status}</span>
+              <span>{row.questCount}</span>
+              <span>{row.activeQuests}</span>
+              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <Link href={`/admin/quests?campaign=${encodeURIComponent(row.code)}`} className="admin-badge neutral">Quests</Link>
+                <Link href={`/admin/moderation?campaign=${encodeURIComponent(row.code)}`} className="admin-badge neutral">Queue</Link>
+                <Link href={`/admin/moderation/history?campaign=${encodeURIComponent(row.code)}`} className="admin-badge neutral">History</Link>
               </div>
             </div>
           ))}
-          {filtered.length === 0 ? <p className="contest-inline-note">No campaigns matching current filters.</p> : null}
+          {filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No campaigns matching filters.</p></div> : null}
         </section>
       ) : null}
     </div>

@@ -50,42 +50,51 @@ export default function QuestLibraryPage() {
   const types = [...new Set(rows.map((row) => row.type))];
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Quest Library</h1>
-        <p className="page-subtitle">Readable quest catalog by objective type, validation policy and reward summary.</p>
-        {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Quest Library</h1>
+          <p className="admin-subtitle">Operational library for validation policy, reward amounts, and moderation jump points.</p>
+          {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
+        </div>
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+          <Link href="/admin/quests/builder" className="admin-badge success">Create quest</Link>
+          <Link href="/admin/quests/legacy" className="admin-badge neutral">Legacy fallback</Link>
+        </div>
       </section>
 
-      <section className="contest-section" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
-        <input className="input" placeholder="Search code/title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "280px" }} />
+      <section className="admin-toolbar">
+        <input className="input" placeholder="Search code/title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "260px" }} />
         <select className="input" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
           <option value="ALL">All objective types</option>
           {types.map((type) => <option key={type} value={type}>{type}</option>)}
         </select>
-        <Link href="/admin/quests/builder" className="contest-inline-note">Create quest (guided builder)</Link>
-        <Link href="/admin/quests/legacy" className="contest-inline-note">Open legacy quest admin</Link>
+        <span className="admin-badge neutral">{filtered.length} quests</span>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
-        {loading ? <p className="contest-inline-note">Loading quest library…</p> : null}
+      <section className="admin-table">
+        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.5fr 1fr 0.8fr 0.8fr 1.7fr" }}>
+          <span>Code</span><span>Quest</span><span>Objective</span><span>Validation</span><span>Reward</span><span>Actions</span>
+        </div>
+        {loading ? <div className="admin-table-row"><p className="contest-inline-note">Loading quest library…</p></div> : null}
         {!loading && filtered.map((row) => (
-          <div key={row.id} className="contest-card">
-            <div className="contest-card-top">
-              <p className="contest-code">{row.code}</p>
-              <span className={`contest-status status-${row.isActive ? "live" : "canceled"}`}>{row.isActive ? "ACTIVE" : "INACTIVE"}</span>
+          <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.5fr 1fr 0.8fr 0.8fr 1.7fr" }}>
+            <span className="contest-code">{row.code}</span>
+            <div>
+              <p style={{ fontWeight: 700 }}>{row.title}</p>
+              <p className="contest-inline-note">{formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
             </div>
-            <h3 className="contest-title">{row.title}</h3>
-            <p className="contest-inline-note">Objective: {row.type} · Validation: {row.validationMode} · Reward: {row.rewardPoints} pts</p>
-            <p className="contest-inline-note">Period: {formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
-            <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-              <Link href={`/admin/quests/${row.id}`} className="contest-inline-note">Performance view</Link>
-              <Link href={`/admin/quests/builder?questId=${row.id}`} className="contest-inline-note">Edit in builder</Link>
-              <Link href={`/admin/moderation?questId=${row.id}`} className="contest-inline-note">Open moderation queue</Link>
+            <span className="contest-inline-note" style={{ color: "#d1d5db" }}>{row.type}</span>
+            <span className="admin-badge neutral">{row.validationMode}</span>
+            <span>{row.rewardPoints} pts</span>
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+              <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Detail</Link>
+              <Link href={`/admin/quests/builder?questId=${row.id}`} className="admin-badge neutral">Edit</Link>
+              <Link href={`/admin/moderation?questId=${row.id}`} className="admin-badge neutral">Queue</Link>
             </div>
           </div>
         ))}
-        {!loading && filtered.length === 0 ? <p className="contest-inline-note">No quests matching current filters.</p> : null}
+        {!loading && filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No quests matching current filters.</p></div> : null}
       </section>
     </div>
   );

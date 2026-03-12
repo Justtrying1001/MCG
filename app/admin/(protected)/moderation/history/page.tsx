@@ -57,14 +57,14 @@ export default function ModerationHistoryPage() {
   }, [decisionFilter, items]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Moderation Decision History</h1>
-        <p className="page-subtitle">Auditable history by reviewer, reason code, note and linked quest/user context.</p>
+    <div className="admin-page">
+      <section className="admin-panel">
+        <h1 className="admin-title">Moderation Decision History</h1>
+        <p className="admin-subtitle">Auditable history by reviewer, reason code, note and linked quest/user context.</p>
         {campaign ? <p className="contest-inline-note">Campaign filter: {campaign}</p> : null}
       </section>
 
-      <section className="contest-section" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
+      <section className="admin-panel" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", alignItems: "center" }}>
         <select className="input" value={decisionFilter} onChange={(event) => setDecisionFilter(event.target.value as typeof decisionFilter)}>
           <option value="ALL">All decisions</option>
           <option value="APPROVED">APPROVED</option>
@@ -73,11 +73,11 @@ export default function ModerationHistoryPage() {
         <Link href="/admin/moderation" className="contest-inline-note">Back to moderation queue</Link>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading history…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading history…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading && !error ? (
-        <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
+        <section className="admin-panel" style={{ display: "grid", gap: "0.5rem" }}>
           {filtered.map((item) => (
             <div key={item.id} className="contest-card">
               <div className="contest-card-top">

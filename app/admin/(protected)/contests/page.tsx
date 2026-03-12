@@ -51,88 +51,84 @@ export default function AdminContestsCatalogPage() {
     void loadContests();
   }, []);
 
-  const filtered = useMemo(() => {
-    return filterContestCatalogRows(contests, statusFilter, query);
-  }, [contests, statusFilter, query]);
+  const filtered = useMemo(() => filterContestCatalogRows(contests, statusFilter, query), [contests, statusFilter, query]);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Contest Catalog</h1>
-        <p className="page-subtitle">Operational entrypoint for contest lifecycle. Use legacy detail pages for execute flows until Phase 3 workbenches are live.</p>
-      </section>
-
-      <section className="contest-section" style={{ display: "grid", gap: "0.75rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            className="input"
-            placeholder="Filter by code/title"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            style={{ maxWidth: "300px" }}
-          />
-          <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL")}> 
-            <option value="ALL">All statuses</option>
-            <option value="DRAFT">DRAFT</option>
-            <option value="OPEN">OPEN</option>
-            <option value="LOCKED">LOCKED</option>
-            <option value="LIVE">LIVE</option>
-            <option value="SETTLED">SETTLED</option>
-            <option value="CANCELED">CANCELED</option>
-          </select>
-          <Button type="button" variant="ghost" onClick={() => void loadContests()}>Refresh</Button>
-          <Link href="/admin/contests/legacy" className="contest-inline-note">Open legacy contest create panel</Link>
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Contest Catalog</h1>
+          <p className="admin-subtitle">Dense operations table for lifecycle state, scoring readiness, settlement status, and quick navigation.</p>
         </div>
-        <p className="contest-inline-note">Showing {filtered.length} contests</p>
+        <Link href="/admin/contests/legacy" className="admin-badge neutral">Legacy create</Link>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading contests…</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      <section className="admin-toolbar">
+        <input className="input" placeholder="Search code / title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "250px" }} />
+        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL")}> 
+          <option value="ALL">All statuses</option>
+          <option value="DRAFT">DRAFT</option>
+          <option value="OPEN">OPEN</option>
+          <option value="LOCKED">LOCKED</option>
+          <option value="LIVE">LIVE</option>
+          <option value="SETTLED">SETTLED</option>
+          <option value="CANCELED">CANCELED</option>
+        </select>
+        <Button type="button" variant="ghost" onClick={() => void loadContests()}>Refresh</Button>
+        <span className="admin-badge neutral">{filtered.length} rows</span>
+      </section>
+
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading contests…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading && !error ? (
-        <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
-          {filtered.map((contest) => (
-            <div key={contest.id} className="contest-card">
-              <div className="contest-card-top">
-                <p className="contest-code">{contest.code}</p>
-                <span className={`contest-status status-${contest.status.toLowerCase()}`}>{contest.status}</span>
+        <section className="admin-table">
+          <div className="admin-table-head">
+            <span>Code</span>
+            <span>Contest</span>
+            <span>Status</span>
+            <span>Entries</span>
+            <span>Rankings</span>
+            <span>Settled</span>
+            <span>Actions</span>
+          </div>
+          {filtered.map((contest) => {
+            const links = buildContestSurfaceLinks(contest.id);
+            return (
+              <div key={contest.id} className="admin-table-row">
+                <span className="contest-code">{contest.code}</span>
+                <div>
+                  <p style={{ fontWeight: 700 }}>{contest.title}</p>
+                  <p className="contest-inline-note">{formatDate(contest.startsAt)} → {formatDate(contest.endsAt)} · lock {formatDate(contest.lockAt)}</p>
+                </div>
+                <span className={`admin-badge ${statusTone(contest.status)}`}>{contest.status}</span>
+                <span>{contest._count.entries}</span>
+                <span>{contest._count.rankings}</span>
+                <span>{contest._count.settlements > 0 ? "Yes" : "No"}</span>
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  <Link href={links.overview} className="admin-badge neutral">Overview</Link>
+                  <Link href={links.scoring} className="admin-badge neutral">Scoring</Link>
+                  <Link href={links.settlement} className="admin-badge neutral">Settlement</Link>
+                  <Link href={links.audit} className="admin-badge neutral">Audit</Link>
+                </div>
               </div>
-              <h3 className="contest-title">{contest.title}</h3>
-              <div className="contest-meta-grid">
-                <ContestMeta label="Entries" value={String(contest._count.entries)} />
-                <ContestMeta label="Rankings" value={String(contest._count.rankings)} />
-                <ContestMeta label="Settled" value={contest._count.settlements > 0 ? "Yes" : "No"} />
-                <ContestMeta label="Starts" value={formatDate(contest.startsAt)} />
-                <ContestMeta label="Lock" value={formatDate(contest.lockAt)} />
-                <ContestMeta label="Ends" value={formatDate(contest.endsAt)} />
-              </div>
-              <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-                <Link href={buildContestSurfaceLinks(contest.id).overview} className="contest-inline-note">Overview</Link>
-                <Link href={buildContestSurfaceLinks(contest.id).lifecycle} className="contest-inline-note">Lifecycle</Link>
-                <Link href={buildContestSurfaceLinks(contest.id).scoring} className="contest-inline-note">Scoring flow</Link>
-                <Link href={buildContestSurfaceLinks(contest.id).settlement} className="contest-inline-note">Settlement flow</Link>
-                <Link href={buildContestSurfaceLinks(contest.id).audit} className="contest-inline-note">Audit trail</Link>
-                <Link href={buildContestSurfaceLinks(contest.id).legacy} className="contest-inline-note">Legacy detail</Link>
-              </div>
-            </div>
-          ))}
-          {filtered.length === 0 ? <p className="contest-inline-note">No contests matching current filters.</p> : null}
+            );
+          })}
+          {filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No contests matching filters.</p></div> : null}
         </section>
       ) : null}
     </div>
   );
 }
 
-function ContestMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
-  );
-}
-
 function formatDate(value: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleString();
+  return new Date(value).toLocaleDateString();
+}
+
+function statusTone(status: ContestStatus): "success" | "warn" | "danger" | "neutral" {
+  if (status === "LIVE" || status === "OPEN") return "success";
+  if (status === "LOCKED" || status === "DRAFT") return "warn";
+  if (status === "CANCELED") return "danger";
+  return "neutral";
 }

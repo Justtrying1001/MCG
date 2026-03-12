@@ -7,7 +7,6 @@ type SearchUser = {
   xUsername: string;
   displayName: string;
   points: number;
-  createdAt: string;
 };
 
 type UserContext = {
@@ -54,53 +53,54 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">User Admin Context</h1>
-        <p className="page-subtitle">Search users and load minimal operational context before moderation/reward actions.</p>
-      </section>
-
-      <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
-        <input className="input" placeholder="Search by userId, @username, display name" value={query} onChange={(event) => setQuery(event.target.value)} />
-        {loading ? <p className="contest-inline-note">Searching…</p> : null}
-        <div style={{ display: "grid", gap: "0.4rem" }}>
-          {rows.map((row) => (
-            <button key={row.id} type="button" className="contest-ranking-row" style={{ textAlign: "left", gridTemplateColumns: "1fr auto" }} onClick={() => void loadContext(row.id)}>
-              <span>{row.displayName} (@{row.xUsername})</span>
-              <span>{row.points} pts</span>
-            </button>
-          ))}
-          {query.trim() && !loading && rows.length === 0 ? <p className="contest-inline-note">No users found.</p> : null}
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">User Context Workbench</h1>
+          <p className="admin-subtitle">Search-first user context for moderation, rewards, and contest support decisions.</p>
         </div>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.6rem" }}>
-        <h2 className="contest-section-title">Selected user context</h2>
-        {contextLoading ? <p className="contest-inline-note">Loading context…</p> : null}
-        {!contextLoading && selected ? (
-          <>
-            <p className="contest-inline-note">{selected.user.displayName ?? selected.user.id} (@{selected.user.xUsername ?? "—"}) · {selected.user.points} pts</p>
-            <div className="contest-meta-grid">
-              <Meta label="Manual grants" value={String(selected.rewards.grantsCount)} />
-              <Meta label="Manual points total" value={String(selected.rewards.totalManualGranted)} />
-              <Meta label="Quest pending" value={String(selected.quests.pendingSubmissions)} />
-              <Meta label="Quest approved" value={String(selected.quests.approvedSubmissions)} />
-              <Meta label="Contest entries" value={String(selected.contests.entriesCount)} />
-              <Meta label="Contest settled" value={String(selected.contests.settlementsCount)} />
-            </div>
-          </>
-        ) : null}
-        {!contextLoading && !selected ? <p className="contest-inline-note">Select a user to load context.</p> : null}
+      <section className="admin-split">
+        <div className="admin-panel">
+          <p className="admin-section-title">Search</p>
+          <input className="input" placeholder="Search by userId, @username, display name" value={query} onChange={(event) => setQuery(event.target.value)} />
+          {loading ? <p className="contest-inline-note">Searching…</p> : null}
+          <div style={{ display: "grid", gap: "0.35rem" }}>
+            {rows.map((row) => (
+              <button key={row.id} type="button" className="admin-panel" style={{ textAlign: "left", padding: "0.48rem" }} onClick={() => void loadContext(row.id)}>
+                <p style={{ fontWeight: 700 }}>{row.displayName} (@{row.xUsername})</p>
+                <p className="contest-inline-note">{row.points} pts</p>
+              </button>
+            ))}
+            {query.trim() && !loading && rows.length === 0 ? <p className="contest-inline-note">No users found.</p> : null}
+          </div>
+        </div>
+
+        <div className="admin-panel">
+          <p className="admin-section-title">Selected user context</p>
+          {contextLoading ? <p className="contest-inline-note">Loading context…</p> : null}
+          {!contextLoading && selected ? (
+            <>
+              <p style={{ fontWeight: 700 }}>{selected.user.displayName ?? selected.user.id} (@{selected.user.xUsername ?? "—"})</p>
+              <p className="contest-inline-note">{selected.user.points} total points</p>
+              <div className="admin-kpi-grid">
+                <Kpi label="Manual grants" value={String(selected.rewards.grantsCount)} />
+                <Kpi label="Manual points total" value={String(selected.rewards.totalManualGranted)} />
+                <Kpi label="Quest pending" value={String(selected.quests.pendingSubmissions)} />
+                <Kpi label="Quest approved" value={String(selected.quests.approvedSubmissions)} />
+                <Kpi label="Contest entries" value={String(selected.contests.entriesCount)} />
+                <Kpi label="Contest settled" value={String(selected.contests.settlementsCount)} />
+              </div>
+            </>
+          ) : null}
+          {!contextLoading && !selected ? <p className="contest-inline-note">Select a user from search results to load context.</p> : null}
+        </div>
       </section>
     </div>
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
-  );
+function Kpi({ label, value }: { label: string; value: string }) {
+  return <div className="admin-kpi"><p className="admin-kpi-label">{label}</p><p className="admin-kpi-value">{value}</p></div>;
 }

@@ -21,17 +21,19 @@ export default function AdminAnalyticsPage() {
   }, []);
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <h1 className="page-title">Analytics (Phase 2 baseline)</h1>
-        <p className="page-subtitle">Limited operational analytics for quick health checks. Full analytics suite ships later.</p>
+    <div className="admin-page">
+      <section className="admin-page-header">
+        <div>
+          <h1 className="admin-title">Analytics Baseline</h1>
+          <p className="admin-subtitle">Compact operational metrics panel pending advanced analytics suite delivery.</p>
+        </div>
       </section>
 
-      <section className="contest-section">
+      <section className="admin-panel">
         {!data ? (
           <p className="contest-inline-note">Loading metrics…</p>
         ) : (
-          <div className="contest-meta-grid">
+          <div className="admin-kpi-grid">
             <Metric label="LIVE contests" value={String(data.summary.contestsByStatus.LIVE ?? 0)} />
             <Metric label="Pending moderation" value={String(data.summary.pendingModerationCount)} />
             <Metric label="Manual grants (24h)" value={String(data.summary.manualGrantsLast24h)} />
@@ -44,10 +46,5 @@ export default function AdminAnalyticsPage() {
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
-  );
+  return <div className="admin-kpi"><p className="admin-kpi-label">{label}</p><p className="admin-kpi-value">{value}</p></div>;
 }

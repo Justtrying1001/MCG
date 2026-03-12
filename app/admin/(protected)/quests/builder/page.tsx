@@ -118,14 +118,14 @@ export default function QuestBuilderPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
+    <div className="admin-page">
+      <section className="admin-panel">
         <Link href="/admin/quests" className="contest-inline-note">← Back to quest library</Link>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.7rem" }}>
-        <h1 className="page-title">Quest Builder</h1>
-        <p className="page-subtitle">Guided flow for Follow X, Like/RT/Comment, and Contest milestone quests.</p>
+      <section className="admin-panel" style={{ display: "grid", gap: "0.7rem" }}>
+        <h1 className="admin-title">Quest Builder</h1>
+        <p className="admin-subtitle">Guided flow for Follow X, Like/RT/Comment, and Contest milestone quests.</p>
 
         <h3 className="contest-section-title">1) Identity</h3>
         <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
@@ -183,7 +183,7 @@ export default function QuestBuilderPage() {
         ))}
 
         {preview ? (
-          <section className="contest-section" style={{ background: "rgba(255,255,255,0.02)" }}>
+          <section className="admin-panel" style={{ background: "rgba(255,255,255,0.02)" }}>
             <h3 className="contest-section-title">User-facing preview</h3>
             <p className="contest-inline-note">{preview.title}</p>
             <p className="contest-inline-note">{preview.description}</p>

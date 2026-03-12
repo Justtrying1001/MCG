@@ -7,57 +7,53 @@ import { usePathname } from "next/navigation";
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/contests", label: "Contests" },
-  { href: "/admin/campaigns", label: "Campaigns & Quests" },
-  { href: "/admin/moderation", label: "Moderation" },
-  { href: "/admin/rewards", label: "Rewards & Compensation" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/analytics", label: "Analytics" },
-  { href: "/admin/activity-log", label: "Activity Log" },
+  { href: "/admin", label: "Dashboard", hint: "Ops cockpit" },
+  { href: "/admin/contests", label: "Contests", hint: "Lifecycle & runs" },
+  { href: "/admin/campaigns", label: "Campaigns & Quests", hint: "Catalog + builder" },
+  { href: "/admin/moderation", label: "Moderation", hint: "Queue & review" },
+  { href: "/admin/rewards", label: "Rewards", hint: "Compensation ops" },
+  { href: "/admin/users", label: "Users", hint: "Context lookup" },
+  { href: "/admin/analytics", label: "Analytics", hint: "Operational metrics" },
+  { href: "/admin/activity-log", label: "Activity Log", hint: "Audit timeline" },
 ] as const;
 
 export function AdminShell({ children, username }: { children: ReactNode; username: string }) {
   const pathname = usePathname();
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0b1020", color: "#e5e7eb" }}>
-      <header style={{ borderBottom: "1px solid #243042", padding: "0.75rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
-        <div>
-          <p style={{ margin: 0, fontWeight: 700 }}>MCG Admin</p>
-          <p style={{ margin: 0, opacity: 0.8, fontSize: "0.9rem" }}>Operations back-office</p>
+    <div className="admin-shell">
+      <header className="admin-topbar">
+        <div className="admin-brand">
+          <span className="admin-brand-badge">MCG</span>
+          <div>
+            <p className="admin-brand-title">Admin Control Center</p>
+            <p className="admin-brand-subtitle">Operations workbench</p>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "0.9rem", opacity: 0.9 }}>Signed in as <strong>{username}</strong></span>
+
+        <div className="admin-identity">
+          <span className="admin-chip">Signed in as <strong>{username}</strong></span>
           <AdminLogoutButton />
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "calc(100vh - 70px)" }}>
-        <aside style={{ borderRight: "1px solid #243042", padding: "1rem", display: "grid", gap: "0.35rem", alignContent: "start" }}>
-          {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                style={{
-                  textDecoration: "none",
-                  color: active ? "#111827" : "#d1d5db",
-                  background: active ? "#a7f3d0" : "transparent",
-                  border: active ? "1px solid #6ee7b7" : "1px solid transparent",
-                  borderRadius: "0.5rem",
-                  padding: "0.55rem 0.65rem",
-                  fontSize: "0.92rem",
-                }}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+      <div className="admin-layout-grid">
+        <aside className="admin-sidebar">
+          <p className="admin-sidebar-label">Modules</p>
+          <nav className="admin-nav-list">
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? "is-active" : ""}`}>
+                  <span className="admin-nav-label">{item.label}</span>
+                  <span className="admin-nav-hint">{item.hint}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </aside>
 
-        <main style={{ padding: "1rem" }}>{children}</main>
+        <main className="admin-content">{children}</main>
       </div>
     </div>
   );
