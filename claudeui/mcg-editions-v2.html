@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCG — Brillante & Full Art rework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #06080c;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 32px 72px;
+  gap: 16px;
+}
+
+h1 {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.35em;
+  color: #1e2a38;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.28em;
+  color: #1e2a38;
+  text-transform: uppercase;
+  align-self: flex-start;
+  margin-left: calc(50% - 330px);
+  margin-bottom: 8px;
+  margin-top: 32px;
+}
+
+.row {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.18em;
+  color: #22303f;
+  text-transform: uppercase;
+}
+.card-sublabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 6.5px;
+  letter-spacing: 0.1em;
+  color: #182028;
+  text-align: center;
+  margin-top: -6px;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════
+   BASE CARD SHELL
+═══════════════════════ */
+.mcg-card {
+  position: relative;
+  width: 196px;
+  aspect-ratio: 63 / 88;
+  border-radius: 10px;
+  cursor: pointer;
+  overflow: hidden;
+
+  --accent:     #7090b8;
+  --glow-col:   rgba(112, 144, 184, 0.22);
+  --border-out: #243050;
+  --border-in:  #2d3d60;
+  --wire:       rgba(112,144,184,0.12);
+  --wire-acc:   rgba(112,144,184,0.22);
+  --bg-card:    #0d1220;
+  --bg-header:  #0a0f1a;
+  --bg-footer:  #090d16;
+  --txt-name:   #dce6f4;
+  --txt-sub:    #4a6080;
+  --txt-flavor: #607080;
+
+  background: var(--bg-card);
+  outline: 1px solid var(--border-out);
+  box-shadow:
+    inset 0 0 0 1px var(--border-in),
+    0 18px 50px rgba(0,0,0,0.8),
+    0 0 40px var(--glow-col);
+
+  display: grid;
+  grid-template-rows: 50px 1fr 38px 34px;
+  transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s ease;
+}
+
+.mcg-card:hover {
+  transform: translateY(-8px) scale(1.025);
+}
+
+/* grain */
+.grain {
+  position: absolute; inset: 0; border-radius: 10px;
+  z-index: 50; pointer-events: none; opacity: 0.3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* corners */
+.co { position: absolute; width: 14px; height: 14px; z-index: 45; pointer-events: none; }
+.co svg { width: 100%; height: 100%; display: block; }
+.co-tl { top: 5px; left: 5px; }
+.co-tr { top: 5px; right: 5px; transform: scaleX(-1); }
+.co-bl { bottom: 5px; left: 5px; transform: scaleY(-1); }
+.co-br { bottom: 5px; right: 5px; transform: scale(-1,-1); }
+
+/* header */
+.z-header {
+  position: relative; z-index: 10;
+  padding: 9px 11px 0;
+  background: var(--bg-header);
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.z-header::after {
+  content: ''; position: absolute; bottom: 0; left: 10px; right: 10px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--wire-acc) 25%, var(--accent) 50%, var(--wire-acc) 75%, transparent);
+  opacity: 0.45;
+}
+.h-left { display: flex; flex-direction: column; gap: 2px; }
+.card-name {
+  font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px;
+  letter-spacing: 0.05em; color: var(--txt-name); text-transform: uppercase; line-height: 1;
+}
+.card-ticker {
+  font-family: 'DM Mono', monospace; font-size: 7.5px; font-weight: 300;
+  color: var(--accent); letter-spacing: 0.12em; opacity: 0.75;
+}
+.h-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; padding-top: 1px; }
+.badge {
+  font-family: 'DM Mono', monospace; font-size: 7px; font-weight: 400;
+  letter-spacing: 0.1em; padding: 2px 5px; border-radius: 2px;
+  border: 1px solid var(--accent); color: var(--accent);
+  background: rgba(0,0,0,0.5); line-height: 1;
+}
+.badge-ed {
+  font-family: 'DM Mono', monospace; font-size: 6px;
+  letter-spacing: 0.1em; padding: 1px 4px; border-radius: 2px;
+  border: 1px solid; line-height: 1;
+}
+
+/* art */
+.z-art {
+  position: relative; z-index: 10;
+  margin: 7px 9px; border-radius: 5px; overflow: hidden;
+  background: #080a0d; border: 1px solid var(--wire);
+}
+.z-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.art-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; opacity: 0.12;
+}
+.z-art::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none; z-index: 2;
+}
+
+/* textbox */
+.z-text {
+  position: relative; z-index: 10;
+  padding: 0 11px; display: flex; align-items: center;
+  border-top: 1px solid var(--wire); border-bottom: 1px solid var(--wire);
+}
+.z-text p {
+  font-family: 'Lora', serif; font-style: italic; font-size: 8.5px;
+  line-height: 1.45; color: var(--txt-flavor);
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+/* footer */
+.z-footer {
+  position: relative; z-index: 10;
+  padding: 0 11px; display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg-footer);
+}
+.z-footer::before {
+  content: ''; position: absolute; top: 0; left: 10px; right: 10px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--wire-acc) 30%, var(--wire-acc) 70%, transparent);
+  opacity: 0.6;
+}
+.f-code, .f-set {
+  font-family: 'DM Mono', monospace; font-size: 7px; font-weight: 300;
+  color: var(--txt-sub); letter-spacing: 0.06em;
+}
+.f-sep { width: 1px; height: 10px; background: var(--wire-acc); opacity: 0.4; }
+
+
+/* ════════════════════════════════════════
+   BRILLANTE v2
+   Foil metallic coating sur toute la carte
+   — couche irisée en mouvement + reflet blanc directionnel
+════════════════════════════════════════ */
+
+@keyframes brillanteShift {
+  0%   { background-position: 0% 50%; }
+  25%  { background-position: 100% 0%; }
+  50%  { background-position: 100% 100%; }
+  75%  { background-position: 0% 100%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes brillanteSweep {
+  0%   { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+.ed-brillante {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.12),
+    0 0 0 1px #243050,
+    0 18px 50px rgba(0,0,0,0.8),
+    0 0 50px rgba(200,220,255,0.3);
+}
+.ed-brillante:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.2),
+    0 0 0 1px #243050,
+    0 30px 72px rgba(0,0,0,0.9),
+    0 0 80px rgba(200,220,255,0.45),
+    0 0 130px rgba(200,220,255,0.15);
+}
+
+/* foil base — metallic gradient couvrant toute la carte */
+.brill-foil {
+  position: absolute; inset: 0; border-radius: 10px;
+  z-index: 22; pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255,255,255,0.00)  0%,
+    rgba(200,210,230,0.07)  8%,
+    rgba(255,255,255,0.13) 15%,
+    rgba(180,200,230,0.06) 22%,
+    rgba(255,255,255,0.09) 30%,
+    rgba(210,220,240,0.05) 38%,
+    rgba(255,255,255,0.14) 45%,
+    rgba(190,210,240,0.07) 52%,
+    rgba(255,255,255,0.10) 60%,
+    rgba(200,215,240,0.06) 68%,
+    rgba(255,255,255,0.13) 76%,
+    rgba(185,205,235,0.05) 84%,
+    rgba(255,255,255,0.08) 92%,
+    rgba(255,255,255,0.00) 100%
+  );
+  background-size: 300% 300%;
+  animation: brillanteShift 6s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+/* micro-glitter : pattern répété de points lumineux */
+.brill-glitter {
+  position: absolute; inset: 0; border-radius: 10px;
+  z-index: 23; pointer-events: none;
+  background-image:
+    radial-gradient(circle 1px at 12% 8%,  rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(circle 1px at 87% 12%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(circle 1px at 34% 19%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(circle 1px at 61% 25%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(circle 1px at 78% 33%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(circle 1px at 22% 41%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(circle 1px at 50% 38%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(circle 1px at 93% 46%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(circle 1px at 8%  54%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(circle 1px at 68% 52%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(circle 1px at 40% 61%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(circle 1px at 82% 65%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(circle 1px at 18% 72%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(circle 1px at 55% 78%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(circle 1px at 30% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(circle 1px at 71% 88%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(circle 1px at 45% 93%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(circle 1px at 90% 96%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(circle 2px at 25% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(circle 2px at 74% 70%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(circle 2px at 48% 55%, rgba(255,255,255,0.3) 0%, transparent 100%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  background-size: 300% 300%;
+  animation: brillanteShift 6s ease-in-out infinite reverse;
+}
+
+/* sweep lumineux — passe en continu */
+.brill-sweep {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0; width: 40%;
+  z-index: 24; pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.06) 30%,
+    rgba(255,255,255,0.18) 50%,
+    rgba(255,255,255,0.06) 70%,
+    transparent 100%
+  );
+  animation: brillanteSweep 3.5s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.badge-brill { border-color: #b8cce4; color: #b8cce4; }
+
+
+/* ════════════════════════════════════════
+   FULL ART v2
+   Sans illustration : fond génératif riche
+   basé sur la couleur de rareté
+   — crée une identité visuelle forte
+════════════════════════════════════════ */
+
+.ed-fullart {
+  --fa-col-1: #0d1a30;
+  --fa-col-2: #112240;
+  --fa-col-3: #0a1525;
+  --fa-accent: #7090b8;
+  overflow: hidden;
+}
+
+/* Le fond génératif remplace l'artwork zone — plein cadre */
+.fa-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* mesh gradient profond */
+  background:
+    radial-gradient(ellipse 140% 80% at 30% 20%, #142a4a 0%, transparent 60%),
+    radial-gradient(ellipse 100% 100% at 80% 80%, #0c1e38 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60%  at 60% 40%, #1a3050 0%, transparent 45%),
+    radial-gradient(ellipse 120% 90% at 10% 90%, #081528 0%, transparent 60%),
+    linear-gradient(160deg, #09111e 0%, #0e1c32 40%, #081018 100%);
+}
+
+/* lignes fines ornemental — "blueprint" / gravure */
+.fa-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image:
+    /* cercle concentrique central */
+    radial-gradient(circle 55px at 50% 42%, transparent 53px, rgba(112,144,184,0.12) 54px, transparent 55px),
+    radial-gradient(circle 38px at 50% 42%, transparent 36px, rgba(112,144,184,0.10) 37px, transparent 38px),
+    radial-gradient(circle 22px at 50% 42%, transparent 20px, rgba(112,144,184,0.14) 21px, transparent 22px),
+    /* croix centrale fine */
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(112,144,184,0.08) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(0deg,  transparent calc(42% - 0.5px), rgba(112,144,184,0.08) 42%, transparent calc(42% + 0.5px)),
+    /* grid très subtile */
+    repeating-linear-gradient(90deg, transparent 0px, transparent 23px, rgba(112,144,184,0.03) 23px, rgba(112,144,184,0.03) 24px),
+    repeating-linear-gradient(0deg,  transparent 0px, transparent 23px, rgba(112,144,184,0.03) 23px, rgba(112,144,184,0.03) 24px);
+}
+
+/* token logo en watermark central */
+.fa-token {
+  position: absolute;
+  z-index: 3;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -42%);
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  opacity: 0.22;
+  filter: saturate(0.4) brightness(1.4);
+}
+.fa-token img { width: 100%; height: 100%; object-fit: cover; }
+
+/* vignette pour fondre les bords */
+.fa-vignette {
+  position: absolute; inset: 0; z-index: 4;
+  background: radial-gradient(ellipse 85% 80% at 50% 50%, transparent 40%, rgba(6,8,12,0.65) 100%);
+  pointer-events: none;
+}
+
+/* UI zones par-dessus */
+.ed-fullart .z-header,
+.ed-fullart .z-text,
+.ed-fullart .z-footer { position: relative; z-index: 10; }
+
+.ed-fullart .z-header {
+  background: linear-gradient(to bottom, rgba(5,9,16,0.96) 60%, transparent);
+}
+.ed-fullart .z-header::after { opacity: 0.2; }
+
+.ed-fullart .z-text {
+  background: rgba(5,9,16,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(112,144,184,0.1);
+}
+
+.ed-fullart .z-footer {
+  background: linear-gradient(to top, rgba(5,9,16,0.96) 60%, transparent);
+}
+.ed-fullart .z-footer::before { opacity: 0.15; }
+
+/* glow spécial full art */
+.ed-fullart {
+  box-shadow:
+    inset 0 0 0 1px #2d3d60,
+    0 18px 50px rgba(0,0,0,0.85),
+    0 0 50px rgba(112,144,184,0.18);
+}
+.ed-fullart:hover {
+  box-shadow:
+    inset 0 0 0 1px #3a5070,
+    0 30px 72px rgba(0,0,0,0.9),
+    0 0 70px rgba(112,144,184,0.3),
+    0 0 120px rgba(112,144,184,0.1);
+}
+
+.badge-fa { border-color: #4a6888; color: #5a7898; }
+
+/* ── Full Art S+ (gold) ── */
+.ed-fullart.r-splus {
+  --fa-col-1: #1e1200;
+  --fa-accent: #b89a60;
+}
+.ed-fullart.r-splus .fa-bg {
+  background:
+    radial-gradient(ellipse 140% 80% at 30% 20%, #2a1a04 0%, transparent 60%),
+    radial-gradient(ellipse 100% 100% at 80% 80%, #1e1203 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60%  at 60% 40%, #321e06 0%, transparent 45%),
+    radial-gradient(ellipse 120% 90% at 10% 90%, #130c02 0%, transparent 60%),
+    linear-gradient(160deg, #0d0802 0%, #1c1204 40%, #0a0702 100%);
+}
+.ed-fullart.r-splus .fa-lines {
+  background-image:
+    radial-gradient(circle 55px at 50% 42%, transparent 53px, rgba(184,154,96,0.15) 54px, transparent 55px),
+    radial-gradient(circle 38px at 50% 42%, transparent 36px, rgba(184,154,96,0.12) 37px, transparent 38px),
+    radial-gradient(circle 22px at 50% 42%, transparent 20px, rgba(184,154,96,0.18) 21px, transparent 22px),
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(184,154,96,0.09) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(0deg,  transparent calc(42% - 0.5px), rgba(184,154,96,0.09) 42%, transparent calc(42% + 0.5px)),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 23px, rgba(184,154,96,0.04) 23px, rgba(184,154,96,0.04) 24px),
+    repeating-linear-gradient(0deg,  transparent 0px, transparent 23px, rgba(184,154,96,0.04) 23px, rgba(184,154,96,0.04) 24px);
+}
+.ed-fullart.r-splus {
+  box-shadow:
+    inset 0 0 0 1px #4a3c22,
+    0 18px 50px rgba(0,0,0,0.85),
+    0 0 50px rgba(184,154,96,0.25);
+}
+.ed-fullart.r-splus:hover {
+  box-shadow:
+    inset 0 0 0 1px #6a5430,
+    0 30px 72px rgba(0,0,0,0.9),
+    0 0 70px rgba(184,154,96,0.4),
+    0 0 120px rgba(184,154,96,0.15);
+}
+
+</style>
+</head>
+<body>
+
+<h1>MCG — Éditions rework</h1>
+
+<!-- ═══ BRILLANTE ═══ -->
+<p class="section-title">Brillante — foil métallique couvrant toute la carte</p>
+<div class="row">
+
+  <!-- S brillante -->
+  <div class="card-wrap">
+    <article class="mcg-card ed-brillante">
+      <div class="grain"></div>
+      <div class="brill-foil"></div>
+      <div class="brill-glitter"></div>
+      <div class="brill-sweep"></div>
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#7a9ac0" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#7a9ac0" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#7a9ac0" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#7a9ac0" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#7a9ac0" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#7a9ac0" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#7a9ac0" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#7a9ac0" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <div class="z-header">
+        <div class="h-left"><span class="card-name">Pepe</span><span class="card-ticker">$PEPE</span></div>
+        <div class="h-right"><span class="badge">S</span><span class="badge-ed badge-brill">BRILL</span></div>
+      </div>
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/29850/large/pepe-token.jpeg" alt="Pepe"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐸</div>'">
+      </div>
+      <div class="z-text"><p>The original. The eternal.</p></div>
+      <div class="z-footer">
+        <span class="f-code">S01-001</span><div class="f-sep"></div><span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Brillante · S</p>
+    <p class="card-sublabel">Foil métallique animé<br>micro-glitter + sweep</p>
+  </div>
+
+  <!-- B brillante -->
+  <div class="card-wrap">
+    <article class="mcg-card ed-brillante" style="
+      --accent:#3d4a5c; --glow-col:rgba(61,74,92,0.1);
+      --border-out:#181e27; --border-in:#1f2733;
+      --wire:rgba(255,255,255,0.05); --wire-acc:rgba(255,255,255,0.07);
+      --bg-card:#11111b; --bg-header:#0d0d16; --bg-footer:#0b0b14;
+      --txt-name:#c8d0dc; --txt-sub:#2e3848; --txt-flavor:#4a5568;
+    ">
+      <div class="grain"></div>
+      <div class="brill-foil"></div>
+      <div class="brill-glitter"></div>
+      <div class="brill-sweep"></div>
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a4858" stroke-width="0.9"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a4858" stroke-width="0.9"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a4858" stroke-width="0.9"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a4858" stroke-width="0.9"/></svg></span>
+      <div class="z-header">
+        <div class="h-left"><span class="card-name">Cheems</span><span class="card-ticker">$CHEEMS</span></div>
+        <div class="h-right"><span class="badge" style="border-color:#3d4a5c;color:#3d4a5c;">B</span><span class="badge-ed badge-brill">BRILL</span></div>
+      </div>
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/29498/large/cheems.png" alt="Cheems"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐕</div>'">
+      </div>
+      <div class="z-text"><p>Humble. Viral. Unstoppable.</p></div>
+      <div class="z-footer">
+        <span class="f-code">S01-011</span><div class="f-sep"></div><span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Brillante · B</p>
+    <p class="card-sublabel">Même effet sur common</p>
+  </div>
+
+</div>
+
+<!-- ═══ FULL ART ═══ -->
+<p class="section-title">Full Art — fond génératif + token watermark</p>
+<div class="row">
+
+  <!-- Full Art S -->
+  <div class="card-wrap">
+    <article class="mcg-card ed-fullart">
+      <div class="grain"></div>
+      <div class="fa-bg"></div>
+      <div class="fa-lines"></div>
+      <div class="fa-token">
+        <img src="https://assets.coingecko.com/coins/images/29850/large/pepe-token.jpeg" alt="">
+      </div>
+      <div class="fa-vignette"></div>
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.7"/></svg></span>
+      <div class="z-header">
+        <div class="h-left"><span class="card-name">Pepe</span><span class="card-ticker">$PEPE</span></div>
+        <div class="h-right"><span class="badge">S</span><span class="badge-ed badge-fa">FULL ART</span></div>
+      </div>
+      <div class="z-text"><p>The original. The eternal.</p></div>
+      <div class="z-footer">
+        <span class="f-code">S01-001</span><div class="f-sep"></div><span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Full Art · S</p>
+    <p class="card-sublabel">Mesh gradient bleu-slate<br>+ cercles gravure + watermark</p>
+  </div>
+
+  <!-- Full Art S+ legendary -->
+  <div class="card-wrap">
+    <article class="mcg-card ed-fullart r-splus" style="
+      --accent:#b89a60; --glow-col:rgba(184,154,96,0.35);
+      --border-out:#3a2e18; --border-in:#4a3c22;
+      --wire:rgba(184,154,96,0.12); --wire-acc:rgba(184,154,96,0.25);
+      --txt-name:#ece0c8; --txt-sub:#7a6040; --txt-flavor:#806a50;
+    ">
+      <div class="grain"></div>
+      <div class="fa-bg"></div>
+      <div class="fa-lines"></div>
+      <div class="fa-token">
+        <img src="https://assets.coingecko.com/coins/images/5/large/dogecoin.png" alt="">
+      </div>
+      <div class="fa-vignette"></div>
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <div class="z-header">
+        <div class="h-left"><span class="card-name">Dogecoin</span><span class="card-ticker">$DOGE</span></div>
+        <div class="h-right"><span class="badge" style="border-color:#b89a60;color:#b89a60;">S+</span><span class="badge-ed" style="border-color:#7a6040;color:#9a8050;">FULL ART</span></div>
+      </div>
+      <div class="z-text"><p>Much wow. The meme that ate finance.</p></div>
+      <div class="z-footer">
+        <span class="f-code" style="color:#7a6040;">S01-002</span><div class="f-sep"></div><span class="f-set" style="color:#7a6040;">GENESIS · 001/50</span>
+      </div>
+    </article>
+    <p class="card-label">Full Art · S+</p>
+    <p class="card-sublabel">Même système, palette or</p>
+  </div>
+
+</div>
+
+</body>
+</html>

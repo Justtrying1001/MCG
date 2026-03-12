@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCG Card Design v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #080b0f;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  gap: 48px;
+}
+
+.label-row {
+  display: flex;
+  gap: 32px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #2a2e35;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════
+   CARD SHELL
+══════════════════════════════════ */
+.mcg-card {
+  position: relative;
+  width: 196px;
+  aspect-ratio: 63 / 88;
+  border-radius: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  /* CSS var system — overridden per rarity */
+  --accent:    #4a5568;
+  --glow-col:  rgba(74, 85, 104, 0);
+  --border-out: #1e2530;
+  --border-in:  #252d38;
+  --wire:      rgba(255,255,255,0.055);
+  --wire-acc:  rgba(255,255,255,0.09);
+  --bg-card:   #0f1318;
+  --bg-header: #0c1015;
+  --bg-footer: #0b0e13;
+  --txt-name:  #dde3ec;
+  --txt-sub:   #3a4352;
+  --txt-flavor:#5a6475;
+  --shimmer:   transparent;
+
+  background: var(--bg-card);
+  outline: 1px solid var(--border-out);
+  box-shadow:
+    inset 0 0 0 1px var(--border-in),
+    0 16px 48px rgba(0,0,0,0.75),
+    0 0 32px var(--glow-col);
+
+  display: grid;
+  grid-template-rows: 50px 1fr 38px 34px;
+
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+}
+
+.mcg-card:hover {
+  transform: translateY(-7px) scale(1.025);
+  box-shadow:
+    inset 0 0 0 1px var(--border-in),
+    0 28px 70px rgba(0,0,0,0.85),
+    0 0 55px var(--glow-col),
+    0 0 100px var(--glow-col);
+}
+
+/* grain */
+.mcg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* shimmer foil (S/S+ only, visible on hover) */
+.mcg-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: 28;
+  pointer-events: none;
+  background: var(--shimmer);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.mcg-card:hover::after { opacity: 1; }
+
+/* ── Corner wire ornaments ── */
+.co {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 25;
+  pointer-events: none;
+}
+.co svg { width: 100%; height: 100%; display: block; }
+.co-tl { top: 5px;    left: 5px; }
+.co-tr { top: 5px;    right: 5px;  transform: scaleX(-1); }
+.co-bl { bottom: 5px; left: 5px;   transform: scaleY(-1); }
+.co-br { bottom: 5px; right: 5px;  transform: scale(-1,-1); }
+
+/* ══════════════════════════════════
+   ZONE 1 · HEADER
+══════════════════════════════════ */
+.z-header {
+  position: relative;
+  z-index: 10;
+  padding: 9px 11px 0;
+  background: var(--bg-header);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* fine separator */
+.z-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 10px; right: 10px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--wire-acc) 25%,
+    var(--accent) 50%,
+    var(--wire-acc) 75%,
+    transparent 100%);
+  opacity: 0.45;
+}
+
+.h-left { display: flex; flex-direction: column; gap: 2px; }
+
+.card-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  color: var(--txt-name);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.card-ticker {
+  font-family: 'DM Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+}
+
+.h-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  padding-top: 1px;
+}
+
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  border-radius: 2px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: rgba(0,0,0,0.5);
+  line-height: 1;
+}
+
+.badge-fa {
+  font-family: 'DM Mono', monospace;
+  font-size: 6px;
+  letter-spacing: 0.08em;
+  color: #2a3040;
+  border: 1px solid #1e2530;
+  padding: 1px 4px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+/* ══════════════════════════════════
+   ZONE 2 · ART
+══════════════════════════════════ */
+.z-art {
+  position: relative;
+  z-index: 10;
+  margin: 7px 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #080a0d;
+  border: 1px solid var(--wire);
+}
+
+.z-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.art-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  opacity: 0.12;
+}
+
+/* vignette inside art */
+.z-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════
+   ZONE 3 · TEXTBOX
+══════════════════════════════════ */
+.z-text {
+  position: relative;
+  z-index: 10;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--wire);
+  border-bottom: 1px solid var(--wire);
+}
+
+.z-text p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 8.5px;
+  line-height: 1.45;
+  color: var(--txt-flavor);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ══════════════════════════════════
+   ZONE 4 · FOOTER
+══════════════════════════════════ */
+.z-footer {
+  position: relative;
+  z-index: 10;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-footer);
+}
+
+.z-footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10px; right: 10px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, var(--wire-acc) 30%,
+    var(--wire-acc) 70%, transparent);
+  opacity: 0.6;
+}
+
+.f-code {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  font-weight: 300;
+  color: var(--txt-sub);
+  letter-spacing: 0.06em;
+}
+
+.f-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--wire-acc);
+  opacity: 0.4;
+}
+
+.f-set {
+  font-family: 'DM Mono', monospace;
+  font-size: 7px;
+  font-weight: 300;
+  color: var(--txt-sub);
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+/* ══════════════════════════════════
+   FULL ART variant
+══════════════════════════════════ */
+.full-art {
+  grid-template-rows: 50px 1fr 38px 34px;
+}
+
+.full-art .z-art {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border-radius: 10px;
+  border: none;
+  z-index: 1;
+}
+
+.full-art .z-art img {
+  filter: brightness(0.65) saturate(0.9);
+}
+
+.full-art .z-header {
+  background: linear-gradient(to bottom, rgba(5,8,13,0.92) 60%, transparent);
+}
+
+.full-art .z-text {
+  background: rgba(5,8,13,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: rgba(255,255,255,0.06);
+}
+
+.full-art .z-footer {
+  background: linear-gradient(to top, rgba(5,8,13,0.92) 60%, transparent);
+}
+
+.full-art .z-header::after { opacity: 0.2; }
+.full-art .z-footer::before { opacity: 0.2; }
+
+/* ══════════════════════════════════
+   RARITY VARS
+   One slate palette — rarity = glow intensity + wire brightness only
+══════════════════════════════════ */
+
+/* B — common */
+.r-b {
+  --accent:    #3d4a5c;
+  --glow-col:  rgba(61, 74, 92, 0);
+  --border-out: #181e27;
+  --border-in:  #1f2733;
+  --wire:      rgba(255,255,255,0.05);
+  --wire-acc:  rgba(255,255,255,0.07);
+  --txt-name:  #c8d0dc;
+  --txt-sub:   #2e3848;
+  --txt-flavor:#4a5568;
+}
+
+/* A — uncommon */
+.r-a {
+  --accent:    #5a7a8a;
+  --glow-col:  rgba(90, 122, 138, 0.12);
+  --border-out: #1e2d38;
+  --border-in:  #253545;
+  --wire:      rgba(90,122,138,0.1);
+  --wire-acc:  rgba(90,122,138,0.18);
+  --txt-name:  #d4dde6;
+  --txt-sub:   #3a5060;
+  --txt-flavor:#556070;
+}
+
+/* S — rare */
+.r-s {
+  --accent:    #7090b8;
+  --glow-col:  rgba(112, 144, 184, 0.22);
+  --border-out: #243050;
+  --border-in:  #2d3d60;
+  --wire:      rgba(112,144,184,0.12);
+  --wire-acc:  rgba(112,144,184,0.22);
+  --txt-name:  #dce6f4;
+  --txt-sub:   #4a6080;
+  --txt-flavor:#607080;
+  --shimmer: linear-gradient(
+    115deg,
+    transparent 25%,
+    rgba(112,144,184,0.07) 45%,
+    rgba(180,210,255,0.12) 50%,
+    rgba(112,144,184,0.07) 55%,
+    transparent 75%
+  );
+}
+
+/* S+ — legendary */
+.r-splus {
+  --accent:    #b89a60;
+  --glow-col:  rgba(184, 154, 96, 0.35);
+  --border-out: #3a2e18;
+  --border-in:  #4a3c22;
+  --wire:      rgba(184,154,96,0.12);
+  --wire-acc:  rgba(184,154,96,0.25);
+  --txt-name:  #ece0c8;
+  --txt-sub:   #7a6040;
+  --txt-flavor:#806a50;
+  --shimmer: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(184,154,96,0.07) 38%,
+    rgba(240,210,140,0.15) 50%,
+    rgba(184,154,96,0.07) 62%,
+    transparent 80%
+  );
+}
+
+/* corner wire color per rarity */
+.r-b   .co svg path { stroke: #2a3545; }
+.r-a   .co svg path { stroke: #3a5060; }
+.r-s   .co svg path { stroke: #4a6888; }
+.r-splus .co svg path { stroke: #8a7040; }
+
+/* ══════════════════════════════════
+   SHIMMER ANIM
+══════════════════════════════════ */
+@keyframes sweep {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.r-splus .z-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 30%,
+    rgba(184,154,96,0.06) 45%,
+    rgba(240,210,140,0.12) 50%,
+    rgba(184,154,96,0.06) 55%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: sweep 5s ease-in-out infinite;
+}
+
+</style>
+</head>
+<body>
+
+<div class="label-row">
+
+  <!-- B · COMMON -->
+  <div class="card-wrap">
+    <article class="mcg-card r-b">
+      <!-- corners -->
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#2a3545" stroke-width="0.9"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#2a3545" stroke-width="0.9"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#2a3545" stroke-width="0.9"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#2a3545" stroke-width="0.9"/></svg></span>
+
+      <div class="z-header">
+        <div class="h-left">
+          <span class="card-name">Cheems</span>
+          <span class="card-ticker">$CHEEMS</span>
+        </div>
+        <div class="h-right">
+          <span class="badge">B</span>
+        </div>
+      </div>
+
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/29498/large/cheems.png" alt="Cheems"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐕</div>'">
+      </div>
+
+      <div class="z-text"><p>Humble. Viral. Unstoppable.</p></div>
+
+      <div class="z-footer">
+        <span class="f-code">S01-011</span>
+        <div class="f-sep"></div>
+        <span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Common · B</p>
+  </div>
+
+  <!-- A · UNCOMMON -->
+  <div class="card-wrap">
+    <article class="mcg-card r-a">
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a5060" stroke-width="0.9"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a5060" stroke-width="0.9"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a5060" stroke-width="0.9"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#3a5060" stroke-width="0.9"/></svg></span>
+
+      <div class="z-header">
+        <div class="h-left">
+          <span class="card-name">Toshi</span>
+          <span class="card-ticker">$TOSHI</span>
+        </div>
+        <div class="h-right">
+          <span class="badge">A</span>
+        </div>
+      </div>
+
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/31400/large/toshi.jpeg" alt="Toshi"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐱</div>'">
+      </div>
+
+      <div class="z-text"><p>Based on Base. Literally.</p></div>
+
+      <div class="z-footer">
+        <span class="f-code">S01-012</span>
+        <div class="f-sep"></div>
+        <span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Uncommon · A</p>
+  </div>
+
+  <!-- S · RARE -->
+  <div class="card-wrap">
+    <article class="mcg-card r-s">
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.6"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.6"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.6"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#4a6888" stroke-width="0.9"/><rect x="1" y="1" width="3" height="3" stroke="#4a6888" stroke-width="0.5" opacity="0.6"/></svg></span>
+
+      <div class="z-header">
+        <div class="h-left">
+          <span class="card-name">Pepe</span>
+          <span class="card-ticker">$PEPE</span>
+        </div>
+        <div class="h-right">
+          <span class="badge">S</span>
+        </div>
+      </div>
+
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/29850/large/pepe-token.jpeg" alt="Pepe"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐸</div>'">
+      </div>
+
+      <div class="z-text"><p>The original. The eternal. The one that started it all.</p></div>
+
+      <div class="z-footer">
+        <span class="f-code">S01-001</span>
+        <div class="f-sep"></div>
+        <span class="f-set">GENESIS · ED.1</span>
+      </div>
+    </article>
+    <p class="card-label">Rare · S</p>
+  </div>
+
+  <!-- S+ · LEGENDARY -->
+  <div class="card-wrap">
+    <article class="mcg-card r-splus">
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+
+      <div class="z-header">
+        <div class="h-left">
+          <span class="card-name">Dogecoin</span>
+          <span class="card-ticker">$DOGE</span>
+        </div>
+        <div class="h-right">
+          <span class="badge">S+</span>
+        </div>
+      </div>
+
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/5/large/dogecoin.png" alt="Doge"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph>🐶</div>'">
+      </div>
+
+      <div class="z-text"><p>Much wow. The meme that ate finance.</p></div>
+
+      <div class="z-footer">
+        <span class="f-code">S01-002</span>
+        <div class="f-sep"></div>
+        <span class="f-set">GENESIS · 001/50</span>
+      </div>
+    </article>
+    <p class="card-label">Legendary · S+</p>
+  </div>
+
+  <!-- S+ · LEGENDARY FULL ART -->
+  <div class="card-wrap">
+    <article class="mcg-card r-splus full-art">
+      <span class="co co-tl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-tr"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-bl"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+      <span class="co co-br"><svg viewBox="0 0 14 14" fill="none"><path d="M1 13V1H13" stroke="#8a7040" stroke-width="1"/><rect x="1" y="1" width="3" height="3" stroke="#8a7040" stroke-width="0.6" opacity="0.7"/><circle cx="2.5" cy="2.5" r="0.7" fill="#b89a60" opacity="0.6"/></svg></span>
+
+      <div class="z-art">
+        <img src="https://assets.coingecko.com/coins/images/30023/large/brett.png" alt="Brett"
+          onerror="this.style.display='none';this.parentElement.innerHTML='<div class=art-ph style=font-size:56px;opacity:0.25>🐻</div>'">
+      </div>
+
+      <div class="z-header">
+        <div class="h-left">
+          <span class="card-name">Brett</span>
+          <span class="card-ticker">$BRETT</span>
+        </div>
+        <div class="h-right">
+          <span class="badge">S+</span>
+          <span class="badge-fa">FULL ART</span>
+        </div>
+      </div>
+
+      <div class="z-text"><p>Brett just vibes.</p></div>
+
+      <div class="z-footer">
+        <span class="f-code">S01-027</span>
+        <div class="f-sep"></div>
+        <span class="f-set">GENESIS · 001/3</span>
+      </div>
+    </article>
+    <p class="card-label">Legendary Full Art · S+</p>
+  </div>
+
+</div>
+
+</body>
+</html>
