@@ -1,11 +1,14 @@
 import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
-import { getEditionTheme, getRarityTheme, getRarityVars, prettyEditionLabel } from "@/components/ui/mvpCardTheme";
+import { getEditionTheme, getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
+
+type CardVariant = "collection" | "reveal" | "compact";
 
 type Props = {
   card: MvpCardView;
   quantity?: number;
-  variant?: "collection" | "reveal";
+  variant?: CardVariant;
+  interactive?: boolean;
 };
 
 const DEFAULT_SET_NAME = "GENESIS";
@@ -32,6 +35,7 @@ const getFallbackIndex = (card: MvpCardView) => {
 
 const getCardText = (card: MvpCardView) => {
   if (card.cardText && card.cardText.trim().length > 0) return card.cardText;
+  if (card.flavorText && card.flavorText.trim().length > 0) return card.flavorText;
   return "No flavor text available in token-master.";
 };
 
@@ -45,7 +49,7 @@ function Corner({ stroke, detail, dot }: { stroke: string; detail: boolean; dot:
   );
 }
 
-export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
+export function MvpCardTile({ card, quantity, variant = "collection", interactive = true }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
   const canonicalCardNumber = getPrintedCardNumber(card);
@@ -57,7 +61,11 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
   const cardStyle = getRarityVars(rarityTheme) as CSSProperties;
 
   return (
-    <article className={`mvp-premium-card ${editionTheme.editionClass} variant-${variant}`} style={cardStyle} data-card-variant={variant}>
+    <article
+      className={`mvp-premium-card ${editionTheme.editionClass} variant-${variant}${interactive ? "" : " is-static"}`}
+      style={cardStyle}
+      data-card-variant={variant}
+    >
       <div className="mvp-card-grain" aria-hidden="true" />
 
       {editionTheme.needsReverseLayers && (
@@ -114,8 +122,8 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
           <span className="mvp-card-ticker">${card.symbol}</span>
         </div>
         <div className="mvp-card-header-right">
-          <span className="mvp-badge-rarity">{card.rarity}</span>
-          <span className="mvp-badge-edition">{prettyEditionLabel(card.edition)}</span>
+          <span className="mvp-badge-rarity">{rarityTheme.code}</span>
+          {editionTheme.badgeLabel ? <span className="mvp-badge-edition">{editionTheme.badgeLabel}</span> : null}
         </div>
       </header>
 

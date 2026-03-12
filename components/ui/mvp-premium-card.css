@@ -28,13 +28,35 @@
 }
 
 .mvp-premium-card.variant-collection:hover {
-  transform: translateY(-4px) scale(1.012);
-  box-shadow: inset 0 0 0 1px var(--border-in), 0 24px 54px rgba(0, 0, 0, 0.86), 0 0 52px var(--glow-col);
+  transform: translateY(-8px) scale(1.025);
+  box-shadow: inset 0 0 0 1px var(--border-in), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 64px var(--glow-col), 0 0 110px var(--glow-col);
 }
 
 .mvp-premium-card.variant-reveal:hover {
   transform: translateY(-8px) scale(1.025);
   box-shadow: inset 0 0 0 1px var(--border-in), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 64px var(--glow-col), 0 0 110px var(--glow-col);
+}
+
+
+.mvp-premium-card.is-static {
+  cursor: default;
+}
+
+.mvp-premium-card.is-static:hover {
+  transform: none;
+}
+
+.mvp-premium-card.variant-compact {
+  border-radius: 9px;
+  grid-template-rows: 46px 1fr 34px 30px;
+}
+
+.mvp-premium-card.variant-compact .mvp-card-name {
+  font-size: 13px;
+}
+
+.mvp-premium-card.variant-compact .mvp-card-textbox p {
+  -webkit-line-clamp: 1;
 }
 
 .mvp-card-grain {
@@ -113,8 +135,19 @@
   white-space: nowrap;
 }
 
-.mvp-badge-rarity { font-size: 7px; padding: 2px 5px; }
-.mvp-badge-edition { font-size: 6px; padding: 1px 4px; opacity: 0.75; }
+.mvp-badge-rarity { font-size: 7px; font-weight: 400; padding: 2px 5px; }
+.mvp-badge-edition { font-size: 6px; font-weight: 400; padding: 1px 4px; opacity: 0.7; }
+
+
+.ed-holo .mvp-badge-edition {
+  background: linear-gradient(90deg, #ff8080, #ffcc60, #60ff80, #60c0ff, #c060ff, #ff60c0);
+  background-size: 200% 100%;
+  animation: mvp-holo-shift 4s ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  border-color: rgba(180, 180, 255, 0.4);
+}
 
 .mvp-card-art-shell {
   position: relative;
@@ -126,7 +159,7 @@
   border: 1px solid var(--wire);
 }
 
-.mvp-card-art-shell img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
+.mvp-card-art-shell img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 
 .mvp-card-art-placeholder {
   width: 100%;
@@ -199,7 +232,7 @@
   font-size: 7px;
   font-weight: 300;
   color: var(--txt-sub);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
 }
 
@@ -297,7 +330,7 @@
 .mvp-mcgart-art-reveal img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
 }
 
@@ -363,9 +396,12 @@
 
 .mvp-mcgart-pattern {
   z-index: 8;
-  background-image: radial-gradient(circle at 20% 15%, rgba(255,255,255,0.09) 0, transparent 35%), radial-gradient(circle at 70% 60%, rgba(255,255,255,0.07) 0, transparent 40%);
-  background-size: 52px 36px;
-  opacity: 0.06;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Ctext x='8' y='36' fill='rgba(255,255,255,0.16)' font-size='24' font-family='Rajdhani,Arial,sans-serif' font-weight='700'%3EMCG%3C/text%3E%3C/svg%3E"),
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.08) 0, transparent 35%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06) 0, transparent 40%);
+  background-size: 88px 52px, 52px 36px, 52px 36px;
+  opacity: 0.12;
   mix-blend-mode: screen;
 }
 
