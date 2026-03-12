@@ -26,6 +26,8 @@ export default function AdminRewardsPage() {
   const [reasonCode, setReasonCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  // Backward-compatible state used by prior reward-pack grant panel variants.
+  const [rewardPackMessage, setRewardPackMessage] = useState("");
   const [rows, setRows] = useState<GrantRow[]>([]);
   const [loadingRows, setLoadingRows] = useState(true);
 
@@ -66,6 +68,17 @@ export default function AdminRewardsPage() {
   useEffect(() => {
     void loadRewardPackRows();
   }, []);
+
+  // Backward-compatible reward-pack action used by older UI variants; delegates to compensation flow.
+  const submitRewardPack = async () => {
+    setRewardPackMessage("");
+    if (!userId.trim()) {
+      setRewardPackMessage("Provide userId before granting reward pack.");
+      return;
+    }
+
+    await submit();
+  };
 
   const submit = async () => {
     const parsedAmount = Number(amount);
@@ -216,6 +229,7 @@ export default function AdminRewardsPage() {
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
             <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Validate + Preview + Apply"}</Button>
             {message ? <span className="contest-inline-note">{message}</span> : null}
+            {rewardPackMessage ? <span className="contest-inline-note">{rewardPackMessage}</span> : null}
           </div>
         </div>
 
