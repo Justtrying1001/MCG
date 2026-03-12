@@ -129,7 +129,7 @@ export default function CollectionPage() {
         ) : mvpCards.length > 0 ? (
           <div className="card-grid">
             {mvpCards.map((item) => (
-              <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} />
+              <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
             ))}
           </div>
         ) : (
@@ -148,7 +148,7 @@ export default function CollectionPage() {
       ) : guestCards.length > 0 ? (
         <div className="card-grid">
           {guestCards.map((item) => (
-            <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} />
+            <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
           ))}
         </div>
       ) : (

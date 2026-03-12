@@ -9,10 +9,12 @@ import {
   getRarityTheme,
   prettyEditionLabel,
 } from "@/components/ui/mvpCardTheme";
+import styles from "@/components/ui/MvpCardTile.module.css";
 
 type Props = {
   card: MvpCardView;
   quantity?: number;
+  variant?: "collection" | "reveal";
 };
 
 const DEFAULT_SET_NAME = "GENESIS";
@@ -44,7 +46,7 @@ const getCardText = (card: MvpCardView, quantity: number) => {
   return `${card.symbol} channels ${faction} resonance on ${chain}. Owned copies: ${quantity}.`;
 };
 
-export function MvpCardTile({ card, quantity }: Props) {
+export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
   const frameTheme = getCardFrameTheme(card.rarity, card.edition);
@@ -77,39 +79,42 @@ export function MvpCardTile({ card, quantity }: Props) {
   } as CSSProperties;
 
   return (
-    <article className={`mvp-premium-card${isFullArt ? " mvp-full-art" : ""}`} style={cardStyle}>
-      <div className="mvp-card-noise" />
-      <div className="mvp-card-gloss" />
+    <article
+      className={`${styles.card} ${variant === "reveal" ? styles.variantReveal : styles.variantCollection}${isFullArt ? ` ${styles.fullArt}` : ""}`}
+      style={cardStyle}
+    >
+      <div className={styles.noise} />
+      <div className={styles.gloss} />
 
-      <header className="mvp-zone mvp-card-header">
-        <div className="mvp-card-name-wrap">
-          <h3 className="mvp-card-name">{card.displayName}</h3>
-          <p className="mvp-token-symbol">{card.symbol}</p>
+      <header className={`${styles.zone} ${styles.header}`}>
+        <div className={styles.nameWrap}>
+          <h3 className={styles.name}>{card.displayName}</h3>
+          <p className={styles.tokenSymbol}>{card.symbol}</p>
         </div>
-        <div className="mvp-header-badges">
-          <span className="mvp-chip mvp-chip-rarity">{card.rarity}</span>
-          <span className="mvp-chip mvp-chip-edition">{prettyEditionLabel(card.edition)}</span>
+        <div className={styles.headerBadges}>
+          <span className={styles.chip}>{card.rarity}</span>
+          <span className={styles.chip}>{prettyEditionLabel(card.edition)}</span>
         </div>
       </header>
 
-      <div className="mvp-zone mvp-card-art-shell">
-        <div className="mvp-card-art-glow" />
+      <div className={`${styles.zone} ${styles.artShell}`}>
+        <div className={styles.artGlow} />
         {card.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt={card.displayName} loading="lazy" className="mvp-card-art" />
+          <img src={card.imageUrl} alt={card.displayName} loading="lazy" className={styles.art} />
         ) : (
-          <div className="mvp-card-art-placeholder">MCG</div>
+          <div className={styles.artPlaceholder}>MCG</div>
         )}
       </div>
 
-      <section className="mvp-zone mvp-card-textbox">
-        <p>{getCardText(card, ownedCount)}</p>
+      <section className={`${styles.zone} ${styles.textbox}`}>
+        <p className={styles.textboxText}>{getCardText(card, ownedCount)}</p>
       </section>
 
-      <footer className="mvp-zone mvp-card-footer">
-        <span className="mvp-footer-code">{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
-        <span className="mvp-footer-meta">{setName} · {setEdition}</span>
-        <span className="mvp-footer-supply">
+      <footer className={`${styles.zone} ${styles.footer}`}>
+        <span className={styles.footerCode}>{canonicalCardNumber ?? `TMP-${padCardNumber(fallbackIndex)}`}</span>
+        <span className={styles.footerMeta}>{setName} · {setEdition}</span>
+        <span className={styles.footerSupply}>
           {card.plannedSupply > 0 ? `${padCardNumber(Math.min(card.issuedSupply || fallbackIndex, card.plannedSupply))} / ${card.plannedSupply}` : "Unnumbered test mint"}
         </span>
       </footer>
