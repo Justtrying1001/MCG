@@ -42,15 +42,15 @@ export type CardSizePreset = {
 
 const cardSizePresets: Record<"collection" | "reveal", CardSizePreset> = {
   collection: {
-    minWidth: "156px",
-    maxWidth: "204px",
+    minWidth: "164px",
+    maxWidth: "198px",
     artScaleBoost: 1,
     templateRows: "18% 47% 20% 15%",
     templateGap: "clamp(0.34rem, 0.58vw, 0.52rem)",
   },
   reveal: {
-    minWidth: "178px",
-    maxWidth: "252px",
+    minWidth: "188px",
+    maxWidth: "232px",
     artScaleBoost: 1.08,
     templateRows: "17% 49% 19% 15%",
     templateGap: "clamp(0.38rem, 0.66vw, 0.56rem)",
