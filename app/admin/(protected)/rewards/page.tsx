@@ -16,13 +16,6 @@ type GrantRow = {
   user: { displayName: string | null; xUsername: string | null };
 };
 
-type CompensationValidation = {
-  blocking: boolean;
-  issues: Array<{ code: string; severity: "ERROR" | "WARN"; field: string | null; message: string; operatorHint: string }>;
-  validationToken: string;
-  impactSummary: { pointsDelta: number };
-};
-
 export default function AdminRewardsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<CandidateUser[]>([]);
@@ -65,8 +58,12 @@ export default function AdminRewardsPage() {
     setLoadingRows(false);
   };
 
+  // Backward-compatible alias for previous UI version naming used in older effects.
+  const loadRewardPackRows = async () => {
+    await loadRows();
+  };
+
   useEffect(() => {
-    void loadRows();
     void loadRewardPackRows();
   }, []);
 
