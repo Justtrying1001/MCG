@@ -15,10 +15,12 @@ export type MvpCardView = {
   owned: boolean;
   instanceCount: number;
   cardText?: string | null;
+  flavorText?: string | null;
   cardNumber?: string | null;
   setCode?: string | null;
   setEditionLabel?: string | null;
   setOrder?: number | null;
+  editionNumber?: number | null;
 };
 
 export type MvpCollectionItem = {

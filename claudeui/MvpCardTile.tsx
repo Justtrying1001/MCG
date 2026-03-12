@@ -54,8 +54,8 @@ function Corner({
 }
 
 export default function MvpCardTile({ card, quantity = 1 }: Props) {
-  const rarity   = resolveRarity(card.rarity?.code ?? card.rarity ?? 'B')
-  const edition  = resolveEdition(card.edition?.code ?? card.edition ?? 'BASE')
+  const rarity   = resolveRarity(card.rarity ?? 'B')
+  const edition  = resolveEdition(card.edition ?? 'BASE')
 
   // Card number display
   const cardNumber =
