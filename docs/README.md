@@ -1,15 +1,30 @@
 # MCG Documentation
 
-## Source-of-truth docs
+## Current source-of-truth docs (read first)
 
-- `mcg-pivot-product-foundation.md` — product source-of-truth (vision, loop, pillars).
-- `current-runtime-architecture.md` — current runtime source-of-truth (what is actually running now).
-- `mvp-controlled-emission-transformation.md` — transformation source-of-truth (repo audit, current-vs-target mapping, docs-first migration plan).
-- `reward-system-audit-2026-03.md` — rewards/quests audit (Phase 1→4, ledger + quests + social submit/review).
-- `repo-cartography-2026-03.md` — exhaustive repo architecture and domain cartography.
+- `current-runtime-architecture.md` — runtime implementation truth (what is actually live now).
+- `cards-system-source-of-truth.md` — final cards source-of-truth reference (data, DB runtime, APIs, UI, seed/maintenance).
+- `mvp-cloud-bootstrap-runbook.md` — operational runbook for cloud bootstrap/remediation of MVP packs/cards data.
+- `mcg-pivot-product-foundation.md` — product intent/source-of-truth (vision, loop, pillars).
+- `repo-and-docs-consolidation-audit-2026-03.md` — consolidated repo+docs truth audit (implementation vs docs alignment, corrections, remaining debt).
+- `cards-data-runtime-audit-2026-03.md` — deep audit of card/template/pack/emission data sources, runtime dependencies, and target source-of-truth architecture.
+- `csv-50-canonical-migration-audit-2026-03.md` — CSV-50 to legacy-JSON mapping audit with field-level migration plan for canonical card data.
+- `token-master-50-source-of-truth.md` — specification for `data/token-master-50.json` canonical dataset and generation workflow.
+- `token-master-50-adoption-plan.md` — concrete replacement/adoption plan to move seed and runtime toward token-master-first flows.
+- `token-master-50-runtime-adoption.md` — concrete runtime/read-model migration status for token-master-first card identity and DTO adoption.
+- `token-master-50-ui-adoption.md` — UI migration status for consuming `MvpCardView`/`MvpCollectionItem` on auth MVP surfaces.
+- `cards-legacy-removal-status.md` — removal/replacement status of legacy card paths (what is removed, replaced, guest-only, or compat-only).
 
-## Reading order for ongoing transformation
+## Historical / contextual docs (read with caution)
 
-1. Product intent: `mcg-pivot-product-foundation.md`
-2. Runtime reality: `current-runtime-architecture.md`
-3. Transformation execution plan: `mvp-controlled-emission-transformation.md`
+- `reward-system-audit-2026-03.md` — rewards/quests phase audit context (still useful, but superseded by consolidation doc for repo-wide truth).
+- `repo-cartography-2026-03.md` — architecture/cartography snapshot from an earlier state.
+- `mvp-controlled-emission-transformation.md` — transformation planning document written pre-implementation for controlled-emission rollout.
+
+## Recommended reading order for new contributors
+
+1. `current-runtime-architecture.md`
+2. `repo-and-docs-consolidation-audit-2026-03.md`
+3. `README.md` (root)
+4. `mcg-pivot-product-foundation.md`
+5. Historical/context docs only if needed for background.

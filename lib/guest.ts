@@ -1,14 +1,14 @@
-import type { BaseCard } from "@/types/cards";
+import type { MvpCardView } from "@/types/cards";
 
 export type GuestCollectionItem = {
-  baseCardId: string;
-  quantity: number;
-  card: BaseCard;
+  templateId: string;
+  instanceCount: number;
+  card: MvpCardView;
 };
 
 export type GuestState = {
   points: number;
   packsOpened: number;
-  collection: GuestCollectionItem[];
+  mvpCollection: GuestCollectionItem[];
   openingsCount: number;
 };

@@ -82,8 +82,6 @@ Core active models include:
   - account identity + points + pack counters
 - `UserSession`
   - hashed session token + expiry
-- `UserCard` / `PackOpening`
-  - legacy-compatible collection and pack history persistence
 - Contest + progression domain models
   - `Contest`, `ContestEntry`, `ContestScore`, `ContestRanking`, `ContestSettlement`
   - `OwnedCardInstance`, `RewardGrant`
@@ -95,9 +93,14 @@ Core active models include:
 ## Documentation
 
 - Docs index: `docs/README.md`
-- Product source-of-truth: `docs/mcg-pivot-product-foundation.md`
-- Runtime architecture (current implementation): `docs/current-runtime-architecture.md`
-- Rewards/quests audit: `docs/reward-system-audit-2026-03.md`
+- Runtime implementation source-of-truth: `docs/current-runtime-architecture.md`
+- Final cards system source-of-truth: `docs/cards-system-source-of-truth.md`
+- Cloud bootstrap runbook: `docs/mvp-cloud-bootstrap-runbook.md`
+- Repo/docs consolidation source-of-truth: `docs/repo-and-docs-consolidation-audit-2026-03.md`
+- Product intent source-of-truth: `docs/mcg-pivot-product-foundation.md`
+- Card/template/pack data deep audit: `docs/cards-data-runtime-audit-2026-03.md`
+- Token master canonical spec: `docs/token-master-50-source-of-truth.md`
+- Historical context: `docs/repo-cartography-2026-03.md`, `docs/mvp-controlled-emission-transformation.md`, `docs/reward-system-audit-2026-03.md`
 
 ## API routes (active + explicit retired compatibility)
 
@@ -124,6 +127,7 @@ Core active models include:
   - `POST /api/internal/contests/:contestId/settle` (now requires `planId` from settlement validate + `Idempotency-Key`)
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
+  - `POST /api/internal/rewards/pack-grant`
   - `GET /api/internal/users/search`
   - `GET /api/rewards/ledger`
   - `GET /api/quests`
@@ -218,10 +222,36 @@ Open http://localhost:3000.
 3. Build command: `npm run vercel-build`.
 4. Install command: `npm install`.
 
-`npm run vercel-build` runs `prisma generate && prisma db push && next build`.
+`npm run vercel-build` runs `prisma generate && prisma db push && npm run bootstrap:mvp:cloud:deploy && next build`.
+
+This means every Vercel build now enforces cloud bootstrap idempotently:
+- `seed:mvp:controlled-emission` upserts pack/card MVP runtime data
+- `check:mvp:bootstrap:allow-exhausted` validates required structures even if inventory is fully exhausted
+
+For manual cloud remediation (or first bootstrap from a local terminal), run:
+
+```bash
+npm run bootstrap:mvp:cloud
+```
+
+`bootstrap:mvp:cloud` is strict and fails if no remaining supply is available.
+`bootstrap:mvp:cloud:deploy` is deploy-safe and allows fully exhausted inventory while still validating structure integrity.
 
 For destructive reset during local/dev migration work only, use:
 
 ```bash
 npm run prisma:push:reset
 ```
+
+
+## Reward packs (GENESIS Edition 1)
+
+Admin can now distribute `mvp_reward_pack` via `/admin/rewards` in two delivery modes:
+
+- `GRANT_ONLY`: consume reward-pack stock and log `RewardGrant(PACK)` without immediate opening.
+- `GRANT_AND_OPEN`: consume reward-pack stock, create `PackOpeningEvent`, allocate 5 cards from DB supply, create `OwnedCardInstance` rows, and log `RewardGrant(PACK)`.
+
+These operations are backed by `/api/internal/rewards/pack-grant`.
+
+
+Important ops note: rerunning `seed:mvp:controlled-emission` is idempotent and now preserves existing runtime counters (`issuedSupply`, `openedPackCount`) on existing rows; it is safe for cloud drift repair and does not reset live inventory history.

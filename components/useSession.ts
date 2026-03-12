@@ -11,7 +11,7 @@ function createDefaultGuestState(): GuestState {
   return {
     points: GAME_CONFIG.STARTING_POINTS,
     packsOpened: 0,
-    collection: [],
+    mvpCollection: [],
     openingsCount: 0,
   };
 }
@@ -29,7 +29,7 @@ function mapGuestState(state: GuestState): GuestSessionPayload {
       points: state.points,
       packsOpened: state.packsOpened,
     },
-    collection: state.collection,
+    mvpCollection: state.mvpCollection,
     openingsCount: state.openingsCount,
   };
 }

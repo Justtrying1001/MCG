@@ -1,43 +1,70 @@
-import type { OwnedCardInstance, Prisma, User, UserCard } from "@prisma/client";
-import { getCardsMap } from "@/lib/cards";
-import { extractBaseCardIdFromTemplateMetadata } from "@/lib/domain/cards/template-metadata";
+import type { OwnedCardInstance, User } from "@prisma/client";
+import type { MvpCollectionItem } from "@/types/cards";
+
+import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
 
 type OwnedInstanceWithTemplate = OwnedCardInstance & {
   cardTemplate: {
-    metadata: unknown;
+    id: string;
+    plannedSupply?: number;
+    issuedSupply?: number;
+    rarity?: { code: string };
+    edition?: { code: string };
+    tokenProject?: { slug: string };
   };
 };
 
 export function buildUserPayload(params: {
   user: User;
   ownedInstances: OwnedInstanceWithTemplate[];
-  legacyUserCards?: UserCard[];
 }) {
-  const cardsMap = getCardsMap();
-
-  const quantityByBaseCardId = new Map<string, number>();
+  const mvpTemplateAgg = new Map<string, {
+    count: number;
+    tokenProjectSlug: string | null;
+    plannedSupply: number;
+    issuedSupply: number;
+    rarityCode: string;
+    editionCode: string;
+  }>();
 
   for (const instance of params.ownedInstances) {
-    const baseCardId = extractBaseCardIdFromTemplateMetadata(instance.cardTemplate.metadata as Prisma.JsonValue | null);
-    if (!baseCardId) continue;
-    quantityByBaseCardId.set(baseCardId, (quantityByBaseCardId.get(baseCardId) ?? 0) + 1);
-  }
+    const aggregate = mvpTemplateAgg.get(instance.cardTemplate.id) ?? {
+      count: 0,
+      tokenProjectSlug: instance.cardTemplate.tokenProject?.slug ?? null,
+      plannedSupply: instance.cardTemplate.plannedSupply ?? 0,
+      issuedSupply: instance.cardTemplate.issuedSupply ?? 0,
+      rarityCode: instance.cardTemplate.rarity?.code ?? "UNKNOWN",
+      editionCode: instance.cardTemplate.edition?.code ?? "UNKNOWN",
+    };
 
-  // Transitional fallback for legacy-only users created before instance-aware ownership existed.
-  if (quantityByBaseCardId.size === 0 && params.legacyUserCards) {
-    for (const card of params.legacyUserCards) {
-      if (card.quantity <= 0) continue;
-      quantityByBaseCardId.set(card.baseCardId, (quantityByBaseCardId.get(card.baseCardId) ?? 0) + card.quantity);
+    aggregate.count += 1;
+    if (!aggregate.tokenProjectSlug && instance.cardTemplate.tokenProject?.slug) {
+      aggregate.tokenProjectSlug = instance.cardTemplate.tokenProject.slug;
     }
+    mvpTemplateAgg.set(instance.cardTemplate.id, aggregate);
   }
 
-  const collection = Array.from(quantityByBaseCardId.entries())
-    .map(([baseCardId, quantity]) => ({
-      baseCardId,
-      quantity,
-      card: cardsMap.get(baseCardId),
-    }))
-    .filter((row): row is { baseCardId: string; quantity: number; card: NonNullable<typeof row.card> } => Boolean(row.card));
+  const mvpCollection: MvpCollectionItem[] = Array.from(mvpTemplateAgg.entries())
+    .map(([templateId, aggregate]) => {
+      if (!aggregate.tokenProjectSlug) return null;
+      const token = findTokenMasterBySlug(aggregate.tokenProjectSlug);
+      if (!token) return null;
+
+      return {
+        templateId,
+        instanceCount: aggregate.count,
+        card: toMvpCardViewFromTokenMasterRow({
+          token,
+          templateId,
+          rarityCode: aggregate.rarityCode,
+          editionCode: aggregate.editionCode,
+          plannedSupply: aggregate.plannedSupply,
+          issuedSupply: aggregate.issuedSupply,
+          instanceCount: aggregate.count,
+        }),
+      };
+    })
+    .filter((row): row is MvpCollectionItem => Boolean(row));
 
   return {
     mode: "user" as const,
@@ -51,6 +78,6 @@ export function buildUserPayload(params: {
       points: params.user.points,
       packsOpened: params.user.packsOpened,
     },
-    collection,
+    mvpCollection,
   };
 }
