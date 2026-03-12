@@ -548,3 +548,68 @@ model CompetitiveProgression {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+
+enum AdminActionStatus {
+  VALIDATED
+  EXECUTED
+  FAILED
+}
+
+model AdminActionLog {
+  id            String            @id @default(cuid())
+  actionType    String
+  module        String
+  targetType    String?
+  targetId      String?
+  actorType     String
+  actorId       String
+  actorLabel    String
+  authMode      String
+  status        AdminActionStatus
+  requestSummary Json?
+  effectSummary  Json?
+  errorCode     String?
+  errorMessage  String?
+  createdAt     DateTime          @default(now())
+
+  @@index([module, createdAt])
+  @@index([actionType, createdAt])
+  @@index([targetType, targetId])
+}
+
+model AdminOpArtifact {
+  id          String   @id @default(cuid())
+  artifactType String
+  targetType   String?
+  targetId     String?
+  payload      Json
+  createdBy    String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([artifactType, createdAt])
+  @@index([expiresAt])
+}
+
+
+enum AdminRole {
+  ADMIN_OPS
+  ADMIN_MODERATOR
+  ADMIN_FINANCE_OPS
+  ADMIN_SUPERVISOR
+}
+
+model AdminIdempotencyKey {
+  id         String   @id @default(cuid())
+  idempotencyKey String @unique
+  actionType String
+  targetType String?
+  targetId   String?
+  actorId    String
+  actionLogId String?
+  createdAt  DateTime @default(now())
+
+  @@index([actionType, createdAt])
+  @@index([targetType, targetId])
+}

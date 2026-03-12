@@ -43,7 +43,10 @@ export async function grantManualPointsMvp(input: {
     throw new ManualGrantError("reasonLabel is required", 400);
   }
 
-  const reasonCode = input.reasonCode ? String(input.reasonCode).trim() : null;
+  const reasonCode = input.reasonCode ? String(input.reasonCode).trim() : "";
+  if (!reasonCode) {
+    throw new ManualGrantError("reasonCode is required", 400);
+  }
   const idempotencyKeyRaw = input.idempotencyKey ? String(input.idempotencyKey).trim() : null;
   const idempotencyKey = idempotencyKeyRaw || `manual-grant:${userId}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 

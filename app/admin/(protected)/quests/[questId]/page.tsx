@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
-import { SiteShell } from "@/components/layout/SiteShell";
+import { useEffect, useMemo, useState } from "react";
 
 type QuestDetailPayload = {
   quest: {
@@ -19,9 +16,7 @@ type QuestDetailPayload = {
     isActive: boolean;
     startAt: string | null;
     endAt: string | null;
-    config: unknown;
-    createdAt: string;
-    updatedAt: string;
+    config: Record<string, unknown> | null;
   };
   analytics: {
     progressCount: number;
@@ -41,32 +36,22 @@ type QuestDetailPayload = {
     createdAt: string;
     user: { id: string; xUsername: string; displayName: string };
   }>;
-  recentlyCompletedUsers: Array<{
-    userId: string;
-    completedAt: string;
-    progressValue: number;
-    user: { id: string; xUsername: string; displayName: string };
-  }>;
   latestLedgerCredits: Array<{
     id: string;
     userId: string;
     amount: number;
-    idempotencyKey: string | null;
     createdAt: string;
-    metadata: unknown;
     user: { id: string; xUsername: string; displayName: string };
   }>;
 };
 
-export default function AdminQuestDetailPage({ params }: { params: { questId: string } }) {
+export default function QuestDetailPerformancePage({ params }: { params: { questId: string } }) {
   const [data, setData] = useState<QuestDetailPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
-      setError("");
       const response = await fetch(`/api/internal/quests/${params.questId}`, { cache: "no-store" });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -74,7 +59,6 @@ export default function AdminQuestDetailPage({ params }: { params: { questId: st
         setLoading(false);
         return;
       }
-
       const payload = (await response.json()) as QuestDetailPayload;
       setData(payload);
       setLoading(false);
@@ -83,92 +67,105 @@ export default function AdminQuestDetailPage({ params }: { params: { questId: st
     void load();
   }, [params.questId]);
 
-  return (
-    <SiteShell>
-      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center" }}>
-        <div>
-          <h1 className="page-title">Quest Detail</h1>
-          <p className="page-subtitle">Operational view for quest status, analytics, submissions, and credits.</p>
-        </div>
-        <AdminLogoutButton />
-      </div>
+  const configSummary = useMemo(() => {
+    const config = data?.quest.config ?? {};
+    return {
+      threshold: typeof config.threshold === "number" ? config.threshold : null,
+      targetUrl: typeof config.targetUrl === "string" ? config.targetUrl : null,
+      instructions: typeof config.instructions === "string" ? config.instructions : null,
+      socialAction: typeof config.socialAction === "string" ? config.socialAction : null,
+      proofRequired: typeof config.proofRequired === "boolean" ? config.proofRequired : null,
+    };
+  }, [data]);
 
-      <section className="contest-section" style={{ marginBottom: "1rem" }}>
-        <Link href="/admin/quests" className="contest-inline-note">← Back to quests</Link>
+  return (
+    <div className="admin-page">
+      <section className="admin-panel">
+        <Link href="/admin/quests" className="contest-inline-note">← Back to quest library</Link>
       </section>
 
-      {loading ? <p className="contest-inline-note">Loading quest detail…</p> : null}
-      {error ? <p className="contest-error">{error}</p> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading quest detail…</p></section> : null}
+      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          <section className="contest-section">
-            <h2 className="contest-section-title">Quest identity</h2>
-            <p className="contest-inline-note">ID: {data.quest.id}</p>
-            <p className="contest-inline-note">Code: {data.quest.code}</p>
-            <p className="contest-inline-note">Type: {data.quest.type}</p>
-            <p className="contest-inline-note">Title: {data.quest.title}</p>
-            <p className="contest-inline-note">Description: {data.quest.description || "—"}</p>
-            <p className="contest-inline-note">Reward: {data.quest.rewardPoints} points</p>
-            <p className="contest-inline-note">Active: {data.quest.isActive ? "Yes" : "No"} · One-time: {data.quest.oneTime ? "Yes" : "No"}</p>
-            <p className="contest-inline-note">Validation: {data.quest.validationMode}</p>
-            <p className="contest-inline-note">Start: {data.quest.startAt ? new Date(data.quest.startAt).toLocaleString() : "—"}</p>
-            <p className="contest-inline-note">End: {data.quest.endAt ? new Date(data.quest.endAt).toLocaleString() : "—"}</p>
-            <pre className="contest-inline-note" style={{ whiteSpace: "pre-wrap" }}>Config: {JSON.stringify(data.quest.config ?? {}, null, 2)}</pre>
+        <>
+          <section className="admin-panel">
+            <div className="contest-card-top">
+              <p className="contest-code">{data.quest.code}</p>
+              <span className={`contest-status status-${data.quest.isActive ? "live" : "canceled"}`}>{data.quest.isActive ? "ACTIVE" : "INACTIVE"}</span>
+            </div>
+            <h1 className="admin-title">{data.quest.title}</h1>
+            <p className="contest-inline-note">Objective: {data.quest.type} · Validation: {data.quest.validationMode} · Reward: {data.quest.rewardPoints} pts</p>
+            <p className="contest-inline-note">Window: {formatDate(data.quest.startAt)} → {formatDate(data.quest.endAt)}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Analytics</h2>
-            <p className="contest-inline-note">Progress records: {data.analytics.progressCount}</p>
-            <p className="contest-inline-note">Completed users: {data.analytics.completedCount}</p>
-            <p className="contest-inline-note">Submissions pending/approved/rejected: {data.analytics.pendingSubmissionCount}/{data.analytics.approvedSubmissionCount}/{data.analytics.rejectedSubmissionCount}</p>
-            <p className="contest-inline-note">Total points distributed: {data.analytics.totalPointsDistributed}</p>
+          <section className="admin-panel">
+            <p className="admin-section-title">Quest config summary</p>
+            <p className="contest-inline-note">Threshold: {configSummary.threshold ?? "—"}</p>
+            <p className="contest-inline-note">Social action: {configSummary.socialAction ?? "—"}</p>
+            <p className="contest-inline-note">Target URL: {configSummary.targetUrl ?? "—"}</p>
+            <p className="contest-inline-note">Instructions: {configSummary.instructions ?? "—"}</p>
+            <p className="contest-inline-note">Proof required: {configSummary.proofRequired === null ? "—" : configSummary.proofRequired ? "Yes" : "No"}</p>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Latest submissions</h2>
-            {data.latestSubmissions.length === 0 ? <p className="contest-inline-note">No submissions yet.</p> : null}
+          <section className="admin-panel">
+            <p className="admin-section-title">Performance funnel</p>
+            <div className="contest-meta-grid">
+              <Metric label="Progress records" value={String(data.analytics.progressCount)} />
+              <Metric label="Completed" value={String(data.analytics.completedCount)} />
+              <Metric label="Pending submissions" value={String(data.analytics.pendingSubmissionCount)} />
+              <Metric label="Approved submissions" value={String(data.analytics.approvedSubmissionCount)} />
+              <Metric label="Rejected submissions" value={String(data.analytics.rejectedSubmissionCount)} />
+              <Metric label="Points distributed" value={String(data.analytics.totalPointsDistributed)} />
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <Link href={`/admin/moderation?questId=${data.quest.id}`} className="contest-inline-note">Open moderation queue for this quest</Link>
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <p className="admin-section-title">Latest submissions</p>
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestSubmissions.map((row) => (
                 <div key={row.id} className="contest-card">
                   <p className="contest-inline-note">{row.user.displayName} (@{row.user.xUsername}) · {row.status}</p>
-                  <p className="contest-inline-note">Proof: {row.proofUrl || "—"}</p>
-                  <p className="contest-inline-note">Note: {row.note || "—"}</p>
+                  <p className="contest-inline-note">Evidence: {row.proofUrl || row.note || "—"}</p>
                   <p className="contest-inline-note">Created: {new Date(row.createdAt).toLocaleString()}</p>
+                  <Link href={`/admin/moderation/${row.id}`} className="contest-inline-note">Open review detail</Link>
                 </div>
               ))}
+              {data.latestSubmissions.length === 0 ? <p className="contest-inline-note">No submissions yet.</p> : null}
             </div>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Recently completed users</h2>
-            {data.recentlyCompletedUsers.length === 0 ? <p className="contest-inline-note">No completions yet.</p> : null}
-            <div style={{ display: "grid", gap: "0.5rem" }}>
-              {data.recentlyCompletedUsers.map((row) => (
-                <div key={`${row.userId}:${row.completedAt}`} className="contest-card">
-                  <p className="contest-inline-note">{row.user.displayName} (@{row.user.xUsername})</p>
-                  <p className="contest-inline-note">Progress value: {row.progressValue}</p>
-                  <p className="contest-inline-note">Completed: {new Date(row.completedAt).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="contest-section">
-            <h2 className="contest-section-title">Latest ledger credits</h2>
-            {data.latestLedgerCredits.length === 0 ? <p className="contest-inline-note">No reward credits yet.</p> : null}
+          <section className="admin-panel">
+            <p className="admin-section-title">Reward distribution snapshot</p>
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestLedgerCredits.map((row) => (
                 <div key={row.id} className="contest-card">
                   <p className="contest-inline-note">{row.user.displayName} (@{row.user.xUsername}) · +{row.amount}</p>
-                  <p className="contest-inline-note">Idempotency: {row.idempotencyKey || "—"}</p>
-                  <p className="contest-inline-note">Created: {new Date(row.createdAt).toLocaleString()}</p>
+                  <p className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</p>
                 </div>
               ))}
+              {data.latestLedgerCredits.length === 0 ? <p className="contest-inline-note">No reward credits yet.</p> : null}
             </div>
           </section>
-        </div>
+        </>
       ) : null}
-    </SiteShell>
+    </div>
   );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="contest-meta-label">{label}</p>
+      <p className="contest-meta-value">{value}</p>
+    </div>
+  );
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
 }
