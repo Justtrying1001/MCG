@@ -26,7 +26,7 @@ type QuestRow = {
 
 const MAX_LEDGER_ROWS = 8;
 
-export default function AccountPage() {
+export default function ProfilePage() {
   const { me, loading } = useSession();
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
@@ -75,15 +75,15 @@ export default function AccountPage() {
     const contestEvents =
       competitive?.recentResults.map((result) => ({
         id: `${result.contestId}-${result.rankedAt}`,
-        label: `Contest result · ${result.contestTitle}`,
-        subLabel: `Rank #${result.rank} · Score ${result.score}`,
+        label: result.contestTitle,
+        subLabel: `Contest result · Rank #${result.rank} · Score ${result.score}`,
         at: result.rankedAt,
       })) ?? [];
 
     const questEvents = completedQuests.slice(0, 6).map((quest) => ({
       id: quest.id,
-      label: `Quest completed · ${quest.title}`,
-      subLabel: `+${quest.rewardPoints} points`,
+      label: quest.title,
+      subLabel: `Quest validated · +${quest.rewardPoints} points`,
       at: quest.completedAt ?? new Date().toISOString(),
     }));
 
@@ -92,180 +92,166 @@ export default function AccountPage() {
       .slice(0, 8);
   }, [competitive?.recentResults, completedQuests]);
 
+  const cardsOwned = collection?.totalOwnedInstances ?? me?.mvpCollection.reduce((acc, item) => acc + item.instanceCount, 0) ?? 0;
+  const uniqueOwned = collection?.ownedTemplateCount ?? me?.mvpCollection.length ?? 0;
+
   return (
     <SiteShell>
       <div className="page-header">
         <div>
           <h1 className="page-title">Profile</h1>
-          <p className="page-subtitle">
-            Your account hub: progression, collection value, points history, and validated quest activity.
-          </p>
+          <p className="page-subtitle">Account command center: identity, currency, progression, collection and verified activity.</p>
         </div>
       </div>
 
-      {me ? (
-        <div className="profile-page-layout">
-          <section className="profile-hero-card">
-            <div className="profile-banner-bg" />
-            <div className="profile-header">
+      {!me ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">◎</div>
+          <p className="empty-state-title">Sign in to load your full account profile</p>
+          <p className="empty-state-desc">Continue with X to unlock progression, points history, quests and contest activity.</p>
+        </div>
+      ) : (
+        <div className="profile-v3-shell">
+          <section className="profile-v3-hero">
+            <div className="profile-v3-orb" />
+            <header className="profile-v3-head">
               <div className="profile-avatar">{me.user.displayName.slice(0, 1).toUpperCase()}</div>
               <div>
-                <p className="profile-hero-label">Account identity</p>
-                <div className="profile-name">{me.user.displayName}</div>
-                <div className="profile-sub">
-                  {me.mode === "guest"
-                    ? "Guest mode · Temporary progression preview"
-                    : `Connected with X · @${me.user.username}`}
-                </div>
+                <p className="profile-v3-eyebrow">Account identity</p>
+                <h2>{me.user.displayName}</h2>
+                <p className="profile-sub">{me.mode === "guest" ? "Guest mode · temporary local profile" : `X handle · @${me.user.username}`}</p>
               </div>
+            </header>
+
+            <div className="profile-v3-currency">
+              <p className="profile-v3-eyebrow">Points balance</p>
+              <p className="profile-v3-points">{account?.pointsBalance ?? me.user.points}</p>
+              <p className="profile-v3-caption">Primary account currency · ledger tracked</p>
             </div>
 
-            <div className="profile-main-kpis">
-              <div className="profile-kpi-card highlight">
-                <p className="profile-kpi-label">Points balance</p>
-                <p className="profile-kpi-value">{account?.pointsBalance ?? me.user.points}</p>
-                <p className="profile-kpi-sub">Spend in rewards-ready systems and track every movement below.</p>
-              </div>
-              <div className="profile-kpi-card">
-                <p className="profile-kpi-label">Level</p>
-                <p className="profile-kpi-value">Lv {account?.level ?? 1}</p>
-                <p className="profile-kpi-sub">{account?.xp ?? 0} XP total</p>
-              </div>
-              <div className="profile-kpi-card">
-                <p className="profile-kpi-label">Cards owned</p>
-                <p className="profile-kpi-value">{collection?.totalOwnedInstances ?? me.mvpCollection.reduce((acc, item) => acc + item.instanceCount, 0)}</p>
-                <p className="profile-kpi-sub">{collection?.ownedTemplateCount ?? me.mvpCollection.length} unique templates</p>
-              </div>
+            <div className="profile-v3-hero-stats">
+              <article>
+                <p>Level</p>
+                <strong>Lv {account?.level ?? 1}</strong>
+                <span>{account?.xp ?? 0} XP</span>
+              </article>
+              <article>
+                <p>Total cards</p>
+                <strong>{cardsOwned}</strong>
+                <span>{uniqueOwned} unique</span>
+              </article>
+              <article>
+                <p>Collection</p>
+                <strong>{collection?.completionPct ?? 0}%</strong>
+                <span>{collection?.missingTemplateCount ?? 0} missing</span>
+              </article>
+              <article>
+                <p>Contest entries</p>
+                <strong>{competitive?.contestsEntered ?? 0}</strong>
+                <span>Best rank {competitive?.bestRank ?? "-"}</span>
+              </article>
             </div>
 
             {account ? (
-              <div className="profile-progress-card">
-                <div className="profile-progress-head">
-                  <p>Progress to Lv {account.nextMilestoneLevel}</p>
-                  <p>{account.progressPct}%</p>
+              <div className="profile-v3-progress-wrap">
+                <div className="profile-v3-progress-head">
+                  <span>Progression to Lv {account.nextMilestoneLevel}</span>
+                  <span>{account.progressPct}%</span>
                 </div>
-                <ProgressBar value={account.xp - account.levelXpFloor} max={account.levelXpCeil - account.levelXpFloor} label="Account level" />
+                <ProgressBar value={account.xp - account.levelXpFloor} max={account.levelXpCeil - account.levelXpFloor} label="Account XP progress" />
               </div>
             ) : (
-              <div className="profile-empty-inline">Detailed level progression is available for authenticated accounts.</div>
+              <div className="profile-empty-inline">Level progression details are available for authenticated accounts.</div>
             )}
-          </section>
-
-          <section className="profile-hub-grid">
-            <article className="profile-stat-card">
-              <span className="profile-stat-label">Collection progression</span>
-              <span className="profile-stat-value">{collection?.completionPct ?? 0}%</span>
-              <span className="profile-stat-sub">{collection?.missingTemplateCount ?? 0} cards missing</span>
-              <span className="profile-stat-sub">Top rarity: {collection?.topRarityCode ?? "Not available yet"}</span>
-            </article>
-            <article className="profile-stat-card">
-              <span className="profile-stat-label">Contest performance</span>
-              <span className="profile-stat-value">{competitive?.contestsEntered ?? 0}</span>
-              <span className="profile-stat-sub">Entries · {competitive?.contestsWon ?? 0} wins</span>
-              <span className="profile-stat-sub">Best rank: {competitive?.bestRank ?? "—"} · Rating: {competitive?.rating ?? "—"}</span>
-            </article>
-            <article className="profile-stat-card">
-              <span className="profile-stat-label">Quest completion</span>
-              <span className="profile-stat-value">{completedQuests.length}</span>
-              <span className="profile-stat-sub">Validated quests completed</span>
-              <span className="profile-stat-sub">Ready for future reward seasons</span>
-            </article>
           </section>
 
           {historyError ? <p className="contest-error">{historyError}</p> : null}
 
-          <div className="profile-ledger-grid">
-            <section className="profile-secondary-panel">
-              <h2 className="profile-secondary-title">Points earned</h2>
-              {pointsIn.length === 0 ? (
-                <p className="profile-empty-inline">No points earned yet. Complete your first quest to start the ledger.</p>
-              ) : (
-                <div className="profile-results-list">
-                  {pointsIn.slice(0, MAX_LEDGER_ROWS).map((entry) => (
-                    <div key={entry.id} className="profile-result-row">
-                      <div>
-                        <div className="profile-result-name">{entry.reasonType}</div>
-                        <div className="profile-result-sub">{new Date(entry.createdAt).toLocaleString()}</div>
-                      </div>
-                      <div className="profile-result-rank" style={{ color: "var(--emerald)" }}>+{entry.amount}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className="profile-secondary-panel">
-              <h2 className="profile-secondary-title">Points spent</h2>
-              {pointsOut.length === 0 ? (
-                <p className="profile-empty-inline">No points spent yet. Future reward redemptions will appear here.</p>
-              ) : (
-                <div className="profile-results-list">
-                  {pointsOut.slice(0, MAX_LEDGER_ROWS).map((entry) => (
-                    <div key={entry.id} className="profile-result-row">
-                      <div>
-                        <div className="profile-result-name">{entry.reasonType}</div>
-                        <div className="profile-result-sub">{new Date(entry.createdAt).toLocaleString()}</div>
-                      </div>
-                      <div className="profile-result-rank" style={{ color: "var(--red)" }}>-{entry.amount}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-
-          <div className="profile-ledger-grid">
-            <section className="profile-secondary-panel">
-              <h2 className="profile-secondary-title">Account activity</h2>
+          <section className="profile-v3-board-grid">
+            <article className="profile-v3-panel">
+              <h3>Account activity timeline</h3>
               {accountTimeline.length === 0 ? (
-                <p className="profile-empty-inline">No recent account activity yet.</p>
+                <p className="profile-empty-inline">No recent events yet.</p>
               ) : (
-                <div className="profile-results-list">
+                <div className="profile-v3-list">
                   {accountTimeline.map((event) => (
-                    <div key={event.id} className="profile-result-row">
+                    <div className="profile-v3-row" key={event.id}>
                       <div>
-                        <div className="profile-result-name">{event.label}</div>
-                        <div className="profile-result-sub">{event.subLabel}</div>
+                        <p className="profile-result-name">{event.label}</p>
+                        <p className="profile-result-sub">{event.subLabel}</p>
                       </div>
-                      <div className="profile-result-sub">{new Date(event.at).toLocaleDateString()}</div>
+                      <time className="profile-result-sub">{new Date(event.at).toLocaleDateString()}</time>
                     </div>
                   ))}
                 </div>
               )}
-            </section>
+            </article>
 
-            <section className="profile-secondary-panel">
-              <h2 className="profile-secondary-title">Completed quests</h2>
+            <article className="profile-v3-panel">
+              <h3>Completed quests</h3>
               {completedQuests.length === 0 ? (
-                <p className="profile-empty-inline">No completed quests yet. Start with available social quests on Rewards.</p>
+                <p className="profile-empty-inline">No completed quests yet.</p>
               ) : (
-                <div className="profile-results-list">
-                  {completedQuests.slice(0, 8).map((quest) => (
-                    <div key={quest.id} className="profile-result-row">
+                <div className="profile-v3-list">
+                  {completedQuests.slice(0, MAX_LEDGER_ROWS).map((quest) => (
+                    <div className="profile-v3-row" key={quest.id}>
                       <div>
-                        <div className="profile-result-name">{quest.title}</div>
-                        <div className="profile-result-sub">{quest.code}</div>
+                        <p className="profile-result-name">{quest.title}</p>
+                        <p className="profile-result-sub">{quest.code}</p>
                       </div>
-                      <div className="profile-result-sub">{quest.completedAt ? new Date(quest.completedAt).toLocaleDateString() : "Validated"}</div>
+                      <span className="profile-v3-pill">+{quest.rewardPoints}</span>
                     </div>
                   ))}
                 </div>
               )}
-            </section>
-          </div>
+            </article>
+          </section>
+
+          <section className="profile-v3-board-grid">
+            <article className="profile-v3-panel">
+              <h3>Points earned</h3>
+              {pointsIn.length === 0 ? (
+                <p className="profile-empty-inline">No credits recorded yet.</p>
+              ) : (
+                <div className="profile-v3-list">
+                  {pointsIn.slice(0, MAX_LEDGER_ROWS).map((entry) => (
+                    <div className="profile-v3-row" key={entry.id}>
+                      <div>
+                        <p className="profile-result-name">{entry.reasonType}</p>
+                        <p className="profile-result-sub">{new Date(entry.createdAt).toLocaleString()}</p>
+                      </div>
+                      <span className="profile-v3-pill positive">+{entry.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+
+            <article className="profile-v3-panel">
+              <h3>Points spent</h3>
+              {pointsOut.length === 0 ? (
+                <p className="profile-empty-inline">No debits recorded yet.</p>
+              ) : (
+                <div className="profile-v3-list">
+                  {pointsOut.slice(0, MAX_LEDGER_ROWS).map((entry) => (
+                    <div className="profile-v3-row" key={entry.id}>
+                      <div>
+                        <p className="profile-result-name">{entry.reasonType}</p>
+                        <p className="profile-result-sub">{new Date(entry.createdAt).toLocaleString()}</p>
+                      </div>
+                      <span className="profile-v3-pill negative">-{entry.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          </section>
 
           {me.mode === "guest" ? (
             <div className="profile-guest-note">
-              Guest mode only stores temporary local progression. Continue with X to unlock persistent points ledger,
-              completed quests history, and account timeline synchronization.
+              Guest mode uses local temporary progression only. Sign in with X to persist points ledger and quest history.
             </div>
           ) : null}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <div className="empty-state-icon">◎</div>
-          <p className="empty-state-title">Sign in to view your account hub</p>
-          <p className="empty-state-desc">Continue with X for persistent profile, collection and quest history.</p>
         </div>
       )}
     </SiteShell>

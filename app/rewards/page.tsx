@@ -19,14 +19,6 @@ type QuestRow = {
   completedAt: string | null;
   validationMode: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   latestSubmissionStatus: "SUBMITTED" | "APPROVED" | "REJECTED" | null;
-  latestSubmission: {
-    id: string;
-    status: "SUBMITTED" | "APPROVED" | "REJECTED";
-    proofUrl: string | null;
-    note: string | null;
-    createdAt: string;
-    reviewedAt: string | null;
-  } | null;
   configSummary: {
     proofRequired?: boolean;
     targetUrl?: string | null;
@@ -61,7 +53,6 @@ export default function RewardsPage() {
 
   useEffect(() => {
     if (loading || !me || me.mode === "guest") return;
-
     setError("");
     void loadData();
   }, [loading, me]);
@@ -118,15 +109,14 @@ export default function RewardsPage() {
     const canSubmit = allowSubmit && isSocialQuest(quest);
 
     return (
-      <div key={quest.id} className="contest-card quest-card-premium">
-        <div className="contest-card-top">
-          <p className="contest-code">{quest.code}</p>
-          <span className="contest-status status-open">{quest.status}</span>
+      <article key={quest.id} className="quests-v3-card">
+        <div className="quests-v3-card-top">
+          <p>{quest.code}</p>
+          <span>{quest.status}</span>
         </div>
-        <h3 className="contest-title">{quest.title}</h3>
+        <h3>{quest.title}</h3>
         <p className="contest-inline-note">{quest.description ?? "Complete this objective to unlock points."}</p>
         <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
-
         {quest.targetValue ? <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p> : null}
 
         {isSocialQuest(quest) ? (
@@ -140,10 +130,10 @@ export default function RewardsPage() {
         ) : null}
 
         {canSubmit ? (
-          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.6rem" }}>
+          <div className="quests-v3-submit">
             <input
               className="input"
-              placeholder="proof URL (optional unless required)"
+              placeholder="proof URL (required for some quests)"
               value={proofUrlByQuestId[quest.id] ?? ""}
               onChange={(event) => setProofUrlByQuestId((prev) => ({ ...prev, [quest.id]: event.target.value }))}
             />
@@ -153,7 +143,7 @@ export default function RewardsPage() {
               value={noteByQuestId[quest.id] ?? ""}
               onChange={(event) => setNoteByQuestId((prev) => ({ ...prev, [quest.id]: event.target.value }))}
             />
-            <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+            <div className="quests-v3-submit-row">
               <Button onClick={() => void submitQuest(quest)} disabled={submittingQuestId === quest.id}>
                 {submittingQuestId === quest.id ? "Submitting…" : "Submit proof"}
               </Button>
@@ -161,7 +151,7 @@ export default function RewardsPage() {
             </div>
           </div>
         ) : null}
-      </div>
+      </article>
     );
   };
 
@@ -170,7 +160,7 @@ export default function RewardsPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Quests</h1>
-          <p className="page-subtitle">Complete missions, submit proof, and track validation status.</p>
+          <p className="page-subtitle">Quest board only. No points ledger here. Complete missions and track review status.</p>
         </div>
       </div>
 
@@ -180,38 +170,50 @@ export default function RewardsPage() {
       {error ? <p className="contest-error">{error}</p> : null}
 
       {me?.mode === "user" ? (
-        <div className="quest-board-grid">
-          <section className="contest-section quest-board-section">
-            <h2 className="contest-section-title">Available quests</h2>
-            {buckets.available.length === 0 ? <p className="profile-empty-inline">No available quests right now.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.available.map((quest) => renderQuestCard(quest, true))}</div>}
+        <div className="quests-v3-layout">
+          <section className="quests-v3-column available">
+            <header>
+              <h2>Available</h2>
+              <span>{buckets.available.length}</span>
+            </header>
+            {buckets.available.length === 0 ? <p className="profile-empty-inline">No available quests right now.</p> : buckets.available.map((quest) => renderQuestCard(quest, true))}
           </section>
 
-          <section className="contest-section quest-board-section">
-            <h2 className="contest-section-title">Under review</h2>
-            {buckets.underReview.length === 0 ? <p className="profile-empty-inline">No submissions under review.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.underReview.map((quest) => renderQuestCard(quest, false))}</div>}
+          <section className="quests-v3-column review">
+            <header>
+              <h2>Under review</h2>
+              <span>{buckets.underReview.length}</span>
+            </header>
+            {buckets.underReview.length === 0 ? <p className="profile-empty-inline">No submissions under review.</p> : buckets.underReview.map((quest) => renderQuestCard(quest, false))}
           </section>
 
-          <section className="contest-section quest-board-section">
-            <h2 className="contest-section-title">Needs resubmission</h2>
-            {buckets.needsResubmission.length === 0 ? <p className="profile-empty-inline">No rejected quests.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.needsResubmission.map((quest) => renderQuestCard(quest, true))}</div>}
+          <section className="quests-v3-column rejected">
+            <header>
+              <h2>Needs resubmission</h2>
+              <span>{buckets.needsResubmission.length}</span>
+            </header>
+            {buckets.needsResubmission.length === 0 ? <p className="profile-empty-inline">No rejected quests.</p> : buckets.needsResubmission.map((quest) => renderQuestCard(quest, true))}
           </section>
 
-          <section className="contest-section quest-board-section">
-            <h2 className="contest-section-title">Completed quests</h2>
-            {buckets.completed.length === 0 ? <p className="profile-empty-inline">No completed quests yet.</p> : (
-              <div style={{ display: "grid", gap: "0.6rem" }}>
-                {buckets.completed.map((quest) => (
-                  <div key={quest.id} className="contest-card quest-card-premium">
-                    <div className="contest-card-top">
-                      <p className="contest-code">{quest.code}</p>
-                      <span className="contest-status status-settled">COMPLETED</span>
-                    </div>
-                    <h3 className="contest-title">{quest.title}</h3>
-                    <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
-                    <p className="contest-inline-note">Completed at: {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : "Validated"}</p>
+          <section className="quests-v3-column completed">
+            <header>
+              <h2>Completed</h2>
+              <span>{buckets.completed.length}</span>
+            </header>
+            {buckets.completed.length === 0 ? (
+              <p className="profile-empty-inline">No completed quests yet.</p>
+            ) : (
+              buckets.completed.map((quest) => (
+                <article key={quest.id} className="quests-v3-card">
+                  <div className="quests-v3-card-top">
+                    <p>{quest.code}</p>
+                    <span>COMPLETED</span>
                   </div>
-                ))}
-              </div>
+                  <h3>{quest.title}</h3>
+                  <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
+                  <p className="contest-inline-note">Completed at: {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : "Validated"}</p>
+                </article>
+              ))
             )}
           </section>
         </div>
