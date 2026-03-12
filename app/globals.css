@@ -3167,3 +3167,96 @@ a { color: inherit; text-decoration: none; }
   .admin-table-head, .admin-table-row { grid-template-columns: 1fr; }
   .admin-split { grid-template-columns: 1fr; }
 }
+
+.contest-create-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.contest-wizard-layout {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 1rem;
+}
+
+.contest-wizard-main {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.contest-stepper-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.contest-step-chip {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.6rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.contest-step-chip strong { font-size: 0.8rem; display: block; }
+.contest-step-chip small { font-size: 0.72rem; color: var(--text-2); }
+.contest-step-chip.is-active {
+  border-color: rgba(214, 58, 50, 0.6);
+  background: rgba(214, 58, 50, 0.12);
+}
+
+.contest-step-number {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-hi);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.contest-reward-rule-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.7rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.contest-wizard-summary {
+  position: sticky;
+  top: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.7rem;
+  background: linear-gradient(165deg, rgba(27, 30, 36, 0.95), rgba(18, 20, 24, 0.95));
+}
+
+.contest-wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+@media (max-width: 1080px) {
+  .contest-create-hero { flex-direction: column; align-items: flex-start; }
+  .contest-wizard-layout { grid-template-columns: 1fr; }
+  .contest-wizard-summary { position: static; }
+}

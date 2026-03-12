@@ -45,3 +45,10 @@ Primary goals addressed in this pass:
 - Broader harmonization pass across moderation/quests/users/detail screens.
 - Dashboard vs Analytics consolidation.
 - Additional end-to-end UI workflow coverage.
+
+
+## Contest create UI implementation update (2026-03)
+- Contest catalog now includes a primary action hero that elevates `Create New Contest` above refresh/list actions.
+- Contest setup wizard now follows a two-column layout (main editor + sticky summary) and a clearer stepper.
+- Rewards step now uses a multi-rule reward distribution builder (add/edit/remove/reorder) with human-readable previews.
+- Review step now consolidates basics, timing, entry, eligibility, rewards and blocking issues before validate/publish.
