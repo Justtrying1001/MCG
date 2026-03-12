@@ -54,8 +54,8 @@ function Corner({
 }
 
 export default function MvpCardTile({ card, quantity = 1 }: Props) {
-  const rarity   = resolveRarity(card.rarity?.code ?? card.rarity ?? 'B')
-  const edition  = resolveEdition(card.edition?.code ?? card.edition ?? 'BASE')
+  const rarity   = resolveRarity(card.rarity ?? 'B')
+  const edition  = resolveEdition(card.edition ?? 'BASE')
 
   // Card number display
   const cardNumber =
@@ -175,7 +175,7 @@ export default function MvpCardTile({ card, quantity = 1 }: Props) {
 
       {/* ══ ZONE 3 — TEXTBOX ══ */}
       <div className="mvp-textbox">
-        <p>{card.cardText ?? card.flavorText ?? `${card.symbol} · ${card.faction ?? ''}`}</p>
+        <p>{card.cardText ?? `${card.symbol} · ${card.faction ?? ''}`}</p>
       </div>
 
       {/* ══ ZONE 4 — FOOTER ══ */}
@@ -183,7 +183,7 @@ export default function MvpCardTile({ card, quantity = 1 }: Props) {
         <span className="mvp-footer-code">{cardNumber ?? '—'}</span>
         <div className="mvp-footer-sep" />
         <span className="mvp-footer-set">
-          {card.setCode ?? 'GENESIS'} · {supplyLabel ?? `ED.${card.editionNumber ?? 1}`}
+          {card.setCode ?? 'GENESIS'} · {supplyLabel ?? (card.setEditionLabel ?? 'Edition 1')}
         </span>
       </div>
     </article>
