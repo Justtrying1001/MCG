@@ -102,7 +102,7 @@ export default function PacksPage() {
   const revealCards = useMemo(
     () => resultMvp.map((card, index) => ({
       key: `${card.templateId}_${index}`,
-      render: <MvpCardTile card={card} quantity={1} />,
+      render: <MvpCardTile card={card} quantity={1} size="reveal" />,
     })),
     [resultMvp]
   );

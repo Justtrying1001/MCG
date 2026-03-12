@@ -23,6 +23,8 @@ export type CardFrameTheme = {
   divider: string;
 };
 
+export const MVP_CARD_RATIO = 63 / 88;
+
 const rarityAccentMap: Record<string, RarityTheme> = {
   COMMON: {
     accent: "#9099A6",
