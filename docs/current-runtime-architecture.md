@@ -17,7 +17,8 @@ This document describes what is currently implemented in runtime.
 
 ### Controlled emission inventory
 - Prisma models: `CardTemplate`, `OwnedCardInstance`, `PackDefinition`, `PackOpeningEvent`
-- Auth pack opening (`/api/pack/open`) uses DB-native inventory and weighted draw by remaining supply.
+- Auth pack opening (`/api/pack/open`) uses DB-native inventory and weighted draw by remaining supply with slot profiles (3 standard + 1 premium-edition + 1 hit slot).
+- `/api/pack/config` exposes sale pack stock (`remaining/total`) and dynamic rarity odds snapshots per slot.
 
 ### API payloads
 - `/api/pack/open` returns `pulledCardsMvp`.

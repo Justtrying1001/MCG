@@ -49,12 +49,18 @@ Current MVP target implemented:
 - 5 rarity tiers
 - 5 edition tiers
 - 1,250 templates (`50 × 5 × 5`)
-- Draw is weighted by remaining template supply (`plannedSupply - issuedSupply`)
+- Planned supply baseline (GENESIS final): 80,000 cards total (`1600 × 50` templates-per-token aggregate)
+- Draw is weighted by remaining template supply (`plannedSupply - issuedSupply`) with slot profiles:
+  - slots 1-3: `STANDARD`
+  - slot 4: `EDITION_BOOST`
+  - slot 5: `RARITY_HIT`
 - Depleted templates cannot be drawn
 
 Auth opening runtime:
 - `app/api/pack/open/route.ts`
 - `lib/domain/acquisition/open-pack.ts`
+- Pack config/odds snapshot runtime:
+  - `GET /api/pack/config`
 
 ---
 
