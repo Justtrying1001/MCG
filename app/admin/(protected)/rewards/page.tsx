@@ -37,6 +37,13 @@ type SearchUser = {
   createdAt: string;
 };
 
+type CompensationValidation = {
+  blocking: boolean;
+  issues: Array<{ code: string; severity: "ERROR" | "WARN"; field: string | null; message: string; operatorHint: string }>;
+  validationToken: string;
+  impactSummary: { pointsDelta: number };
+};
+
 export default function AdminRewardsPage() {
   const [userId, setUserId] = useState("");
   const [amount, setAmount] = useState("500");
@@ -117,38 +124,74 @@ export default function AdminRewardsPage() {
     setMessage("");
 
     const parsedAmount = Number(amount);
-    if (!userId.trim() || !Number.isInteger(parsedAmount) || parsedAmount <= 0 || !reasonLabel.trim()) {
-      setMessage("Provide userId, positive integer amount, and reason label.");
+    if (!userId.trim() || !Number.isInteger(parsedAmount) || parsedAmount <= 0 || !reasonLabel.trim() || !reasonCode.trim()) {
+      setMessage("Provide userId, positive integer amount, reason label, and reason code.");
       return;
     }
 
-    const idempotencyKey = `manual-ui:${userId.trim()}:${Date.now()}`;
-
     setSubmitting(true);
-    const response = await fetch("/api/internal/rewards/manual-grant", {
+
+    const validateResponse = await fetch("/api/internal/compensations/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId: userId.trim(),
         amount: parsedAmount,
         reasonLabel: reasonLabel.trim(),
-        reasonCode: reasonCode.trim() || null,
-        idempotencyKey,
+        reasonCode: reasonCode.trim(),
       }),
     });
 
-    const payload = (await response.json().catch(() => null)) as { error?: string; applied?: boolean; user?: { points: number } } | null;
+    const validation = (await validateResponse.json().catch(() => null)) as CompensationValidation | { error?: string } | null;
 
-    if (!response.ok) {
-      setMessage(payload?.error ?? "Manual grant failed");
+    if (!validateResponse.ok || !validation || !("validationToken" in validation)) {
+      setMessage((validation as { error?: string } | null)?.error ?? "Compensation validation failed");
       setSubmitting(false);
       return;
     }
 
-    setMessage(payload?.applied === false
-      ? "Grant already applied (idempotency replay)."
-      : `Manual grant applied. User new balance: ${payload?.user?.points ?? "?"}`);
+    if (validation.blocking) {
+      setMessage(`Validation blocked: ${(validation.issues ?? []).map((issue) => issue.message).join("; ")}`);
+      setSubmitting(false);
+      return;
+    }
 
+    const previewResponse = await fetch(`/api/internal/compensations/preview/${validation.validationToken}`, { cache: "no-store" });
+    const preview = (await previewResponse.json().catch(() => null)) as { preview?: { user?: { displayName?: string; pointsBefore?: number; pointsAfter?: number }; rewardComponents?: Array<{ amount?: number }> } } | { error?: string } | null;
+    if (!previewResponse.ok || !preview || !("preview" in preview)) {
+      setMessage((preview as { error?: string } | null)?.error ?? "Compensation preview failed");
+      setSubmitting(false);
+      return;
+    }
+
+    const confirmation = window.confirm(
+      `Confirm compensation for ${preview.preview?.user?.displayName ?? userId}: +${preview.preview?.rewardComponents?.[0]?.amount ?? parsedAmount} points (before ${preview.preview?.user?.pointsBefore ?? "?"}, after ${preview.preview?.user?.pointsAfter ?? "?"})`
+    );
+    if (!confirmation) {
+      setSubmitting(false);
+      return;
+    }
+
+    const idempotencyKey = `comp-ui:${userId.trim()}:${Date.now()}`;
+    const executeResponse = await fetch("/api/internal/compensations/execute", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({
+        validationToken: validation.validationToken,
+      }),
+    });
+
+    const executePayload = (await executeResponse.json().catch(() => null)) as { receipt?: { summary?: { pointsDelta?: number } }; error?: string } | null;
+    if (!executeResponse.ok) {
+      setMessage(executePayload?.error ?? "Compensation execution failed");
+      setSubmitting(false);
+      return;
+    }
+
+    setMessage(`Compensation applied (+${executePayload?.receipt?.summary?.pointsDelta ?? parsedAmount} points).`);
     setReasonLabel("");
     setReasonCode("");
     setSubmitting(false);
@@ -257,7 +300,7 @@ export default function AdminRewardsPage() {
           <input className="input" placeholder="userId" value={userId} onChange={(event) => setUserId(event.target.value)} />
           <input className="input" type="number" min={1} placeholder="amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
           <input className="input" placeholder="reason label" value={reasonLabel} onChange={(event) => setReasonLabel(event.target.value)} />
-          <input className="input" placeholder="reason code (optional)" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
+          <input className="input" placeholder="reason code (required)" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
         </div>
         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
           <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Apply points grant"}</Button>

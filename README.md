@@ -27,7 +27,9 @@ PvE has been retired from active gameplay.
   - Review queue: `GET /api/internal/quests/submissions`, `POST /api/internal/quests/submissions/:submissionId/review`
 - New UI surfaces:
   - User page: `/rewards` (ledger + quests + social submission form)
-  - Admin panels: `/admin/quests`, `/admin/quests/submissions`
+  - Admin panels: `/admin/campaigns`, `/admin/quests`, `/admin/quests/builder`, `/admin/moderation`, `/admin/moderation/:submissionId`, `/admin/moderation/history` (legacy fallback `/admin/quests/submissions`)
+  - Admin shell/navigation Phase 2: `/admin` dashboard + `/admin/contests`, `/admin/campaigns`, `/admin/moderation`, `/admin/rewards`, `/admin/users`, `/admin/analytics`, `/admin/activity-log`
+  - Phase 3 contest surfaces: `/admin/contests/:contestId` (overview), `/lifecycle`, `/scoring`, `/settlement`, `/audit` with legacy fallback at `/admin/contests/legacy/:contestId`
 - Live quest runtime types:
   - `CONTEST_COUNT_MILESTONE` (AUTO progression/completion/credit, points-only reward, idempotent ledger credit)
   - `SOCIAL_FOLLOW_X` and `SOCIAL_ENGAGEMENT_X` in submit/review mode (no X auto-verification)
@@ -119,9 +121,9 @@ Core active models include:
   - `GET /api/internal/contests`
   - `GET /api/internal/contests/:contestId`
   - `POST /api/internal/contests`
-  - `POST /api/internal/contests/:contestId/status`
-  - `POST /api/internal/contests/:contestId/score`
-  - `POST /api/internal/contests/:contestId/settle`
+  - `POST /api/internal/contests/:contestId/status` (now requires `validationToken` from transition validate + `Idempotency-Key`)
+  - `POST /api/internal/contests/:contestId/score` (now requires `importId` from scoring validate + `Idempotency-Key`)
+  - `POST /api/internal/contests/:contestId/settle` (now requires `planId` from settlement validate + `Idempotency-Key`)
 - Rewards / quests
   - `POST /api/internal/rewards/manual-grant`
   - `POST /api/internal/rewards/pack-grant`
@@ -133,8 +135,29 @@ Core active models include:
   - `POST /api/internal/quests`
   - `GET /api/internal/quests/:questId`
   - `PATCH /api/internal/quests/:questId`
+  - `GET /api/internal/quests/library`
+  - `POST /api/internal/quests/builder/validate`
+  - `GET /api/internal/campaigns/catalog`
   - `GET /api/internal/quests/submissions`
   - `POST /api/internal/quests/submissions/:submissionId/review`
+  - `GET /api/internal/moderation/queue`
+  - `GET /api/internal/moderation/decisions`
+
+- Admin phase 0/1 safety rails APIs (new):
+  - `GET /api/internal/admin-actions`
+  - `GET /api/internal/admin-actions/:actionId`
+  - `POST /api/internal/contest-runs/:contestId/transitions/validate`
+  - `POST /api/internal/contest-runs/:contestId/scoring/validate`
+  - `GET /api/internal/contest-runs/:contestId/scoring/preview/:importId`
+  - `POST /api/internal/contest-runs/:contestId/settlement/plan/validate`
+  - `GET /api/internal/contest-runs/:contestId/settlement/preview/:planId`
+  - `POST /api/internal/compensations/validate`
+  - `GET /api/internal/compensations/preview/:token`
+  - `POST /api/internal/compensations/execute` (`validationToken` + `Idempotency-Key` required)
+  - `GET /api/internal/moderation/submissions/:submissionId/context`
+  - `POST /api/internal/moderation/submissions/:submissionId/decide`
+  - `GET /api/internal/users/:userId/admin-context`
+  - `GET /api/internal/admin/dashboard-summary`
 - Retired PvE compatibility endpoints (intentional `410 Gone`)
   - `POST /api/pve/battle`
   - `POST /api/pve/run`
@@ -161,6 +184,9 @@ Required:
 Optional (recommended for machine-to-machine/internal scripts):
 
 - `INTERNAL_ADMIN_KEY`
+- `ADMIN_DEFAULT_ROLE` (optional, default `ADMIN_OPS`)
+- `INTERNAL_ADMIN_KEY_ID` (optional stable service actor id, default `internal-admin-service`)
+- `INTERNAL_ADMIN_KEY_ROLE` (optional, default `ADMIN_SUPERVISOR`)
 
 Generate `ADMIN_PASSWORD_HASH` locally (replace `<PASSWORD>`):
 

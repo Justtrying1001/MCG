@@ -38,7 +38,7 @@ describe("/api/internal/rewards/manual-grant", () => {
   });
 
   it("creates manual grant and includes admin mode", async () => {
-    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session", actor: { id: "admin:a", label: "alice", type: "admin_user", username: "alice", authMode: "session", role: "ADMIN_FINANCE_OPS" } });
     grantManualPointsMvpMock.mockResolvedValue({
       applied: true,
       user: { id: "u1", points: 900 },
@@ -53,12 +53,12 @@ describe("/api/internal/rewards/manual-grant", () => {
     const body = await response.json();
 
     expect(response.status).toBe(201);
-    expect(grantManualPointsMvpMock).toHaveBeenCalledWith(expect.objectContaining({ grantedByAdmin: "session" }));
+    expect(grantManualPointsMvpMock).toHaveBeenCalledWith(expect.objectContaining({ grantedByAdmin: "alice" }));
     expect(body.entry.createdAt).toBe("2026-03-01T10:00:00.000Z");
   });
 
   it("returns recent grants", async () => {
-    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "key" });
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "key", actor: { id: "service-key:svc", label: "service-key:svc", type: "service_key", username: null, authMode: "key", role: "ADMIN_FINANCE_OPS" } });
     listRecentManualGrantsMvpMock.mockResolvedValue([
       {
         id: "led1",
