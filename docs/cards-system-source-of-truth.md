@@ -116,7 +116,8 @@ Legacy card frame rendering is removed from active cards flow.
    - `npm run typecheck`
    - `npm test`
 4. Cloud bootstrap/remediation:
-   - `npm run bootstrap:mvp:cloud`
+   - strict manual check: `npm run bootstrap:mvp:cloud`
+   - deploy-safe check (allows exhausted inventory): `npm run bootstrap:mvp:cloud:deploy`
 
 
 ---
@@ -148,5 +149,8 @@ Still present but non-runtime for cards flow:
   - `GRANT_ONLY`: consume reward stock + log `RewardGrant(PACK)`
   - `GRANT_AND_OPEN`: consume reward stock + open immediately + create instances + log `RewardGrant(PACK)`
 
-- Cloud bootstrap command: `npm run bootstrap:mvp:cloud` (seed + strict check).
+- Cloud bootstrap commands:
+  - `npm run bootstrap:mvp:cloud` (seed + strict check requiring remaining supply)
+  - `npm run bootstrap:mvp:cloud:deploy` (seed + deploy-safe check allowing exhausted supply)
+- Vercel build path runs deploy-safe bootstrap automatically through `npm run vercel-build`.
 - Seed upserts preserve live runtime counters on existing rows (`issuedSupply`, `openedPackCount`) to avoid resetting production inventory history.
