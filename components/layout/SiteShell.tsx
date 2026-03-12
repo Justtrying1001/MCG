@@ -13,7 +13,7 @@ const navItems = [
   { href: "/collection",label: "Collection", icon: "▦" },
   { href: "/contests",  label: "Contests",   icon: "🏆" },
   { href: "/rewards",   label: "Rewards",    icon: "✦" },
-  { href: "/compte",    label: "Profile",    icon: "◎" },
+  { href: "/profile",   label: "Profile",    icon: "◎" },
 ];
 
 export function SiteShell({ children }: { children: ReactNode }) {

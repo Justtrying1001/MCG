@@ -6,15 +6,6 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
 
-type LedgerRow = {
-  id: string;
-  entryType: "CREDIT" | "DEBIT";
-  amount: number;
-  reasonType: string;
-  reasonRef: string | null;
-  createdAt: string;
-};
-
 type QuestRow = {
   id: string;
   code: string;
@@ -25,7 +16,6 @@ type QuestRow = {
   status: "AVAILABLE" | "IN_PROGRESS" | "CLAIMABLE" | "COMPLETED" | "REJECTED";
   progressValue: number;
   targetValue: number | null;
-  isActive: boolean;
   completedAt: string | null;
   validationMode: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   latestSubmissionStatus: "SUBMITTED" | "APPROVED" | "REJECTED" | null;
@@ -38,7 +28,6 @@ type QuestRow = {
     reviewedAt: string | null;
   } | null;
   configSummary: {
-    threshold?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;
     instructions?: string | null;
@@ -51,7 +40,6 @@ function isSocialQuest(quest: QuestRow) {
 
 export default function RewardsPage() {
   const { me, loading } = useSession();
-  const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [error, setError] = useState("");
   const [submitMessageByQuestId, setSubmitMessageByQuestId] = useState<Record<string, string>>({});
@@ -60,20 +48,14 @@ export default function RewardsPage() {
   const [noteByQuestId, setNoteByQuestId] = useState<Record<string, string>>({});
 
   const loadData = async () => {
-    const [ledgerRes, questsRes] = await Promise.all([
-      fetch("/api/rewards/ledger", { cache: "no-store" }),
-      fetch("/api/quests", { cache: "no-store" }),
-    ]);
+    const questsRes = await fetch("/api/quests", { cache: "no-store" });
 
-    if (!ledgerRes.ok || !questsRes.ok) {
-      setError("Cannot load rewards data");
+    if (!questsRes.ok) {
+      setError("Cannot load quests right now.");
       return;
     }
 
-    const ledgerPayload = (await ledgerRes.json()) as { entries: LedgerRow[] };
     const questsPayload = (await questsRes.json()) as { quests: QuestRow[] };
-
-    setLedger(ledgerPayload.entries ?? []);
     setQuests(questsPayload.quests ?? []);
   };
 
@@ -136,29 +118,24 @@ export default function RewardsPage() {
     const canSubmit = allowSubmit && isSocialQuest(quest);
 
     return (
-      <div key={quest.id} className="contest-card">
+      <div key={quest.id} className="contest-card quest-card-premium">
         <div className="contest-card-top">
           <p className="contest-code">{quest.code}</p>
           <span className="contest-status status-open">{quest.status}</span>
         </div>
         <h3 className="contest-title">{quest.title}</h3>
-        <p className="contest-inline-note">{quest.description ?? "—"}</p>
+        <p className="contest-inline-note">{quest.description ?? "Complete this objective to unlock points."}</p>
         <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
 
-        {quest.targetValue ? (
-          <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p>
-        ) : null}
+        {quest.targetValue ? <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p> : null}
 
         {isSocialQuest(quest) ? (
           <>
             <p className="contest-inline-note">Validation: {quest.validationMode}</p>
-            <p className="contest-inline-note">Proof required: {quest.configSummary.proofRequired ? "Yes" : "No"}</p>
             {quest.configSummary.targetUrl ? (
               <p className="contest-inline-note">Target URL: <a href={quest.configSummary.targetUrl} target="_blank" rel="noreferrer">{quest.configSummary.targetUrl}</a></p>
             ) : null}
-            {quest.configSummary.instructions ? (
-              <p className="contest-inline-note">Instructions: {quest.configSummary.instructions}</p>
-            ) : null}
+            {quest.configSummary.instructions ? <p className="contest-inline-note">Instructions: {quest.configSummary.instructions}</p> : null}
           </>
         ) : null}
 
@@ -192,65 +169,46 @@ export default function RewardsPage() {
     <SiteShell>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Rewards & Quests</h1>
-          <p className="page-subtitle">Track your points ledger and quest progression.</p>
+          <h1 className="page-title">Quests</h1>
+          <p className="page-subtitle">Complete missions, submit proof, and track validation status.</p>
         </div>
       </div>
 
       {loading ? <p className="contest-inline-note">Loading session…</p> : null}
-      {!loading && !me ? <div className="empty-state"><p className="empty-state-title">Sign in with X to access rewards.</p></div> : null}
-      {me?.mode === "guest" ? <div className="empty-state"><p className="empty-state-title">Rewards and quests are available for authenticated accounts only.</p></div> : null}
+      {!loading && !me ? <div className="empty-state"><p className="empty-state-title">Sign in with X to access quests.</p></div> : null}
+      {me?.mode === "guest" ? <div className="empty-state"><p className="empty-state-title">Quests are available for authenticated accounts only.</p></div> : null}
       {error ? <p className="contest-error">{error}</p> : null}
 
       {me?.mode === "user" ? (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          <section className="contest-section">
+        <div className="quest-board-grid">
+          <section className="contest-section quest-board-section">
             <h2 className="contest-section-title">Available quests</h2>
-            {buckets.available.length === 0 ? <p className="contest-inline-note">No available quests right now.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.available.map((quest) => renderQuestCard(quest, true))}</div>}
+            {buckets.available.length === 0 ? <p className="profile-empty-inline">No available quests right now.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.available.map((quest) => renderQuestCard(quest, true))}</div>}
           </section>
 
-          <section className="contest-section">
+          <section className="contest-section quest-board-section">
             <h2 className="contest-section-title">Under review</h2>
-            {buckets.underReview.length === 0 ? <p className="contest-inline-note">No submissions under review.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.underReview.map((quest) => renderQuestCard(quest, false))}</div>}
+            {buckets.underReview.length === 0 ? <p className="profile-empty-inline">No submissions under review.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.underReview.map((quest) => renderQuestCard(quest, false))}</div>}
           </section>
 
-          <section className="contest-section">
+          <section className="contest-section quest-board-section">
             <h2 className="contest-section-title">Needs resubmission</h2>
-            {buckets.needsResubmission.length === 0 ? <p className="contest-inline-note">No rejected quests.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.needsResubmission.map((quest) => renderQuestCard(quest, true))}</div>}
+            {buckets.needsResubmission.length === 0 ? <p className="profile-empty-inline">No rejected quests.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.needsResubmission.map((quest) => renderQuestCard(quest, true))}</div>}
           </section>
 
-          <section className="contest-section">
+          <section className="contest-section quest-board-section">
             <h2 className="contest-section-title">Completed quests</h2>
-            {buckets.completed.length === 0 ? <p className="contest-inline-note">No completed quests yet.</p> : (
+            {buckets.completed.length === 0 ? <p className="profile-empty-inline">No completed quests yet.</p> : (
               <div style={{ display: "grid", gap: "0.6rem" }}>
                 {buckets.completed.map((quest) => (
-                  <div key={quest.id} className="contest-card">
+                  <div key={quest.id} className="contest-card quest-card-premium">
                     <div className="contest-card-top">
                       <p className="contest-code">{quest.code}</p>
                       <span className="contest-status status-settled">COMPLETED</span>
                     </div>
                     <h3 className="contest-title">{quest.title}</h3>
                     <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
-                    <p className="contest-inline-note">Completed at: {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : "-"}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="contest-section">
-            <h2 className="contest-section-title">Points history</h2>
-            {ledger.length === 0 ? (
-              <p className="contest-inline-note">No point movements yet.</p>
-            ) : (
-              <div style={{ display: "grid", gap: "0.5rem" }}>
-                {ledger.map((entry) => (
-                  <div key={entry.id} className="contest-ranking-row" style={{ gridTemplateColumns: "1fr auto auto" }}>
-                    <span>{entry.reasonType}</span>
-                    <span style={{ color: entry.entryType === "CREDIT" ? "var(--emerald)" : "var(--red)" }}>
-                      {entry.entryType === "CREDIT" ? "+" : "-"}{entry.amount}
-                    </span>
-                    <span>{new Date(entry.createdAt).toLocaleString()}</span>
+                    <p className="contest-inline-note">Completed at: {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : "Validated"}</p>
                   </div>
                 ))}
               </div>
