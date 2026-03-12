@@ -245,7 +245,7 @@ export default function AdminRewardsPage() {
       <div className="page-header" style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center" }}>
         <div>
           <h1 className="page-title">Manual Reward Grants</h1>
-          <p className="page-subtitle">Admin-only points grants with validation, preview, and ledger traceability.</p>
+          <p className="page-subtitle">Admin-only points and reward-pack grants.</p>
         </div>
         <AdminLogoutButton />
       </div>
@@ -280,7 +280,22 @@ export default function AdminRewardsPage() {
       </section>
 
       <section className="contest-section" style={{ display: "grid", gap: "0.7rem", marginBottom: "1rem" }}>
-        <h2 className="contest-section-title">Create manual compensation</h2>
+        <h2 className="contest-section-title">Grant reward pack (GENESIS Edition 1)</h2>
+        <div style={{ display: "grid", gap: "0.6rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+          <input className="input" placeholder="userId" value={userId} onChange={(event) => setUserId(event.target.value)} />
+          <select className="input" value={rewardMode} onChange={(event) => setRewardMode(event.target.value as "GRANT_ONLY" | "GRANT_AND_OPEN") }>
+            <option value="GRANT_AND_OPEN">GRANT_AND_OPEN (recommended)</option>
+            <option value="GRANT_ONLY">GRANT_ONLY</option>
+          </select>
+        </div>
+        <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+          <Button onClick={() => void submitRewardPack()} disabled={rewardPackSubmitting}>{rewardPackSubmitting ? "Applying…" : "Apply reward pack"}</Button>
+          {rewardPackMessage ? <span className="contest-inline-note">{rewardPackMessage}</span> : null}
+        </div>
+      </section>
+
+      <section className="contest-section" style={{ display: "grid", gap: "0.7rem", marginBottom: "1rem" }}>
+        <h2 className="contest-section-title">Create manual points grant</h2>
         <div style={{ display: "grid", gap: "0.6rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
           <input className="input" placeholder="userId" value={userId} onChange={(event) => setUserId(event.target.value)} />
           <input className="input" type="number" min={1} placeholder="amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
@@ -288,7 +303,7 @@ export default function AdminRewardsPage() {
           <input className="input" placeholder="reason code (required)" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
         </div>
         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
-          <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Validate + Preview + Apply"}</Button>
+          <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Apply points grant"}</Button>
           {message ? <span className="contest-inline-note">{message}</span> : null}
         </div>
       </section>

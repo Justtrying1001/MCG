@@ -54,6 +54,8 @@ This document describes what is currently implemented in runtime.
   - `npm run seed:mvp:controlled-emission`
   - `npm run check:mvp:bootstrap`
 - If missing, `/api/pack/open` will return an explicit `MVP sale pack is not available` bootstrap-drift error.
+- Bootstrap seed is idempotent for cloud drift repair and preserves live counters (`CardTemplate.issuedSupply`, `PackDefinition.openedPackCount`) when rows already exist.
+
 
 
 ## Reward pack admin flow

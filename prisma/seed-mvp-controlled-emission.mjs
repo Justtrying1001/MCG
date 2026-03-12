@@ -158,7 +158,6 @@ async function run() {
               imageUrl: token.imageUrl,
               isActive: true,
               plannedSupply,
-              issuedSupply: 0,
               metadata: {
                 source: "phase_c_mvp_controlled_emission_seed",
                 tokenIdentity: {
@@ -185,7 +184,6 @@ async function run() {
               imageUrl: token.imageUrl,
               isActive: true,
               plannedSupply,
-              issuedSupply: 0,
               metadata: {
                 source: "phase_c_mvp_controlled_emission_seed",
                 tokenIdentity: {
@@ -216,7 +214,6 @@ async function run() {
           cardSetId: cardSet.id,
           source: pack.source,
           plannedPackCount: pack.plannedPackCount,
-          openedPackCount: 0,
           cardsPerPack: CARDS_PER_PACK,
           isActive: true,
         },
@@ -226,7 +223,6 @@ async function run() {
           cardSetId: cardSet.id,
           source: pack.source,
           plannedPackCount: pack.plannedPackCount,
-          openedPackCount: 0,
           cardsPerPack: CARDS_PER_PACK,
           isActive: true,
         },

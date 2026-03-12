@@ -228,6 +228,8 @@ Important: schema push/build does **not** seed controlled-emission inventory. On
 ```bash
 npm run seed:mvp:controlled-emission
 npm run check:mvp:bootstrap
+# shortcut:
+npm run bootstrap:mvp:cloud
 ```
 
 `check:mvp:bootstrap` verifies that `MVP_SET_V1`, `mvp_sale_pack`, `mvp_reward_pack`, and active template supply are present.
@@ -247,3 +249,6 @@ Admin can now distribute `mvp_reward_pack` via `/admin/rewards` in two delivery 
 - `GRANT_AND_OPEN`: consume reward-pack stock, create `PackOpeningEvent`, allocate 5 cards from DB supply, create `OwnedCardInstance` rows, and log `RewardGrant(PACK)`.
 
 These operations are backed by `/api/internal/rewards/pack-grant`.
+
+
+Important ops note: rerunning `seed:mvp:controlled-emission` is idempotent and now preserves existing runtime counters (`issuedSupply`, `openedPackCount`) on existing rows; it is safe for cloud drift repair and does not reset live inventory history.
