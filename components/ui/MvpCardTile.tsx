@@ -39,11 +39,9 @@ const getFallbackIndex = (card: MvpCardView) => {
   return (raw % Math.max(card.plannedSupply || 999, 1)) + 1;
 };
 
-const getCardText = (card: MvpCardView, quantity: number) => {
+const getCardText = (card: MvpCardView) => {
   if (card.cardText && card.cardText.trim().length > 0) return card.cardText;
-  const faction = card.faction ?? "Unaligned";
-  const chain = card.primaryChain ?? "Multichain";
-  return `${card.symbol} of the ${faction} line, anchored on ${chain}. Collection copy ${quantity}.`;
+  return "No flavor text available in token-master.";
 };
 
 export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
@@ -54,7 +52,6 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
   const chainColor = getChainAccent(card.primaryChain);
   const ornament = getRarityOrnament(card.rarity);
   const isFullArt = card.edition.toUpperCase() === "FULL_ART";
-  const ownedCount = quantity ?? card.instanceCount;
   const canonicalCardNumber = getPrintedCardNumber(card);
   const fallbackIndex = getFallbackIndex(card);
 
@@ -86,6 +83,7 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
     <article
       className={`${styles.card} ${variant === "reveal" ? styles.variantReveal : styles.variantCollection}${isFullArt ? ` ${styles.fullArt}` : ""}`}
       style={cardStyle}
+      data-card-variant={variant}
     >
       <div className={styles.noise} />
       <div className={styles.gloss} />
@@ -112,7 +110,7 @@ export function MvpCardTile({ card, quantity, variant = "collection" }: Props) {
       </div>
 
       <section className={`${styles.zone} ${styles.textbox}`}>
-        <p className={styles.textboxText}>{getCardText(card, ownedCount)}</p>
+        <p className={styles.textboxText}>{getCardText(card)}</p>
       </section>
 
       <footer className={`${styles.zone} ${styles.footer}`}>
