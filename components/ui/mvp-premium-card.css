@@ -1,7 +1,7 @@
 .mvp-premium-card {
   position: relative;
   width: 100%;
-  aspect-ratio: 63 / 88;
+  aspect-ratio: 3 / 4;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
@@ -20,8 +20,8 @@
   --txt-flavor: #4a5568;
 
   background: var(--bg-card);
-  outline: 1px solid var(--border-out);
-  box-shadow: inset 0 0 0 1px var(--border-in), 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 40px var(--glow-col);
+  outline: 1px solid color-mix(in oklab, var(--border-out) 82%, #fff 18%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 52px var(--glow-col);
   display: grid;
   grid-template-rows: 50px 1fr 38px 34px;
   transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.32s ease;
@@ -29,12 +29,12 @@
 
 .mvp-premium-card.variant-collection:hover {
   transform: translateY(-8px) scale(1.025);
-  box-shadow: inset 0 0 0 1px var(--border-in), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 64px var(--glow-col), 0 0 110px var(--glow-col);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 82px var(--glow-col), 0 0 138px var(--glow-col);
 }
 
 .mvp-premium-card.variant-reveal:hover {
   transform: translateY(-8px) scale(1.025);
-  box-shadow: inset 0 0 0 1px var(--border-in), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 64px var(--glow-col), 0 0 110px var(--glow-col);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 82px var(--glow-col), 0 0 138px var(--glow-col);
 }
 
 
@@ -44,6 +44,16 @@
 
 .mvp-premium-card.is-static:hover {
   transform: none;
+}
+
+
+.mvp-premium-card.variant-zoom {
+  cursor: default;
+}
+
+.mvp-premium-card.variant-zoom:hover {
+  transform: none;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 52px var(--glow-col);
 }
 
 .mvp-premium-card.variant-compact {
@@ -80,11 +90,13 @@
 .mvp-card-header {
   position: relative;
   z-index: 10;
-  padding: 9px 11px 0;
+  padding: 9px 11px 7px;
   background: var(--bg-header);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  min-height: 64px;
 }
 
 .mvp-card-header::after {
@@ -95,11 +107,27 @@
   right: 10px;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--wire-acc) 25%, var(--accent) 50%, var(--wire-acc) 75%, transparent);
-  opacity: 0.45;
+  opacity: 0.58;
 }
 
-.mvp-card-header-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.mvp-card-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; padding-top: 1px; }
+.mvp-card-header-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 48px;
+}
+.mvp-card-header-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 48px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
 
 .mvp-card-name {
   font-family: 'Rajdhani', 'Inter', sans-serif;
@@ -128,14 +156,14 @@
   font-family: 'DM Mono', 'JetBrains Mono', monospace;
   letter-spacing: 0.1em;
   border-radius: 2px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid color-mix(in oklab, var(--accent) 86%, #fff 14%);
+  color: color-mix(in oklab, var(--accent) 78%, #fff 22%);
+  background: rgba(0, 0, 0, 0.42);
   line-height: 1;
   white-space: nowrap;
 }
 
-.mvp-badge-rarity { font-size: 7px; font-weight: 400; padding: 2px 5px; }
+.mvp-badge-rarity { font-size: 6.5px; font-weight: 500; padding: 2px 5px; }
 .mvp-badge-edition { font-size: 6px; font-weight: 400; padding: 1px 4px; opacity: 0.7; }
 
 
@@ -209,7 +237,7 @@
   z-index: 10;
   padding: 0 11px;
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto;
   align-items: center;
   gap: 6px;
   background: var(--bg-footer);
@@ -223,26 +251,37 @@
   right: 10px;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--wire-acc) 30%, var(--wire-acc) 70%, transparent);
-  opacity: 0.6;
+  opacity: 0.72;
 }
 
 .mvp-footer-code,
-.mvp-footer-set {
+.mvp-footer-supply {
   font-family: 'DM Mono', 'JetBrains Mono', monospace;
   font-size: 7px;
-  font-weight: 300;
+  font-weight: 500;
   color: var(--txt-sub);
   letter-spacing: 0.06em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mvp-footer-supply { text-align: right; justify-self: end; }
+.mvp-footer-center {
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: color-mix(in oklab, var(--txt-name) 78%, var(--txt-sub));
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.mvp-footer-sep {
-  width: 1px;
-  height: 10px;
-  background: var(--wire-acc);
-  opacity: 0.4;
+.mvp-footer-supply {
+  text-align: right;
+  justify-self: end;
 }
 
 .mvp-qty-chip {
@@ -409,5 +448,5 @@
   .mvp-card-name { font-size: 13px; }
   .mvp-card-ticker { font-size: 7px; }
   .mvp-footer-code,
-  .mvp-footer-set { font-size: 6.5px; }
+  .mvp-footer-center { font-size: 7px; }
 }

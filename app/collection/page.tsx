@@ -2,13 +2,16 @@
 
 import { SiteShell } from "@/components/layout/SiteShell";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { useSession } from "@/components/useSession";
 import { useMemo, useState } from "react";
+import type { MvpCardView } from "@/types/cards";
 
 export default function CollectionPage() {
   const { me } = useSession();
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
+  const [zoomedCard, setZoomedCard] = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
 
   const isAuthUser = me?.mode === "user";
   const mvpCollection = me?.mvpCollection;
@@ -129,7 +132,9 @@ export default function CollectionPage() {
         ) : mvpCards.length > 0 ? (
           <div className="card-grid">
             {mvpCards.map((item) => (
-              <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
+              <button key={item.templateId} type="button" className="card-tile-trigger" onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}>
+                <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
+              </button>
             ))}
           </div>
         ) : (
@@ -148,7 +153,9 @@ export default function CollectionPage() {
       ) : guestCards.length > 0 ? (
         <div className="card-grid">
           {guestCards.map((item) => (
-            <MvpCardTile key={item.templateId} card={item.card} quantity={item.instanceCount} variant="collection" />
+            <button key={item.templateId} type="button" className="card-tile-trigger" onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}>
+              <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
+            </button>
           ))}
         </div>
       ) : (
@@ -164,6 +171,7 @@ export default function CollectionPage() {
           </p>
         </div>
       )}
+      <CardZoomModal card={zoomedCard.card} quantity={zoomedCard.quantity} open={Boolean(zoomedCard.card)} onClose={() => setZoomedCard({ card: null })} />
     </SiteShell>
   );
 }
