@@ -22,6 +22,13 @@ const rarityChips = [
   { key: "LEGENDARY", label: "Legendary",  cls: "rc-legendary" },
 ];
 
+
+function formatEditionLabel(editionCode: string) {
+  const normalized = (editionCode || "").trim();
+  if (!normalized) return "Unknown";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+}
+
 export default function CollectionPage() {
   const { me } = useSession();
   const [search,      setSearch]      = useState("");
@@ -47,7 +54,7 @@ export default function CollectionPage() {
   );
 
   const editions = useMemo(
-    () => [...new Set(sourceCollection.map((x) => x.card.setEditionLabel || x.card.edition).filter(Boolean) as string[])].sort(),
+    () => [...new Set(sourceCollection.map((x) => x.card.edition).filter(Boolean) as string[])].sort(),
     [sourceCollection]
   );
 
@@ -55,7 +62,7 @@ export default function CollectionPage() {
     () => editions.map((editionLabel) => ({
       key: editionLabel,
       label: editionLabel,
-      count: sourceCollection.filter((item) => (item.card.setEditionLabel || item.card.edition || "") === editionLabel).length,
+      count: sourceCollection.filter((item) => (item.card.edition || "") === editionLabel).length,
     })),
     [editions, sourceCollection]
   );
@@ -81,7 +88,7 @@ export default function CollectionPage() {
   const editionStats = useMemo(() => {
     const map = new Map<string, { unique: number; owned: number }>();
     for (const item of sourceCollection) {
-      const editionName = item.card.setEditionLabel || item.card.edition || "Unknown";
+      const editionName = item.card.edition || "Unknown";
       const prev = map.get(editionName) ?? { unique: 0, owned: 0 };
       map.set(editionName, { unique: prev.unique + 1, owned: prev.owned + item.instanceCount });
     }
@@ -94,7 +101,7 @@ export default function CollectionPage() {
     const filtered = sourceCollection
       .filter((item) => !faction || item.card.faction === faction)
       .filter((item) => !rarityFilter || item.card.rarity === rarityFilter)
-      .filter((item) => !edition || (item.card.setEditionLabel || item.card.edition || "") === edition)
+      .filter((item) => !edition || (item.card.edition || "") === edition)
       .filter((item) =>
         `${item.card.displayName} ${item.card.symbol} ${item.card.faction ?? ""} ${item.card.rarity} ${item.card.edition}`
           .toLowerCase()
@@ -103,7 +110,7 @@ export default function CollectionPage() {
 
     const sorted = [...filtered].sort((a, b) => {
       if (sortBy === "rarity")    return (rarityRank[a.card.rarity] ?? -1) - (rarityRank[b.card.rarity] ?? -1);
-      if (sortBy === "edition")   return (a.card.setEditionLabel || a.card.edition || "").localeCompare(b.card.setEditionLabel || b.card.edition || "");
+      if (sortBy === "edition")   return (a.card.edition || "").localeCompare(b.card.edition || "");
       if (sortBy === "quantity")  return a.instanceCount - b.instanceCount;
       return a.card.displayName.localeCompare(b.card.displayName);
     });
@@ -209,7 +216,7 @@ export default function CollectionPage() {
                 <div className="ccb-label">Owned by Edition</div>
                 {editionStats.map((editionRow) => (
                   <div key={editionRow.label} className="ccb-edition-row">
-                    <span className="ccb-edition-label">{editionRow.label}</span>
+                    <span className="ccb-edition-label">{formatEditionLabel(editionRow.label)}</span>
                     <span className="ccb-edition-count">{editionRow.owned} owned · {editionRow.unique} unique</span>
                   </div>
                 ))}
@@ -236,7 +243,7 @@ export default function CollectionPage() {
                 onClick={() => setEdition(editionChip.key)}
               >
                 <span className="rarity-chip-dot" />
-                {editionChip.label}
+                {formatEditionLabel(editionChip.label)}
                 <span style={{ opacity: 0.65, marginLeft: 2, fontSize: "0.68rem" }}>
                   ({editionChip.count})
                 </span>
@@ -285,7 +292,7 @@ export default function CollectionPage() {
             {editions.length > 0 && (
               <select className="filter-select" value={edition} onChange={(e) => setEdition(e.target.value)}>
                 <option value="">All editions</option>
-                {editions.map((setEdition) => <option key={setEdition} value={setEdition}>{setEdition}</option>)}
+                {editions.map((setEdition) => <option key={setEdition} value={setEdition}>{formatEditionLabel(setEdition)}</option>)}
               </select>
             )}
             <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}>
