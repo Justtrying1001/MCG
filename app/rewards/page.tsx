@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
+import { resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
 
 type LedgerRow = {
   id: string;
@@ -41,13 +42,16 @@ type QuestRow = {
     threshold?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;
+    ctaLabel?: string | null;
     instructions?: string | null;
+    socialAction?: string | null;
   };
 };
 
 function isSocialQuest(quest: QuestRow) {
   return quest.type === "SOCIAL_FOLLOW_X" || quest.type === "SOCIAL_ENGAGEMENT_X";
 }
+
 
 export default function RewardsPage() {
   const { me, loading } = useSession();
@@ -134,32 +138,38 @@ export default function RewardsPage() {
 
   const renderQuestCard = (quest: QuestRow, allowSubmit: boolean) => {
     const canSubmit = allowSubmit && isSocialQuest(quest);
+    const hasTarget = Boolean(String(quest.configSummary.targetUrl ?? "").trim());
 
     return (
-      <div key={quest.id} className="contest-card">
+      <div key={quest.id} className="contest-card quest-user-card">
         <div className="contest-card-top">
           <p className="contest-code">{quest.code}</p>
           <span className="contest-status status-open">{quest.status}</span>
         </div>
-        <h3 className="contest-title">{quest.title}</h3>
-        <p className="contest-inline-note">{quest.description ?? "—"}</p>
-        <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
 
-        {quest.targetValue ? (
-          <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p>
-        ) : null}
+        <h3 className="contest-title">{quest.title}</h3>
+        <p className="contest-inline-note">{quest.description ?? "No description provided."}</p>
+
+        <div className="quest-meta-grid">
+          <p className="contest-inline-note">Reward: <strong>{quest.rewardPoints} points</strong></p>
+          {quest.targetValue ? <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p> : null}
+          {isSocialQuest(quest) ? <p className="contest-inline-note">Validation: {quest.validationMode}</p> : null}
+          {isSocialQuest(quest) ? <p className="contest-inline-note">Proof required: {quest.configSummary.proofRequired ? "Yes" : "No"}</p> : null}
+        </div>
 
         {isSocialQuest(quest) ? (
-          <>
-            <p className="contest-inline-note">Validation: {quest.validationMode}</p>
-            <p className="contest-inline-note">Proof required: {quest.configSummary.proofRequired ? "Yes" : "No"}</p>
-            {quest.configSummary.targetUrl ? (
-              <p className="contest-inline-note">Target URL: <a href={quest.configSummary.targetUrl} target="_blank" rel="noreferrer">{quest.configSummary.targetUrl}</a></p>
-            ) : null}
-            {quest.configSummary.instructions ? (
-              <p className="contest-inline-note">Instructions: {quest.configSummary.instructions}</p>
-            ) : null}
-          </>
+          <div className="quest-social-action-row">
+            {hasTarget ? (
+              <a href={quest.configSummary.targetUrl ?? "#"} target="_blank" rel="noreferrer" className="btn btn-gold btn-sm">
+                {resolveSocialCtaLabelForUserQuest(quest)}
+              </a>
+            ) : (
+              <button type="button" className="btn btn-ghost btn-sm" disabled title="No URL configured for this quest yet.">
+                Link unavailable
+              </button>
+            )}
+            {quest.configSummary.instructions ? <p className="contest-inline-note">{quest.configSummary.instructions}</p> : null}
+          </div>
         ) : null}
 
         {canSubmit ? (
@@ -176,7 +186,7 @@ export default function RewardsPage() {
               value={noteByQuestId[quest.id] ?? ""}
               onChange={(event) => setNoteByQuestId((prev) => ({ ...prev, [quest.id]: event.target.value }))}
             />
-            <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
               <Button onClick={() => void submitQuest(quest)} disabled={submittingQuestId === quest.id}>
                 {submittingQuestId === quest.id ? "Submitting…" : "Submit proof"}
               </Button>
@@ -193,7 +203,7 @@ export default function RewardsPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Rewards & Quests</h1>
-          <p className="page-subtitle">Track your points ledger and quest progression.</p>
+          <p className="page-subtitle">Complete quests, open actions on X instantly, and track your reward ledger.</p>
         </div>
       </div>
 

@@ -75,6 +75,7 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
       instructions: typeof config.instructions === "string" ? config.instructions : null,
       socialAction: typeof config.socialAction === "string" ? config.socialAction : null,
       proofRequired: typeof config.proofRequired === "boolean" ? config.proofRequired : null,
+      ctaLabel: typeof config.ctaLabel === "string" ? config.ctaLabel : null,
     };
   }, [data]);
 
@@ -105,6 +106,7 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             <p className="contest-inline-note">Social action: {configSummary.socialAction ?? "—"}</p>
             <p className="contest-inline-note">Target URL: {configSummary.targetUrl ?? "—"}</p>
             <p className="contest-inline-note">Instructions: {configSummary.instructions ?? "—"}</p>
+            <p className="contest-inline-note">CTA label: {configSummary.ctaLabel ?? "—"}</p>
             <p className="contest-inline-note">Proof required: {configSummary.proofRequired === null ? "—" : configSummary.proofRequired ? "Yes" : "No"}</p>
           </section>
 

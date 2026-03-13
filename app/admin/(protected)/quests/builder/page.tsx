@@ -2,23 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { QuestLivePreviewCard } from "@/components/quests/QuestLivePreviewCard";
 import { Button } from "@/components/ui/Button";
+import type { BuilderObjectiveType, SocialAction } from "@/lib/domain/quests/social";
 
-type ObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "CONTEST_MILESTONE";
-type SocialAction = "LIKE" | "RETWEET" | "COMMENT";
+type PreviewPayload = {
+  title: string;
+  description: string;
+  objective: string;
+  rewardCopy: string;
+  proofCopy: string;
+  ctaCopy: string;
+};
+
+type ValidatePayload = {
+  issues?: Array<{ field: string; severity: "ERROR" | "WARN"; message: string }>;
+  preview?: PreviewPayload | null;
+  normalizedPayload?: Record<string, unknown> | null;
+  error?: string;
+  blocking?: boolean;
+};
 
 export default function QuestBuilderPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const questId = searchParams.get("questId");
+  const isEditMode = Boolean(questId);
 
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [objectiveType, setObjectiveType] = useState<ObjectiveType>("FOLLOW_X");
+  const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>("FOLLOW_X");
   const [socialAction, setSocialAction] = useState<SocialAction>("LIKE");
   const [targetUrl, setTargetUrl] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
   const [instructions, setInstructions] = useState("");
   const [proofRequired, setProofRequired] = useState(true);
   const [rewardPoints, setRewardPoints] = useState("100");
@@ -28,15 +47,25 @@ export default function QuestBuilderPage() {
   const [oneTime, setOneTime] = useState(true);
 
   const [issues, setIssues] = useState<Array<{ field: string; severity: "ERROR" | "WARN"; message: string }>>([]);
-  const [preview, setPreview] = useState<{ title: string; description: string; objective: string; rewardCopy: string; proofCopy: string } | null>(null);
-  const [normalizedPayload, setNormalizedPayload] = useState<any>(null);
+  const [preview, setPreview] = useState<PreviewPayload | null>(null);
+  const [normalizedPayload, setNormalizedPayload] = useState<ValidatePayload["normalizedPayload"]>(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [validating, setValidating] = useState(false);
 
   useEffect(() => {
     if (!questId) return;
     const load = async () => {
+      setLoading(true);
+      setMessage("");
       const response = await fetch(`/api/internal/quests/${questId}`, { cache: "no-store" });
-      if (!response.ok) return;
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        setMessage(payload?.error ?? "Cannot load quest");
+        setLoading(false);
+        return;
+      }
       const payload = await response.json();
       const quest = payload.quest;
       setCode(quest.code ?? "");
@@ -53,10 +82,12 @@ export default function QuestBuilderPage() {
 
       const config = (quest.config ?? {}) as Record<string, unknown>;
       if (typeof config.targetUrl === "string") setTargetUrl(config.targetUrl);
+      if (typeof config.ctaLabel === "string") setCtaLabel(config.ctaLabel);
       if (typeof config.instructions === "string") setInstructions(config.instructions);
       if (typeof config.proofRequired === "boolean") setProofRequired(config.proofRequired);
       if (typeof config.threshold === "number") setMilestoneThreshold(String(config.threshold));
       if (typeof config.socialAction === "string") setSocialAction(config.socialAction as SocialAction);
+      setLoading(false);
     };
     void load();
   }, [questId]);
@@ -68,6 +99,7 @@ export default function QuestBuilderPage() {
     objectiveType,
     socialAction,
     targetUrl,
+    ctaLabel,
     instructions,
     proofRequired,
     rewardPoints: Number(rewardPoints),
@@ -75,18 +107,21 @@ export default function QuestBuilderPage() {
     validationMode,
     isActive,
     oneTime,
-  }), [code, title, description, objectiveType, socialAction, targetUrl, instructions, proofRequired, rewardPoints, milestoneThreshold, validationMode, isActive, oneTime]);
+  }), [code, title, description, objectiveType, socialAction, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, milestoneThreshold, validationMode, isActive, oneTime]);
 
   const runValidate = async () => {
+    setMessage("");
+    setValidating(true);
     const response = await fetch("/api/internal/quests/builder/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(builderInput),
     });
 
-    const payload = await response.json().catch(() => null) as { issues?: Array<{ field: string; severity: "ERROR" | "WARN"; message: string }>; preview?: any; normalizedPayload?: any; error?: string; blocking?: boolean } | null;
+    const payload = await response.json().catch(() => null) as ValidatePayload | null;
     if (!response.ok || !payload) {
       setMessage(payload?.error ?? "Builder validation failed");
+      setValidating(false);
       return;
     }
 
@@ -94,6 +129,7 @@ export default function QuestBuilderPage() {
     setPreview(payload.preview ?? null);
     setNormalizedPayload(payload.normalizedPayload ?? null);
     setMessage(payload.blocking ? "Validation blocked." : "Validation passed.");
+    setValidating(false);
   };
 
   const saveQuest = async () => {
@@ -102,6 +138,8 @@ export default function QuestBuilderPage() {
       return;
     }
 
+    setSaving(true);
+    setMessage("");
     const response = await fetch(questId ? `/api/internal/quests/${questId}` : "/api/internal/quests", {
       method: questId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,87 +149,125 @@ export default function QuestBuilderPage() {
     const payload = await response.json().catch(() => null) as { error?: string; quest?: { id: string } } | null;
     if (!response.ok) {
       setMessage(payload?.error ?? "Cannot save quest");
+      setSaving(false);
       return;
     }
 
-    setMessage(questId ? "Quest updated." : "Quest created.");
+    setMessage(isEditMode ? "Quest updated successfully." : "Quest created successfully.");
+    setSaving(false);
+
+    if (!isEditMode && payload?.quest?.id) {
+      router.replace(`/admin/quests/builder?questId=${payload.quest.id}`);
+      router.refresh();
+    }
   };
 
   return (
-    <div className="admin-page">
+    <div className="admin-page quest-admin-page">
       <section className="admin-panel">
         <Link href="/admin/quests" className="contest-inline-note">← Back to quest library</Link>
       </section>
 
-      <section className="admin-panel" style={{ display: "grid", gap: "0.7rem" }}>
-        <h1 className="admin-title">Quest Builder</h1>
-        <p className="admin-subtitle">Guided flow for Follow X, Like/RT/Comment, and Contest milestone quests.</p>
+      <section className="admin-panel quest-builder-shell">
+        <header className="quest-builder-header">
+          <div>
+            <h1 className="admin-title">{isEditMode ? "Edit Quest" : "Quest Builder"}</h1>
+            <p className="admin-subtitle">{isEditMode ? "Update all quest fields with full live preview and policy validation." : "Create production-ready social and milestone quests with clear user intent and moderation policies."}</p>
+          </div>
+          <div className="quest-builder-header-actions">
+            <Button variant="ghost" onClick={() => void runValidate()} disabled={validating || loading}>{validating ? "Validating…" : "Validate + Preview"}</Button>
+            <Button className="quest-primary-action" onClick={() => void saveQuest()} disabled={!normalizedPayload || saving || loading}>
+              {saving ? "Saving…" : isEditMode ? "Save changes" : "Create Quest"}
+            </Button>
+          </div>
+        </header>
 
-        <h3 className="contest-section-title">1) Identity</h3>
-        <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <input className="input" placeholder="code" value={code} onChange={(event) => setCode(event.target.value)} />
-          <input className="input" placeholder="title" value={title} onChange={(event) => setTitle(event.target.value)} />
-          <input className="input" placeholder="description" value={description} onChange={(event) => setDescription(event.target.value)} />
+        <div className="quest-builder-layout">
+          <div className="quest-builder-main">
+            {loading ? <p className="contest-inline-note">Loading quest...</p> : null}
+
+            <section className="quest-form-section">
+              <h3 className="contest-section-title">1. Identity</h3>
+              <div className="admin-field-grid">
+                <input className="input" placeholder="Code (ex: CAMPAIGN1_FOLLOW)" value={code} onChange={(event) => setCode(event.target.value)} />
+                <input className="input" placeholder="Quest title" value={title} onChange={(event) => setTitle(event.target.value)} />
+                <input className="input" placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
+              </div>
+            </section>
+
+            <section className="quest-form-section">
+              <h3 className="contest-section-title">2. Objective</h3>
+              <div className="admin-field-grid">
+                <select className="input" value={objectiveType} onChange={(event) => setObjectiveType(event.target.value as BuilderObjectiveType)}>
+                  <option value="FOLLOW_X">Follow X</option>
+                  <option value="SOCIAL_ENGAGEMENT">Like / RT / Comment</option>
+                  <option value="CONTEST_MILESTONE">Contest milestone</option>
+                </select>
+                {objectiveType === "SOCIAL_ENGAGEMENT" ? (
+                  <select className="input" value={socialAction} onChange={(event) => setSocialAction(event.target.value as SocialAction)}>
+                    <option value="LIKE">LIKE</option>
+                    <option value="RETWEET">RETWEET</option>
+                    <option value="COMMENT">COMMENT</option>
+                  </select>
+                ) : null}
+                {objectiveType === "CONTEST_MILESTONE" ? (
+                  <input className="input" type="number" min={1} placeholder="Milestone threshold" value={milestoneThreshold} onChange={(event) => setMilestoneThreshold(event.target.value)} />
+                ) : null}
+                {objectiveType !== "CONTEST_MILESTONE" ? (
+                  <>
+                    <input className="input" placeholder="target_url (https://x.com/username or .../status/123)" value={targetUrl} onChange={(event) => setTargetUrl(event.target.value)} />
+                    <input className="input" placeholder="CTA label (optional, ex: Open on X)" value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} />
+                    <input className="input" placeholder="Operator instructions" value={instructions} onChange={(event) => setInstructions(event.target.value)} />
+                    <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={proofRequired} onChange={(event) => setProofRequired(event.target.checked)} /> proof required</label>
+                  </>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="quest-form-section">
+              <h3 className="contest-section-title">3. Reward & Policy</h3>
+              <div className="admin-field-grid">
+                <input className="input" type="number" min={0} placeholder="Reward points" value={rewardPoints} onChange={(event) => setRewardPoints(event.target.value)} />
+                <select className="input" value={validationMode} onChange={(event) => setValidationMode(event.target.value as "AUTO" | "SUBMIT" | "MANUAL_REVIEW")}>
+                  <option value="AUTO">AUTO</option>
+                  <option value="SUBMIT">SUBMIT</option>
+                  <option value="MANUAL_REVIEW">MANUAL_REVIEW</option>
+                </select>
+                <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /> active</label>
+                <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={oneTime} onChange={(event) => setOneTime(event.target.checked)} /> one-time</label>
+              </div>
+            </section>
+
+            {message ? <p className="contest-inline-note">{message}</p> : null}
+            {issues.map((issue, index) => (
+              <p key={`${issue.field}-${index}`} className={issue.severity === "ERROR" ? "contest-error" : "contest-inline-note"}>{issue.field}: {issue.message}</p>
+            ))}
+
+            {preview ? (
+              <section className="admin-panel" style={{ background: "rgba(255,255,255,0.02)" }}>
+                <h3 className="contest-section-title">Validation snapshot</h3>
+                <p className="contest-inline-note">{preview.title}</p>
+                <p className="contest-inline-note">{preview.description}</p>
+                <p className="contest-inline-note">{preview.objective}</p>
+                <p className="contest-inline-note">{preview.rewardCopy}</p>
+                <p className="contest-inline-note">{preview.proofCopy}</p>
+                <p className="contest-inline-note">{preview.ctaCopy}</p>
+              </section>
+            ) : null}
+          </div>
+
+          <QuestLivePreviewCard
+            title={title}
+            description={description}
+            objectiveType={objectiveType}
+            socialAction={objectiveType === "SOCIAL_ENGAGEMENT" ? socialAction : undefined}
+            rewardPoints={Number(rewardPoints) || 0}
+            statusLabel={isActive ? "AVAILABLE" : "INACTIVE"}
+            targetUrl={targetUrl}
+            ctaLabel={ctaLabel}
+            milestoneThreshold={Number(milestoneThreshold) || 0}
+          />
         </div>
-
-        <h3 className="contest-section-title">2) Objective</h3>
-        <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <select className="input" value={objectiveType} onChange={(event) => setObjectiveType(event.target.value as ObjectiveType)}>
-            <option value="FOLLOW_X">Follow X</option>
-            <option value="SOCIAL_ENGAGEMENT">Like / RT / Comment</option>
-            <option value="CONTEST_MILESTONE">Contest milestone</option>
-          </select>
-          {objectiveType === "SOCIAL_ENGAGEMENT" ? (
-            <select className="input" value={socialAction} onChange={(event) => setSocialAction(event.target.value as SocialAction)}>
-              <option value="LIKE">LIKE</option>
-              <option value="RETWEET">RETWEET</option>
-              <option value="COMMENT">COMMENT</option>
-            </select>
-          ) : null}
-          {objectiveType === "CONTEST_MILESTONE" ? (
-            <input className="input" type="number" min={1} placeholder="milestone threshold" value={milestoneThreshold} onChange={(event) => setMilestoneThreshold(event.target.value)} />
-          ) : null}
-          {objectiveType !== "CONTEST_MILESTONE" ? (
-            <>
-              <input className="input" placeholder="target URL" value={targetUrl} onChange={(event) => setTargetUrl(event.target.value)} />
-              <input className="input" placeholder="instructions" value={instructions} onChange={(event) => setInstructions(event.target.value)} />
-              <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={proofRequired} onChange={(event) => setProofRequired(event.target.checked)} /> proof required</label>
-            </>
-          ) : null}
-        </div>
-
-        <h3 className="contest-section-title">3) Reward & policy</h3>
-        <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <input className="input" type="number" min={0} placeholder="reward points" value={rewardPoints} onChange={(event) => setRewardPoints(event.target.value)} />
-          <select className="input" value={validationMode} onChange={(event) => setValidationMode(event.target.value as any)}>
-            <option value="AUTO">AUTO</option>
-            <option value="SUBMIT">SUBMIT</option>
-            <option value="MANUAL_REVIEW">MANUAL_REVIEW</option>
-          </select>
-          <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /> active</label>
-          <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={oneTime} onChange={(event) => setOneTime(event.target.checked)} /> one-time</label>
-        </div>
-
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <Button onClick={() => void runValidate()}>Validate + Preview</Button>
-          <Button onClick={() => void saveQuest()} disabled={!normalizedPayload}>{questId ? "Save quest" : "Create quest"}</Button>
-        </div>
-
-        {message ? <p className="contest-inline-note">{message}</p> : null}
-        {issues.map((issue, index) => (
-          <p key={`${issue.field}-${index}`} className={issue.severity === "ERROR" ? "contest-error" : "contest-inline-note"}>{issue.field}: {issue.message}</p>
-        ))}
-
-        {preview ? (
-          <section className="admin-panel" style={{ background: "rgba(255,255,255,0.02)" }}>
-            <h3 className="contest-section-title">User-facing preview</h3>
-            <p className="contest-inline-note">{preview.title}</p>
-            <p className="contest-inline-note">{preview.description}</p>
-            <p className="contest-inline-note">{preview.objective}</p>
-            <p className="contest-inline-note">{preview.rewardCopy}</p>
-            <p className="contest-inline-note">{preview.proofCopy}</p>
-          </section>
-        ) : null}
       </section>
     </div>
   );

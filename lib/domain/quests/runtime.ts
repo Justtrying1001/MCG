@@ -26,7 +26,9 @@ export class QuestRuntimeError extends Error {
 type SocialQuestConfigSummary = {
   proofRequired: boolean;
   targetUrl: string | null;
+  ctaLabel: string | null;
   instructions: string | null;
+  socialAction: string | null;
 };
 
 
@@ -97,7 +99,9 @@ export type QuestForUserRow = {
     threshold?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;
+    ctaLabel?: string | null;
     instructions?: string | null;
+    socialAction?: string | null;
   };
 };
 
@@ -122,7 +126,7 @@ function parseContestMilestoneThreshold(config: Prisma.JsonValue | null): number
 
 function parseSocialSubmitConfig(config: Prisma.JsonValue | null): SocialQuestConfigSummary {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
-    return { proofRequired: false, targetUrl: null, instructions: null };
+    return { proofRequired: false, targetUrl: null, ctaLabel: null, instructions: null, socialAction: null };
   }
 
   const root = config as Record<string, unknown>;
@@ -130,7 +134,9 @@ function parseSocialSubmitConfig(config: Prisma.JsonValue | null): SocialQuestCo
   return {
     proofRequired: Boolean(root.proofRequired),
     targetUrl: typeof root.targetUrl === "string" && root.targetUrl.trim() ? root.targetUrl.trim() : null,
+    ctaLabel: typeof root.ctaLabel === "string" && root.ctaLabel.trim() ? root.ctaLabel.trim() : null,
     instructions: typeof root.instructions === "string" && root.instructions.trim() ? root.instructions.trim() : null,
+    socialAction: typeof root.socialAction === "string" && root.socialAction.trim() ? root.socialAction.trim() : null,
   };
 }
 
@@ -177,7 +183,7 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
   if (isSocialSubmitQuest(type)) {
     if (config === undefined) {
       if (required) {
-        return { proofRequired: false, targetUrl: null, instructions: null };
+        return { proofRequired: false, targetUrl: null, ctaLabel: null, instructions: null, socialAction: null };
       }
       return undefined;
     }
@@ -191,7 +197,9 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
     return {
       proofRequired: Boolean(root.proofRequired),
       targetUrl: typeof root.targetUrl === "string" && root.targetUrl.trim() ? root.targetUrl.trim() : null,
+      ctaLabel: typeof root.ctaLabel === "string" && root.ctaLabel.trim() ? root.ctaLabel.trim() : null,
       instructions: typeof root.instructions === "string" && root.instructions.trim() ? root.instructions.trim() : null,
+      socialAction: typeof root.socialAction === "string" && root.socialAction.trim() ? root.socialAction.trim() : null,
     };
   }
 

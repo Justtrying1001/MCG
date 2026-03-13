@@ -1,0 +1,64 @@
+import { getQuestObjectiveText, resolveSocialCtaLabel, sanitizeOptionalText, type BuilderObjectiveType, type SocialAction } from "@/lib/domain/quests/social";
+
+import styles from "./QuestLivePreviewCard.module.css";
+
+type Props = {
+  title: string;
+  description: string;
+  objectiveType: BuilderObjectiveType;
+  socialAction?: SocialAction;
+  rewardPoints: number;
+  statusLabel?: string;
+  targetUrl?: string | null;
+  ctaLabel?: string | null;
+  milestoneThreshold?: number;
+};
+
+export function QuestLivePreviewCard({
+  title,
+  description,
+  objectiveType,
+  socialAction,
+  rewardPoints,
+  statusLabel = "AVAILABLE",
+  targetUrl,
+  ctaLabel,
+  milestoneThreshold,
+}: Props) {
+  const resolvedTitle = title.trim() || "Untitled quest";
+  const resolvedDescription = description.trim() || "No description provided.";
+  const objectiveText = getQuestObjectiveText({ objectiveType, socialAction, milestoneThreshold });
+
+  const hasTarget = Boolean(sanitizeOptionalText(targetUrl));
+  const socialQuest = objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT";
+  const ctaText = resolveSocialCtaLabel({ objectiveType, socialAction, ctaLabel });
+
+  return (
+    <aside className={styles.previewWrap} aria-live="polite">
+      <p className={styles.previewTitle}>Live user preview</p>
+      <article className={`contest-card ${styles.previewCard}`}>
+        <div className={`contest-card-top ${styles.previewMeta}`}>
+          <p className="contest-code">PREVIEW</p>
+          <span className="contest-status status-open">{statusLabel}</span>
+        </div>
+
+        <h3 className="contest-title">{resolvedTitle}</h3>
+        <p className="contest-inline-note">{resolvedDescription}</p>
+
+        <p className={styles.previewObjective}>{objectiveText}</p>
+        <p className="contest-inline-note">Reward: <strong>{rewardPoints} points</strong></p>
+
+        {socialQuest ? (
+          <div className={styles.previewCtaRow}>
+            {hasTarget ? (
+              <button type="button" className="btn btn-gold btn-sm">{ctaText}</button>
+            ) : (
+              <button type="button" className="btn btn-ghost btn-sm" disabled>Link unavailable</button>
+            )}
+            <span className={styles.previewHint}>{hasTarget ? "CTA visible côté user" : "Ajoute target_url pour activer le CTA"}</span>
+          </div>
+        ) : null}
+      </article>
+    </aside>
+  );
+}

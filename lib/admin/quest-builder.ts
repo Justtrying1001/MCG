@@ -1,5 +1,14 @@
-export type QuestObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "CONTEST_MILESTONE";
-export type SocialEngagementAction = "LIKE" | "RETWEET" | "COMMENT";
+import {
+  getQuestObjectiveText,
+  resolveSocialCtaLabel,
+  sanitizeOptionalText,
+  validateSocialTargetForBuilder,
+  type BuilderObjectiveType,
+  type SocialAction,
+} from "@/lib/domain/quests/social";
+
+export type QuestObjectiveType = BuilderObjectiveType;
+export type SocialEngagementAction = SocialAction;
 
 export type QuestBuilderInput = {
   code?: string;
@@ -8,6 +17,7 @@ export type QuestBuilderInput = {
   objectiveType?: QuestObjectiveType;
   socialAction?: SocialEngagementAction;
   targetUrl?: string | null;
+  ctaLabel?: string | null;
   instructions?: string | null;
   proofRequired?: boolean;
   rewardPoints?: number;
@@ -48,9 +58,11 @@ export function validateQuestBuilderInput(input: QuestBuilderInput) {
     issues.push({ field: "socialAction", severity: "ERROR", message: "social action is required for engagement quests" });
   }
 
-  if ((objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT") && !String(input.targetUrl ?? "").trim()) {
-    issues.push({ field: "targetUrl", severity: "WARN", message: "target URL is recommended for social quests" });
-  }
+  issues.push(...validateSocialTargetForBuilder({
+    objectiveType,
+    socialAction: input.socialAction,
+    targetUrl: input.targetUrl,
+  }));
 
   if ((objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT") && !String(input.instructions ?? "").trim()) {
     issues.push({ field: "instructions", severity: "WARN", message: "operator instructions are recommended" });
@@ -75,7 +87,7 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
   const base = {
     code: String(input.code ?? "").trim(),
     title: String(input.title ?? "").trim(),
-    description: input.description?.trim() || null,
+    description: sanitizeOptionalText(input.description),
     type,
     validationMode,
     rewardPoints: Number(input.rewardPoints ?? 0),
@@ -98,27 +110,32 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
     ...base,
     config: {
       proofRequired: input.proofRequired ?? true,
-      targetUrl: input.targetUrl?.trim() || null,
-      instructions: input.instructions?.trim() || null,
+      targetUrl: sanitizeOptionalText(input.targetUrl),
+      ctaLabel: sanitizeOptionalText(input.ctaLabel),
+      instructions: sanitizeOptionalText(input.instructions),
       socialAction: input.socialAction ?? null,
     },
   };
 }
 
 export function buildQuestUserPreview(input: QuestBuilderInput) {
-  const objective = input.objectiveType === "FOLLOW_X"
-    ? "Follow the target account"
-    : input.objectiveType === "SOCIAL_ENGAGEMENT"
-      ? `Perform social action: ${input.socialAction ?? "(choose action)"}`
-      : `Enter ${input.milestoneThreshold ?? 0} contests`;
+  const objectiveType = input.objectiveType ?? "FOLLOW_X";
+  const hasTarget = Boolean(sanitizeOptionalText(input.targetUrl));
 
   return {
     title: String(input.title ?? "").trim() || "Untitled quest",
     description: String(input.description ?? "").trim() || "",
-    objective,
+    objective: getQuestObjectiveText({
+      objectiveType,
+      socialAction: input.socialAction,
+      milestoneThreshold: input.milestoneThreshold ?? 0,
+    }),
     rewardCopy: `Reward: ${Number(input.rewardPoints ?? 0)} points`,
-    proofCopy: (input.objectiveType === "FOLLOW_X" || input.objectiveType === "SOCIAL_ENGAGEMENT")
+    proofCopy: (objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT")
       ? `Proof required: ${input.proofRequired ?? true ? "Yes" : "No"}`
       : "Proof required: No",
+    ctaCopy: (objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT")
+      ? `${hasTarget ? "CTA" : "CTA (disabled)"}: ${hasTarget ? resolveSocialCtaLabel({ objectiveType, socialAction: input.socialAction, ctaLabel: input.ctaLabel }) : "Link unavailable"}`
+      : "CTA: none",
   };
 }
