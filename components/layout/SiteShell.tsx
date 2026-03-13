@@ -55,7 +55,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="nav-logo-badge">MCG</div>
           <div>
             <span className="nav-logo-name">Meme Card Game</span>
-            <span className="nav-logo-tagline">Collect · Compete · Dominate</span>
+            <span className="nav-logo-tagline">Collect · Joue · Progresse</span>
           </div>
         </Link>
 
@@ -81,16 +81,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <span className="xp-badge">{me.user.points} XP</span>
               </div>
               <Button variant="ghost" className="btn-sm" onClick={logout}>
-                {me.mode === "guest" ? "Exit Guest" : "Logout"}
+                {me.mode === "guest" ? "Quitter le mode invité" : "Se déconnecter"}
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" className="btn-sm" onClick={loginWithX}>
-                Continue with X
+                Se connecter avec X
               </Button>
               <Button className="btn-sm" onClick={startAsGuest}>
-                Continue as Guest
+                Continuer en invité
               </Button>
             </>
           )}
@@ -133,13 +133,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     <span className="xp-badge">{me.user.points} XP</span>
                   </div>
                   <Button variant="ghost" onClick={logout} style={{ width: "100%" }}>
-                    {me.mode === "guest" ? "Exit Guest" : "Logout"}
+                    {me.mode === "guest" ? "Quitter le mode invité" : "Se déconnecter"}
                   </Button>
                 </div>
               ) : (
                 <div className="mobile-auth-buttons" style={{ display: "grid", gap: "0.6rem" }}>
-                  <Button variant="ghost" onClick={loginWithX}>Continue with X</Button>
-                  <Button onClick={startAsGuest}>Continue as Guest</Button>
+                  <Button variant="ghost" onClick={loginWithX}>Se connecter avec X</Button>
+                  <Button onClick={startAsGuest}>Continuer en invité</Button>
                 </div>
               )}
             </div>
@@ -162,7 +162,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </div>
             Meme Card Game
           </div>
-          <span>© 2025 MCG · Premium Collectible TCG · <Link href="/admin" className="contest-inline-note">Internal admin</Link></span>
+          <span>© 2025 MCG · Trading Card Game illustré · <Link href="/admin" className="contest-inline-note">Espace admin</Link></span>
         </footer>
       </div>
     </>

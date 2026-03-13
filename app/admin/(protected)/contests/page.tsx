@@ -83,7 +83,7 @@ export default function AdminContestsCatalogPage() {
           <p className="admin-subtitle">Pilotage complet: créer, éditer, publier, archiver et opérer le lifecycle depuis un seul module lisible.</p>
         </div>
         <div className="admin-actions-row">
-          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Nouveau contest</Link>
+          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }} title="Start here">Create New Contest</Link>
           <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
         </div>
       </section>

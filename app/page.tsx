@@ -15,25 +15,25 @@ export default function HomePage() {
           <Suspense fallback={null}>
             <AuthErrorNotice />
           </Suspense>
-          <p className="eyebrow">Premium Dark-Modern TCG</p>
+          <p className="eyebrow">Bienvenue dans ton univers de cartes</p>
           <h1 className="hero-title">
-            Own the rarest.<br />
-            <span className="accent">Chase the drop.</span><br />
-            Dominate.
+            Collectionne, échange des vibes,<br />
+            <span className="accent">ouvre tes boosters</span><br />
+            et joue les contests.
           </h1>
           <p className="hero-desc">
-            MCG is a premium collectible card game where every pull carries weight.
-            Open sealed boosters, build high-synergy rosters, and compete
-            for the rarest cards in the set.
+            MCG est un jeu de collection de cartes fun et accessible.
+            Ouvre des packs, complète ta collection et compose ton lineup
+            pour grimper dans les contests.
           </p>
           <div className="cta-row">
-            <Link href="/packs" className="btn btn-primary btn-lg">Open a pack</Link>
-            <Link href="/collection" className="btn btn-ghost btn-lg">My collection</Link>
+            <Link href="/packs" className="btn btn-primary btn-lg">Ouvrir un pack</Link>
+            <Link href="/collection" className="btn btn-ghost btn-lg">Voir ma collection</Link>
           </div>
           <div className="hero-pills">
-            <span className="hero-pill">5-tier rarity system</span>
-            <span className="hero-pill">Sealed pack ritual</span>
-            <span className="hero-pill">Contest progression</span>
+            <span className="hero-pill">Raretés et éditions</span>
+            <span className="hero-pill">Ouverture progressive</span>
+            <span className="hero-pill">Rewards et quêtes</span>
           </div>
         </div>
 
@@ -60,26 +60,26 @@ export default function HomePage() {
       <div className="feature-grid">
         <article className="feature-panel">
           <div className="feature-panel-icon">◈</div>
-          <h3>Crack the seal</h3>
+          <h3>Ouvre ton booster</h3>
           <p>
-            Sealed booster ritual — five face-down cards, revealed one by one.
-            Every flip is a moment. Every pull stays in your collection forever.
+            Découvre 5 cartes par pack avec une révélation carte par carte.
+            Chaque tirage enrichit ta progression et ton style de jeu.
           </p>
         </article>
         <article className="feature-panel">
           <div className="feature-panel-icon">▦</div>
-          <h3>Build your binder</h3>
+          <h3>Construis ta collection</h3>
           <p>
-            Six rarity tiers. Foil variants. Full-art chases.
-            Every card is an object worth possessing — not just a stat block.
+            Trie, admire et complète ta binder avec des cartes rares, éditions spéciales
+            et cartes iconiques à collectionner.
           </p>
         </article>
         <article className="feature-panel">
           <div className="feature-panel-icon">🏆</div>
-          <h3>Enter contests</h3>
+          <h3>Entre en contest</h3>
           <p>
-            Build your lineup from owned cards, enter active contests,
-            and climb settled leaderboards with measurable progression.
+            Sélectionne tes cartes possédées, inscris-toi aux contests actifs
+            et vise le top du classement pour gagner des rewards.
           </p>
         </article>
       </div>

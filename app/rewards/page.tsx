@@ -10,8 +10,6 @@ import { resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
 
 import styles from "./rewards.module.css";
 
-import styles from "./rewards.module.css";
-
 type LedgerRow = {
   id: string;
   entryType: "CREDIT" | "DEBIT";
