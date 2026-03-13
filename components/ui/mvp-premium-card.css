@@ -96,7 +96,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 8px;
-  min-height: 50px;
+  min-height: 64px;
 }
 
 .mvp-card-header::after {
@@ -110,21 +110,22 @@
   opacity: 0.45;
 }
 
-.mvp-card-header-left {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  align-content: start;
-  row-gap: 2px;
-  min-width: 0;
-  min-height: 32px;
-}
-.mvp-card-header-right {
+.mvp-card-header-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: flex-start;
-  gap: 3px;
-  min-height: 32px;
+  gap: 4px;
+  min-width: 0;
+  min-height: 48px;
+}
+.mvp-card-header-badges {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 48px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .mvp-card-name {

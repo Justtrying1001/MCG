@@ -118,11 +118,11 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
         <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
       </span>
       <header className="mvp-card-header">
-        <div className="mvp-card-header-left">
+        <div className="mvp-card-header-text">
           <span className="mvp-card-name">{card.displayName}</span>
           <span className="mvp-card-ticker">${card.symbol}</span>
         </div>
-        <div className="mvp-card-header-right">
+        <div className="mvp-card-header-badges">
           <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
           <span className="mvp-badge-edition">{editionBadge}</span>
         </div>

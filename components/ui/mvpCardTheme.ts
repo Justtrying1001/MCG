@@ -127,7 +127,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   REVERSE: {
     code: "REVERSE",
     label: "Reverse",
-    badgeLabel: "REV",
+    badgeLabel: "REVERSE",
     editionClass: "ed-reverse",
     needsReverseLayers: true,
     needsBrillanteLayer: false,
@@ -137,7 +137,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   BRILLANTE: {
     code: "BRILLANTE",
     label: "Brillante",
-    badgeLabel: "BRILL",
+    badgeLabel: "BRILLIANT",
     editionClass: "ed-brillante",
     needsReverseLayers: false,
     needsBrillanteLayer: true,
