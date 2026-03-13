@@ -12,6 +12,7 @@ import {
 import { drawWeightForTemplate, slotTypeForIndex, type PackSlotType } from "@/lib/domain/acquisition/slot-weights";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
+import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 
@@ -329,6 +330,8 @@ async function openPackByCodeDbNative(params: {
       });
       rewardGrantId = grant.id;
     }
+
+    await applyContestEntryQuestProgressionTx(tx, params.userId);
 
     return {
       pulledCardsMvp,
