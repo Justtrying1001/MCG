@@ -73,6 +73,12 @@ export default function QuestLibraryPage() {
           <h1 className="admin-title">Quests</h1>
           <p className="admin-subtitle">Stylized social quest cards. Click a card for stats and management actions.</p>
           {message ? <p className="contest-inline-note">{message}</p> : null}
+          <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
+            <span className="admin-badge neutral">Total {stats.all}</span>
+            <span className="admin-badge neutral">Active {stats.active}</span>
+            <span className="admin-badge neutral">Archived {stats.archived}</span>
+            <span className="admin-badge neutral">Deleted {stats.deleted}</span>
+          </div>
         </div>
         <div className="admin-actions-row">
           <Link href="/admin/quests/builder?objectiveType=FOLLOW_X" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create Quest</Link>
