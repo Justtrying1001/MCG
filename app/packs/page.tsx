@@ -158,7 +158,7 @@ export default function PacksPage() {
           <div>
             <h1 className="page-title">Open Packs</h1>
             <p className="page-subtitle">
-              Dark, clean, and reveal-first. Open fast, flip one by one, collect forever.
+              Open a Genesis Booster, flip each card in order, and keep every reveal.
             </p>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function PacksPage() {
 
               <div className="pack-action-copy">
                 <p className="pack-action-title">Genesis Booster — Standard Pull</p>
-                <p className="pack-action-desc">Reveal all {cardsPerPack} cards in sequence.</p>
+                <p className="pack-action-desc">Flip all {cardsPerPack} cards one by one.</p>
               </div>
 
               <Button
@@ -217,7 +217,7 @@ export default function PacksPage() {
 
             <aside className="pack-overview-card">
               <p className="pack-info-title">Genesis Booster · S01</p>
-              <p className="pack-info-desc">Fast open, clean UI, cards first.</p>
+              <p className="pack-info-desc">A premium five-card pull with live supply and transparent odds.</p>
 
               <div className="pack-metrics">
                 <div className="pack-metric-line">
@@ -252,7 +252,7 @@ export default function PacksPage() {
               </div>
 
               <div className="pack-drop-hover">
-                <p className="pack-drop-trigger">Hover for live drop rates by rarity and edition.</p>
+                <p className="pack-drop-trigger">Hover to view current drop rates by rarity and edition.</p>
                 <div className="pack-drop-popover" role="tooltip" aria-label="Drop rates details">
                   <div className="pack-rates-split">
                     <div>
@@ -282,8 +282,8 @@ export default function PacksPage() {
               </div>
 
               <div className="pack-side-card">
-                <p className="pack-side-card-label">Pack summary</p>
-                <p className="pack-side-card-copy">{cardsPerPack} cards. Flip in order. Premium guaranteed.</p>
+                <p className="pack-side-card-label">How it works</p>
+                <p className="pack-side-card-copy">Open one pack, reveal five cards in sequence, and add them instantly to your collection.</p>
               </div>
             </aside>
           </div>
