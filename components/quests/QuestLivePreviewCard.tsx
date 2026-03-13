@@ -1,4 +1,11 @@
-import { getQuestObjectiveText, resolveSocialCtaLabel, sanitizeOptionalText, type BuilderObjectiveType, type SocialAction } from "@/lib/domain/quests/social";
+import {
+  getQuestObjectiveText,
+  resolveSocialCtaLabel,
+  sanitizeOptionalText,
+  type BuilderObjectiveType,
+  type MilestoneType,
+  type SocialAction,
+} from "@/lib/domain/quests/social";
 
 import styles from "./QuestLivePreviewCard.module.css";
 
@@ -11,7 +18,9 @@ type Props = {
   statusLabel?: string;
   targetUrl?: string | null;
   ctaLabel?: string | null;
-  milestoneThreshold?: number;
+  milestoneType?: MilestoneType;
+  milestoneTargetValue?: number;
+  progressValue?: number;
 };
 
 export function QuestLivePreviewCard({
@@ -23,11 +32,18 @@ export function QuestLivePreviewCard({
   statusLabel = "AVAILABLE",
   targetUrl,
   ctaLabel,
-  milestoneThreshold,
+  milestoneType,
+  milestoneTargetValue,
+  progressValue = 0,
 }: Props) {
   const resolvedTitle = title.trim() || "Untitled quest";
   const resolvedDescription = description.trim() || "No description provided.";
-  const objectiveText = getQuestObjectiveText({ objectiveType, socialAction, milestoneThreshold });
+  const objectiveText = getQuestObjectiveText({
+    objectiveType,
+    socialAction,
+    milestoneType,
+    milestoneTargetValue,
+  });
 
   const hasTarget = Boolean(sanitizeOptionalText(targetUrl));
   const socialQuest = objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT";
@@ -47,6 +63,10 @@ export function QuestLivePreviewCard({
 
         <p className={styles.previewObjective}>{objectiveText}</p>
         <p className="contest-inline-note">Reward: <strong>{rewardPoints} points</strong></p>
+
+        {objectiveType === "MILESTONE" ? (
+          <p className="contest-inline-note">Progress: {Math.max(0, progressValue)} / {Math.max(0, Number(milestoneTargetValue ?? 0))}</p>
+        ) : null}
 
         {socialQuest ? (
           <div className={styles.previewCtaRow}>

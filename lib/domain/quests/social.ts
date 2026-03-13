@@ -1,6 +1,7 @@
-export type BuilderObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "CONTEST_MILESTONE";
+export type BuilderObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "MILESTONE";
 export type SocialAction = "LIKE" | "RETWEET" | "COMMENT";
 export type SocialUrlKind = "PROFILE" | "TWEET" | "UNKNOWN";
+export type MilestoneType = "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
 
 export type SocialValidationIssue = {
   field: "targetUrl";
@@ -105,10 +106,24 @@ export function resolveSocialCtaLabelForUserQuest(quest: {
   });
 }
 
+export function getMilestoneObjectiveText(milestoneType: MilestoneType | null | undefined, targetValue: number) {
+  const target = Math.max(0, Number(targetValue));
+  switch (milestoneType) {
+    case "PACK_OPEN_COUNT":
+      return `Open ${target} packs`;
+    case "CARD_COLLECTION_COUNT":
+      return `Collect ${target} cards`;
+    case "CONTEST_PARTICIPATION_COUNT":
+    default:
+      return `Participate in ${target} contests`;
+  }
+}
+
 export function getQuestObjectiveText(input: {
   objectiveType: BuilderObjectiveType;
   socialAction?: SocialAction | null;
-  milestoneThreshold?: number | null;
+  milestoneType?: MilestoneType | null;
+  milestoneTargetValue?: number | null;
 }) {
   if (input.objectiveType === "FOLLOW_X") return "Follow this account on X";
   if (input.objectiveType === "SOCIAL_ENGAGEMENT") {
@@ -124,5 +139,5 @@ export function getQuestObjectiveText(input: {
     }
   }
 
-  return `Enter ${Math.max(0, Number(input.milestoneThreshold ?? 0))} contests`;
+  return getMilestoneObjectiveText(input.milestoneType, Number(input.milestoneTargetValue ?? 0));
 }

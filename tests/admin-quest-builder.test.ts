@@ -47,28 +47,69 @@ describe("quest builder", () => {
     expect(validPayload.config.socialAction).toBe("LIKE");
   });
 
-  it("requires positive threshold for CONTEST_MILESTONE", () => {
+  it("requires milestone type and target for MILESTONE", () => {
     const invalid = validateQuestBuilderInput({
       code: "C1_MILESTONE",
       title: "Enter contests",
-      objectiveType: "CONTEST_MILESTONE",
-      milestoneThreshold: 0,
+      objectiveType: "MILESTONE",
+      targetValue: 0,
       rewardPoints: 50,
     });
 
     expect(invalid.blocking).toBe(true);
-    expect(invalid.issues.some((issue) => issue.field === "milestoneThreshold")).toBe(true);
+    expect(invalid.issues.some((issue) => issue.field === "targetValue")).toBe(true);
 
     const payload = toQuestRuntimePayload({
       code: "C1_MILESTONE",
-      title: "Enter contests",
-      objectiveType: "CONTEST_MILESTONE",
-      milestoneThreshold: 3,
+      title: "Open packs",
+      objectiveType: "MILESTONE",
+      milestoneType: "PACK_OPEN_COUNT",
+      targetValue: 3,
       rewardPoints: 50,
     });
 
     expect(payload.type).toBe("CONTEST_COUNT_MILESTONE");
-    expect(payload.config.threshold).toBe(3);
+    expect(payload.config.targetValue).toBe(3);
+    expect(payload.config.milestoneType).toBe("PACK_OPEN_COUNT");
+  });
+
+  it("enforces valid url scheme and warns for objective/url mismatch", () => {
+    const invalidScheme = validateQuestBuilderInput({
+      code: "X",
+      title: "Y",
+      objectiveType: "FOLLOW_X",
+      targetUrl: "ftp://x.com/memecardgame",
+      rewardPoints: 5,
+    });
+
+    expect(invalidScheme.blocking).toBe(true);
+    expect(invalidScheme.issues.some((issue) => issue.field === "targetUrl" && issue.severity === "ERROR")).toBe(true);
+
+    const mismatch = validateQuestBuilderInput({
+      code: "X2",
+      title: "Y2",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: "https://x.com/memecardgame",
+      rewardPoints: 5,
+    });
+
+    expect(mismatch.blocking).toBe(false);
+    expect(mismatch.issues.some((issue) => issue.message.includes("tweet URL"))).toBe(true);
+  });
+
+  it("builds CTA fallback preview when no custom label", () => {
+    const preview = buildQuestUserPreview({
+      code: "Q",
+      title: "Like this tweet",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: null,
+      rewardPoints: 10,
+    });
+
+    expect(preview.ctaCopy).toContain("disabled");
+    expect(preview.ctaCopy).toContain("Link unavailable");
   });
 
   it("enforces valid url scheme and warns for objective/url mismatch", () => {

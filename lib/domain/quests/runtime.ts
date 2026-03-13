@@ -31,6 +31,12 @@ type SocialQuestConfigSummary = {
   socialAction: string | null;
 };
 
+type MilestoneType = "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
+type MilestoneConfigSummary = {
+  milestoneType: MilestoneType;
+  targetValue: number;
+};
+
 
 export type InternalQuestAnalytics = {
   progressCount: number;
@@ -97,6 +103,8 @@ export type QuestForUserRow = {
   } | null;
   configSummary: {
     threshold?: number;
+    milestoneType?: MilestoneType;
+    targetValue?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;
     ctaLabel?: string | null;
@@ -115,13 +123,31 @@ function isSocialSubmitQuest(type: QuestType) {
   return type === QuestType.SOCIAL_FOLLOW_X || type === QuestType.SOCIAL_ENGAGEMENT_X;
 }
 
+function parseMilestoneType(value: unknown): MilestoneType | null {
+  if (value === "PACK_OPEN_COUNT" || value === "CONTEST_PARTICIPATION_COUNT" || value === "CARD_COLLECTION_COUNT") {
+    return value;
+  }
+
+  return null;
+}
+
 function parseContestMilestoneThreshold(config: Prisma.JsonValue | null): number | null {
+  const parsed = parseMilestoneConfig(config);
+  return parsed?.targetValue ?? null;
+}
+
+function parseMilestoneConfig(config: Prisma.JsonValue | null): MilestoneConfigSummary | null {
   if (!config || typeof config !== "object" || Array.isArray(config)) return null;
 
-  const threshold = (config as Record<string, unknown>).threshold;
-  if (!Number.isInteger(threshold) || Number(threshold) <= 0) return null;
+  const root = config as Record<string, unknown>;
+  const rawTarget = root.targetValue ?? root.threshold;
+  const targetValue = Number(rawTarget);
+  if (!Number.isInteger(targetValue) || targetValue <= 0) return null;
 
-  return Number(threshold);
+  return {
+    milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTEST_PARTICIPATION_COUNT",
+    targetValue,
+  };
 }
 
 function parseSocialSubmitConfig(config: Prisma.JsonValue | null): SocialQuestConfigSummary {
@@ -172,12 +198,18 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
       throw new QuestRuntimeError("config must be an object", 400);
     }
 
-    const threshold = (config as Record<string, unknown>).threshold;
-    if (!Number.isInteger(threshold) || Number(threshold) <= 0) {
-      throw new QuestRuntimeError("config.threshold must be a positive integer", 400);
+    const root = config as Record<string, unknown>;
+    const rawTarget = root.targetValue ?? root.threshold;
+    const targetValue = Number(rawTarget);
+    if (!Number.isInteger(targetValue) || targetValue <= 0) {
+      throw new QuestRuntimeError("config.targetValue (or threshold) must be a positive integer", 400);
     }
 
-    return { threshold: Number(threshold) };
+    return {
+      milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTEST_PARTICIPATION_COUNT",
+      targetValue,
+      threshold: targetValue,
+    };
   }
 
   if (isSocialSubmitQuest(type)) {
@@ -207,9 +239,23 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
   return config as Prisma.InputJsonValue;
 }
 
-export async function applyContestEntryQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
+async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: string) {
+  const [contestParticipations, packOpenCount, collectionAggregate] = await Promise.all([
+    tx.contestEntry.count({ where: { userId } }),
+    tx.packOpening.count({ where: { userId } }),
+    tx.userCard.aggregate({ where: { userId }, _sum: { quantity: true } }),
+  ]);
+
+  return {
+    CONTEST_PARTICIPATION_COUNT: contestParticipations,
+    PACK_OPEN_COUNT: packOpenCount,
+    CARD_COLLECTION_COUNT: collectionAggregate._sum.quantity ?? 0,
+  } as const;
+}
+
+async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
   const now = new Date();
-  const contestEntriesCount = await tx.contestEntry.count({ where: { userId } });
+  const stats = await getUserMilestoneStatsTx(tx, userId);
 
   const quests = await tx.questDefinition.findMany({
     where: {
@@ -222,10 +268,11 @@ export async function applyContestEntryQuestProgressionTx(tx: Prisma.Transaction
   for (const quest of quests) {
     if (!nowInActiveWindow(now, quest)) continue;
 
-    const threshold = parseContestMilestoneThreshold(quest.config);
-    if (!threshold) continue;
+    const milestoneConfig = parseMilestoneConfig(quest.config);
+    if (!milestoneConfig) continue;
 
-    const reached = contestEntriesCount >= threshold;
+    const progressMetric = stats[milestoneConfig.milestoneType];
+    const reached = progressMetric >= milestoneConfig.targetValue;
 
     const existing = await tx.userQuestProgress.findUnique({
       where: {
@@ -234,7 +281,7 @@ export async function applyContestEntryQuestProgressionTx(tx: Prisma.Transaction
     });
 
     if (!existing) {
-      const status = reached ? UserQuestStatus.COMPLETED : (contestEntriesCount > 0 ? UserQuestStatus.IN_PROGRESS : UserQuestStatus.AVAILABLE);
+      const status = reached ? UserQuestStatus.COMPLETED : (progressMetric > 0 ? UserQuestStatus.IN_PROGRESS : UserQuestStatus.AVAILABLE);
       const completedAt = reached ? now : null;
       const claimedAt = reached ? now : null;
 
@@ -243,13 +290,13 @@ export async function applyContestEntryQuestProgressionTx(tx: Prisma.Transaction
           userId,
           questId: quest.id,
           status,
-          progressValue: contestEntriesCount,
+          progressValue: progressMetric,
           completedAt,
           claimedAt,
         },
       });
     } else {
-      const nextProgress = Math.max(existing.progressValue, contestEntriesCount);
+      const nextProgress = Math.max(existing.progressValue, progressMetric);
 
       if (existing.status === UserQuestStatus.COMPLETED) {
         if (nextProgress > existing.progressValue) {
@@ -289,16 +336,20 @@ export async function applyContestEntryQuestProgressionTx(tx: Prisma.Transaction
         metadata: {
           questCode: quest.code,
           questType: quest.type,
-          trigger: "contest_entry_count",
+          trigger: `milestone_${milestoneConfig.milestoneType}`,
         },
       });
     }
   }
 }
 
+export async function applyContestEntryQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
+  await applyAutoMilestoneQuestProgressionTx(tx, userId);
+}
+
 export async function syncContestEntryQuestProgression(userId: string) {
   return prisma.$transaction(async (tx) => {
-    await applyContestEntryQuestProgressionTx(tx, userId);
+    await applyAutoMilestoneQuestProgressionTx(tx, userId);
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
@@ -517,9 +568,10 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
     .filter((quest) => nowInActiveWindow(now, quest))
     .map((quest) => {
       const progress = progressByQuestId.get(quest.id);
-      const threshold = quest.type === QuestType.CONTEST_COUNT_MILESTONE
-        ? parseContestMilestoneThreshold(quest.config)
+      const milestoneConfig = quest.type === QuestType.CONTEST_COUNT_MILESTONE
+        ? parseMilestoneConfig(quest.config)
         : null;
+      const threshold = milestoneConfig?.targetValue ?? null;
       const latestSubmission = latestSubmissionByQuestId.get(quest.id) ?? null;
       const socialConfig = isSocialSubmitQuest(quest.type) ? parseSocialSubmitConfig(quest.config) : null;
 
@@ -551,6 +603,7 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
           : null,
         configSummary: {
           ...(threshold ? { threshold } : {}),
+          ...(milestoneConfig ? { milestoneType: milestoneConfig.milestoneType, targetValue: milestoneConfig.targetValue } : {}),
           ...(socialConfig ? socialConfig : {}),
         },
       };

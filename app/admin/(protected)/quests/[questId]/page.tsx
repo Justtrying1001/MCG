@@ -71,6 +71,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
     const config = data?.quest.config ?? {};
     return {
       threshold: typeof config.threshold === "number" ? config.threshold : null,
+      targetValue: typeof config.targetValue === "number" ? config.targetValue : null,
+      milestoneType: typeof config.milestoneType === "string" ? config.milestoneType : null,
       targetUrl: typeof config.targetUrl === "string" ? config.targetUrl : null,
       instructions: typeof config.instructions === "string" ? config.instructions : null,
       socialAction: typeof config.socialAction === "string" ? config.socialAction : null,
@@ -102,7 +104,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
 
           <section className="admin-panel">
             <p className="admin-section-title">Quest config summary</p>
-            <p className="contest-inline-note">Threshold: {configSummary.threshold ?? "—"}</p>
+            <p className="contest-inline-note">Milestone type: {configSummary.milestoneType ?? "—"}</p>
+            <p className="contest-inline-note">Target value: {configSummary.targetValue ?? configSummary.threshold ?? "—"}</p>
             <p className="contest-inline-note">Social action: {configSummary.socialAction ?? "—"}</p>
             <p className="contest-inline-note">Target URL: {configSummary.targetUrl ?? "—"}</p>
             <p className="contest-inline-note">Instructions: {configSummary.instructions ?? "—"}</p>

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { QuestLivePreviewCard } from "@/components/quests/QuestLivePreviewCard";
 import { Button } from "@/components/ui/Button";
-import type { BuilderObjectiveType, SocialAction } from "@/lib/domain/quests/social";
+import type { BuilderObjectiveType, MilestoneType, SocialAction } from "@/lib/domain/quests/social";
 
 type PreviewPayload = {
   title: string;
@@ -36,12 +36,13 @@ export default function QuestBuilderPage() {
   const [description, setDescription] = useState("");
   const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>("FOLLOW_X");
   const [socialAction, setSocialAction] = useState<SocialAction>("LIKE");
+  const [milestoneType, setMilestoneType] = useState<MilestoneType>("CONTEST_PARTICIPATION_COUNT");
+  const [targetValue, setTargetValue] = useState("3");
   const [targetUrl, setTargetUrl] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
   const [instructions, setInstructions] = useState("");
   const [proofRequired, setProofRequired] = useState(true);
   const [rewardPoints, setRewardPoints] = useState("100");
-  const [milestoneThreshold, setMilestoneThreshold] = useState("3");
   const [validationMode, setValidationMode] = useState<"AUTO" | "SUBMIT" | "MANUAL_REVIEW">("MANUAL_REVIEW");
   const [isActive, setIsActive] = useState(true);
   const [oneTime, setOneTime] = useState(true);
@@ -78,15 +79,17 @@ export default function QuestBuilderPage() {
 
       if (quest.type === "SOCIAL_FOLLOW_X") setObjectiveType("FOLLOW_X");
       if (quest.type === "SOCIAL_ENGAGEMENT_X") setObjectiveType("SOCIAL_ENGAGEMENT");
-      if (quest.type === "CONTEST_COUNT_MILESTONE") setObjectiveType("CONTEST_MILESTONE");
+      if (quest.type === "CONTEST_COUNT_MILESTONE") setObjectiveType("MILESTONE");
 
       const config = (quest.config ?? {}) as Record<string, unknown>;
       if (typeof config.targetUrl === "string") setTargetUrl(config.targetUrl);
       if (typeof config.ctaLabel === "string") setCtaLabel(config.ctaLabel);
       if (typeof config.instructions === "string") setInstructions(config.instructions);
       if (typeof config.proofRequired === "boolean") setProofRequired(config.proofRequired);
-      if (typeof config.threshold === "number") setMilestoneThreshold(String(config.threshold));
       if (typeof config.socialAction === "string") setSocialAction(config.socialAction as SocialAction);
+      if (typeof config.milestoneType === "string") setMilestoneType(config.milestoneType as MilestoneType);
+      if (typeof config.targetValue === "number") setTargetValue(String(config.targetValue));
+      if (typeof config.threshold === "number" && !(typeof config.targetValue === "number")) setTargetValue(String(config.threshold));
       setLoading(false);
     };
     void load();
@@ -98,16 +101,17 @@ export default function QuestBuilderPage() {
     description,
     objectiveType,
     socialAction,
+    milestoneType,
+    targetValue: Number(targetValue),
     targetUrl,
     ctaLabel,
     instructions,
     proofRequired,
     rewardPoints: Number(rewardPoints),
-    milestoneThreshold: Number(milestoneThreshold),
     validationMode,
     isActive,
     oneTime,
-  }), [code, title, description, objectiveType, socialAction, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, milestoneThreshold, validationMode, isActive, oneTime]);
+  }), [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, validationMode, isActive, oneTime]);
 
   const runValidate = async () => {
     setMessage("");
@@ -172,7 +176,7 @@ export default function QuestBuilderPage() {
         <header className="quest-builder-header">
           <div>
             <h1 className="admin-title">{isEditMode ? "Edit Quest" : "Quest Builder"}</h1>
-            <p className="admin-subtitle">{isEditMode ? "Update all quest fields with full live preview and policy validation." : "Create production-ready social and milestone quests with clear user intent and moderation policies."}</p>
+            <p className="admin-subtitle">{isEditMode ? "Update all quest fields with full live preview and policy validation." : "Create social quests and milestones with clean UX and runtime-ready config."}</p>
           </div>
           <div className="quest-builder-header-actions">
             <Button variant="ghost" onClick={() => void runValidate()} disabled={validating || loading}>{validating ? "Validating…" : "Validate + Preview"}</Button>
@@ -189,7 +193,7 @@ export default function QuestBuilderPage() {
             <section className="quest-form-section">
               <h3 className="contest-section-title">1. Identity</h3>
               <div className="admin-field-grid">
-                <input className="input" placeholder="Code (ex: CAMPAIGN1_FOLLOW)" value={code} onChange={(event) => setCode(event.target.value)} />
+                <input className="input" placeholder="Code (ex: Q_SOCIAL_FOLLOW)" value={code} onChange={(event) => setCode(event.target.value)} />
                 <input className="input" placeholder="Quest title" value={title} onChange={(event) => setTitle(event.target.value)} />
                 <input className="input" placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
               </div>
@@ -199,10 +203,11 @@ export default function QuestBuilderPage() {
               <h3 className="contest-section-title">2. Objective</h3>
               <div className="admin-field-grid">
                 <select className="input" value={objectiveType} onChange={(event) => setObjectiveType(event.target.value as BuilderObjectiveType)}>
-                  <option value="FOLLOW_X">Follow X</option>
-                  <option value="SOCIAL_ENGAGEMENT">Like / RT / Comment</option>
-                  <option value="CONTEST_MILESTONE">Contest milestone</option>
+                  <option value="FOLLOW_X">Social · Follow X</option>
+                  <option value="SOCIAL_ENGAGEMENT">Social · Like / RT / Comment</option>
+                  <option value="MILESTONE">Milestone / Objective</option>
                 </select>
+
                 {objectiveType === "SOCIAL_ENGAGEMENT" ? (
                   <select className="input" value={socialAction} onChange={(event) => setSocialAction(event.target.value as SocialAction)}>
                     <option value="LIKE">LIKE</option>
@@ -210,10 +215,19 @@ export default function QuestBuilderPage() {
                     <option value="COMMENT">COMMENT</option>
                   </select>
                 ) : null}
-                {objectiveType === "CONTEST_MILESTONE" ? (
-                  <input className="input" type="number" min={1} placeholder="Milestone threshold" value={milestoneThreshold} onChange={(event) => setMilestoneThreshold(event.target.value)} />
+
+                {objectiveType === "MILESTONE" ? (
+                  <>
+                    <select className="input" value={milestoneType} onChange={(event) => setMilestoneType(event.target.value as MilestoneType)}>
+                      <option value="CONTEST_PARTICIPATION_COUNT">Contest participation count</option>
+                      <option value="PACK_OPEN_COUNT">Pack open count</option>
+                      <option value="CARD_COLLECTION_COUNT">Card collection count</option>
+                    </select>
+                    <input className="input" type="number" min={1} placeholder="Target value" value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
+                  </>
                 ) : null}
-                {objectiveType !== "CONTEST_MILESTONE" ? (
+
+                {objectiveType !== "MILESTONE" ? (
                   <>
                     <input className="input" placeholder="target_url (https://x.com/username or .../status/123)" value={targetUrl} onChange={(event) => setTargetUrl(event.target.value)} />
                     <input className="input" placeholder="CTA label (optional, ex: Open on X)" value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} />
@@ -265,7 +279,9 @@ export default function QuestBuilderPage() {
             statusLabel={isActive ? "AVAILABLE" : "INACTIVE"}
             targetUrl={targetUrl}
             ctaLabel={ctaLabel}
-            milestoneThreshold={Number(milestoneThreshold) || 0}
+            milestoneType={objectiveType === "MILESTONE" ? milestoneType : undefined}
+            milestoneTargetValue={objectiveType === "MILESTONE" ? Number(targetValue) || 0 : undefined}
+            progressValue={objectiveType === "MILESTONE" ? Math.min(Number(targetValue) || 0, 1) : 0}
           />
         </div>
       </section>
