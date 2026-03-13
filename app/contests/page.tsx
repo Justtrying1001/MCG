@@ -1,34 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { ContestTile } from "@/components/contests/ContestTile";
+import type { ContestListItem } from "@/components/contests/types";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 
-type ContestRule = {
-  id: string;
-  cardSetId: string | null;
-  maxRosterSize: number | null;
-};
-
-type ContestListItem = {
-  id: string;
-  code: string;
-  title: string;
-  status: "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
-  startsAt: string | null;
-  lockAt: string | null;
-  endsAt: string | null;
-  rules: ContestRule[];
-  _count: { entries: number };
-};
+type ContestTab = "open" | "live" | "settled";
 
 export default function ContestsPage() {
   const { me, loading } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<ContestTab>("open");
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -56,93 +48,64 @@ export default function ContestsPage() {
 
   const grouped = useMemo(() => {
     return {
-      open: contests.filter((c) => c.status === "OPEN" || c.status === "LOCKED" || c.status === "LIVE"),
-      settled: contests.filter((c) => c.status === "SETTLED"),
+      open: contests.filter((c) => c.status === "OPEN" || c.status === "DRAFT"),
+      live: contests.filter((c) => c.status === "LOCKED" || c.status === "LIVE"),
+      settled: contests.filter((c) => c.status === "SETTLED" || c.status === "CANCELED"),
     };
   }, [contests]);
 
+  const displayed = grouped[tab];
   const guestBlocked = !loading && me?.mode === "guest";
 
   return (
     <SiteShell>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contests</h1>
-          <p className="page-subtitle">
-            Discover active contests, lock your lineup, and track the leaderboard in one dedicated flow.
-          </p>
+          <h1 className="page-title">Contests Arena</h1>
+          <p className="page-subtitle">Choose your tournament, lock your lineup, and climb the leaderboard.</p>
         </div>
       </div>
 
-      {guestBlocked ? <GuestNotice /> : null}
-
-      {isLoading ? (
-        <div className="empty-state"><p className="empty-state-title">Loading contests…</p></div>
-      ) : error ? (
-        <div className="empty-state"><p className="empty-state-title">{error}</p></div>
-      ) : contests.length === 0 ? (
-        <div className="empty-state">
-          <p className="empty-state-title">No contests are currently published.</p>
-          <p className="empty-state-desc">Check back soon for the next lock window.</p>
+      <section className="contest-dashboard">
+        <div className="contest-info-panel">
+          <p className="contest-inline-note">🧭 Deadlines: lineup lock at contest lock time · live scoring during LIVE status.</p>
+          <p className="contest-inline-note">🎁 Rewards: season points + exclusive cards based on your final rank.</p>
         </div>
-      ) : (
-        <>
-          <ContestSection title="Active + Upcoming" contests={grouped.open} />
-          <ContestSection title="Settled" contests={grouped.settled} />
-        </>
-      )}
+
+        <div className="contest-tabs" role="tablist" aria-label="Contest categories">
+          <button type="button" className={`contest-tab${tab === "open" ? " active" : ""}`} onClick={() => setTab("open")} role="tab" aria-selected={tab === "open"}>Active & Upcoming</button>
+          <button type="button" className={`contest-tab${tab === "live" ? " active" : ""}`} onClick={() => setTab("live")} role="tab" aria-selected={tab === "live"}>Live</button>
+          <button type="button" className={`contest-tab${tab === "settled" ? " active" : ""}`} onClick={() => setTab("settled")} role="tab" aria-selected={tab === "settled"}>Completed</button>
+        </div>
+
+        {guestBlocked ? <GuestNotice /> : null}
+
+        {isLoading ? (
+          <div className="empty-state"><p className="empty-state-title">Loading contests…</p></div>
+        ) : error ? (
+          <div className="empty-state"><p className="empty-state-title">{error}</p></div>
+        ) : contests.length === 0 ? (
+          <div className="empty-state">
+            <p className="empty-state-title">No contests are currently published.</p>
+            <p className="empty-state-desc">Check back soon for the next lock window.</p>
+          </div>
+        ) : (
+          <section className="contest-section">
+            <h2 className="contest-section-title">{tab === "open" ? "Build your lineup" : tab === "live" ? "Current round" : "History"}</h2>
+            <div className="contest-list contest-scroller">
+              {displayed.length ? displayed.map((contest) => <ContestTile contest={contest} nowTs={nowTs} key={contest.id} />) : <p className="contest-inline-note">No contests available in this section.</p>}
+            </div>
+          </section>
+        )}
+      </section>
     </SiteShell>
-  );
-}
-
-function ContestSection({ title, contests }: { title: string; contests: ContestListItem[] }) {
-  if (contests.length === 0) return null;
-
-  return (
-    <section className="contest-section">
-      <h2 className="contest-section-title">{title}</h2>
-      <div className="contest-list">
-        {contests.map((contest) => {
-          const rule = contest.rules[0];
-          return (
-            <Link href={`/contests/${contest.id}`} key={contest.id} className="contest-card">
-              <div className="contest-card-top">
-                <p className="contest-code">{contest.code}</p>
-                <span className={`contest-status status-${contest.status.toLowerCase()}`}>{contest.status}</span>
-              </div>
-              <h3 className="contest-title">{contest.title}</h3>
-              <div className="contest-meta-grid">
-                <ContestMeta label="Entries" value={String(contest._count.entries)} />
-                <ContestMeta label="Roster size" value={String(rule?.maxRosterSize ?? 5)} />
-                <ContestMeta label="Starts" value={formatDate(contest.startsAt)} />
-                <ContestMeta label="Lock" value={formatDate(contest.lockAt)} />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function ContestMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
   );
 }
 
 function GuestNotice() {
   return (
     <div className="contest-guest-notice">
-      Contest participation requires an authenticated account with owned card instances. Guest mode can open packs and preview collection data, but cannot enter contests.
+      Contest participation requires an authenticated account with owned card instances. Guest mode can preview contests but cannot enter.
     </div>
   );
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString();
 }

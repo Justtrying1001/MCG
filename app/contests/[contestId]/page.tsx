@@ -2,17 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
+import { ContestHero } from "@/components/contests/ContestHero";
+import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
+import { LineupSlot } from "@/components/contests/LineupSlot";
+import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
+import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
-
-type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
-
-type ContestRule = {
-  id: string;
-  cardSetId: string | null;
-  maxRosterSize: number | null;
-};
 
 type ContestDetail = {
   contest: {
@@ -37,18 +35,6 @@ type RankingPayload = {
   rankings: Array<{ id: string; userId: string; rank: number; score: number }>;
 };
 
-type LineupOption = {
-  instanceId: string;
-  cardTemplateId: string;
-  lockState: string | null;
-  cardSetId: string;
-  cardSetCode: string;
-  cardSetName: string;
-  rarityCode: string;
-  editionCode: string;
-  name: string;
-};
-
 export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
@@ -56,7 +42,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const [submitState, setSubmitState] = useState<"idle" | "saving">("idle");
+  const [submitState, setSubmitState] = useState<"idle" | "saving" | "success">("idle");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (loading || !me || me.mode === "guest") return;
@@ -103,19 +97,32 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return options.filter((item) => item.cardSetId === rule.cardSetId);
   }, [options, rule?.cardSetId]);
 
-  const selectedCards = useMemo(
-    () => filteredOptions.filter((option) => selected.includes(option.instanceId)),
-    [filteredOptions, selected]
-  );
+  const selectedCards = useMemo(() => {
+    return selected.map((id) => filteredOptions.find((option) => option.instanceId === id) ?? null);
+  }, [filteredOptions, selected]);
+
+  const countdown = detail ? formatCountdown(getTargetDate(detail.contest.status, detail.contest.lockAt, detail.contest.endsAt), nowTs) : "—";
 
   const toggle = (instanceId: string) => {
     if (!canEnter) return;
 
     setSelected((prev) => {
+      if (activeSlot !== null) {
+        const next = [...prev];
+        const existingIndex = next.indexOf(instanceId);
+        if (existingIndex >= 0) next.splice(existingIndex, 1);
+        next[activeSlot] = instanceId;
+        return next.filter(Boolean).slice(0, maxRosterSize);
+      }
       if (prev.includes(instanceId)) return prev.filter((id) => id !== instanceId);
       if (prev.length >= maxRosterSize) return prev;
       return [...prev, instanceId];
     });
+  };
+
+  const removeFromSlot = (slot: number) => {
+    if (!canEnter) return;
+    setSelected((prev) => prev.filter((_, index) => index !== slot));
   };
 
   const submitEntry = async () => {
@@ -140,15 +147,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     if (updated.ok) {
       setDetail((await updated.json()) as ContestDetail);
     }
-    setSubmitState("idle");
+    setSubmitState("success");
   };
 
   return (
     <SiteShell>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contest Detail</h1>
-          <p className="page-subtitle">Read rules, lock an eligible lineup, and track leaderboard outcomes.</p>
+          <h1 className="page-title">Contest Command Center</h1>
+          <p className="page-subtitle">Build your lineup, confirm your entry, and track your rank.</p>
         </div>
       </div>
 
@@ -159,106 +166,92 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       {!detail ? (
         <div className="empty-state"><p className="empty-state-title">{error || "Loading contest…"}</p></div>
       ) : (
-        <>
-          <section className="contest-detail-card">
-            <div className="contest-card-top">
-              <p className="contest-code">{detail.contest.code}</p>
-              <span className={`contest-status status-${detail.contest.status.toLowerCase()}`}>{detail.contest.status}</span>
-            </div>
-            <h2 className="contest-title">{detail.contest.title}</h2>
-            <div className="contest-meta-grid">
-              <ContestMeta label="Entries" value={String(detail.contest._count.entries)} />
-              <ContestMeta label="Roster size" value={String(maxRosterSize)} />
-              <ContestMeta label="Starts" value={formatDate(detail.contest.startsAt)} />
-              <ContestMeta label="Lock" value={formatDate(detail.contest.lockAt)} />
-              <ContestMeta label="Ends" value={formatDate(detail.contest.endsAt)} />
-              <ContestMeta label="Set restriction" value={rule?.cardSetId ? "Restricted" : "Any set"} />
-            </div>
+        <div className="contest-dashboard">
+          <ContestHero
+            code={detail.contest.code}
+            title={detail.contest.title}
+            status={detail.contest.status}
+            startsAt={detail.contest.startsAt}
+            lockAt={detail.contest.lockAt}
+            endsAt={detail.contest.endsAt}
+            rosterSize={maxRosterSize}
+            restrictedSet={Boolean(rule?.cardSetId)}
+            entries={detail.contest._count.entries}
+          />
+
+          <section className="contest-info-panel">
+            <p className="contest-inline-note">⏱ Timer: {countdown}</p>
+            <p className="contest-inline-note">📜 Rule: {rule?.cardSetId ? "Restricted set" : "All sets allowed"} · {maxRosterSize} required slots.</p>
           </section>
 
           <section className="contest-section">
-            <h3 className="contest-section-title">Your Entry</h3>
+            <h3 className="contest-section-title">Lineup Manager</h3>
             {detail.userEntry ? (
-              <p className="contest-inline-note">Entry locked ({detail.userEntry.status}). You cannot change lineup in this MVP flow.</p>
+              <p className="contest-inline-note">Entry locked ({detail.userEntry.status}). Your lineup is frozen.</p>
             ) : (
-              <p className="contest-inline-note">Select exactly {maxRosterSize} owned instances, then submit.</p>
+              <p className="contest-inline-note">Select exactly {maxRosterSize} cards (visual slots + selection modal).</p>
             )}
 
             <div className="contest-selected-lineup">
-              {Array.from({ length: maxRosterSize }).map((_, index) => {
-                const card = selectedCards[index];
-                return (
-                  <div className="contest-slot" key={index}>
-                    <span className="contest-slot-index">{index + 1}</span>
-                    <span className="contest-slot-name">{card ? `${card.name} · ${card.rarityCode}/${card.editionCode}` : "Empty"}</span>
-                  </div>
-                );
-              })}
+              {Array.from({ length: maxRosterSize }).map((_, index) => (
+                <LineupSlot
+                  key={index}
+                  index={index}
+                  card={selectedCards[index]}
+                  canEdit={Boolean(canEnter)}
+                  onRemove={() => removeFromSlot(index)}
+                  onOpenPicker={() => {
+                    setActiveSlot(index);
+                    setModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
 
-            {canEnter ? (
-              <Button onClick={() => void submitEntry()} disabled={submitState === "saving" || selected.length !== maxRosterSize}>
-                {submitState === "saving" ? "Submitting…" : "Submit Contest Entry"}
-              </Button>
-            ) : null}
-
-            <div className="contest-option-grid">
-              {filteredOptions.map((item) => {
-                const isSelected = selected.includes(item.instanceId);
-                const isLocked = Boolean(item.lockState) && !isSelected;
-                return (
-                  <button
-                    key={item.instanceId}
-                    className={`contest-option-card${isSelected ? " selected" : ""}`}
-                    type="button"
-                    onClick={() => toggle(item.instanceId)}
-                    disabled={!canEnter || isLocked}
-                  >
-                    <p className="contest-option-name">{item.name}</p>
-                    <p className="contest-option-meta">{item.rarityCode} · {item.editionCode}</p>
-                    <p className="contest-option-meta">{item.cardSetCode}</p>
-                    <p className="contest-option-instance">#{item.instanceId.slice(-8)}</p>
-                    {isLocked ? <span className="contest-option-lock">Locked in another active contest</span> : null}
-                  </button>
-                );
-              })}
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+              {canEnter ? <Button type="button" variant="ghost" onClick={() => { setActiveSlot(null); setModalOpen(true); }}>Open selector</Button> : null}
+              {canEnter ? (
+                <Button onClick={() => void submitEntry()} disabled={submitState === "saving" || selected.length !== maxRosterSize} className={selected.length === maxRosterSize ? "lineup-cta-ready" : ""}>
+                  {submitState === "saving" ? "Submitting…" : submitState === "success" ? "Entry confirmed ✨" : "Confirm my entry"}
+                </Button>
+              ) : null}
             </div>
           </section>
 
-          <section className="contest-section">
-            <h3 className="contest-section-title">Leaderboard</h3>
-            {ranking?.rankings?.length ? (
-              <div className="contest-ranking-table">
-                {ranking.rankings.map((row) => (
-                  <div className="contest-ranking-row" key={row.id}>
-                    <span>#{row.rank}</span>
-                    <span>{row.userId === me?.user.id ? "You" : `${row.userId.slice(0, 8)}…`}</span>
-                    <span>{row.score.toFixed(2)}</span>
+          {(detail.contest.status === "LOCKED" || detail.contest.status === "LIVE" || detail.contest.status === "SETTLED") && detail.userEntry ? (
+            <section className="contest-info-panel">
+              <h3 className="contest-section-title">Live Tracking</h3>
+              <p className="contest-inline-note">Locked lineup · score updates via leaderboard.</p>
+              <div className="contest-selected-lineup">
+                {selectedCards.map((card, index) => (
+                  <div className="lineup-slot filled" key={`${card?.instanceId ?? "empty"}-${index}`}>
+                    <div className="lineup-slot-main">
+                      <span className="contest-slot-index">Slot {index + 1}</span>
+                      <span className="contest-slot-name">{card?.name ?? "Unknown card"}</span>
+                    </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="contest-inline-note">Ranking is not available yet. Scores will appear once recorded.</p>
-            )}
+            </section>
+          ) : null}
+
+          <section className="contest-section">
+            <h3 className="contest-section-title">Leaderboard</h3>
+            <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
           </section>
 
           {error ? <div className="contest-error">{error}</div> : null}
-        </>
+
+          <CardSelectorModal
+            open={modalOpen}
+            options={filteredOptions}
+            selectedIds={selected}
+            onToggle={toggle}
+            onClose={() => setModalOpen(false)}
+            canEnter={Boolean(canEnter)}
+          />
+        </div>
       )}
     </SiteShell>
   );
-}
-
-function ContestMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
-  );
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString();
 }
