@@ -87,19 +87,6 @@
 .mvp-corner-bl { bottom: 5px; left: 5px; transform: scaleY(-1); }
 .mvp-corner-br { bottom: 5px; right: 5px; transform: scale(-1, -1); }
 
-.mvp-card-emblem {
-  position: absolute;
-  top: 7px;
-  left: 22px;
-  z-index: 46;
-  font-family: 'DM Mono', 'JetBrains Mono', monospace;
-  font-size: 6px;
-  letter-spacing: 0.16em;
-  color: var(--accent);
-  opacity: 0.72;
-  pointer-events: none;
-}
-
 .mvp-card-header {
   position: relative;
   z-index: 10;
@@ -174,7 +161,7 @@
   white-space: nowrap;
 }
 
-.mvp-badge-rarity { font-size: 7px; font-weight: 400; padding: 2px 5px; }
+.mvp-badge-rarity { font-size: 6.5px; font-weight: 500; padding: 2px 5px; }
 .mvp-badge-edition { font-size: 6px; font-weight: 400; padding: 1px 4px; opacity: 0.7; }
 
 
@@ -248,7 +235,7 @@
   z-index: 10;
   padding: 0 11px;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto;
   align-items: center;
   gap: 6px;
   background: var(--bg-footer);
@@ -266,12 +253,10 @@
 }
 
 .mvp-footer-code,
-.mvp-footer-set,
-.mvp-footer-edition,
 .mvp-footer-supply {
   font-family: 'DM Mono', 'JetBrains Mono', monospace;
   font-size: 7px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--txt-sub);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -279,9 +264,17 @@
   text-overflow: ellipsis;
 }
 
-.mvp-footer-set,
-.mvp-footer-edition {
+.mvp-footer-center {
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: color-mix(in oklab, var(--txt-name) 78%, var(--txt-sub));
   text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mvp-footer-supply {
@@ -453,5 +446,5 @@
   .mvp-card-name { font-size: 13px; }
   .mvp-card-ticker { font-size: 7px; }
   .mvp-footer-code,
-  .mvp-footer-set { font-size: 6.5px; }
+  .mvp-footer-center { font-size: 7px; }
 }

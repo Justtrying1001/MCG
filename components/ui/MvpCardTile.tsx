@@ -117,15 +117,13 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
       <span className="mvp-corner mvp-corner-br" aria-hidden="true">
         <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
       </span>
-      <span className="mvp-card-emblem" aria-hidden="true">MCG</span>
-
       <header className="mvp-card-header">
         <div className="mvp-card-header-left">
           <span className="mvp-card-name">{card.displayName}</span>
           <span className="mvp-card-ticker">${card.symbol}</span>
         </div>
         <div className="mvp-card-header-right">
-          <span className="mvp-badge-rarity">{rarityTheme.code}</span>
+          <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
           <span className="mvp-badge-edition">{editionBadge}</span>
         </div>
       </header>
@@ -145,8 +143,7 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
 
       <footer className="mvp-card-footer">
         <span className="mvp-footer-code">{cardNumber}</span>
-        <span className="mvp-footer-set">{setName}</span>
-        <span className="mvp-footer-edition">{setEdition}</span>
+        <span className="mvp-footer-center">{setName} · {setEdition}</span>
         <span className="mvp-footer-supply">
           {card.plannedSupply > 0
             ? pullNumber
