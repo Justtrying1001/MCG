@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { getEditionTheme, getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
 
-type CardVariant = "collection" | "reveal" | "compact";
+type CardVariant = "collection" | "reveal" | "compact" | "zoom";
 
 type Props = {
   card: MvpCardView;

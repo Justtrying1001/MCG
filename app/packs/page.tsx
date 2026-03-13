@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { Modal } from "@/components/ui/Modal";
+import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { useSession } from "@/components/useSession";
 import type { MvpCardView } from "@/types/cards";
 import Image from "next/image";
@@ -34,6 +35,7 @@ export default function PacksPage() {
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
   const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
+  const [zoomedCard, setZoomedCard] = useState<MvpCardView | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -124,6 +126,7 @@ export default function PacksPage() {
     setResultMvp([]);
     setRevealed([]);
     setOpeningPhase("idle");
+    setZoomedCard(null);
   };
 
   const revealCards = useMemo(
@@ -158,9 +161,10 @@ export default function PacksPage() {
 
       <Modal title={allRevealed ? "Pack complete - all cards revealed" : "Pack reveal - flip cards in order"} open={revealSize > 0 && openingPhase === "revealing"} onClose={closeReveal}>
         <div className="reveal-progress-wrap"><p className="reveal-progress-text">Revealed {revealedCount}/{revealSize}</p><div className="reveal-progress-track"><div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(revealSize, 1)) * 100}%` }} /></div>{!allRevealed && <p className="reveal-next-copy">Next card to flip: #{nextRevealIndex + 1}</p>}</div>
-        <div className="pack-reveal-grid">{revealCards.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={card.key} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => handleReveal(index)} disabled={isCardRevealed || !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><Image src={versoImage} alt="Card back" className="reveal-slot-back-image" /><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front">{card.render}</div></div></button>); })}</div>
+        <div className="pack-reveal-grid">{revealCards.map((card, index) => { const isCardRevealed = revealed[index]; const isNext = index === nextRevealIndex; return (<button key={card.key} className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`} onClick={() => { if (isCardRevealed) { setZoomedCard(resultMvp[index] ?? null); return; } handleReveal(index); }} disabled={!isCardRevealed && !isNext}><div className="reveal-slot-inner"><div className="reveal-slot-face reveal-slot-back"><Image src={versoImage} alt="Card back" className="reveal-slot-back-image" /><span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous card"}</span></div><div className="reveal-slot-face reveal-slot-front">{card.render}</div></div></button>); })}</div>
         {allRevealed && (<div className="reveal-complete-row"><p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p><Button onClick={closeReveal}>Done</Button></div>)}
       </Modal>
+      <CardZoomModal card={zoomedCard} quantity={1} open={Boolean(zoomedCard)} onClose={() => setZoomedCard(null)} />
     </SiteShell>
   );
 }
