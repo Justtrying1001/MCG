@@ -3607,9 +3607,9 @@ a { color: inherit; text-decoration: none; }
 .ccb-inner {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto auto;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
-  align-items: start;
+  align-items: center;
 }
 .ccb-label {
   font-size: 0.65rem;
@@ -4109,7 +4109,4 @@ a { color: inherit; text-decoration: none; }
   .achievement-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
   .collection-completion-bar { padding: 1rem; }
   .ccb-inner { grid-template-columns: 1fr; }
-  .ccb-rarity-grid { display: none; }
-  .ccb-edition-row { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
-  .ccb-edition-count { white-space: normal; }
 }

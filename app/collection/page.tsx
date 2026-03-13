@@ -24,9 +24,11 @@ const rarityChips = [
 
 
 function formatEditionLabel(editionCode: string) {
-  const normalized = (editionCode || "").trim();
+  const normalized = (editionCode || "").trim().toUpperCase();
   if (!normalized) return "Unknown";
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+  if (normalized === "FULL_ART") return "MCG art";
+  if (normalized === "MCG_ART") return "MCG art";
+  return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
 export default function CollectionPage() {
@@ -83,18 +85,6 @@ export default function CollectionPage() {
       seed[rarity as keyof typeof seed].owned += item.instanceCount;
     }
     return seed;
-  }, [sourceCollection]);
-
-  const editionStats = useMemo(() => {
-    const map = new Map<string, { unique: number; owned: number }>();
-    for (const item of sourceCollection) {
-      const editionName = item.card.edition || "Unknown";
-      const prev = map.get(editionName) ?? { unique: 0, owned: 0 };
-      map.set(editionName, { unique: prev.unique + 1, owned: prev.owned + item.instanceCount });
-    }
-    return [...map.entries()]
-      .map(([label, stats]) => ({ label, ...stats }))
-      .sort((a, b) => b.owned - a.owned || a.label.localeCompare(b.label));
   }, [sourceCollection]);
 
   const visibleCards = useMemo(() => {
@@ -188,40 +178,12 @@ export default function CollectionPage() {
                 <div className="ccb-track">
                   <div className="ccb-fill" style={{ width: `${completionPct ?? 0}%` }} />
                 </div>
+                <div className="ccb-note">{totalCards} cards owned · {uniqueCards} unique</div>
                 {completionPct === null && (
                   <div className="ccb-note">Completion available for signed-in profiles only.</div>
                 )}
               </div>
-              <div className="ccb-rarity-grid">
-                {[
-                  { key: "LEGENDARY", label: "Legendary", color: "var(--rarity-legendary)" },
-                  { key: "EPIC",      label: "Epic",      color: "var(--rarity-epic)" },
-                  { key: "RARE",      label: "Rare",      color: "var(--rarity-rare)" },
-                  { key: "UNCOMMON",  label: "Uncommon",  color: "var(--rarity-uncommon)" },
-                  { key: "COMMON",    label: "Common",    color: "var(--rarity-common)" },
-                ].map(({ key, label, color }) => (
-                  <div key={label} className="ccb-rarity-row">
-                    <span className="ccb-rarity-dot" style={{ background: color }} />
-                    <span className="ccb-rarity-label" style={{ color }}>{label}</span>
-                    <span className="ccb-rarity-count">
-                      {rarityStats[key as keyof typeof rarityStats].owned} owned · {rarityStats[key as keyof typeof rarityStats].unique} unique
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
-
-            {editionStats.length > 0 && (
-              <div className="ccb-edition-grid">
-                <div className="ccb-label">Owned by Edition</div>
-                {editionStats.map((editionRow) => (
-                  <div key={editionRow.label} className="ccb-edition-row">
-                    <span className="ccb-edition-label">{formatEditionLabel(editionRow.label)}</span>
-                    <span className="ccb-edition-count">{editionRow.owned} owned · {editionRow.unique} unique</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
