@@ -2251,3 +2251,37 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+
+.contest-wizard-stepper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.contest-step-pill {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contest-step-pill.active {
+  border-color: rgba(214, 58, 50, 0.7);
+  background: rgba(214, 58, 50, 0.16);
+}
+
+.admin-table-row .admin-actions-row .btn,
+.admin-table-row .admin-actions-row button,
+.admin-table-row .admin-actions-row .admin-badge {
+  min-height: 28px;
+}
+
+.contest-wizard-summary .admin-callout {
+  background: rgba(214, 58, 50, 0.08);
+  border-color: rgba(214, 58, 50, 0.3);
+}

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
             entries: true,
             rankings: true,
             settlements: true,
+            scores: true,
           },
         },
       },
