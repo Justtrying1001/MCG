@@ -27,8 +27,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     id: "build",
     label: "Setup & Catalog",
     items: [
-      { href: "/admin/campaigns", label: "Campaigns", hint: "Campaign and quest catalog" },
-      { href: "/admin/quests", label: "Quest Library", hint: "Quest definitions and builder" },
+      { href: "/admin/quests", label: "Quests", hint: "Social quest definitions and builder" },
+      { href: "/admin/milestones", label: "Milestones", hint: "Milestone definitions and rewards" },
       { href: "/admin/users", label: "Users", hint: "User context lookup" },
     ],
   },

@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 type LifecycleStatus = "ACTIVE" | "ARCHIVED" | "DELETED";
 
-type QuestRow = {
+type MilestoneRow = {
   id: string;
   code: string;
   title: string;
@@ -24,14 +23,10 @@ type QuestRow = {
   };
 };
 
-export default function QuestLibraryPage() {
-  const searchParams = useSearchParams();
-  const campaignFilter = searchParams.get("campaign") ?? "";
-
-  const [rows, setRows] = useState<QuestRow[]>([]);
+export default function MilestoneLibraryPage() {
+  const [rows, setRows] = useState<MilestoneRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
@@ -39,8 +34,9 @@ export default function QuestLibraryPage() {
   const load = async () => {
     const response = await fetch("/api/internal/quests/library", { cache: "no-store" });
     if (response.ok) {
-      const payload = (await response.json()) as { quests: QuestRow[] };
-      setRows(payload.quests ?? []);
+      const payload = (await response.json()) as { quests: MilestoneRow[] };
+      const onlyMilestones = (payload.quests ?? []).filter((q) => q.type === "CONTEST_COUNT_MILESTONE");
+      setRows(onlyMilestones);
     }
     setLoading(false);
   };
@@ -51,7 +47,7 @@ export default function QuestLibraryPage() {
 
   const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT") => {
     if (action === "DELETE_SOFT") {
-      const confirmed = window.confirm("Soft-delete this quest? It will disappear from user-facing pages and default admin list.");
+      const confirmed = window.confirm("Soft-delete this milestone? It will disappear from user-facing pages and default admin list.");
       if (!confirmed) return;
     }
 
@@ -70,71 +66,61 @@ export default function QuestLibraryPage() {
     }
     await load();
     setBusyId(null);
-    setMessage(action === "DELETE_SOFT" ? "Quest deleted (soft delete)." : "Quest lifecycle updated.");
+    setMessage(action === "DELETE_SOFT" ? "Milestone deleted (soft delete)." : "Milestone lifecycle updated.");
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
-      if (row.type === "CONTEST_COUNT_MILESTONE") return false;
-      if (campaignFilter && !row.code.toLowerCase().startsWith(campaignFilter.toLowerCase())) return false;
       if (!showDeleted && (row.lifecycleStatus ?? "ACTIVE") === "DELETED") return false;
-      if (typeFilter !== "ALL" && row.type !== typeFilter) return false;
       if (!q) return true;
       return row.code.toLowerCase().includes(q) || row.title.toLowerCase().includes(q);
     });
-  }, [campaignFilter, rows, query, showDeleted, typeFilter]);
-
-  const types = [...new Set(rows.map((row) => row.type))];
+  }, [rows, query, showDeleted]);
 
   return (
     <div className="admin-page quest-admin-page">
       <section className="admin-panel quest-library-hero">
         <div>
-          <h1 className="admin-title">Quest Library</h1>
-          <p className="admin-subtitle">Manage social quests with clean validation, moderation-ready settings and user-facing previews.</p>
-          {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
+          <h1 className="admin-title">Milestone Library</h1>
+          <p className="admin-subtitle">Manage progression milestones, thresholds, rewards and lifecycle with dedicated admin controls.</p>
           {message ? <p className="contest-inline-note">{message}</p> : null}
         </div>
         <div className="quest-library-hero-actions">
-          <Link href="/admin/quests/builder?objectiveType=FOLLOW_X" className="btn btn-primary quest-primary-action">Create Quest</Link>
-          <Link href="/admin/milestones" className="btn btn-ghost">Milestones</Link>
-          <Link href="/admin/quests/legacy" className="btn btn-ghost">Legacy fallback</Link>
+          <Link href="/admin/quests/builder?objectiveType=MILESTONE" className="btn btn-primary quest-primary-action">Create Milestone</Link>
+          <Link href="/admin/quests" className="btn btn-ghost">Go to quests</Link>
         </div>
       </section>
 
       <section className="admin-toolbar quest-library-toolbar">
         <input className="input" placeholder="Search by code or title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "320px" }} />
-        <select className="input" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-          <option value="ALL">All social quest types</option>
-          {types.map((type) => <option key={type} value={type}>{type}</option>)}
-        </select>
         <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
           <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} />
           show deleted
         </label>
-        <span className="admin-badge neutral">{filtered.length} quests</span>
+        <span className="admin-badge neutral">{filtered.length} milestones</span>
       </section>
 
       <section className="admin-table quest-library-table">
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 0.9fr 2fr" }}>
-          <span>Code</span><span>Quest</span><span>Objective</span><span>Validation</span><span>Reward</span><span>Stats</span><span>Actions</span>
+        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.5fr 0.9fr 0.9fr 0.9fr 2fr" }}>
+          <span>Code</span><span>Milestone</span><span>Validation</span><span>Reward</span><span>Stats</span><span>Actions</span>
         </div>
-        {loading ? <div className="admin-table-row"><p className="contest-inline-note">Loading quest library…</p></div> : null}
+        {loading ? <div className="admin-table-row"><p className="contest-inline-note">Loading milestone library…</p></div> : null}
         {!loading && filtered.map((row) => {
           const lifecycle = row.lifecycleStatus ?? "ACTIVE";
           return (
-            <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 0.9fr 2fr" }}>
+            <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.5fr 0.9fr 0.9fr 0.9fr 2fr" }}>
               <span className="contest-code">{row.code}</span>
               <div>
                 <p style={{ fontWeight: 700 }}>{row.title}</p>
                 <p className="contest-inline-note">{formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
                 <p className="contest-inline-note">Lifecycle: {lifecycle}</p>
               </div>
-              <span className="admin-badge neutral">SOCIAL</span>
               <span className="admin-badge neutral">{row.validationMode}</span>
               <span>{row.rewardPoints} pts</span>
-              <p className="contest-inline-note">done {row.analytics?.completedCount ?? 0}</p>
+              <p className="contest-inline-note">
+                done {row.analytics?.completedCount ?? 0} · in progress {Math.max(0, (row.analytics?.progressCount ?? 0) - (row.analytics?.completedCount ?? 0))}
+              </p>
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                 <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Detail</Link>
                 <Link href={`/admin/quests/builder?questId=${row.id}`} className="admin-badge neutral">Edit</Link>
@@ -145,7 +131,7 @@ export default function QuestLibraryPage() {
             </div>
           );
         })}
-        {!loading && filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No quests matching current filters.</p></div> : null}
+        {!loading && filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No milestones matching current filters.</p></div> : null}
       </section>
     </div>
   );

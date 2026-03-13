@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useSession } from "@/components/useSession";
+
+type UserQuestRow = {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  completedAt: string | null;
+  rewardPoints: number;
+  configSummary?: { milestoneType?: string };
+};
+
 
 export default function AccountPage() {
   const { me } = useSession();
@@ -12,6 +24,23 @@ export default function AccountPage() {
   const account     = v2?.accountProgression;
   const collection  = v2?.collectionProgression;
   const competitive = v2?.competitiveProgression;
+  const [userQuests, setUserQuests] = useState<UserQuestRow[]>([]);
+
+  useEffect(() => {
+    if (me?.mode !== "user") return;
+    void (async () => {
+      const response = await fetch("/api/quests", { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = (await response.json()) as { quests?: UserQuestRow[] };
+      setUserQuests(payload.quests ?? []);
+    })();
+  }, [me]);
+
+  const unlockedMilestoneBadges = useMemo(() => {
+    return userQuests
+      .filter((quest) => quest.type === "CONTEST_COUNT_MILESTONE" && quest.status === "COMPLETED")
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [userQuests]);
 
   return (
     <SiteShell>
@@ -246,6 +275,34 @@ export default function AccountPage() {
                 </div>
               </div>
             )}
+
+            {me.mode === "user" ? (
+              <div style={{
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--border)",
+                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
+                padding: "1.2rem 1.5rem",
+              }}>
+                <div style={{
+                  fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
+                  textTransform: "uppercase", color: "var(--text-3)",
+                  marginBottom: "1rem",
+                }}>
+                  Milestone badges unlocked
+                </div>
+                <div className="achievement-grid">
+                  {unlockedMilestoneBadges.map((badge) => (
+                    <div key={badge.id} className="achievement-badge unlocked">
+                      <span className="achievement-icon">🏅</span>
+                      <span className="achievement-name">{badge.title}</span>
+                    </div>
+                  ))}
+                  {unlockedMilestoneBadges.length === 0 ? (
+                    <p className="contest-inline-note">No milestone badges unlocked yet.</p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             {/* ── Recent Contest Results ── */}
             {competitive?.recentResults?.length ? (

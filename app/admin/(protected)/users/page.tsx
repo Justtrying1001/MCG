@@ -10,10 +10,12 @@ type SearchUser = {
 };
 
 type UserContext = {
-  user: { id: string; displayName: string | null; xUsername: string | null; points: number };
-  rewards: { grantsCount: number; totalManualGranted: number; lastGrantAt: string | null };
+  user: { id: string; displayName: string | null; xUsername: string | null; points: number; createdAt: string };
+  rewards: { grantsCount: number; totalManualGranted: number };
   quests: { pendingSubmissions: number; approvedSubmissions: number; rejectedSubmissions: number; completedProgress: number };
   contests: { entriesCount: number; scoredEntriesCount: number; settlementsCount: number };
+  milestones: Array<{ questId: string; title: string; code: string; completedAt: string | null }>;
+  activity: Array<{ type: string; label: string; at: string; ref: string }>;
 };
 
 export default function AdminUsersPage() {
@@ -57,7 +59,7 @@ export default function AdminUsersPage() {
       <section className="admin-page-header">
         <div>
           <h1 className="admin-title">User Context Workbench</h1>
-          <p className="admin-subtitle">Search-first user context for moderation, rewards, and contest support decisions.</p>
+          <p className="admin-subtitle">Search-first user context for moderation, rewards, contests, milestones and forensic activity timeline.</p>
         </div>
       </section>
 
@@ -83,14 +85,32 @@ export default function AdminUsersPage() {
           {!contextLoading && selected ? (
             <>
               <p style={{ fontWeight: 700 }}>{selected.user.displayName ?? selected.user.id} (@{selected.user.xUsername ?? "—"})</p>
-              <p className="contest-inline-note">{selected.user.points} total points</p>
+              <p className="contest-inline-note">{selected.user.points} total points · created {new Date(selected.user.createdAt).toLocaleString()}</p>
               <div className="admin-kpi-grid">
                 <Kpi label="Manual grants" value={String(selected.rewards.grantsCount)} />
                 <Kpi label="Manual points total" value={String(selected.rewards.totalManualGranted)} />
                 <Kpi label="Quest pending" value={String(selected.quests.pendingSubmissions)} />
                 <Kpi label="Quest approved" value={String(selected.quests.approvedSubmissions)} />
+                <Kpi label="Quest rejected" value={String(selected.quests.rejectedSubmissions)} />
+                <Kpi label="Quest completed" value={String(selected.quests.completedProgress)} />
                 <Kpi label="Contest entries" value={String(selected.contests.entriesCount)} />
                 <Kpi label="Contest settled" value={String(selected.contests.settlementsCount)} />
+              </div>
+
+              <div style={{ marginTop: "0.8rem", display: "grid", gap: "0.45rem" }}>
+                <p className="admin-section-title">Milestones unlocked</p>
+                {selected.milestones.map((item) => (
+                  <p key={item.questId} className="contest-inline-note">🏅 {item.title} ({item.code}) · {item.completedAt ? new Date(item.completedAt).toLocaleString() : "—"}</p>
+                ))}
+                {selected.milestones.length === 0 ? <p className="contest-inline-note">No milestones unlocked yet.</p> : null}
+              </div>
+
+              <div style={{ marginTop: "0.8rem", display: "grid", gap: "0.45rem" }}>
+                <p className="admin-section-title">Activity timeline (who did what)</p>
+                {selected.activity.map((item, idx) => (
+                  <p key={`${item.ref}-${idx}`} className="contest-inline-note">{new Date(item.at).toLocaleString()} · [{item.type}] {item.label}</p>
+                ))}
+                {selected.activity.length === 0 ? <p className="contest-inline-note">No recent activity rows.</p> : null}
               </div>
             </>
           ) : null}
