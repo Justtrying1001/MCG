@@ -37,6 +37,19 @@ type TokenMasterRow = {
   } | null;
 };
 
+
+function padCardNumber(value: number) {
+  return value.toString().padStart(3, "0");
+}
+
+function deriveCardNumber(token: TokenMasterRow) {
+  if (token.editorial?.cardNumber && token.editorial.cardNumber.trim().length > 0) {
+    return token.editorial.cardNumber;
+  }
+  const stableOrder = token.setOrder && token.setOrder > 0 ? token.setOrder : token.sourceCsvRow && token.sourceCsvRow > 0 ? token.sourceCsvRow : 1;
+  return `S01-${padCardNumber(stableOrder)}`;
+}
+
 type TokenMasterPayload = {
   version: number;
   tokens: TokenMasterRow[];
@@ -126,10 +139,11 @@ export function toMvpCardViewFromTokenMasterRow(input: {
     owned: (input.instanceCount ?? 0) > 0,
     instanceCount: input.instanceCount ?? 0,
     cardText: input.token.editorial?.flavorText ?? null,
-    cardNumber: input.token.editorial?.cardNumber ?? null,
+    cardNumber: deriveCardNumber(input.token),
     setCode: input.token.editorial?.collectionCode ?? input.token.editorial?.setCode ?? null,
     setEditionLabel: input.token.editorial?.editionLabel ?? null,
     setOrder: input.token.setOrder ?? null,
+    editionNumber: input.issuedSupply > 0 ? input.issuedSupply : 1,
   };
 }
 

@@ -117,7 +117,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   BASE: {
     code: "BASE",
     label: "Base",
-    badgeLabel: "",
+    badgeLabel: "BASE",
     editionClass: "ed-base",
     needsReverseLayers: false,
     needsBrillanteLayer: false,

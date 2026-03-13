@@ -87,14 +87,29 @@
 .mvp-corner-bl { bottom: 5px; left: 5px; transform: scaleY(-1); }
 .mvp-corner-br { bottom: 5px; right: 5px; transform: scale(-1, -1); }
 
+.mvp-card-emblem {
+  position: absolute;
+  top: 7px;
+  left: 22px;
+  z-index: 46;
+  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-size: 6px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
 .mvp-card-header {
   position: relative;
   z-index: 10;
-  padding: 9px 11px 0;
+  padding: 9px 11px 7px;
   background: var(--bg-header);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  min-height: 50px;
 }
 
 .mvp-card-header::after {
@@ -108,8 +123,22 @@
   opacity: 0.45;
 }
 
-.mvp-card-header-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.mvp-card-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; padding-top: 1px; }
+.mvp-card-header-left {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-content: start;
+  row-gap: 2px;
+  min-width: 0;
+  min-height: 32px;
+}
+.mvp-card-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: 32px;
+}
 
 .mvp-card-name {
   font-family: 'Rajdhani', 'Inter', sans-serif;
@@ -219,7 +248,7 @@
   z-index: 10;
   padding: 0 11px;
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   background: var(--bg-footer);
@@ -237,22 +266,27 @@
 }
 
 .mvp-footer-code,
-.mvp-footer-set {
+.mvp-footer-set,
+.mvp-footer-edition,
+.mvp-footer-supply {
   font-family: 'DM Mono', 'JetBrains Mono', monospace;
   font-size: 7px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--txt-sub);
   letter-spacing: 0.06em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mvp-footer-supply { text-align: right; justify-self: end; }
+.mvp-footer-set,
+.mvp-footer-edition {
+  text-transform: uppercase;
+}
 
-.mvp-footer-sep {
-  width: 1px;
-  height: 10px;
-  background: var(--wire-acc);
-  opacity: 0.4;
+.mvp-footer-supply {
+  text-align: right;
+  justify-self: end;
 }
 
 .mvp-qty-chip {
