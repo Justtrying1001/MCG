@@ -2977,6 +2977,79 @@ a { color: inherit; text-decoration: none; }
 .he-amount.credit { color: var(--emerald); }
 .he-amount.debit  { color: var(--red); }
 
+
+
+.milestone-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+.milestone-showcase-card {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 0.95rem;
+  background: linear-gradient(156deg, rgba(24, 26, 33, 0.92), rgba(12, 13, 16, 0.98));
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.milestone-showcase-card.done {
+  border-color: rgba(200, 155, 60, 0.42);
+  box-shadow: 0 8px 20px rgba(200, 155, 60, 0.12);
+}
+.milestone-showcase-card.locked {
+  opacity: 0.7;
+  filter: grayscale(0.55);
+}
+.milestone-showcase-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.milestone-showcase-icon {
+  font-size: 1.4rem;
+}
+.milestone-showcase-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.milestone-showcase-desc {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.milestone-help {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+.milestone-help:hover { border-color: rgba(200, 155, 60, 0.4); color: var(--gold); }
+.milestone-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  display: grid;
+  place-items: center;
+  z-index: 90;
+  padding: 1rem;
+}
+.milestone-modal {
+  width: min(460px, 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(158deg, rgba(22,24,29,0.98), rgba(11,11,13,0.99));
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
 /* --------------------------------------------------------------------------
    PLAYER CARD HEADER (Profile)
    -------------------------------------------------------------------------- */

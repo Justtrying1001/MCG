@@ -27,6 +27,7 @@ export default function QuestLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | LifecycleStatus>("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
@@ -65,27 +66,40 @@ export default function QuestLibraryPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
+      const lifecycle = row.lifecycleStatus ?? "ACTIVE";
       if (campaignFilter && !row.code.toLowerCase().startsWith(campaignFilter.toLowerCase())) return false;
       if (typeFilter !== "ALL" && row.type !== typeFilter) return false;
+      if (statusFilter !== "ALL" && lifecycle !== statusFilter) return false;
       if (!q) return true;
       return row.code.toLowerCase().includes(q) || row.title.toLowerCase().includes(q);
     });
-  }, [campaignFilter, rows, query, typeFilter]);
+  }, [campaignFilter, rows, query, statusFilter, typeFilter]);
 
   const types = [...new Set(rows.map((row) => row.type))];
+  const stats = useMemo(() => ({
+    all: rows.length,
+    active: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "ACTIVE").length,
+    archived: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "ARCHIVED").length,
+    deleted: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "DELETED").length,
+  }), [rows]);
 
   return (
     <div className="admin-page quest-admin-page">
       <section className="admin-panel quest-library-hero">
         <div>
           <h1 className="admin-title">Quest Library</h1>
-          <p className="admin-subtitle">Manage social and milestone quests with clean validation, moderation-ready settings and user-facing previews.</p>
+          <p className="admin-subtitle">Create, archive, restore and clean quests quickly with a single management panel.</p>
           {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
           {message ? <p className="contest-inline-note">{message}</p> : null}
+          <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
+            <span className="admin-badge neutral">Total {stats.all}</span>
+            <span className="admin-badge neutral">Active {stats.active}</span>
+            <span className="admin-badge neutral">Archived {stats.archived}</span>
+            <span className="admin-badge neutral">Deleted {stats.deleted}</span>
+          </div>
         </div>
         <div className="quest-library-hero-actions">
           <Link href="/admin/quests/builder" className="btn btn-primary quest-primary-action">Create Quest</Link>
-          <Link href="/admin/quests/legacy" className="btn btn-ghost">Legacy fallback</Link>
         </div>
       </section>
 
@@ -94,6 +108,12 @@ export default function QuestLibraryPage() {
         <select className="input" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
           <option value="ALL">All objective types</option>
           {types.map((type) => <option key={type} value={type}>{type}</option>)}
+        </select>
+        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | LifecycleStatus)}>
+          <option value="ALL">All lifecycle states</option>
+          <option value="ACTIVE">Active</option>
+          <option value="ARCHIVED">Archived</option>
+          <option value="DELETED">Deleted</option>
         </select>
         <span className="admin-badge neutral">{filtered.length} quests</span>
       </section>
@@ -119,8 +139,12 @@ export default function QuestLibraryPage() {
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                 <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Detail</Link>
                 <Link href={`/admin/quests/builder?questId=${row.id}`} className="admin-badge neutral">Edit</Link>
-                <button className="admin-badge neutral" disabled={busyId === row.id} onClick={() => void applyLifecycle(row.id, row.isActive ? "DISABLE" : "ENABLE")}>{row.isActive ? "Disable" : "Enable"}</button>
-                <button className="admin-badge neutral" disabled={busyId === row.id || lifecycle === "ARCHIVED"} onClick={() => void applyLifecycle(row.id, "ARCHIVE")}>Archive</button>
+                <button className="admin-badge neutral" disabled={busyId === row.id || lifecycle === "DELETED"} onClick={() => void applyLifecycle(row.id, row.isActive ? "DISABLE" : "ENABLE")}>{row.isActive ? "Disable" : "Enable"}</button>
+                {lifecycle === "ARCHIVED" || lifecycle === "DELETED" ? (
+                  <button className="admin-badge neutral" disabled={busyId === row.id} onClick={() => void applyLifecycle(row.id, "RESTORE")}>Restore</button>
+                ) : (
+                  <button className="admin-badge neutral" disabled={busyId === row.id} onClick={() => void applyLifecycle(row.id, "ARCHIVE")}>Archive</button>
+                )}
                 <button className="admin-badge neutral" disabled={busyId === row.id || lifecycle === "DELETED"} onClick={() => void applyLifecycle(row.id, "DELETE_SOFT")}>Delete</button>
               </div>
             </div>
