@@ -84,17 +84,24 @@ export default function ContestsPage() {
         </div>
       </div>
 
-      <section className="contest-dashboard">
-        <div className="contest-info-panel">
-          <p className="contest-inline-note">🧭 Deadlines: lock time determines entry close. Locked contests switch to live tracking until settlement.</p>
-          <p className="contest-inline-note">🎁 Rewards: points and card rewards depend on rank, entry volume, and settlement output.</p>
-          {isGuest ? <p className="contest-inline-note">Guest mode: browse contests and team building. Connect with X to submit entries.</p> : null}
+      <section className="contest-dashboard premium-contest-dashboard">
+        <div className="contest-hero-strip">
+          <div className="contest-info-panel spotlight">
+            <p className="contest-inline-note">🏆 Compete for prestige rewards and leaderboard ranking.</p>
+            <p className="contest-inline-note">⚡ Lock pressure: lineup validation matters most right before lock.</p>
+            {isGuest ? <p className="contest-inline-note">Guest mode: build and explore freely. Connect with X to submit entries.</p> : null}
+          </div>
+          <div className="contest-kpi-row">
+            <div className="contest-kpi"><p>Open</p><strong>{grouped.open.length}</strong></div>
+            <div className="contest-kpi"><p>Live</p><strong>{grouped.live.length}</strong></div>
+            <div className="contest-kpi"><p>Settled</p><strong>{grouped.settled.length}</strong></div>
+          </div>
         </div>
 
         {featured ? (
           <section className="contest-section">
             <h2 className="contest-section-title">Featured contest</h2>
-            <div className="contest-list">
+            <div className="contest-list featured-list">
               <ContestTile contest={featured} nowTs={nowTs} />
             </div>
           </section>

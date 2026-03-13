@@ -139,6 +139,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, [filteredOptions, maxRosterSize, selected]);
 
   const myRankingRow = ranking?.rankings?.find((row) => row.userId === me?.user.id) ?? null;
+  const filledSlots = selectedCards.filter(Boolean).length;
+  const lineupProgressPct = Math.min(100, Math.round((filledSlots / Math.max(maxRosterSize, 1)) * 100));
 
   const toggle = (instanceId: string) => {
     if (!canManageLineup) return;
@@ -203,7 +205,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       {!detail ? (
         <div className="empty-state"><p className="empty-state-title">{error || "Loading contest…"}</p></div>
       ) : (
-        <div className="contest-dashboard">
+        <div className="contest-dashboard premium-contest-dashboard">
           <ContestHero
             code={detail.contest.code}
             title={detail.contest.title}
@@ -219,10 +221,18 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
           <ContestProgressTimeline status={detail.contest.status} />
 
+          {myRankingRow ? (
+            <section className="contest-kpi-row contest-kpi-row-strong">
+              <div className="contest-kpi"><p>Your rank</p><strong>#{myRankingRow.rank}</strong></div>
+              <div className="contest-kpi"><p>Your score</p><strong>{myRankingRow.score.toFixed(2)}</strong></div>
+              <div className="contest-kpi"><p>Contest phase</p><strong>{detail.contest.status}</strong></div>
+            </section>
+          ) : null}
+
           {error ? <div className="contest-error">{error}</div> : null}
 
           <section className="contest-grid-2">
-            <section className="contest-section">
+            <section className="contest-section contest-builder-panel">
               <h3 className="contest-section-title">Team builder</h3>
               {detail.userEntry ? (
                 <p className="contest-inline-note">Lineup submitted ({detail.userEntry.status}). Editing is disabled.</p>
@@ -230,7 +240,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 <p className="contest-inline-note">Fill exactly {maxRosterSize} slots to validate your lineup.</p>
               )}
 
-              <div className="contest-selected-lineup">
+              <div className="lineup-progress-shell" aria-live="polite">
+                <div className="lineup-progress-copy">
+                  <p>Lineup completion</p>
+                  <strong>{filledSlots}/{maxRosterSize}</strong>
+                </div>
+                <div className="lineup-progress-track"><span style={{ width: `${lineupProgressPct}%` }} /></div>
+              </div>
+
+              <div className="contest-selected-lineup premium-lineup-grid">
                 {Array.from({ length: maxRosterSize }).map((_, index) => (
                   <LineupSlot
                     key={index}
@@ -246,7 +264,31 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 ))}
               </div>
 
-              <div className="contest-action-row">
+              {canManageLineup ? (
+                <div className="eligible-strip" role="list" aria-label="Eligible cards preview">
+                  {filteredOptions.slice(0, 8).map((item) => {
+                    const selectedState = selected.includes(item.instanceId);
+                    const lockedState = Boolean(item.lockState) && !selectedState;
+                    return (
+                      <button
+                        key={item.instanceId}
+                        type="button"
+                        className={`eligible-pill${selectedState ? " selected" : ""}${lockedState ? " locked" : ""}`}
+                        onClick={() => {
+                          setActiveSlot(null);
+                          void toggle(item.instanceId);
+                        }}
+                        disabled={lockedState || !canManageLineup}
+                      >
+                        <span>{item.name}</span>
+                        <small>{lockedState ? "Locked" : item.rarityCode}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              <div className="contest-action-row sticky-actions">
                 {canManageLineup ? <Button type="button" variant="ghost" onClick={() => { setActiveSlot(null); setModalOpen(true); }}>Browse eligible cards</Button> : null}
                 {canManageLineup ? (
                   <Button onClick={() => void submitEntry()} disabled={isGuest || submitState === "saving" || selected.length !== maxRosterSize} className={selected.length === maxRosterSize && !isGuest ? "lineup-cta-ready" : ""}>
