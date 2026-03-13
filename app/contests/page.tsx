@@ -24,10 +24,6 @@ export default function ContestsPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!me || me.mode === "guest") {
-      setIsLoading(false);
-      return;
-    }
 
     void (async () => {
       setIsLoading(true);
@@ -44,7 +40,7 @@ export default function ContestsPage() {
       setContests(payload.contests ?? []);
       setIsLoading(false);
     })();
-  }, [loading, me]);
+  }, [loading]);
 
   const grouped = useMemo(() => {
     return {
@@ -55,7 +51,7 @@ export default function ContestsPage() {
   }, [contests]);
 
   const displayed = grouped[tab];
-  const guestBlocked = !loading && me?.mode === "guest";
+  const isGuest = !loading && me?.mode === "guest";
 
   return (
     <SiteShell>
@@ -78,7 +74,7 @@ export default function ContestsPage() {
           <button type="button" className={`contest-tab${tab === "settled" ? " active" : ""}`} onClick={() => setTab("settled")} role="tab" aria-selected={tab === "settled"}>Completed</button>
         </div>
 
-        {guestBlocked ? <GuestNotice /> : null}
+        {isGuest ? <GuestNotice /> : null}
 
         {isLoading ? (
           <div className="empty-state"><p className="empty-state-title">Loading contests…</p></div>
@@ -105,7 +101,7 @@ export default function ContestsPage() {
 function GuestNotice() {
   return (
     <div className="contest-guest-notice">
-      Contest participation requires an authenticated account with owned card instances. Guest mode can preview contests but cannot enter.
+      Guest mode can browse contests, rewards, and details. Connect with X to participate.
     </div>
   );
 }

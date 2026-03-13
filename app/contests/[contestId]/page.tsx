@@ -53,7 +53,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, []);
 
   useEffect(() => {
-    if (loading || !me || me.mode === "guest") return;
+    if (loading) return;
 
     void (async () => {
       setError("");
@@ -85,12 +85,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         setSelected(detailPayload.userEntry.rosterLocks.map((lock) => lock.ownedCardInstanceId));
       }
     })();
-  }, [loading, me, params.contestId]);
+  }, [loading, params.contestId]);
 
   const rule = detail?.contest.rules[0];
   const maxRosterSize = rule?.maxRosterSize ?? 5;
-  const canEnter = detail?.contest.status === "OPEN" && !detail?.userEntry;
-  const guestBlocked = !loading && me?.mode === "guest";
+  const isGuest = !loading && me?.mode === "guest";
+  const canManageLineup = detail?.contest.status === "OPEN" && !detail?.userEntry;
+  const canEnter = canManageLineup && !isGuest;
 
   const filteredOptions = useMemo(() => {
     if (!rule?.cardSetId) return options;
@@ -104,7 +105,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const countdown = detail ? formatCountdown(getTargetDate(detail.contest.status, detail.contest.lockAt, detail.contest.endsAt), nowTs) : "—";
 
   const toggle = (instanceId: string) => {
-    if (!canEnter) return;
+    if (!canManageLineup) return;
 
     setSelected((prev) => {
       if (activeSlot !== null) {
@@ -121,12 +122,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   };
 
   const removeFromSlot = (slot: number) => {
-    if (!canEnter) return;
+    if (!canManageLineup) return;
     setSelected((prev) => prev.filter((_, index) => index !== slot));
   };
 
   const submitEntry = async () => {
-    if (!detail || selected.length !== maxRosterSize) return;
+    if (!detail || !canEnter || selected.length !== maxRosterSize) return;
 
     setSubmitState("saving");
     setError("");
@@ -159,8 +160,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         </div>
       </div>
 
-      {guestBlocked ? (
-        <div className="contest-guest-notice">Contests are account-only in MVP. Log in with X to enter using owned instances.</div>
+      {isGuest ? (
+        <div className="contest-guest-notice">Guest mode can explore contest details and build a lineup preview. Connect with X to participate.</div>
       ) : null}
 
       {!detail ? (
@@ -198,7 +199,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                   key={index}
                   index={index}
                   card={selectedCards[index]}
-                  canEdit={Boolean(canEnter)}
+                  canEdit={Boolean(canManageLineup)}
                   onRemove={() => removeFromSlot(index)}
                   onOpenPicker={() => {
                     setActiveSlot(index);
@@ -209,10 +210,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             </div>
 
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-              {canEnter ? <Button type="button" variant="ghost" onClick={() => { setActiveSlot(null); setModalOpen(true); }}>Open selector</Button> : null}
-              {canEnter ? (
-                <Button onClick={() => void submitEntry()} disabled={submitState === "saving" || selected.length !== maxRosterSize} className={selected.length === maxRosterSize ? "lineup-cta-ready" : ""}>
-                  {submitState === "saving" ? "Submitting…" : submitState === "success" ? "Entry confirmed ✨" : "Confirm my entry"}
+              {canManageLineup ? <Button type="button" variant="ghost" onClick={() => { setActiveSlot(null); setModalOpen(true); }}>Open selector</Button> : null}
+              {canManageLineup ? (
+                <Button onClick={() => void submitEntry()} disabled={isGuest || submitState === "saving" || selected.length !== maxRosterSize} className={selected.length === maxRosterSize && !isGuest ? "lineup-cta-ready" : ""}>
+                  {isGuest ? "Connect with X to participate" : submitState === "saving" ? "Submitting…" : submitState === "success" ? "Entry confirmed ✨" : "Confirm my entry"}
                 </Button>
               ) : null}
             </div>
@@ -248,7 +249,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             selectedIds={selected}
             onToggle={toggle}
             onClose={() => setModalOpen(false)}
-            canEnter={Boolean(canEnter)}
+            canEnter={Boolean(canManageLineup)}
           />
         </div>
       )}
