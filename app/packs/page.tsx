@@ -6,13 +6,13 @@ import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { Modal } from "@/components/ui/Modal";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { useSession } from "@/components/useSession";
+import { GAME_CONFIG } from "@/lib/game-config";
 import type { MvpCardView } from "@/types/cards";
 import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
-type SlotOdds = { rarityCode: string; pct: number };
 type PackConfigPayload = {
   exists: boolean;
   pack: null | {
@@ -24,14 +24,7 @@ type PackConfigPayload = {
     remainingPackCount: number;
     isActive: boolean;
   };
-  slots: Array<{ index: number; type: string; label: string; rarityOdds: SlotOdds[] }>;
-};
-
-/* Rarity color map */
-const rarityColors: Record<string, string> = {
-  B: "#7E8794", A: "#4FA39A", S: "#3C6DF2", "S+": "#D8A63E",
-  COMMON: "#7E8794", UNCOMMON: "#4FA39A", RARE: "#3C6DF2",
-  EPIC: "#6E4CCF", LEGENDARY: "#D8A63E",
+  slots: Array<{ index: number; type: string; label: string; rarityOdds: Array<{ rarityCode: string; pct: number }>; rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }> }>;
 };
 
 export default function PacksPage() {
@@ -123,6 +116,35 @@ export default function PacksPage() {
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned   = packConfig?.pack?.plannedPackCount;
+  const packsSold     = packConfig?.pack?.openedPackCount;
+  const cardsPerPack  = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+  const standardSlots = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("standard")).length ?? 3;
+  const premiumSlots  = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("premium")).length ?? 1;
+  const hitSlots      = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("hit")).length ?? 1;
+
+  const rarityEditionRows = useMemo(() => {
+    const totalSlots = Math.max(cardsPerPack, 1);
+    const aggregate = new Map<string, number>();
+
+    for (const slot of packConfig?.slots ?? []) {
+      for (const odd of slot.rarityEditionOdds ?? []) {
+        const key = `${odd.rarityCode}__${odd.editionCode}`;
+        aggregate.set(key, (aggregate.get(key) ?? 0) + (odd.pct / totalSlots));
+      }
+    }
+
+    return Array.from(aggregate.entries())
+      .map(([key, rate]) => {
+        const [rarityCode, editionCode] = key.split("__");
+        return {
+          key,
+          label: `${rarityCode} + ${editionCode}`,
+          rate: Number(rate.toFixed(2)),
+        };
+      })
+      .sort((a, b) => b.rate - a.rate)
+      .slice(0, 6);
+  }, [cardsPerPack, packConfig?.slots]);
 
   return (
     <SiteShell>
@@ -133,8 +155,7 @@ export default function PacksPage() {
           <div>
             <h1 className="page-title">Open Packs</h1>
             <p className="page-subtitle">
-              Break the seal. Five face-down cards revealed one by one.
-              Every pull is permanent. Every hit is yours to keep.
+              Dark, clean, and reveal-first. Open fast, flip one by one, collect forever.
             </p>
           </div>
         </div>
@@ -162,8 +183,7 @@ export default function PacksPage() {
             <div>
               <p className="pack-info-title">Genesis Booster · S01</p>
               <p className="pack-info-desc">
-                Slot-weighted distribution: 3 standard slots, 1 premium edition slot,
-                1 hit slot. Odds evolve with remaining supply.
+                Minimal info, maximum suspense. The cards stay center stage.
               </p>
               {typeof packRemaining === "number" && typeof packPlanned === "number" && (
                 <div style={{ marginTop: "0.85rem" }}>
@@ -191,49 +211,51 @@ export default function PacksPage() {
               )}
             </div>
 
-            {/* Slot Odds */}
-            {packConfig?.slots?.length ? (
-              <div className="pack-odds">
-                <p className="pack-odds-label">Runtime Slot Odds</p>
-                {packConfig.slots.map((slot) => (
-                  <div key={slot.index} style={{ marginBottom: "0.85rem" }}>
-                    <p className="pack-odds-label" style={{ marginBottom: "0.35rem" }}>
-                      #{slot.index + 1} — {slot.label}
-                    </p>
-                    {slot.rarityOdds.slice(0, 4).map((o) => (
-                      <div key={`${slot.index}_${o.rarityCode}`} style={{
-                        display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.28rem",
-                      }}>
-                        <span style={{
-                          fontSize: "0.76rem", fontWeight: 700,
-                          color: rarityColors[o.rarityCode] ?? "var(--text-2)",
-                          width: 60, flexShrink: 0,
-                        }}>
-                          {o.rarityCode}
-                        </span>
-                        <div style={{
-                          flex: 1, height: 5, borderRadius: 999,
-                          background: "rgba(255,255,255,0.06)", overflow: "hidden",
-                        }}>
-                          <div style={{
-                            height: "100%", borderRadius: 999,
-                            background: rarityColors[o.rarityCode] ?? "var(--arc-blue)",
-                            width: `${o.pct}%`, opacity: 0.75,
-                          }} />
-                        </div>
-                        <span style={{
-                          fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem",
-                          color: "var(--text-3)", width: 36, textAlign: "right", flexShrink: 0,
-                        }}>
-                          {o.pct}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-                <p className="pack-tip">Odds evolve with remaining supply and are not fixed static rates.</p>
+            <div className="pack-kpi-grid">
+              <div className="pack-kpi-item">
+                <span className="pack-kpi-label">Price</span>
+                <span className="pack-kpi-value">{GAME_CONFIG.PACK_COST} pts</span>
               </div>
-            ) : null}
+              <div className="pack-kpi-item">
+                <span className="pack-kpi-label">Remaining</span>
+                <span className="pack-kpi-value">{typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"}</span>
+              </div>
+              <div className="pack-kpi-item">
+                <span className="pack-kpi-label">Sold</span>
+                <span className="pack-kpi-value">{typeof packsSold === "number" ? packsSold.toLocaleString() : "—"}</span>
+              </div>
+              <div className="pack-kpi-item">
+                <span className="pack-kpi-label">Total</span>
+                <span className="pack-kpi-value">{typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"}</span>
+              </div>
+            </div>
+
+            <div className="pack-pill-row">
+              <span className="pack-pill">{cardsPerPack} cards</span>
+              <span className="pack-pill">{standardSlots} standard</span>
+              <span className="pack-pill">{premiumSlots} premium</span>
+              <span className="pack-pill">{hitSlots} hit</span>
+            </div>
+
+            <div className="pack-rates-table-wrap">
+              <p className="pack-odds-label">Drop rates · rarity + edition</p>
+              <table className="pack-rates-table" aria-label="Pack drop rates summary">
+                <thead>
+                  <tr>
+                    <th>Rarity + Edition</th>
+                    <th>Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rarityEditionRows.map((row) => (
+                    <tr key={row.key}>
+                      <td>{row.label}</td>
+                      <td>{row.rate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* CENTER — Pack Visual & CTA */}
@@ -275,17 +297,21 @@ export default function PacksPage() {
           {/* RIGHT — Tips & Info */}
           <div className="pack-right">
             <div className="pack-side-card">
-              <p className="pack-side-card-label">What&apos;s inside?</p>
+              <p className="pack-side-card-label">Pack format</p>
               <p className="pack-side-card-copy">
-                Each Genesis Booster contains 5 cards with at least one premium-edition hit.
-                Legendaries and full-art cards are rare, but in every pack.
+                {cardsPerPack} cards per pack, with a guaranteed premium moment.
               </p>
             </div>
             <div className="pack-side-card">
-              <p className="pack-side-card-label">How it works</p>
+              <p className="pack-side-card-label">Reveal flow</p>
               <p className="pack-side-card-copy">
-                Cards are face-down after opening. Click each card to reveal it in sequence.
-                Once revealed, they&apos;re permanently part of your collection.
+                Open and flip in order. Saved instantly.
+              </p>
+            </div>
+            <div className="pack-side-card">
+              <p className="pack-side-card-label">Collection safety</p>
+              <p className="pack-side-card-copy">
+                Signed-in pulls are saved to your account. Guest pulls remain local.
               </p>
             </div>
           </div>
