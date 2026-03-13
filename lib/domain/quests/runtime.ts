@@ -37,6 +37,8 @@ type MilestoneConfigSummary = {
   targetValue: number;
 };
 
+type QuestLifecycleStatus = "ACTIVE" | "ARCHIVED" | "DELETED";
+
 
 export type InternalQuestAnalytics = {
   progressCount: number;
@@ -110,6 +112,7 @@ export type QuestForUserRow = {
     ctaLabel?: string | null;
     instructions?: string | null;
     socialAction?: string | null;
+    lifecycleStatus?: QuestLifecycleStatus;
   };
 };
 
@@ -166,6 +169,18 @@ function parseSocialSubmitConfig(config: Prisma.JsonValue | null): SocialQuestCo
   };
 }
 
+function parseQuestLifecycleStatus(config: Prisma.JsonValue | null): QuestLifecycleStatus {
+  if (!config || typeof config !== "object" || Array.isArray(config)) return "ACTIVE";
+  const status = (config as Record<string, unknown>).lifecycleStatus;
+  if (status === "ARCHIVED" || status === "DELETED") return status;
+  return "ACTIVE";
+}
+
+function isLifecycleVisibleForUsers(config: Prisma.JsonValue | null) {
+  const lifecycle = parseQuestLifecycleStatus(config);
+  return lifecycle === "ACTIVE";
+}
+
 function normalizeRewardPoints(value: unknown) {
   const rewardPoints = Number(value);
   if (!Number.isInteger(rewardPoints) || rewardPoints < 0) {
@@ -206,6 +221,7 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
     }
 
     return {
+      ...root,
       milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTEST_PARTICIPATION_COUNT",
       targetValue,
       threshold: targetValue,
@@ -227,6 +243,7 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
     const root = config as Record<string, unknown>;
 
     return {
+      ...root,
       proofRequired: Boolean(root.proofRequired),
       targetUrl: typeof root.targetUrl === "string" && root.targetUrl.trim() ? root.targetUrl.trim() : null,
       ctaLabel: typeof root.ctaLabel === "string" && root.ctaLabel.trim() ? root.ctaLabel.trim() : null,
@@ -372,15 +389,11 @@ export async function submitSocialQuestMvp(params: {
       throw new QuestRuntimeError("Quest does not accept user submissions", 400);
     }
 
-    if (quest.validationMode !== QuestValidationMode.SUBMIT && quest.validationMode !== QuestValidationMode.MANUAL_REVIEW) {
-      throw new QuestRuntimeError("Quest validation mode does not allow submit workflow", 400);
-    }
-
     const socialConfig = parseSocialSubmitConfig(quest.config);
     const proofUrl = params.proofUrl?.trim() || null;
     const note = params.note?.trim() || null;
 
-    if (socialConfig.proofRequired && !proofUrl) {
+    if (quest.validationMode !== QuestValidationMode.AUTO && socialConfig.proofRequired && !proofUrl) {
       throw new QuestRuntimeError("This quest requires a proof URL", 400);
     }
 
@@ -400,6 +413,61 @@ export async function submitSocialQuestMvp(params: {
 
     if (latestSubmission?.status === QuestSubmissionStatus.APPROVED || progress?.status === UserQuestStatus.COMPLETED) {
       throw new QuestRuntimeError("Quest already completed", 409);
+    }
+
+    if (quest.validationMode === QuestValidationMode.AUTO) {
+      const approved = await tx.questSubmission.create({
+        data: {
+          userId: params.userId,
+          questId: params.questId,
+          status: QuestSubmissionStatus.APPROVED,
+          proofUrl,
+          note,
+          reviewedByAdmin: "system:auto",
+          reviewedAt: now,
+        },
+      });
+
+      if (!progress) {
+        await tx.userQuestProgress.create({
+          data: {
+            userId: params.userId,
+            questId: params.questId,
+            status: UserQuestStatus.COMPLETED,
+            progressValue: 1,
+            completedAt: now,
+            claimedAt: now,
+          },
+        });
+      } else {
+        await tx.userQuestProgress.update({
+          where: { id: progress.id },
+          data: {
+            status: UserQuestStatus.COMPLETED,
+            progressValue: Math.max(progress.progressValue, 1),
+            completedAt: progress.completedAt ?? now,
+            claimedAt: progress.claimedAt ?? now,
+          },
+        });
+      }
+
+      if (quest.rewardPoints > 0) {
+        await creditPointsWithLedger(tx, {
+          userId: params.userId,
+          amount: quest.rewardPoints,
+          reasonType: RewardLedgerReasonType.QUEST_REWARD,
+          reasonRef: LedgerConventions.questReward.reasonRef(quest.id),
+          idempotencyKey: LedgerConventions.questReward.approvalIdempotencyKey(quest.id, params.userId),
+          metadata: {
+            questCode: quest.code,
+            questType: quest.type,
+            trigger: "social_auto_complete",
+            submissionId: approved.id,
+          },
+        });
+      }
+
+      return approved;
     }
 
     const submission = await tx.questSubmission.create({
@@ -565,7 +633,7 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
   }
 
   const rows = quests
-    .filter((quest) => nowInActiveWindow(now, quest))
+    .filter((quest) => nowInActiveWindow(now, quest) && isLifecycleVisibleForUsers(quest.config))
     .map((quest) => {
       const progress = progressByQuestId.get(quest.id);
       const milestoneConfig = quest.type === QuestType.CONTEST_COUNT_MILESTONE
@@ -605,6 +673,7 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
           ...(threshold ? { threshold } : {}),
           ...(milestoneConfig ? { milestoneType: milestoneConfig.milestoneType, targetValue: milestoneConfig.targetValue } : {}),
           ...(socialConfig ? socialConfig : {}),
+          lifecycleStatus: parseQuestLifecycleStatus(quest.config),
         },
       };
     });
@@ -813,6 +882,46 @@ export async function updateQuestDefinitionMvp(
       endAt,
       config,
     },
+  });
+}
+
+
+export async function updateQuestLifecycleMvp(
+  questId: string,
+  action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT"
+) {
+  const existing = await prisma.questDefinition.findUnique({ where: { id: questId } });
+  if (!existing) throw new QuestRuntimeError("Quest not found", 404);
+
+  const currentConfig = (existing.config && typeof existing.config === "object" && !Array.isArray(existing.config))
+    ? (existing.config as Record<string, unknown>)
+    : {};
+
+  const nextConfig: Record<string, unknown> = { ...currentConfig };
+  const data: Prisma.QuestDefinitionUpdateInput = {};
+
+  if (action === "DISABLE") data.isActive = false;
+  if (action === "ENABLE") data.isActive = true;
+
+  if (action === "ARCHIVE") {
+    nextConfig.lifecycleStatus = "ARCHIVED";
+    data.isActive = false;
+  }
+
+  if (action === "DELETE_SOFT") {
+    nextConfig.lifecycleStatus = "DELETED";
+    data.isActive = false;
+  }
+
+  if (action === "RESTORE") {
+    nextConfig.lifecycleStatus = "ACTIVE";
+  }
+
+  data.config = nextConfig as Prisma.InputJsonValue;
+
+  return prisma.questDefinition.update({
+    where: { id: questId },
+    data,
   });
 }
 

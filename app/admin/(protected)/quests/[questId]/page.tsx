@@ -49,6 +49,8 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
   const [data, setData] = useState<QuestDetailPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -78,8 +80,30 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
       socialAction: typeof config.socialAction === "string" ? config.socialAction : null,
       proofRequired: typeof config.proofRequired === "boolean" ? config.proofRequired : null,
       ctaLabel: typeof config.ctaLabel === "string" ? config.ctaLabel : null,
+      lifecycleStatus: typeof config.lifecycleStatus === "string" ? config.lifecycleStatus : "ACTIVE",
     };
   }, [data]);
+
+
+  const updateLifecycle = async (action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT") => {
+    setBusy(true);
+    setMessage("");
+    const response = await fetch(`/api/internal/quests/${params.questId}/lifecycle`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (!response.ok) {
+      setMessage(payload?.error ?? "Cannot update lifecycle");
+      setBusy(false);
+      return;
+    }
+    setMessage("Lifecycle updated.");
+    setBusy(false);
+    const refresh = await fetch(`/api/internal/quests/${params.questId}`, { cache: "no-store" });
+    if (refresh.ok) setData(await refresh.json());
+  };
 
   return (
     <div className="admin-page">
@@ -89,6 +113,7 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
 
       {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading quest detail…</p></section> : null}
       {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
+      {message ? <section className="admin-panel"><p className="contest-inline-note">{message}</p></section> : null}
 
       {data ? (
         <>
@@ -100,6 +125,12 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             <h1 className="admin-title">{data.quest.title}</h1>
             <p className="contest-inline-note">Objective: {data.quest.type} · Validation: {data.quest.validationMode} · Reward: {data.quest.rewardPoints} pts</p>
             <p className="contest-inline-note">Window: {formatDate(data.quest.startAt)} → {formatDate(data.quest.endAt)}</p>
+            <p className="contest-inline-note">Lifecycle: {configSummary.lifecycleStatus}</p>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+              <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => void updateLifecycle(data.quest.isActive ? "DISABLE" : "ENABLE")}>{data.quest.isActive ? "Disable" : "Enable"}</button>
+              <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => void updateLifecycle("ARCHIVE")}>Archive</button>
+              <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => void updateLifecycle("DELETE_SOFT")}>Delete</button>
+            </div>
           </section>
 
           <section className="admin-panel">

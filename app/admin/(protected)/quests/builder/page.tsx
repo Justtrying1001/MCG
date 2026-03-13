@@ -49,7 +49,6 @@ export default function QuestBuilderPage() {
 
   const [issues, setIssues] = useState<Array<{ field: string; severity: "ERROR" | "WARN"; message: string }>>([]);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
-  const [normalizedPayload, setNormalizedPayload] = useState<ValidatePayload["normalizedPayload"]>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -131,14 +130,33 @@ export default function QuestBuilderPage() {
 
     setIssues(payload.issues ?? []);
     setPreview(payload.preview ?? null);
-    setNormalizedPayload(payload.normalizedPayload ?? null);
     setMessage(payload.blocking ? "Validation blocked." : "Validation passed.");
     setValidating(false);
   };
 
   const saveQuest = async () => {
-    if (!normalizedPayload) {
-      setMessage("Validate first.");
+    setSaving(true);
+    setMessage("");
+
+    const validateResponse = await fetch("/api/internal/quests/builder/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(builderInput),
+    });
+
+    const validatePayload = await validateResponse.json().catch(() => null) as ValidatePayload | null;
+    if (!validateResponse.ok || !validatePayload) {
+      setMessage(validatePayload?.error ?? "Builder validation failed");
+      setSaving(false);
+      return;
+    }
+
+    setIssues(validatePayload.issues ?? []);
+    setPreview(validatePayload.preview ?? null);
+
+    if (validatePayload.blocking || !validatePayload.normalizedPayload) {
+      setMessage("Please fix validation errors before saving.");
+      setSaving(false);
       return;
     }
 
@@ -147,7 +165,7 @@ export default function QuestBuilderPage() {
     const response = await fetch(questId ? `/api/internal/quests/${questId}` : "/api/internal/quests", {
       method: questId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(normalizedPayload),
+      body: JSON.stringify(validatePayload.normalizedPayload),
     });
 
     const payload = await response.json().catch(() => null) as { error?: string; quest?: { id: string } } | null;
@@ -179,9 +197,9 @@ export default function QuestBuilderPage() {
             <p className="admin-subtitle">{isEditMode ? "Update all quest fields with full live preview and policy validation." : "Create social quests and milestones with clean UX and runtime-ready config."}</p>
           </div>
           <div className="quest-builder-header-actions">
-            <Button variant="ghost" onClick={() => void runValidate()} disabled={validating || loading}>{validating ? "Validating…" : "Validate + Preview"}</Button>
-            <Button className="quest-primary-action" onClick={() => void saveQuest()} disabled={!normalizedPayload || saving || loading}>
-              {saving ? "Saving…" : isEditMode ? "Save changes" : "Create Quest"}
+            <Button variant="ghost" onClick={() => void runValidate()} disabled={validating || saving || loading}>{validating ? "Refreshing preview…" : "Refresh preview"}</Button>
+            <Button className="quest-primary-action" onClick={() => void saveQuest()} disabled={saving || loading}>
+              {saving ? "Validating & saving…" : isEditMode ? "Save changes" : "Create Quest"}
             </Button>
           </div>
         </header>

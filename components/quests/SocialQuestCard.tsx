@@ -10,6 +10,7 @@ type SocialQuest = {
   description: string | null;
   rewardPoints: number;
   status: string;
+  validationMode?: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   configSummary: {
     targetUrl?: string | null;
     ctaLabel?: string | null;
@@ -17,8 +18,19 @@ type SocialQuest = {
   };
 };
 
-export function SocialQuestCard({ quest }: { quest: SocialQuest }) {
+export function SocialQuestCard({
+  quest,
+  onMarkDone,
+  markingDone,
+  feedback,
+}: {
+  quest: SocialQuest;
+  onMarkDone?: (questId: string) => void;
+  markingDone?: boolean;
+  feedback?: string;
+}) {
   const hasTarget = Boolean(String(quest.configSummary.targetUrl ?? "").trim());
+  const isCompleted = quest.status === "COMPLETED";
 
   return (
     <article className={`contest-card ${styles.card}`}>
@@ -37,7 +49,16 @@ export function SocialQuestCard({ quest }: { quest: SocialQuest }) {
         ) : (
           <button type="button" className="btn btn-ghost btn-sm" disabled>Link unavailable</button>
         )}
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          disabled={isCompleted || markingDone}
+          onClick={() => onMarkDone?.(quest.id)}
+        >
+          {isCompleted ? "Completed" : markingDone ? "Saving…" : "Mark as done"}
+        </button>
       </div>
+      {feedback ? <p className="contest-inline-note">{feedback}</p> : null}
     </article>
   );
 }

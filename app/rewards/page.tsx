@@ -10,6 +10,8 @@ import { resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
 
 import styles from "./rewards.module.css";
 
+import styles from "./rewards.module.css";
+
 type LedgerRow = {
   id: string;
   entryType: "CREDIT" | "DEBIT";
@@ -72,6 +74,8 @@ export default function RewardsPage() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | QuestStatus>("ALL");
   const [sortBy, setSortBy] = useState<"REWARD_DESC" | "REWARD_ASC" | "RECENT">("REWARD_DESC");
+  const [submittingQuestId, setSubmittingQuestId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   const loadData = async () => {
     const [ledgerRes, questsRes] = await Promise.all([
@@ -89,6 +93,27 @@ export default function RewardsPage() {
 
     setLedger(ledgerPayload.entries ?? []);
     setQuests(questsPayload.quests ?? []);
+  };
+
+
+  const submitSocialQuest = async (questId: string) => {
+    setSubmittingQuestId(questId);
+    setActionMessage("");
+    const response = await fetch(`/api/quests/${questId}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (!response.ok) {
+      setActionMessage(payload?.error ?? "Quest completion failed");
+      setSubmittingQuestId(null);
+      return;
+    }
+
+    setActionMessage("Quest completion recorded. Rewards updated.");
+    await loadData();
+    setSubmittingQuestId(null);
   };
 
   useEffect(() => {
@@ -123,6 +148,7 @@ export default function RewardsPage() {
       {!loading && !me ? <div className="empty-state"><p className="empty-state-title">Sign in with X to access rewards.</p></div> : null}
       {me?.mode === "guest" ? <div className="empty-state"><p className="empty-state-title">Rewards and quests are available for authenticated accounts only.</p></div> : null}
       {error ? <p className="contest-error">{error}</p> : null}
+      {actionMessage ? <p className="contest-inline-note">{actionMessage}</p> : null}
 
       {me?.mode === "user" ? (
         <div className={styles.layout}>
@@ -148,7 +174,14 @@ export default function RewardsPage() {
             <h2 className="contest-section-title">Social quests</h2>
             <div className={styles.cards}>
               {viewModel.social.length === 0 ? <p className="contest-inline-note">No social quests for current filters.</p> : null}
-              {viewModel.social.map((quest) => <SocialQuestCard key={quest.id} quest={quest} />)}
+              {viewModel.social.map((quest) => (
+                <SocialQuestCard
+                  key={quest.id}
+                  quest={quest}
+                  onMarkDone={(questId) => void submitSocialQuest(questId)}
+                  markingDone={submittingQuestId === quest.id}
+                />
+              ))}
             </div>
           </section>
 
