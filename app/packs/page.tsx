@@ -116,7 +116,6 @@ export default function PacksPage() {
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned   = packConfig?.pack?.plannedPackCount;
-  const packsSold     = packConfig?.pack?.openedPackCount;
   const cardsPerPack  = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
   const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
@@ -228,7 +227,7 @@ export default function PacksPage() {
                 <div className="pack-metric-line">
                   <span className="pack-metric-label">Supply</span>
                   <span className="pack-metric-value">
-                    {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packsSold === "number" ? packsSold.toLocaleString() : "—"} sold · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
+                    {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
                   </span>
                 </div>
               </div>
