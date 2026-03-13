@@ -27,6 +27,7 @@ export default function CollectionPage() {
   const [search,      setSearch]      = useState("");
   const [rarityFilter,setRarityFilter]= useState("");
   const [faction,     setFaction]     = useState("");
+  const [edition,     setEdition]     = useState("");
   const [sortBy,      setSortBy]      = useState<CollectionSortKey>("rarity");
   const [sortDir,     setSortDir]     = useState<"asc" | "desc">("desc");
   const [zoomedCard,  setZoomedCard]  = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
@@ -45,10 +46,46 @@ export default function CollectionPage() {
     [sourceCollection]
   );
 
+  const editions = useMemo(
+    () => [...new Set(sourceCollection.map((x) => x.card.setEditionLabel || x.card.edition).filter(Boolean) as string[])].sort(),
+    [sourceCollection]
+  );
+
+  const rarityStats = useMemo(() => {
+    const seed = {
+      COMMON: { unique: 0, owned: 0 },
+      UNCOMMON: { unique: 0, owned: 0 },
+      RARE: { unique: 0, owned: 0 },
+      EPIC: { unique: 0, owned: 0 },
+      LEGENDARY: { unique: 0, owned: 0 },
+    };
+
+    for (const item of sourceCollection) {
+      const rarity = item.card.rarity;
+      if (!seed[rarity as keyof typeof seed]) continue;
+      seed[rarity as keyof typeof seed].unique += 1;
+      seed[rarity as keyof typeof seed].owned += item.instanceCount;
+    }
+    return seed;
+  }, [sourceCollection]);
+
+  const editionStats = useMemo(() => {
+    const map = new Map<string, { unique: number; owned: number }>();
+    for (const item of sourceCollection) {
+      const editionName = item.card.setEditionLabel || item.card.edition || "Unknown";
+      const prev = map.get(editionName) ?? { unique: 0, owned: 0 };
+      map.set(editionName, { unique: prev.unique + 1, owned: prev.owned + item.instanceCount });
+    }
+    return [...map.entries()]
+      .map(([label, stats]) => ({ label, ...stats }))
+      .sort((a, b) => b.owned - a.owned || a.label.localeCompare(b.label));
+  }, [sourceCollection]);
+
   const visibleCards = useMemo(() => {
     const filtered = sourceCollection
       .filter((item) => !faction || item.card.faction === faction)
       .filter((item) => !rarityFilter || item.card.rarity === rarityFilter)
+      .filter((item) => !edition || (item.card.setEditionLabel || item.card.edition || "") === edition)
       .filter((item) =>
         `${item.card.displayName} ${item.card.symbol} ${item.card.faction ?? ""} ${item.card.rarity} ${item.card.edition}`
           .toLowerCase()
@@ -63,16 +100,16 @@ export default function CollectionPage() {
     });
 
     return sortDir === "asc" ? sorted : sorted.reverse();
-  }, [faction, rarityFilter, search, sortBy, sortDir, sourceCollection]);
+  }, [edition, faction, rarityFilter, search, sortBy, sortDir, sourceCollection]);
 
   /* Stats */
   const totalCards    = sourceCollection.reduce((acc, x) => acc + x.instanceCount, 0);
   const uniqueCards   = sourceCollection.length;
-  const legendaryCount= sourceCollection.filter((x) => x.card.rarity === "LEGENDARY").length;
-  const epicCount     = sourceCollection.filter((x) => x.card.rarity === "EPIC").length;
-  const rareCount     = sourceCollection.filter((x) => x.card.rarity === "RARE").length;
-  const uncommonCount = sourceCollection.filter((x) => x.card.rarity === "UNCOMMON").length;
-  const commonCount   = sourceCollection.filter((x) => x.card.rarity === "COMMON").length;
+  const legendaryCount= rarityStats.LEGENDARY.unique;
+  const epicCount     = rarityStats.EPIC.unique;
+  const rareCount     = rarityStats.RARE.unique;
+  const uncommonCount = rarityStats.UNCOMMON.unique;
+  const commonCount   = rarityStats.COMMON.unique;
 
   const collectionProg = me?.mode === "user" ? me.coexistence?.v2?.collectionProgression : undefined;
   const completionPct  = collectionProg?.completionPct ?? (uniqueCards > 0 ? Math.min(Math.round((uniqueCards / 100) * 100), 100) : 0);
@@ -134,20 +171,34 @@ export default function CollectionPage() {
               </div>
               <div className="ccb-rarity-grid">
                 {[
-                  { label: "Legendary", color: "var(--rarity-legendary)", count: legendaryCount },
-                  { label: "Epic",      color: "var(--rarity-epic)",      count: epicCount },
-                  { label: "Rare",      color: "var(--rarity-rare)",      count: rareCount },
-                  { label: "Uncommon",  color: "var(--rarity-uncommon)",  count: uncommonCount },
-                  { label: "Common",    color: "var(--rarity-common)",    count: commonCount },
-                ].map(({ label, color, count }) => (
+                  { key: "LEGENDARY", label: "Legendary", color: "var(--rarity-legendary)" },
+                  { key: "EPIC",      label: "Epic",      color: "var(--rarity-epic)" },
+                  { key: "RARE",      label: "Rare",      color: "var(--rarity-rare)" },
+                  { key: "UNCOMMON",  label: "Uncommon",  color: "var(--rarity-uncommon)" },
+                  { key: "COMMON",    label: "Common",    color: "var(--rarity-common)" },
+                ].map(({ key, label, color }) => (
                   <div key={label} className="ccb-rarity-row">
                     <span className="ccb-rarity-dot" style={{ background: color }} />
                     <span className="ccb-rarity-label" style={{ color }}>{label}</span>
-                    <span className="ccb-rarity-count">{count}</span>
+                    <span className="ccb-rarity-count">
+                      {rarityStats[key as keyof typeof rarityStats].owned} owned · {rarityStats[key as keyof typeof rarityStats].unique} unique
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
+
+            {editionStats.length > 0 && (
+              <div className="ccb-edition-grid">
+                <div className="ccb-label">Owned by Edition</div>
+                {editionStats.map((editionRow) => (
+                  <div key={editionRow.label} className="ccb-edition-row">
+                    <span className="ccb-edition-label">{editionRow.label}</span>
+                    <span className="ccb-edition-count">{editionRow.owned} owned · {editionRow.unique} unique</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -187,6 +238,12 @@ export default function CollectionPage() {
               <select className="filter-select" value={faction} onChange={(e) => setFaction(e.target.value)}>
                 <option value="">All factions</option>
                 {factions.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
+            {editions.length > 0 && (
+              <select className="filter-select" value={edition} onChange={(e) => setEdition(e.target.value)}>
+                <option value="">All editions</option>
+                {editions.map((setEdition) => <option key={setEdition} value={setEdition}>{setEdition}</option>)}
               </select>
             )}
             <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}>
