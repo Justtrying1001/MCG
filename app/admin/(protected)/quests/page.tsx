@@ -48,6 +48,20 @@ export default function QuestLibraryPage() {
     });
   }, [rows, query, showDeleted]);
 
+  const stats = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        const lifecycle = row.lifecycleStatus ?? "ACTIVE";
+        acc.all += 1;
+        if (lifecycle === "ACTIVE") acc.active += 1;
+        if (lifecycle === "ARCHIVED") acc.archived += 1;
+        if (lifecycle === "DELETED") acc.deleted += 1;
+        return acc;
+      },
+      { all: 0, active: 0, archived: 0, deleted: 0 },
+    );
+  }, [rows]);
+
   const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "DELETE_SOFT") => {
     if (action === "DELETE_SOFT") {
       const confirmed = window.confirm("Delete this quest? It will be soft deleted.");
