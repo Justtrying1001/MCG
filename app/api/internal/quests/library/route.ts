@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
             ? ((quest.config as Record<string, unknown>).lifecycleStatus ?? "ACTIVE")
             : "ACTIVE",
         analytics: quest.analytics,
+        config: quest.config,
       })),
     });
   } catch (error) {

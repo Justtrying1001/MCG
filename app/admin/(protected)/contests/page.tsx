@@ -27,6 +27,7 @@ export default function AdminContestsCatalogPage() {
   const [statusFilter, setStatusFilter] = useState<ContestStatus | "ALL">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [selected, setSelected] = useState<AdminContest | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -56,21 +57,21 @@ export default function AdminContestsCatalogPage() {
 
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
     if (action === "delete") {
-      const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with their linked entries/rankings/scores/settlements.");
+      const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with linked operations.");
       if (!confirmed) return;
     }
-
     setBusyId(contestId);
     setMessage("");
+
     const response = await (action === "publish"
       ? fetch(`/api/internal/contest-configs/${contestId}/publish`, { method: "POST" })
       : action === "delete"
         ? fetch(`/api/internal/contests/${contestId}`, { method: "DELETE" })
         : fetch(`/api/internal/contests/${contestId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: action === "archive" ? "ARCHIVE" : "UNPUBLISH" }),
-          }));
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: action === "archive" ? "ARCHIVE" : "UNPUBLISH" }),
+        }));
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -79,6 +80,8 @@ export default function AdminContestsCatalogPage() {
       setError("");
       setMessage(action === "delete" ? "Contest deleted." : `Contest ${action} successful.`);
       await load();
+      const updated = contests.find((c) => c.id === contestId);
+      if (updated) setSelected(updated);
     }
     setBusyId(null);
   };
@@ -88,7 +91,7 @@ export default function AdminContestsCatalogPage() {
       <section className="admin-page-header">
         <div>
           <h1 className="admin-title">Contests</h1>
-          <p className="admin-subtitle">Full control center: create, edit, publish, archive and operate contest lifecycle from one clear module.</p>
+          <p className="admin-subtitle">Card-based contest management. Open a contest card to run actions and inspect stats.</p>
         </div>
         <div className="admin-actions-row">
           <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create New Contest · Start here</Link>
@@ -109,51 +112,47 @@ export default function AdminContestsCatalogPage() {
       {message ? <section className="admin-panel"><p className="contest-inline-note">{message}</p></section> : null}
       {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
-      {!loading ? (
-        <section className="admin-table">
-          <div className="admin-table-head" style={{ gridTemplateColumns: "1.3fr 2.5fr 1fr 1.6fr 0.8fr 0.8fr 2fr" }}>
-            <span>Code</span><span>Contest</span><span>Status</span><span>Timing</span><span>Entries</span><span>Published</span><span>Actions</span>
-          </div>
-          {rows.map((contest) => {
-            const published = Boolean(contest.configPublishedAt);
-            const canPublish = contest.status === "DRAFT" && !published;
-            const canUnpublish = published && contest._count.entries === 0 && contest.status !== "SETTLED";
-            const hasOperations = contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0;
-            const canDelete = !hasOperations || contest.status === "CANCELED";
-            return (
-              <div key={contest.id} className="admin-table-row" style={{ gridTemplateColumns: "1.3fr 2.5fr 1fr 1.6fr 0.8fr 0.8fr 2fr" }}>
-                <span className="contest-code">{contest.code}</span>
-                <div>
-                  <p style={{ fontWeight: 700 }}>{contest.title}</p>
-                  <p className="contest-inline-note">{contest._count.rankings} rankings · {contest._count.settlements} settlements</p>
-                </div>
-                <span className={`admin-badge ${tone(contest.status)}`}>{contest.status}</span>
-                <span className="contest-inline-note">{fmt(contest.startsAt)} → {fmt(contest.lockAt)} → {fmt(contest.endsAt)}</span>
-                <span>{contest._count.entries}</span>
-                <span>{published ? "Yes" : "No"}</span>
-                <div className="admin-actions-row">
-                  <Link href={`/admin/contests/${contest.id}`} className="admin-badge neutral">Open</Link>
-                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-badge neutral">Edit</Link>
-                  {canPublish ? <Button onClick={() => void runAction(contest.id, "publish")} disabled={busyId === contest.id}>Publish</Button> : null}
-                  {canUnpublish ? <Button variant="ghost" onClick={() => void runAction(contest.id, "unpublish")} disabled={busyId === contest.id}>Unpublish</Button> : null}
-                  {contest.status !== "CANCELED" ? <Button variant="ghost" onClick={() => void runAction(contest.id, "archive")} disabled={busyId === contest.id}>Archive</Button> : null}
-                  {canDelete ? <Button variant="ghost" onClick={() => void runAction(contest.id, "delete")} disabled={busyId === contest.id}>Delete</Button> : null}
-                </div>
+      <section className="admin-card-grid">
+        {rows.map((contest) => (
+          <button key={contest.id} type="button" className="admin-focus-card" onClick={() => setSelected(contest)}>
+            <span className="milestone-chip-icon" style={{ background: "rgba(245,158,11,0.18)", color: "#fbbf24" }}>🏟️</span>
+            <span className="milestone-chip-name">{contest.title}</span>
+          </button>
+        ))}
+        {!loading && rows.length === 0 ? <section className="admin-panel"><p className="contest-inline-note">No contests found.</p></section> : null}
+      </section>
+
+      {selected ? (
+        <div className="contest-modal-overlay" role="presentation" onClick={() => setSelected(null)}>
+          <div className="contest-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="contest-modal-head">
+              <div>
+                <h4>{selected.title}</h4>
+                <p className="contest-inline-note">{selected.code} · {selected.status}</p>
               </div>
-            );
-          })}
-          {rows.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No contests found.</p></div> : null}
-        </section>
+              <button type="button" className="btn btn-ghost" onClick={() => setSelected(null)}>Close</button>
+            </div>
+            <div style={{ display: "grid", gap: "0.35rem" }}>
+              <p className="contest-inline-note">Entries: {selected._count.entries}</p>
+              <p className="contest-inline-note">Scores: {selected._count.scores}</p>
+              <p className="contest-inline-note">Rankings: {selected._count.rankings}</p>
+              <p className="contest-inline-note">Settlements: {selected._count.settlements}</p>
+              <p className="contest-inline-note">Timing: {fmt(selected.startsAt)} → {fmt(selected.lockAt)} → {fmt(selected.endsAt)}</p>
+
+              <div className="admin-actions-row">
+                <Link href={`/admin/contests/${selected.id}`} className="admin-badge neutral">Open</Link>
+                <Link href={`/admin/contests/create?contestId=${selected.id}`} className="admin-badge neutral">Edit</Link>
+                {selected.status === "DRAFT" && !selected.configPublishedAt ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "publish")}>Publish</button> : null}
+                {selected.configPublishedAt && selected._count.entries === 0 && selected.status !== "SETTLED" ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "unpublish")}>Unpublish</button> : null}
+                {selected.status !== "CANCELED" ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "archive")}>Archive</button> : null}
+                {((selected.status === "CANCELED") || (selected._count.entries === 0 && selected._count.scores === 0 && selected._count.rankings === 0 && selected._count.settlements === 0)) ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "delete")}>Delete</button> : null}
+              </div>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
-}
-
-function tone(status: ContestStatus) {
-  if (status === "OPEN" || status === "LIVE") return "success";
-  if (status === "DRAFT" || status === "LOCKED") return "warn";
-  if (status === "CANCELED") return "danger";
-  return "neutral";
 }
 
 function fmt(value: string | null) {
