@@ -110,7 +110,7 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
     return {
       ...base,
       config: {
-        milestoneType: input.milestoneType ?? "CONTEST_PARTICIPATION_COUNT",
+        milestoneType: input.milestoneType ?? "CONTESTS_JOINED",
         targetValue,
         threshold: targetValue,
       },

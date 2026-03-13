@@ -36,7 +36,7 @@ export default function QuestBuilderPage() {
   const [description, setDescription] = useState("");
   const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>("FOLLOW_X");
   const [socialAction, setSocialAction] = useState<SocialAction>("LIKE");
-  const [milestoneType, setMilestoneType] = useState<MilestoneType>("CONTEST_PARTICIPATION_COUNT");
+  const [milestoneType, setMilestoneType] = useState<MilestoneType>("CONTESTS_JOINED");
   const [targetValue, setTargetValue] = useState("3");
   const [targetUrl, setTargetUrl] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
@@ -237,9 +237,20 @@ export default function QuestBuilderPage() {
                 {objectiveType === "MILESTONE" ? (
                   <>
                     <select className="input" value={milestoneType} onChange={(event) => setMilestoneType(event.target.value as MilestoneType)}>
-                      <option value="CONTEST_PARTICIPATION_COUNT">Contest participation count</option>
-                      <option value="PACK_OPEN_COUNT">Pack open count</option>
-                      <option value="CARD_COLLECTION_COUNT">Card collection count</option>
+                      <option value="CONTESTS_JOINED">Contests joined</option>
+                      <option value="PACK_OPEN_COUNT">Packs opened</option>
+                      <option value="TOTAL_CARDS_COLLECTED">Total cards collected</option>
+                      <option value="UNIQUE_CARDS_COLLECTED">Unique cards collected</option>
+                      <option value="CONTESTS_WON">Contests won</option>
+                      <option value="CONTESTS_TOP3">Contests top 3</option>
+                      <option value="RARE_PLUS_CARDS_OWNED">Rare+ cards owned</option>
+                      <option value="EPIC_PLUS_CARDS_OWNED">Epic+ cards owned</option>
+                      <option value="LEGENDARY_CARDS_OWNED">Legendary cards owned</option>
+                      <option value="REWARDS_CLAIMED">Quest rewards claimed</option>
+                      <option value="REWARD_POINTS_EARNED">Reward points earned</option>
+                      <option value="ROSTER_SUBMISSIONS_COUNT">Roster submissions</option>
+                      <option value="CONTESTS_SETTLED_COUNT">Settled contests</option>
+                      <option value="POINTS_BALANCE_REACHED">Points balance reached</option>
                     </select>
                     <input className="input" type="number" min={1} placeholder="Target value" value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
                   </>
