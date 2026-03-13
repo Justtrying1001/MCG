@@ -77,8 +77,10 @@ export default function AdminContestCreatePage() {
 
   const payload = useMemo(() => {
     const rewardPayload = toContestRewardPayload(rules);
+    const normalizedCode = code.trim();
+    const parsedEntryFee = Number(entryFeeAmount);
     return {
-      code: code.trim(),
+      code: autoCode ? undefined : normalizedCode,
       autoGenerateCode: autoCode,
       title: title.trim(),
       description: description.trim() || null,
@@ -92,7 +94,7 @@ export default function AdminContestCreatePage() {
       cardSetId: eligibilityMode === "CARD_SET_ONLY" ? (cardSetId || null) : null,
       entryFeeEnabled,
       entryFeeCurrency: "POINTS",
-      entryFeeAmount: entryFeeEnabled ? Number(entryFeeAmount) : null,
+      entryFeeAmount: entryFeeEnabled && Number.isInteger(parsedEntryFee) ? parsedEntryFee : null,
       rewardBundles: rewardPayload.rewardBundles,
       distributionRules: rewardPayload.distributionRules,
     };
@@ -105,10 +107,24 @@ export default function AdminContestCreatePage() {
     if (!payload.startsAt || !payload.lockAt || !payload.endsAt) arr.push("Le schedule complet est requis.");
     if (payload.startsAt && payload.lockAt && payload.startsAt >= payload.lockAt) arr.push("openAt doit être avant lockAt.");
     if (payload.lockAt && payload.endsAt && payload.lockAt > payload.endsAt) arr.push("lockAt doit être <= endAt.");
+    if (entryFeeEnabled && (!Number.isInteger(payload.entryFeeAmount) || (payload.entryFeeAmount ?? 0) <= 0)) {
+      arr.push("entryFeeAmount doit être un entier positif quand les frais sont activés.");
+    }
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Sélectionner un card set.");
     if (payload.rewardBundles.length === 0) arr.push("Ajouter au moins une règle reward valide.");
     return arr;
-  }, [autoCode, eligibilityMode, payload]);
+  }, [autoCode, eligibilityMode, entryFeeEnabled, payload]);
+
+  const formatApiError = (body: any, fallback: string) => {
+    const issues = Array.isArray(body?.issues) ? body.issues : [];
+    if (issues.length > 0) {
+      const detail = issues
+        .map((issue: { path?: Array<string | number>; message?: string }) => `${(issue.path ?? []).join(".") || "payload"}: ${issue.message ?? "invalid"}`)
+        .join(" | ");
+      return `${body?.error ?? fallback} — ${detail}`;
+    }
+    return body?.error ?? fallback;
+  };
 
   const saveDraft = async () => {
     const response = await fetch(contestId ? `/api/internal/contest-configs/${contestId}` : "/api/internal/contest-configs", {
@@ -117,20 +133,26 @@ export default function AdminContestCreatePage() {
       body: JSON.stringify(payload),
     });
     const body = (await response.json().catch(() => null)) as any;
-    if (!response.ok) return setMessage(body?.error ?? "Échec save draft");
+    if (!response.ok) {
+      setMessage(formatApiError(body, "Échec save draft"));
+      return null;
+    }
     if (!contestId && body?.contest?.id) setContestId(body.contest.id);
     if (!code && body?.contest?.code) setCode(body.contest.code);
     setMessage("Draft sauvegardé.");
+    return body?.contest?.id ?? contestId;
   };
 
   const launch = async () => {
-    if (!contestId) {
-      await saveDraft();
-      return;
+    let effectiveContestId = contestId;
+    if (!effectiveContestId) {
+      const createdId = await saveDraft();
+      if (!createdId) return;
+      effectiveContestId = createdId;
     }
-    const response = await fetch(`/api/internal/contest-configs/${contestId}/publish`, { method: "POST" });
+    const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/publish`, { method: "POST" });
     const body = (await response.json().catch(() => null)) as any;
-    if (!response.ok) return setMessage(body?.error ?? "Échec publish");
+    if (!response.ok) return setMessage(formatApiError(body, "Échec publish"));
     setMessage("Contest publié avec succès.");
   };
 

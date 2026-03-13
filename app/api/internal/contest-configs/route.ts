@@ -7,7 +7,11 @@ import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
 const createSchema = z.object({
-  code: z.string().trim().min(1).optional(),
+  code: z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  }, z.string().min(1).optional()),
   autoGenerateCode: z.boolean().optional(),
   title: z.string().trim().min(1),
   description: z.string().optional().nullable(),
