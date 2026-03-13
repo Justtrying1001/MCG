@@ -118,7 +118,7 @@ export default function AdminContestsCatalogPage() {
             const published = Boolean(contest.configPublishedAt);
             const canPublish = contest.status === "DRAFT" && !published;
             const canUnpublish = published && contest._count.entries === 0 && contest.status !== "SETTLED";
-            const canDelete = contest.status === "DRAFT" && contest._count.entries === 0;
+            const canDelete = contest._count.entries === 0 && contest._count.scores === 0 && contest._count.rankings === 0 && contest._count.settlements === 0;
             return (
               <div key={contest.id} className="admin-table-row" style={{ gridTemplateColumns: "1.3fr 2.5fr 1fr 1.6fr 0.8fr 0.8fr 2fr" }}>
                 <span className="contest-code">{contest.code}</span>
