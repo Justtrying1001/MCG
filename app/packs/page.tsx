@@ -118,10 +118,6 @@ export default function PacksPage() {
   const packPlanned   = packConfig?.pack?.plannedPackCount;
   const packsSold     = packConfig?.pack?.openedPackCount;
   const cardsPerPack  = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
-  const standardSlots = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("standard")).length ?? 3;
-  const premiumSlots  = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("premium")).length ?? 1;
-  const hitSlots      = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("hit")).length ?? 1;
-
   const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
     const aggregate = new Map<string, number>();
@@ -234,51 +230,52 @@ export default function PacksPage() {
 
             <div className="pack-pill-row">
               <span className="pack-pill">{cardsPerPack} cards</span>
-              <span className="pack-pill">{standardSlots} standard</span>
-              <span className="pack-pill">{premiumSlots} premium</span>
-              <span className="pack-pill">{hitSlots} hit</span>
             </div>
 
-            <div className="pack-rates-table-wrap">
-              <p className="pack-odds-label">Drop rates</p>
-              <div className="pack-rates-split">
-                <div>
-                  <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
-                  <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
-                    <thead>
-                      <tr>
-                        <th>Rarity</th>
-                        <th>Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rarityRows.slice(0, 5).map((row) => (
-                        <tr key={`rarity_${row.label}`}>
-                          <td>{row.label}</td>
-                          <td>{row.rate}%</td>
+            <div className="pack-drop-hover">
+              <p className="pack-drop-trigger">
+                Hover to view live drop rates by rarity and edition.
+              </p>
+              <div className="pack-drop-popover" role="tooltip" aria-label="Drop rates details">
+                <div className="pack-rates-split">
+                  <div>
+                    <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
+                    <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
+                      <thead>
+                        <tr>
+                          <th>Rarity</th>
+                          <th>Rate</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div>
-                  <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
-                  <table className="pack-rates-table" aria-label="Pack drop rates by edition">
-                    <thead>
-                      <tr>
-                        <th>Edition</th>
-                        <th>Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {editionRows.slice(0, 5).map((row) => (
-                        <tr key={`edition_${row.label}`}>
-                          <td>{row.label}</td>
-                          <td>{row.rate}%</td>
+                      </thead>
+                      <tbody>
+                        {rarityRows.slice(0, 5).map((row) => (
+                          <tr key={`rarity_${row.label}`}>
+                            <td>{row.label}</td>
+                            <td>{row.rate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
+                    <table className="pack-rates-table" aria-label="Pack drop rates by edition">
+                      <thead>
+                        <tr>
+                          <th>Edition</th>
+                          <th>Rate</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {editionRows.slice(0, 5).map((row) => (
+                          <tr key={`edition_${row.label}`}>
+                            <td>{row.label}</td>
+                            <td>{row.rate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
