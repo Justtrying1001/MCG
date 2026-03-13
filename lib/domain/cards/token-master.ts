@@ -119,6 +119,7 @@ export function toMvpCardViewFromTokenMasterRow(input: {
   plannedSupply: number;
   issuedSupply: number;
   instanceCount?: number;
+  editionNumber?: number | null;
 }): MvpCardView {
   const remainingSupply = Math.max(input.plannedSupply - input.issuedSupply, 0);
 
@@ -143,7 +144,7 @@ export function toMvpCardViewFromTokenMasterRow(input: {
     setCode: input.token.editorial?.collectionCode ?? input.token.editorial?.setCode ?? null,
     setEditionLabel: input.token.editorial?.editionLabel ?? null,
     setOrder: input.token.setOrder ?? null,
-    editionNumber: input.issuedSupply > 0 ? input.issuedSupply : 1,
+    editionNumber: input.editionNumber ?? null,
   };
 }
 

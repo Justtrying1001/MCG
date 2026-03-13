@@ -31,8 +31,7 @@ const getPrintedCardNumber = (card: MvpCardView) => {
 
 const getPullNumber = (card: MvpCardView) => {
   if (card.editionNumber && card.editionNumber > 0) return card.editionNumber;
-  if (card.issuedSupply > 0) return card.issuedSupply;
-  return 1;
+  return null;
 };
 
 const getCardText = (card: MvpCardView) => {
@@ -150,8 +149,10 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
         <span className="mvp-footer-edition">{setEdition}</span>
         <span className="mvp-footer-supply">
           {card.plannedSupply > 0
-            ? `${padCardNumber(Math.min(pullNumber, card.plannedSupply))} / ${padCardNumber(card.plannedSupply)}`
-            : "001 / ---"}
+            ? pullNumber
+              ? `${padCardNumber(Math.min(pullNumber, card.plannedSupply))} / ${padCardNumber(card.plannedSupply)}`
+              : `MAX ${padCardNumber(card.plannedSupply)}`
+            : "UNLTD"}
         </span>
       </footer>
 
