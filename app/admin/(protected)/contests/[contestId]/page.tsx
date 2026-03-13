@@ -61,7 +61,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
   }, [params.contestId]);
 
   const deleteContest = async () => {
-    const confirmed = window.confirm("Delete this contest draft? This action is permanent and only works if there are no entries/scores/rankings/settlements.");
+    const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with their linked entries/rankings/scores/settlements.");
     if (!confirmed) return;
     setBusyDelete(true);
     setMessage("");
@@ -137,7 +137,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
             <Link href={`/admin/contests/${params.contestId}/settlement`} className="contest-inline-note">Settlement workbench</Link>
             <Link href={`/admin/contests/${params.contestId}/audit`} className="contest-inline-note">Contest audit timeline</Link>
             <Link href={`/admin/contests/legacy/${params.contestId}`} className="contest-inline-note">Open legacy detail (temporary)</Link>
-            {data.contest._count.entries === 0 && data.contest._count.scores === 0 && data.contest._count.rankings === 0 && data.contest._count.settlements === 0 ? (
+            {(data.contest.status === "CANCELED" || (data.contest._count.entries === 0 && data.contest._count.scores === 0 && data.contest._count.rankings === 0 && data.contest._count.settlements === 0)) ? (
               <Button variant="ghost" onClick={() => void deleteContest()} disabled={busyDelete}>Delete contest</Button>
             ) : null}
           </section>

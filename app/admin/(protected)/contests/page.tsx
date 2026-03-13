@@ -56,7 +56,7 @@ export default function AdminContestsCatalogPage() {
 
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
     if (action === "delete") {
-      const confirmed = window.confirm("Delete this contest draft? This action is permanent and only works if there are no entries/scores/rankings/settlements.");
+      const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with their linked entries/rankings/scores/settlements.");
       if (!confirmed) return;
     }
 
@@ -118,7 +118,8 @@ export default function AdminContestsCatalogPage() {
             const published = Boolean(contest.configPublishedAt);
             const canPublish = contest.status === "DRAFT" && !published;
             const canUnpublish = published && contest._count.entries === 0 && contest.status !== "SETTLED";
-            const canDelete = contest._count.entries === 0 && contest._count.scores === 0 && contest._count.rankings === 0 && contest._count.settlements === 0;
+            const hasOperations = contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0;
+            const canDelete = !hasOperations || contest.status === "CANCELED";
             return (
               <div key={contest.id} className="admin-table-row" style={{ gridTemplateColumns: "1.3fr 2.5fr 1fr 1.6fr 0.8fr 0.8fr 2fr" }}>
                 <span className="contest-code">{contest.code}</span>
