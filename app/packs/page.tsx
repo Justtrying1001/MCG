@@ -122,28 +122,36 @@ export default function PacksPage() {
   const premiumSlots  = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("premium")).length ?? 1;
   const hitSlots      = packConfig?.slots?.filter((slot) => slot.type.toLowerCase().includes("hit")).length ?? 1;
 
-  const rarityEditionRows = useMemo(() => {
+  const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
     const aggregate = new Map<string, number>();
 
     for (const slot of packConfig?.slots ?? []) {
-      for (const odd of slot.rarityEditionOdds ?? []) {
-        const key = `${odd.rarityCode}__${odd.editionCode}`;
+      for (const odd of slot.rarityOdds ?? []) {
+        const key = odd.rarityCode.toUpperCase();
         aggregate.set(key, (aggregate.get(key) ?? 0) + (odd.pct / totalSlots));
       }
     }
 
     return Array.from(aggregate.entries())
-      .map(([key, rate]) => {
-        const [rarityCode, editionCode] = key.split("__");
-        return {
-          key,
-          label: `${rarityCode} + ${editionCode}`,
-          rate: Number(rate.toFixed(2)),
-        };
-      })
-      .sort((a, b) => b.rate - a.rate)
-      .slice(0, 6);
+      .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
+      .sort((a, b) => b.rate - a.rate);
+  }, [cardsPerPack, packConfig?.slots]);
+
+  const editionRows = useMemo(() => {
+    const totalSlots = Math.max(cardsPerPack, 1);
+    const aggregate = new Map<string, number>();
+
+    for (const slot of packConfig?.slots ?? []) {
+      for (const odd of slot.rarityEditionOdds ?? []) {
+        const key = odd.editionCode.toUpperCase();
+        aggregate.set(key, (aggregate.get(key) ?? 0) + (odd.pct / totalSlots));
+      }
+    }
+
+    return Array.from(aggregate.entries())
+      .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
+      .sort((a, b) => b.rate - a.rate);
   }, [cardsPerPack, packConfig?.slots]);
 
   return (
@@ -211,22 +219,16 @@ export default function PacksPage() {
               )}
             </div>
 
-            <div className="pack-kpi-grid">
-              <div className="pack-kpi-item">
-                <span className="pack-kpi-label">Price</span>
-                <span className="pack-kpi-value">{GAME_CONFIG.PACK_COST} pts</span>
+            <div className="pack-metrics">
+              <div className="pack-metric-line">
+                <span className="pack-metric-label">Price</span>
+                <span className="pack-metric-value">{GAME_CONFIG.PACK_COST} pts</span>
               </div>
-              <div className="pack-kpi-item">
-                <span className="pack-kpi-label">Remaining</span>
-                <span className="pack-kpi-value">{typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"}</span>
-              </div>
-              <div className="pack-kpi-item">
-                <span className="pack-kpi-label">Sold</span>
-                <span className="pack-kpi-value">{typeof packsSold === "number" ? packsSold.toLocaleString() : "—"}</span>
-              </div>
-              <div className="pack-kpi-item">
-                <span className="pack-kpi-label">Total</span>
-                <span className="pack-kpi-value">{typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"}</span>
+              <div className="pack-metric-line">
+                <span className="pack-metric-label">Supply</span>
+                <span className="pack-metric-value">
+                  {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packsSold === "number" ? packsSold.toLocaleString() : "—"} sold · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
+                </span>
               </div>
             </div>
 
@@ -238,23 +240,47 @@ export default function PacksPage() {
             </div>
 
             <div className="pack-rates-table-wrap">
-              <p className="pack-odds-label">Drop rates · rarity + edition</p>
-              <table className="pack-rates-table" aria-label="Pack drop rates summary">
-                <thead>
-                  <tr>
-                    <th>Rarity + Edition</th>
-                    <th>Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rarityEditionRows.map((row) => (
-                    <tr key={row.key}>
-                      <td>{row.label}</td>
-                      <td>{row.rate}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <p className="pack-odds-label">Drop rates</p>
+              <div className="pack-rates-split">
+                <div>
+                  <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
+                  <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
+                    <thead>
+                      <tr>
+                        <th>Rarity</th>
+                        <th>Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rarityRows.slice(0, 5).map((row) => (
+                        <tr key={`rarity_${row.label}`}>
+                          <td>{row.label}</td>
+                          <td>{row.rate}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
+                  <table className="pack-rates-table" aria-label="Pack drop rates by edition">
+                    <thead>
+                      <tr>
+                        <th>Edition</th>
+                        <th>Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editionRows.slice(0, 5).map((row) => (
+                        <tr key={`edition_${row.label}`}>
+                          <td>{row.label}</td>
+                          <td>{row.rate}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -294,24 +320,12 @@ export default function PacksPage() {
             )}
           </div>
 
-          {/* RIGHT — Tips & Info */}
+          {/* RIGHT — Summary */}
           <div className="pack-right">
             <div className="pack-side-card">
-              <p className="pack-side-card-label">Pack format</p>
+              <p className="pack-side-card-label">Pack summary</p>
               <p className="pack-side-card-copy">
-                {cardsPerPack} cards per pack, with a guaranteed premium moment.
-              </p>
-            </div>
-            <div className="pack-side-card">
-              <p className="pack-side-card-label">Reveal flow</p>
-              <p className="pack-side-card-copy">
-                Open and flip in order. Saved instantly.
-              </p>
-            </div>
-            <div className="pack-side-card">
-              <p className="pack-side-card-label">Collection safety</p>
-              <p className="pack-side-card-copy">
-                Signed-in pulls are saved to your account. Guest pulls remain local.
+                {cardsPerPack} cards. Open and flip in order. Premium guaranteed. Signed-in pulls are saved.
               </p>
             </div>
           </div>

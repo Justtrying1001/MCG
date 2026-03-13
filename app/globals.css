@@ -627,6 +627,39 @@ a { color: inherit; text-decoration: none; }
 }
 
 
+.pack-metrics {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pack-metric-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.5rem 0.65rem;
+}
+
+.pack-metric-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pack-metric-value {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+
+
 .pack-kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -661,6 +694,13 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.02);
   padding: 0.7rem 0.75rem;
+}
+
+
+.pack-rates-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
 .pack-rates-table {
@@ -1897,7 +1937,7 @@ a { color: inherit; text-decoration: none; }
   /* Pack odds — wrap inline on mobile */
   .pack-odds                   { flex-direction: row; flex-wrap: wrap; gap: 0.4rem; }
   .pack-odds-row               { flex: 1; min-width: 120px; }
-  .pack-kpi-grid               { grid-template-columns: 1fr 1fr; }
+  .pack-rates-split             { grid-template-columns: 1fr; }
 
   /* Page header tighter */
   .page-header                 { gap: 0.75rem; }
