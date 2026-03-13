@@ -46,6 +46,6 @@ describe("quests social helpers", () => {
     expect(getQuestObjectiveText({ objectiveType: "FOLLOW_X" })).toContain("Follow");
     expect(getQuestObjectiveText({ objectiveType: "SOCIAL_ENGAGEMENT", socialAction: "RETWEET" })).toContain("RT");
     expect(getQuestObjectiveText({ objectiveType: "MILESTONE", milestoneType: "PACK_OPEN_COUNT", milestoneTargetValue: 4 })).toContain("Open 4 packs");
-    expect(getMilestoneObjectiveText("CARD_COLLECTION_COUNT", 50)).toContain("50 cards");
+    expect(getMilestoneObjectiveText("TOTAL_CARDS_COLLECTED", 50)).toContain("50 total cards");
   });
 });

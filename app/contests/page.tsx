@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
@@ -63,7 +62,7 @@ export default function ContestsPage() {
       setContests(p.contests ?? []);
       setIsLoading(false);
     })();
-  }, [loading, me]);
+  }, [loading]);
 
   const grouped = useMemo(() => ({
     active:  contests.filter((c) => ["OPEN","LOCKED","LIVE"].includes(c.status)),

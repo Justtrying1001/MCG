@@ -40,6 +40,18 @@ type State = {
   contestEntriesCount: number;
   packOpenCount: number;
   collectionCardCount: number;
+  uniqueCardTemplateCount: number;
+  contestsWonCount: number;
+  contestsTop3Count: number;
+  rarePlusCount: number;
+  epicPlusCount: number;
+  legendaryCount: number;
+  rewardsClaimedCount: number;
+  rewardPointsEarned: number;
+  rosterSubmissionCount: number;
+  contestsSettledCount: number;
+  packRewardsReceivedCount: number;
+  pointsBalance: number;
   quests: Array<any>;
   progressByUserQuest: Map<string, any>;
   progressById: Map<string, any>;
@@ -53,13 +65,32 @@ function key(userId: string, questId: string) {
 function createTx(state: State) {
   return {
     contestEntry: {
-      count: vi.fn(async () => state.contestEntriesCount),
+      count: vi.fn(async ({ where }: any) => (where?.status === "SETTLED" ? state.contestsSettledCount : state.contestEntriesCount)),
     },
-    packOpening: {
+    packOpeningEvent: {
       count: vi.fn(async () => state.packOpenCount),
     },
-    userCard: {
-      aggregate: vi.fn(async () => ({ _sum: { quantity: state.collectionCardCount } })),
+    ownedCardInstance: {
+      count: vi.fn(async ({ where }: any) => {
+        if (where?.cardTemplate?.rarity?.code?.in?.includes("RARE")) return state.rarePlusCount;
+        if (where?.cardTemplate?.rarity?.code?.in?.includes("EPIC")) return state.epicPlusCount;
+        if (where?.cardTemplate?.rarity?.code === "LEGENDARY") return state.legendaryCount;
+        return state.collectionCardCount;
+      }),
+      groupBy: vi.fn(async () => Array.from({ length: state.uniqueCardTemplateCount }).map((_, i) => ({ cardTemplateId: `tpl_${i}` }))),
+    },
+    contestRanking: {
+      count: vi.fn(async ({ where }: any) => {
+        if (where?.rank === 1) return state.contestsWonCount;
+        if (where?.rank?.lte === 3) return state.contestsTop3Count;
+        return 0;
+      }),
+    },
+    rosterLock: {
+      count: vi.fn(async () => state.rosterSubmissionCount),
+    },
+    packAcquisition: {
+      count: vi.fn(async () => state.packRewardsReceivedCount),
     },
     questDefinition: {
       findMany: vi.fn(async () => state.quests),
@@ -83,6 +114,8 @@ function createTx(state: State) {
       }),
     },
     rewardLedgerEntry: {
+      count: vi.fn(async () => state.rewardsClaimedCount),
+      aggregate: vi.fn(async () => ({ _sum: { amount: state.rewardPointsEarned } })),
       findUnique: vi.fn(async ({ where }: any) => state.ledgerEntries.find((entry) => entry.idempotencyKey === where.idempotencyKey) ?? null),
       create: vi.fn(async ({ data }: any) => {
         const created = { id: `led_${state.ledgerEntries.length + 1}`, ...data };
@@ -91,6 +124,7 @@ function createTx(state: State) {
       }),
     },
     user: {
+      findUnique: vi.fn(async () => ({ points: state.pointsBalance })),
       update: vi.fn(async ({ where, data }: any) => {
         if (where.id !== state.user.id) throw new Error("User not found");
         state.user.points += data.points.increment;
@@ -240,6 +274,18 @@ describe("quests runtime phase 3", () => {
       contestEntriesCount: 1,
       packOpenCount: 0,
       collectionCardCount: 0,
+      uniqueCardTemplateCount: 0,
+      contestsWonCount: 0,
+      contestsTop3Count: 0,
+      rarePlusCount: 0,
+      epicPlusCount: 0,
+      legendaryCount: 0,
+      rewardsClaimedCount: 0,
+      rewardPointsEarned: 0,
+      rosterSubmissionCount: 0,
+      contestsSettledCount: 0,
+      packRewardsReceivedCount: 0,
+      pointsBalance: 0,
       quests: [
         {
           id: "q1",
@@ -292,6 +338,18 @@ describe("quests runtime phase 3", () => {
       contestEntriesCount: 0,
       packOpenCount: 2,
       collectionCardCount: 0,
+      uniqueCardTemplateCount: 0,
+      contestsWonCount: 0,
+      contestsTop3Count: 0,
+      rarePlusCount: 0,
+      epicPlusCount: 0,
+      legendaryCount: 0,
+      rewardsClaimedCount: 0,
+      rewardPointsEarned: 0,
+      rosterSubmissionCount: 0,
+      contestsSettledCount: 0,
+      packRewardsReceivedCount: 0,
+      pointsBalance: 0,
       quests: [
         {
           id: "q_pack",
@@ -326,12 +384,24 @@ describe("quests runtime phase 3", () => {
     expect(state.progressByUserQuest.get("u1:q_pack").status).toBe("COMPLETED");
   });
 
-  it("auto-completes CARD_COLLECTION_COUNT milestone from user cards", async () => {
+  it("auto-completes TOTAL_CARDS_COLLECTED milestone from user cards", async () => {
     const state: State = {
       user: { id: "u1", points: 0 },
       contestEntriesCount: 0,
       packOpenCount: 0,
       collectionCardCount: 49,
+      uniqueCardTemplateCount: 49,
+      contestsWonCount: 0,
+      contestsTop3Count: 0,
+      rarePlusCount: 0,
+      epicPlusCount: 0,
+      legendaryCount: 0,
+      rewardsClaimedCount: 0,
+      rewardPointsEarned: 0,
+      rosterSubmissionCount: 0,
+      contestsSettledCount: 0,
+      packRewardsReceivedCount: 0,
+      pointsBalance: 0,
       quests: [
         {
           id: "q_col",
@@ -345,7 +415,7 @@ describe("quests runtime phase 3", () => {
           isActive: true,
           startAt: null,
           endAt: null,
-          config: { milestoneType: "CARD_COLLECTION_COUNT", targetValue: 50, threshold: 50 },
+          config: { milestoneType: "TOTAL_CARDS_COLLECTED", targetValue: 50, threshold: 50 },
         },
       ],
       progressByUserQuest: new Map(),
@@ -359,6 +429,7 @@ describe("quests runtime phase 3", () => {
     expect(state.user.points).toBe(0);
 
     state.collectionCardCount = 50;
+    state.uniqueCardTemplateCount = 50;
     await syncContestEntryQuestProgression(state.user.id);
 
     expect(state.user.points).toBe(500);
