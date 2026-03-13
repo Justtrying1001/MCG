@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { useSession } from "@/components/useSession";
 
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
@@ -57,6 +58,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "saving">("idle");
+  const [lineupBuilderOpen, setLineupBuilderOpen] = useState(false);
 
   useEffect(() => {
     if (loading || !me || me.mode === "guest") return;
@@ -78,10 +80,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       const detailPayload = (await detailRes.json()) as ContestDetail;
       setDetail(detailPayload);
 
-      if (rankingRes.ok) {
-        setRanking((await rankingRes.json()) as RankingPayload);
-      }
-
+      if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
       if (optionsRes.ok) {
         const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
         setOptions(lineupPayload.options ?? []);
@@ -137,9 +136,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     }
 
     const updated = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
-    if (updated.ok) {
-      setDetail((await updated.json()) as ContestDetail);
-    }
+    if (updated.ok) setDetail((await updated.json()) as ContestDetail);
+
+    setLineupBuilderOpen(false);
     setSubmitState("idle");
   };
 
@@ -147,13 +146,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     <SiteShell>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contest Detail</h1>
-          <p className="page-subtitle">Read rules, lock an eligible lineup, and track leaderboard outcomes.</p>
+          <h1 className="page-title">Contest detail</h1>
+          <p className="page-subtitle">Build your lineup visually, lock your team, and monitor competition outcomes from one page.</p>
         </div>
       </div>
 
       {guestBlocked ? (
-        <div className="contest-guest-notice">Contests are account-only in MVP. Log in with X to enter using owned instances.</div>
+        <div className="contest-guest-notice">Contests are account-only. Sign in with X to enter using owned card instances.</div>
       ) : null}
 
       {!detail ? (
@@ -174,14 +173,21 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               <ContestMeta label="Ends" value={formatDate(detail.contest.endsAt)} />
               <ContestMeta label="Set restriction" value={rule?.cardSetId ? "Restricted" : "Any set"} />
             </div>
+
+            <div className="contest-builder-actions">
+              <Button variant="gold" onClick={() => setLineupBuilderOpen(true)} disabled={!canEnter}>
+                {canEnter ? "Open visual lineup builder" : "Lineup locked / unavailable"}
+              </Button>
+              <p className="contest-inline-note">Pick exactly {maxRosterSize} cards and submit your team.</p>
+            </div>
           </section>
 
           <section className="contest-section">
-            <h3 className="contest-section-title">Your Entry</h3>
+            <h3 className="contest-section-title">Current lineup preview</h3>
             {detail.userEntry ? (
-              <p className="contest-inline-note">Entry locked ({detail.userEntry.status}). You cannot change lineup in this MVP flow.</p>
+              <p className="contest-inline-note">Entry locked ({detail.userEntry.status}). This lineup cannot be edited in this MVP flow.</p>
             ) : (
-              <p className="contest-inline-note">Select exactly {maxRosterSize} owned instances, then submit.</p>
+              <p className="contest-inline-note">Use the lineup builder to lock your team.</p>
             )}
 
             <div className="contest-selected-lineup">
@@ -190,36 +196,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 return (
                   <div className="contest-slot" key={index}>
                     <span className="contest-slot-index">{index + 1}</span>
-                    <span className="contest-slot-name">{card ? `${card.name} · ${card.rarityCode}/${card.editionCode}` : "Empty"}</span>
+                    <span className="contest-slot-name">{card ? `${card.name} · ${card.rarityCode}/${card.editionCode}` : "Empty slot"}</span>
                   </div>
-                );
-              })}
-            </div>
-
-            {canEnter ? (
-              <Button onClick={() => void submitEntry()} disabled={submitState === "saving" || selected.length !== maxRosterSize}>
-                {submitState === "saving" ? "Submitting…" : "Submit Contest Entry"}
-              </Button>
-            ) : null}
-
-            <div className="contest-option-grid">
-              {filteredOptions.map((item) => {
-                const isSelected = selected.includes(item.instanceId);
-                const isLocked = Boolean(item.lockState) && !isSelected;
-                return (
-                  <button
-                    key={item.instanceId}
-                    className={`contest-option-card${isSelected ? " selected" : ""}`}
-                    type="button"
-                    onClick={() => toggle(item.instanceId)}
-                    disabled={!canEnter || isLocked}
-                  >
-                    <p className="contest-option-name">{item.name}</p>
-                    <p className="contest-option-meta">{item.rarityCode} · {item.editionCode}</p>
-                    <p className="contest-option-meta">{item.cardSetCode}</p>
-                    <p className="contest-option-instance">#{item.instanceId.slice(-8)}</p>
-                    {isLocked ? <span className="contest-option-lock">Locked in another active contest</span> : null}
-                  </button>
                 );
               })}
             </div>
@@ -243,6 +221,52 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           </section>
 
           {error ? <div className="contest-error">{error}</div> : null}
+
+          <Modal title="Visual lineup builder" open={lineupBuilderOpen} onClose={() => setLineupBuilderOpen(false)}>
+            <div className="contest-builder-modal">
+              <p className="contest-inline-note">Select {maxRosterSize} owned instances. Locked cards in other active contests cannot be used.</p>
+              <div className="contest-selected-lineup" style={{ marginBottom: "1rem" }}>
+                {Array.from({ length: maxRosterSize }).map((_, index) => {
+                  const card = selectedCards[index];
+                  return (
+                    <div className="contest-slot" key={index}>
+                      <span className="contest-slot-index">{index + 1}</span>
+                      <span className="contest-slot-name">{card ? `${card.name} · ${card.rarityCode}/${card.editionCode}` : "Empty slot"}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="contest-option-grid">
+                {filteredOptions.map((item) => {
+                  const isSelected = selected.includes(item.instanceId);
+                  const isLocked = Boolean(item.lockState) && !isSelected;
+                  return (
+                    <button
+                      key={item.instanceId}
+                      className={`contest-option-card${isSelected ? " selected" : ""}`}
+                      type="button"
+                      onClick={() => toggle(item.instanceId)}
+                      disabled={!canEnter || isLocked}
+                    >
+                      <p className="contest-option-name">{item.name}</p>
+                      <p className="contest-option-meta">{item.rarityCode} · {item.editionCode}</p>
+                      <p className="contest-option-meta">{item.cardSetCode}</p>
+                      <p className="contest-option-instance">#{item.instanceId.slice(-8)}</p>
+                      {isLocked ? <span className="contest-option-lock">Locked in another active contest</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="contest-builder-actions">
+                <Button onClick={() => void submitEntry()} disabled={submitState === "saving" || selected.length !== maxRosterSize}>
+                  {submitState === "saving" ? "Submitting…" : "Submit contest entry"}
+                </Button>
+                <Button variant="ghost" onClick={() => setLineupBuilderOpen(false)}>Close builder</Button>
+              </div>
+            </div>
+          </Modal>
         </>
       )}
     </SiteShell>

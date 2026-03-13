@@ -18,7 +18,7 @@ export default function AccountPage() {
         <div>
           <h1 className="page-title">Profile</h1>
           <p className="page-subtitle">
-            Your progression hub — account milestones, collection completion, and contest performance.
+            Your personal progression hub: account growth, collection depth, and competitive outcomes in one place.
           </p>
         </div>
       </div>
@@ -48,7 +48,7 @@ export default function AccountPage() {
           <div className="profile-hub-grid">
             <section className="profile-stat-card">
               <span className="profile-stat-label">Account progression</span>
-              <span className="profile-stat-value" style={{ color: "var(--cyan)" }}>
+              <span className="profile-stat-value" style={{ color: "var(--arc-blue)" }}>
                 Lv {account?.level ?? 1}
               </span>
               <span className="profile-stat-sub">

@@ -54,12 +54,13 @@ export default function ContestsPage() {
     })();
   }, [loading, me]);
 
-  const grouped = useMemo(() => {
-    return {
+  const grouped = useMemo(
+    () => ({
       open: contests.filter((c) => c.status === "OPEN" || c.status === "LOCKED" || c.status === "LIVE"),
       settled: contests.filter((c) => c.status === "SETTLED"),
-    };
-  }, [contests]);
+    }),
+    [contests]
+  );
 
   const guestBlocked = !loading && me?.mode === "guest";
 
@@ -69,10 +70,17 @@ export default function ContestsPage() {
         <div>
           <h1 className="page-title">Contests</h1>
           <p className="page-subtitle">
-            Discover active contests, lock your lineup, and track the leaderboard in one dedicated flow.
+            Choose a contest, build your lineup visually, and track each phase from open registration to final rankings.
           </p>
         </div>
       </div>
+
+      <section className="contest-flow-strip">
+        <div><strong>1.</strong> Pick a live contest</div>
+        <div><strong>2.</strong> Build your roster</div>
+        <div><strong>3.</strong> Lock your entry</div>
+        <div><strong>4.</strong> Follow results</div>
+      </section>
 
       {guestBlocked ? <GuestNotice /> : null}
 
@@ -83,7 +91,7 @@ export default function ContestsPage() {
       ) : contests.length === 0 ? (
         <div className="empty-state">
           <p className="empty-state-title">No contests are currently published.</p>
-          <p className="empty-state-desc">Check back soon for the next lock window.</p>
+          <p className="empty-state-desc">New lineup windows will appear here as soon as they are available.</p>
         </div>
       ) : (
         <>
@@ -117,6 +125,7 @@ function ContestSection({ title, contests }: { title: string; contests: ContestL
                 <ContestMeta label="Starts" value={formatDate(contest.startsAt)} />
                 <ContestMeta label="Lock" value={formatDate(contest.lockAt)} />
               </div>
+              <p className="contest-inline-note" style={{ marginTop: "0.6rem" }}>Open detail to build your lineup and submit your team.</p>
             </Link>
           );
         })}
@@ -137,7 +146,7 @@ function ContestMeta({ label, value }: { label: string; value: string }) {
 function GuestNotice() {
   return (
     <div className="contest-guest-notice">
-      Contest participation requires an authenticated account with owned card instances. Guest mode can open packs and preview collection data, but cannot enter contests.
+      Contest participation requires an authenticated account with owned card instances. Guest mode can open packs and preview collection data, but cannot submit lineups.
     </div>
   );
 }

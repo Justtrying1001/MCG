@@ -7,57 +7,56 @@ import { useSession } from "@/components/useSession";
 import { useMemo, useState } from "react";
 import type { MvpCardView } from "@/types/cards";
 
+type SortMode = "NAME" | "RARITY" | "COPIES";
+
 export default function CollectionPage() {
   const { me } = useSession();
   const [search, setSearch] = useState("");
   const [faction, setFaction] = useState("");
+  const [sortBy, setSortBy] = useState<SortMode>("NAME");
   const [zoomedCard, setZoomedCard] = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
 
   const isAuthUser = me?.mode === "user";
   const mvpCollection = me?.mvpCollection;
-  const useMvpCollection = isAuthUser && Array.isArray(mvpCollection);
+  const source = isAuthUser ? (mvpCollection ?? []) : (me?.mvpCollection ?? []);
 
-  const factions = useMemo(() => {
-    if (!me) return [];
+  const factions = useMemo(
+    () => [...new Set(source.map((x) => x.card.faction).filter(Boolean) as string[])].sort(),
+    [source]
+  );
 
-    if (isAuthUser) {
-      const source = mvpCollection ?? [];
-      return [...new Set(source.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
+  const filteredCards = useMemo(() => {
+    const rarityWeight: Record<string, number> = {
+      LEGENDARY: 5,
+      EPIC: 4,
+      RARE: 3,
+      UNCOMMON: 2,
+      COMMON: 1,
+    };
+
+    const rows = source
+      .filter((item) => !faction || item.card.faction === faction)
+      .filter((item) =>
+        `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      );
+
+    if (sortBy === "NAME") {
+      return rows.sort((a, b) => a.card.displayName.localeCompare(b.card.displayName));
     }
 
-    return [...new Set(me.mvpCollection.map((x) => x.card.faction).filter(Boolean) as string[])].sort();
-  }, [isAuthUser, me, mvpCollection]);
+    if (sortBy === "COPIES") {
+      return rows.sort((a, b) => b.instanceCount - a.instanceCount);
+    }
 
-  const mvpCards = useMemo(() => {
-    if (!isAuthUser) return [];
+    return rows.sort((a, b) => (rarityWeight[b.card.rarity] ?? 0) - (rarityWeight[a.card.rarity] ?? 0));
+  }, [faction, search, sortBy, source]);
 
-    return (mvpCollection ?? [])
-      .filter((item) => !faction || item.card.faction === faction)
-      .filter((item) =>
-        `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
-      )
-      .sort((a, b) => a.card.displayName.localeCompare(b.card.displayName));
-  }, [faction, isAuthUser, mvpCollection, search]);
-
-  const guestCards = useMemo(() => {
-    if (!me || me.mode !== "guest") return [];
-
-    return me.mvpCollection
-      .filter((item) => !faction || item.card.faction === faction)
-      .filter((item) =>
-        `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""}`.toLowerCase().includes(search.toLowerCase())
-      )
-      .sort((a, b) => a.card.displayName.localeCompare(b.card.displayName));
-  }, [me, faction, search]);
-
-  const totalCards = isAuthUser
-    ? (mvpCollection ?? []).reduce((acc, x) => acc + x.instanceCount, 0)
-    : me?.mvpCollection.reduce((acc, x) => acc + x.instanceCount, 0) ?? 0;
-  const uniqueCards = isAuthUser ? (mvpCollection ?? []).length : me?.mvpCollection.length ?? 0;
-  const legendaryCount = isAuthUser
-    ? (mvpCollection ?? []).filter((x) => x.card.rarity === "LEGENDARY").length
-     : me?.mvpCollection.filter((x) => x.card.rarity === "LEGENDARY").length ?? 0;
-  const v2Projection = isAuthUser ? me.coexistence?.v2?.collectionProjection : undefined;
+  const totalCards = source.reduce((acc, x) => acc + x.instanceCount, 0);
+  const uniqueCards = source.length;
+  const legendaryCount = source.filter((x) => x.card.rarity === "LEGENDARY").length;
+  const completionHint = uniqueCards > 0 ? Math.round((legendaryCount / uniqueCards) * 100) : 0;
 
   return (
     <SiteShell>
@@ -65,8 +64,7 @@ export default function CollectionPage() {
         <div>
           <h1 className="page-title">Collection</h1>
           <p className="page-subtitle">
-            Your complete card roster. Filter by faction, search by name, and audit your
-            strongest cores with a premium TCG face-front card layout.
+            Your collector dashboard: inspect your binder, sort your cards, and quickly identify your strongest rarity pockets.
           </p>
         </div>
       </div>
@@ -74,104 +72,77 @@ export default function CollectionPage() {
       {me && (
         <div className="collection-stats">
           <div className="stat-pill">
-            <span className="stat-pill-value" style={{ color: "var(--text)" }}>{v2Projection?.totalOwnedInstances ?? totalCards}</span>
-            <span className="stat-pill-label">Total cards {v2Projection ? "(v2)" : ""}</span>
+            <span className="stat-pill-value" style={{ color: "var(--text)" }}>{totalCards}</span>
+            <span className="stat-pill-label">Total copies</span>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-value">{v2Projection?.ownedTemplateCount ?? uniqueCards}</span>
-            <span className="stat-pill-label">Unique owned</span>
+            <span className="stat-pill-value">{uniqueCards}</span>
+            <span className="stat-pill-label">Unique cards</span>
           </div>
           <div className="stat-pill">
             <span className="stat-pill-value" style={{ color: "var(--rarity-legendary)" }}>{legendaryCount}</span>
-            <span className="stat-pill-label">Legendary</span>
+            <span className="stat-pill-label">Legendary cards</span>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-value">{v2Projection?.missingTemplateCount ?? factions.length}</span>
-            <span className="stat-pill-label">Missing templates</span>
+            <span className="stat-pill-value">{completionHint}%</span>
+            <span className="stat-pill-label">Legendary ratio</span>
           </div>
         </div>
       )}
 
-      <div className="filters-bar">
+      <section className="collector-toolbar">
         <input
           className="filter-input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, symbol, faction…"
         />
-        <select
-          className="filter-select"
-          value={faction}
-          onChange={(e) => setFaction(e.target.value)}
-        >
+        <select className="filter-select" value={faction} onChange={(e) => setFaction(e.target.value)}>
           <option value="">All factions</option>
           {factions.map((f) => (
             <option key={f} value={f}>{f}</option>
           ))}
         </select>
-      </div>
+        <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)}>
+          <option value="NAME">Sort: Name</option>
+          <option value="RARITY">Sort: Rarity</option>
+          <option value="COPIES">Sort: Copies owned</option>
+        </select>
+      </section>
 
       {!me ? (
         <div className="empty-state">
           <div className="empty-state-icon">▦</div>
-          <p className="empty-state-title">Connect or start guest mode to view your collection</p>
-          <p className="empty-state-desc">
-            Use X for persistent collection, or guest mode for temporary testing.
-          </p>
+          <p className="empty-state-title">Sign in or start guest mode to open your collection binder</p>
+          <p className="empty-state-desc">Use X login for persistent ownership, or guest mode for temporary collection sessions.</p>
         </div>
-      ) : isAuthUser ? (
-        !useMvpCollection ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">⚠</div>
-            <p className="empty-state-title">MVP collection payload unavailable</p>
-            <p className="empty-state-desc">
-              Auth collection no longer falls back to legacy cards. Refresh your session and verify `/api/me` returns
-              `mvpCollection`.
-            </p>
-          </div>
-        ) : mvpCards.length > 0 ? (
-          <div className="card-grid">
-            {mvpCards.map((item) => (
-              <button key={item.templateId} type="button" className="card-tile-trigger" onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}>
-                <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-state-icon">◈</div>
-            <p className="empty-state-title">
-              {search || faction ? "No cards match your filters" : "Your collection is empty"}
-            </p>
-            <p className="empty-state-desc">
-              {search || faction
-                ? "Try adjusting your search or removing the faction filter."
-                : "Head to Packs and crack open your first booster to get started."}
-            </p>
-          </div>
-        )
-      ) : guestCards.length > 0 ? (
+      ) : filteredCards.length > 0 ? (
         <div className="card-grid">
-          {guestCards.map((item) => (
-            <button key={item.templateId} type="button" className="card-tile-trigger" onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}>
+          {filteredCards.map((item) => (
+            <button
+              key={item.templateId}
+              type="button"
+              className="card-tile-trigger"
+              onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}
+            >
               <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
             </button>
           ))}
         </div>
       ) : (
         <div className="empty-state">
-          <div className="empty-state-icon">◈</div>
-          <p className="empty-state-title">
-            {search || faction ? "No cards match your filters" : "Your collection is empty"}
-          </p>
-          <p className="empty-state-desc">
-            {search || faction
-              ? "Try adjusting your search or removing the faction filter."
-              : "Open a guest pack to start filling this temporary collection."}
-          </p>
+          <div className="empty-state-icon">🗂️</div>
+          <p className="empty-state-title">No cards match your current filters</p>
+          <p className="empty-state-desc">Try another faction, clear search terms, or open new packs to expand your collection.</p>
         </div>
       )}
-      <CardZoomModal card={zoomedCard.card} quantity={zoomedCard.quantity} open={Boolean(zoomedCard.card)} onClose={() => setZoomedCard({ card: null })} />
+
+      <CardZoomModal
+        card={zoomedCard.card}
+        quantity={zoomedCard.quantity}
+        open={Boolean(zoomedCard.card)}
+        onClose={() => setZoomedCard({ card: null })}
+      />
     </SiteShell>
   );
 }

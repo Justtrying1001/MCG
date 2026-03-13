@@ -7,6 +7,33 @@
   gap: 1rem;
 }
 
+.gamifiedBar {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.kpi {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--bg-2) 66%, transparent);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.kpi strong {
+  font-size: 1.2rem;
+  color: var(--gold);
+}
+
+.kpi span {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .controls {
   display: flex;
   gap: 0.6rem;

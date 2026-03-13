@@ -2350,3 +2350,50 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Page-specific redesign helpers */
+.collector-toolbar {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(160px, 220px));
+  align-items: center;
+}
+
+.contest-flow-strip {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.contest-flow-strip > div {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--bg-2) 72%, transparent);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.contest-flow-strip strong {
+  color: var(--gold);
+  margin-right: 0.3rem;
+}
+
+.contest-builder-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.contest-builder-modal {
+  display: grid;
+  gap: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .collector-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

@@ -16,13 +16,13 @@ export function AdminShell({ children, username }: { children: ReactNode; userna
         <div className="admin-brand">
           <span className="admin-brand-badge">MCG</span>
           <div>
-            <p className="admin-brand-title">Administration MCG</p>
-            <p className="admin-brand-subtitle">Piloter · Configurer · Vérifier</p>
+            <p className="admin-brand-title">MCG Admin Control</p>
+            <p className="admin-brand-subtitle">Operate · Configure · Audit</p>
           </div>
         </div>
 
         <div className="admin-identity">
-          <span className="admin-chip">Connecté en tant que <strong>{username}</strong></span>
+          <span className="admin-chip">Signed in as <strong>{username}</strong></span>
           <AdminLogoutButton />
         </div>
       </header>

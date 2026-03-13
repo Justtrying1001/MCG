@@ -8,12 +8,12 @@ import { useSession } from "@/components/useSession";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/",          label: "Home",       icon: "⬡" },
-  { href: "/packs",     label: "Packs",      icon: "◈" },
-  { href: "/collection",label: "Collection", icon: "▦" },
-  { href: "/contests",  label: "Contests",   icon: "🏆" },
-  { href: "/rewards",   label: "Rewards",    icon: "✦" },
-  { href: "/compte",    label: "Profile",    icon: "◎" },
+  { href: "/", label: "Home", icon: "⬡" },
+  { href: "/packs", label: "Packs", icon: "◈" },
+  { href: "/collection", label: "Collection", icon: "▦" },
+  { href: "/contests", label: "Contests", icon: "🏆" },
+  { href: "/rewards", label: "Rewards", icon: "✦" },
+  { href: "/compte", label: "Profile", icon: "◎" },
 ];
 
 export function SiteShell({ children }: { children: ReactNode }) {
@@ -55,7 +55,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="nav-logo-badge">MCG</div>
           <div>
             <span className="nav-logo-name">Meme Card Game</span>
-            <span className="nav-logo-tagline">Collect · Joue · Progresse</span>
+            <span className="nav-logo-tagline">Collect · Build · Compete</span>
           </div>
         </Link>
 
@@ -81,16 +81,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <span className="xp-badge">{me.user.points} XP</span>
               </div>
               <Button variant="ghost" className="btn-sm" onClick={logout}>
-                {me.mode === "guest" ? "Quitter le mode invité" : "Se déconnecter"}
+                {me.mode === "guest" ? "Exit Guest" : "Log out"}
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" className="btn-sm" onClick={loginWithX}>
-                Se connecter avec X
+                Continue with X
               </Button>
               <Button className="btn-sm" onClick={startAsGuest}>
-                Continuer en invité
+                Continue as guest
               </Button>
             </>
           )}
@@ -133,13 +133,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     <span className="xp-badge">{me.user.points} XP</span>
                   </div>
                   <Button variant="ghost" onClick={logout} style={{ width: "100%" }}>
-                    {me.mode === "guest" ? "Quitter le mode invité" : "Se déconnecter"}
+                    {me.mode === "guest" ? "Exit Guest" : "Log out"}
                   </Button>
                 </div>
               ) : (
                 <div className="mobile-auth-buttons" style={{ display: "grid", gap: "0.6rem" }}>
-                  <Button variant="ghost" onClick={loginWithX}>Se connecter avec X</Button>
-                  <Button onClick={startAsGuest}>Continuer en invité</Button>
+                  <Button variant="ghost" onClick={loginWithX}>Continue with X</Button>
+                  <Button onClick={startAsGuest}>Continue as guest</Button>
                 </div>
               )}
             </div>
@@ -162,7 +162,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </div>
             Meme Card Game
           </div>
-          <span>© 2025 MCG · Trading Card Game illustré · <Link href="/admin" className="contest-inline-note">Espace admin</Link></span>
+          <span>© 2025 MCG · Dark collectible card game · <Link href="/admin" className="contest-inline-note">Admin area</Link></span>
         </footer>
       </div>
     </>

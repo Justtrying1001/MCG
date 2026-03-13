@@ -80,7 +80,7 @@ export default function AdminContestsCatalogPage() {
       <section className="admin-page-header">
         <div>
           <h1 className="admin-title">Contests</h1>
-          <p className="admin-subtitle">Pilotage complet: créer, éditer, publier, archiver et opérer le lifecycle depuis un seul module lisible.</p>
+          <p className="admin-subtitle">Full lifecycle control: create, edit, publish, archive, and operate contests in one workspace.</p>
         </div>
         <div className="admin-actions-row">
           <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }} title="Start here">Create New Contest</Link>
@@ -89,21 +89,21 @@ export default function AdminContestsCatalogPage() {
       </section>
 
       <section className="admin-toolbar">
-        <input className="input" placeholder="Rechercher code / titre" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: 260 }} />
+        <input className="input" placeholder="Search by code / title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: 260 }} />
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL")}>
-          <option value="ALL">Tous statuts</option>
+          <option value="ALL">All statuses</option>
           {(["DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"] as ContestStatus[]).map((status) => <option key={status} value={status}>{status}</option>)}
         </select>
         <span className="admin-badge neutral">{rows.length} contest(s)</span>
       </section>
 
-      {loading ? <section className="admin-panel"><p className="contest-inline-note">Chargement…</p></section> : null}
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading…</p></section> : null}
       {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading ? (
         <section className="admin-table">
           <div className="admin-table-head" style={{ gridTemplateColumns: "1.3fr 2.5fr 1fr 1.6fr 0.8fr 0.8fr 2fr" }}>
-            <span>Code</span><span>Contest</span><span>Statut</span><span>Timing</span><span>Entries</span><span>Publié</span><span>Actions</span>
+            <span>Code</span><span>Contest</span><span>Status</span><span>Timing</span><span>Entries</span><span>Published</span><span>Actions</span>
           </div>
           {rows.map((contest) => {
             const published = Boolean(contest.configPublishedAt);
@@ -120,19 +120,19 @@ export default function AdminContestsCatalogPage() {
                 <span className={`admin-badge ${tone(contest.status)}`}>{contest.status}</span>
                 <span className="contest-inline-note">{fmt(contest.startsAt)} → {fmt(contest.lockAt)} → {fmt(contest.endsAt)}</span>
                 <span>{contest._count.entries}</span>
-                <span>{published ? "Oui" : "Non"}</span>
+                <span>{published ? "Yes" : "No"}</span>
                 <div className="admin-actions-row">
-                  <Link href={`/admin/contests/${contest.id}`} className="admin-badge neutral">Ouvrir</Link>
-                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-badge neutral">Éditer</Link>
-                  {canPublish ? <Button onClick={() => void runAction(contest.id, "publish")} disabled={busyId === contest.id}>Publier</Button> : null}
-                  {canUnpublish ? <Button variant="ghost" onClick={() => void runAction(contest.id, "unpublish")} disabled={busyId === contest.id}>Dépublier</Button> : null}
-                  {contest.status !== "CANCELED" ? <Button variant="ghost" onClick={() => void runAction(contest.id, "archive")} disabled={busyId === contest.id}>Archiver</Button> : null}
-                  {canDelete ? <Button variant="ghost" onClick={() => void runAction(contest.id, "delete")} disabled={busyId === contest.id}>Supprimer</Button> : null}
+                  <Link href={`/admin/contests/${contest.id}`} className="admin-badge neutral">Open</Link>
+                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-badge neutral">Edit</Link>
+                  {canPublish ? <Button onClick={() => void runAction(contest.id, "publish")} disabled={busyId === contest.id}>Publish</Button> : null}
+                  {canUnpublish ? <Button variant="ghost" onClick={() => void runAction(contest.id, "unpublish")} disabled={busyId === contest.id}>Unpublish</Button> : null}
+                  {contest.status !== "CANCELED" ? <Button variant="ghost" onClick={() => void runAction(contest.id, "archive")} disabled={busyId === contest.id}>Archive</Button> : null}
+                  {canDelete ? <Button variant="ghost" onClick={() => void runAction(contest.id, "delete")} disabled={busyId === contest.id}>Delete</Button> : null}
                 </div>
               </div>
             );
           })}
-          {rows.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">Aucun contest trouvé.</p></div> : null}
+          {rows.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No contests found.</p></div> : null}
         </section>
       ) : null}
     </div>

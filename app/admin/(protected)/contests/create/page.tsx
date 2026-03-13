@@ -11,12 +11,12 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
 
 const STEPS: Array<{ id: Step; label: string; hint: string }> = [
-  { id: 1, label: "Infos contest", hint: "Code, titre, description" },
+  { id: 1, label: "Contest info", hint: "Code, title, description" },
   { id: 2, label: "Schedule", hint: "Open / lock / end" },
-  { id: 3, label: "Entry", hint: "Frais d'entrée" },
+  { id: 3, label: "Entry", hint: "Entry fee" },
   { id: 4, label: "Team & Eligibility", hint: "Roster + card set" },
-  { id: 5, label: "Rewards", hint: "Règles de récompenses" },
-  { id: 6, label: "Review / Launch", hint: "Validation finale" },
+  { id: 5, label: "Rewards", hint: "Reward rules" },
+  { id: 6, label: "Review / Launch", hint: "Final validation" },
 ];
 
 const DEFAULT_REWARD_RULES: RewardRuleDraft[] = [createRewardRuleDraft({ id: "seed-r1", label: "Winner", rewardType: "POINTS", amount: 1000, distributionType: "FIXED_RANKS", distributionValue: 1 })];
@@ -102,16 +102,16 @@ export default function AdminContestCreatePage() {
 
   const issues = useMemo(() => {
     const arr: string[] = [];
-    if (!autoCode && !payload.code) arr.push("Le code est requis en mode manuel.");
-    if (!payload.title) arr.push("Le titre est requis.");
-    if (!payload.startsAt || !payload.lockAt || !payload.endsAt) arr.push("Le schedule complet est requis.");
-    if (payload.startsAt && payload.lockAt && payload.startsAt >= payload.lockAt) arr.push("openAt doit être avant lockAt.");
-    if (payload.lockAt && payload.endsAt && payload.lockAt > payload.endsAt) arr.push("lockAt doit être <= endAt.");
+    if (!autoCode && !payload.code) arr.push("Code is required in manual mode.");
+    if (!payload.title) arr.push("Title is required.");
+    if (!payload.startsAt || !payload.lockAt || !payload.endsAt) arr.push("A full schedule is required.");
+    if (payload.startsAt && payload.lockAt && payload.startsAt >= payload.lockAt) arr.push("openAt must be before lockAt.");
+    if (payload.lockAt && payload.endsAt && payload.lockAt > payload.endsAt) arr.push("lockAt must be <= endAt.");
     if (entryFeeEnabled && (!Number.isInteger(payload.entryFeeAmount) || (payload.entryFeeAmount ?? 0) <= 0)) {
-      arr.push("entryFeeAmount doit être un entier positif quand les frais sont activés.");
+      arr.push("entryFeeAmount must be a positive integer when entry fee is enabled.");
     }
-    if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Sélectionner un card set.");
-    if (payload.rewardBundles.length === 0) arr.push("Ajouter au moins une règle reward valide.");
+    if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set.");
+    if (payload.rewardBundles.length === 0) arr.push("Add at least one valid reward rule.");
     return arr;
   }, [autoCode, eligibilityMode, entryFeeEnabled, payload]);
 
@@ -139,7 +139,7 @@ export default function AdminContestCreatePage() {
     }
     if (!contestId && body?.contest?.id) setContestId(body.contest.id);
     if (!code && body?.contest?.code) setCode(body.contest.code);
-    setMessage("Draft sauvegardé.");
+    setMessage("Draft saved.");
     return body?.contest?.id ?? contestId;
   };
 
@@ -153,14 +153,14 @@ export default function AdminContestCreatePage() {
     const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/publish`, { method: "POST" });
     const body = (await response.json().catch(() => null)) as any;
     if (!response.ok) return setMessage(formatApiError(body, "Échec publish"));
-    setMessage("Contest publié avec succès.");
+    setMessage("Contest published successfully.");
   };
 
   return (
     <div className="admin-page">
       <section className="admin-page-header">
-        <div><h1 className="admin-title">{contestId ? "Edit Contest" : "Create Contest"}</h1><p className="admin-subtitle">Wizard produit propre avec actions métier réelles.</p></div>
-        <Link href="/admin/contests" className="contest-inline-note">← Retour liste contest</Link>
+        <div><h1 className="admin-title">{contestId ? "Edit Contest" : "Create Contest"}</h1><p className="admin-subtitle">Structured wizard connected to real contest actions.</p></div>
+        <Link href="/admin/contests" className="contest-inline-note">← Back to contest list</Link>
       </section>
 
       <section className="contest-wizard-layout">
@@ -170,17 +170,17 @@ export default function AdminContestCreatePage() {
             <h2 className="admin-section-title">{STEPS.find((s) => s.id === step)?.label}</h2>
             <p className="contest-inline-note">{STEPS.find((s) => s.id === step)?.hint}</p>
 
-            {step === 1 && <div className="admin-section-stack"><div className="admin-actions-row"><label><input type="checkbox" checked={autoCode} onChange={(e) => setAutoCode(e.target.checked)} /> Générer automatiquement le code</label></div><input className="input" disabled={autoCode} placeholder="CONTEST-MAR25" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} /><input className="input" placeholder="Contest title" value={title} onChange={(e) => setTitle(e.target.value)} /><textarea className="input" placeholder="Description (optionnel)" value={description} onChange={(e) => setDescription(e.target.value)} /></div>}
+            {step === 1 && <div className="admin-section-stack"><div className="admin-actions-row"><label><input type="checkbox" checked={autoCode} onChange={(e) => setAutoCode(e.target.checked)} /> Generate code automatically</label></div><input className="input" disabled={autoCode} placeholder="CONTEST-MAR25" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} /><input className="input" placeholder="Contest title" value={title} onChange={(e) => setTitle(e.target.value)} /><textarea className="input" placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} /></div>}
 
             {step === 2 && <div className="admin-field-grid"><div><label className="contest-inline-note">openAt</label><input className="input" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} /></div><div><label className="contest-inline-note">lockAt</label><input className="input" type="datetime-local" value={lockAt} onChange={(e) => setLockAt(e.target.value)} /></div><div><label className="contest-inline-note">endAt</label><input className="input" type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></div></div>}
 
             {step === 3 && <div className="admin-field-grid"><label><input type="checkbox" checked={entryFeeEnabled} onChange={(e) => setEntryFeeEnabled(e.target.checked)} /> Entry fee enabled</label><input className="input" type="number" min={1} disabled={!entryFeeEnabled} value={entryFeeAmount} onChange={(e) => setEntryFeeAmount(e.target.value)} /></div>}
 
-            {step === 4 && <div className="admin-field-grid"><select className="input" value={teamSizeValue} onChange={(e) => setTeamSizeValue(e.target.value)}><option value="3">3</option><option value="5">5</option><option value="7">7</option></select><select className="input" value={eligibilityMode} onChange={(e) => setEligibilityMode(e.target.value as any)}><option value="ANY">Any set</option><option value="CARD_SET_ONLY">Card set only</option></select>{eligibilityMode === "CARD_SET_ONLY" ? cardSets.length > 0 ? <select className="input" value={cardSetId} onChange={(e) => setCardSetId(e.target.value)}><option value="">Select card set</option>{cardSets.map((set) => <option key={set.id} value={set.id}>{set.displayName} ({set.code})</option>)}</select> : <p className="contest-error">Aucun card set disponible.</p> : null}</div>}
+            {step === 4 && <div className="admin-field-grid"><select className="input" value={teamSizeValue} onChange={(e) => setTeamSizeValue(e.target.value)}><option value="3">3</option><option value="5">5</option><option value="7">7</option></select><select className="input" value={eligibilityMode} onChange={(e) => setEligibilityMode(e.target.value as any)}><option value="ANY">Any set</option><option value="CARD_SET_ONLY">Card set only</option></select>{eligibilityMode === "CARD_SET_ONLY" ? cardSets.length > 0 ? <select className="input" value={cardSetId} onChange={(e) => setCardSetId(e.target.value)}><option value="">Select card set</option>{cardSets.map((set) => <option key={set.id} value={set.id}>{set.displayName} ({set.code})</option>)}</select> : <p className="contest-error">No card set available.</p> : null}</div>}
 
-            {step === 5 && <div className="admin-section-stack">{rules.map((rule) => <article key={rule.id} className="contest-reward-rule-card"><input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} /><div className="admin-field-grid"><select className="input" value={rule.rewardType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { rewardType: e.target.value as RewardType } })}><option value="POINTS">Points</option><option value="XP">XP</option><option value="PACK">Pack</option></select><input className="input" type="number" min={1} value={rule.amount} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { amount: Number(e.target.value) } })} /><select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Fixed ranks</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top percent</option></select><input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} /></div><p className="contest-inline-note">{describeRewardRule(rule)}</p></article>)}<Button onClick={() => dispatchRules({ type: "add" })}>Ajouter une règle</Button></div>}
+            {step === 5 && <div className="admin-section-stack">{rules.map((rule) => <article key={rule.id} className="contest-reward-rule-card"><input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} /><div className="admin-field-grid"><select className="input" value={rule.rewardType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { rewardType: e.target.value as RewardType } })}><option value="POINTS">Points</option><option value="XP">XP</option><option value="PACK">Pack</option></select><input className="input" type="number" min={1} value={rule.amount} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { amount: Number(e.target.value) } })} /><select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Fixed ranks</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top percent</option></select><input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} /></div><p className="contest-inline-note">{describeRewardRule(rule)}</p></article>)}<Button onClick={() => dispatchRules({ type: "add" })}>Add rule</Button></div>}
 
-            {step === 6 && <div className="admin-section-stack"><div className="admin-callout"><p className="contest-inline-note"><strong>Contest:</strong> {payload.code || "[auto]"} · {payload.title || "—"}</p><p className="contest-inline-note"><strong>Schedule:</strong> {payload.startsAt || "—"} / {payload.lockAt || "—"} / {payload.endsAt || "—"}</p><p className="contest-inline-note"><strong>Eligibility:</strong> {payload.eligibilityMode} {payload.cardSetId ? `(${payload.cardSetId})` : ""}</p></div>{issues.length > 0 ? <div className="admin-callout danger">{issues.map((issue) => <p key={issue} className="contest-inline-note">• {issue}</p>)}</div> : <div className="admin-callout"><p className="contest-inline-note">Aucun blocage détecté. Ready to launch.</p></div>}</div>}
+            {step === 6 && <div className="admin-section-stack"><div className="admin-callout"><p className="contest-inline-note"><strong>Contest:</strong> {payload.code || "[auto]"} · {payload.title || "—"}</p><p className="contest-inline-note"><strong>Schedule:</strong> {payload.startsAt || "—"} / {payload.lockAt || "—"} / {payload.endsAt || "—"}</p><p className="contest-inline-note"><strong>Eligibility:</strong> {payload.eligibilityMode} {payload.cardSetId ? `(${payload.cardSetId})` : ""}</p></div>{issues.length > 0 ? <div className="admin-callout danger">{issues.map((issue) => <p key={issue} className="contest-inline-note">• {issue}</p>)}</div> : <div className="admin-callout"><p className="contest-inline-note">No blockers detected. Ready to launch.</p></div>}</div>}
 
             <div className="contest-wizard-footer">
               <Button variant="ghost" disabled={step === 1} onClick={() => setStep((s) => Math.max(1, s - 1) as Step)}>Back</Button>
@@ -191,10 +191,10 @@ export default function AdminContestCreatePage() {
         </div>
 
         <aside className="contest-wizard-summary">
-          <h3 className="admin-section-title">Résumé</h3>
+          <h3 className="admin-section-title">Summary</h3>
           <p className="contest-inline-note">Code: {payload.code || "auto"}</p>
-          <p className="contest-inline-note">Titre: {payload.title || "—"}</p>
-          <p className="contest-inline-note">Rules valides: {payload.rewardBundles.length}</p>
+          <p className="contest-inline-note">Title: {payload.title || "—"}</p>
+          <p className="contest-inline-note">Valid rules: {payload.rewardBundles.length}</p>
           {contestId ? <span className="admin-badge neutral">contestId={contestId}</span> : null}
           {message ? <p className="contest-inline-note">{message}</p> : null}
         </aside>

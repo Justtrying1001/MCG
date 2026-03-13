@@ -6,7 +6,6 @@ import { MilestoneQuestCard } from "@/components/quests/MilestoneQuestCard";
 import { SocialQuestCard } from "@/components/quests/SocialQuestCard";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
-import { resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
 
 import styles from "./rewards.module.css";
 
@@ -93,7 +92,6 @@ export default function RewardsPage() {
     setQuests(questsPayload.quests ?? []);
   };
 
-
   const submitSocialQuest = async (questId: string) => {
     setSubmittingQuestId(questId);
     setActionMessage("");
@@ -126,11 +124,12 @@ export default function RewardsPage() {
     const milestones = quests.filter(isMilestoneQuest);
     const underReview = quests.filter((quest) => quest.latestSubmissionStatus === "SUBMITTED");
     const completed = quests.filter((quest) => quest.status === "COMPLETED" || quest.latestSubmissionStatus === "APPROVED");
+    const claimable = quests.filter((quest) => quest.status === "CLAIMABLE");
 
     const filteredSocial = applySort(applyStatusFilter(social, statusFilter), sortBy);
     const filteredMilestones = applySort(applyStatusFilter(milestones, statusFilter), sortBy);
 
-    return { social: filteredSocial, milestones: filteredMilestones, completed, underReview };
+    return { social: filteredSocial, milestones: filteredMilestones, completed, underReview, claimable };
   }, [quests, statusFilter, sortBy]);
 
   return (
@@ -138,18 +137,25 @@ export default function RewardsPage() {
       <div className={`page-header ${styles.hero}`}>
         <div>
           <h1 className="page-title">Rewards & Quests</h1>
-          <p className="page-subtitle">Complete social actions and milestones to progress your account rewards.</p>
+          <p className="page-subtitle">Your gamified progression zone: complete quests, stack points, and unlock steady account growth.</p>
         </div>
       </div>
 
       {loading ? <p className="contest-inline-note">Loading session…</p> : null}
       {!loading && !me ? <div className="empty-state"><p className="empty-state-title">Sign in with X to access rewards.</p></div> : null}
-      {me?.mode === "guest" ? <div className="empty-state"><p className="empty-state-title">Rewards and quests are available for authenticated accounts only.</p></div> : null}
+      {me?.mode === "guest" ? <div className="empty-state"><p className="empty-state-title">Rewards and quests are account-only in this flow.</p></div> : null}
       {error ? <p className="contest-error">{error}</p> : null}
       {actionMessage ? <p className="contest-inline-note">{actionMessage}</p> : null}
 
       {me?.mode === "user" ? (
         <div className={styles.layout}>
+          <section className={styles.gamifiedBar}>
+            <div className={styles.kpi}><strong>{quests.length}</strong><span>Total quests</span></div>
+            <div className={styles.kpi}><strong>{viewModel.claimable.length}</strong><span>Claimable now</span></div>
+            <div className={styles.kpi}><strong>{viewModel.completed.length}</strong><span>Completed</span></div>
+            <div className={styles.kpi}><strong>{ledger.filter((x) => x.entryType === "CREDIT").reduce((acc, x) => acc + x.amount, 0)}</strong><span>Points earned</span></div>
+          </section>
+
           <section className="contest-section">
             <h2 className="contest-section-title">Quest filters</h2>
             <div className={styles.controls}>
@@ -160,7 +166,7 @@ export default function RewardsPage() {
                 <option value="CLAIMABLE">Claimable</option>
                 <option value="COMPLETED">Completed</option>
               </select>
-              <select className="input" value={sortBy} onChange={(event) => setSortBy(event.target.value as "REWARD_DESC" | "REWARD_ASC" | "RECENT")}>
+              <select className="input" value={sortBy} onChange={(event) => setSortBy(event.target.value as "REWARD_DESC" | "REWARD_ASC" | "RECENT")}> 
                 <option value="REWARD_DESC">Sort: reward high → low</option>
                 <option value="REWARD_ASC">Sort: reward low → high</option>
                 <option value="RECENT">Sort: latest code first</option>
@@ -184,7 +190,7 @@ export default function RewardsPage() {
           </section>
 
           <section className="contest-section">
-            <h2 className="contest-section-title">Milestones</h2>
+            <h2 className="contest-section-title">Milestone quests</h2>
             <div className={styles.cards}>
               {viewModel.milestones.length === 0 ? <p className="contest-inline-note">No milestones for current filters.</p> : null}
               {viewModel.milestones.map((quest) => <MilestoneQuestCard key={quest.id} quest={quest} />)}
@@ -194,14 +200,7 @@ export default function RewardsPage() {
           {viewModel.underReview.length > 0 ? (
             <section className="contest-section">
               <h2 className="contest-section-title">Under review</h2>
-              <p className="contest-inline-note">{viewModel.underReview.length} submissions are currently under review by moderators.</p>
-            </section>
-          ) : null}
-
-          {viewModel.completed.length > 0 ? (
-            <section className="contest-section">
-              <h2 className="contest-section-title">Completed</h2>
-              <p className="contest-inline-note">{viewModel.completed.length} quests completed.</p>
+              <p className="contest-inline-note">{viewModel.underReview.length} submissions are currently waiting for moderation.</p>
             </section>
           ) : null}
 
