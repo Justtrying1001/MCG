@@ -60,6 +60,20 @@ export type ContestConfigInput = {
   distributionRules?: DistributionRuleInput[];
 };
 
+export async function generateUniqueContestCode(seed?: string | null) {
+  const normalizedSeed = (seed ?? "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const base = (normalizedSeed || "CONTEST").slice(0, 16);
+
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const suffix = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+    const candidate = `${base}-${suffix}${attempt === 0 ? "" : `-${attempt + 1}`}`;
+    const exists = await prisma.contest.findUnique({ where: { code: candidate }, select: { id: true } });
+    if (!exists) return candidate;
+  }
+
+  throw new ContestRuntimeError("Cannot generate a unique contest code", 500);
+}
+
 export async function createContestDraft(input: ContestConfigInput) {
   const normalized = normalizeContestInput(input);
 
@@ -225,7 +239,7 @@ export async function publishContest(contestId: string) {
       );
     }
 
-    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date() } });
+    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), status: ContestStatus.OPEN } });
     await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.PUBLISHED } });
 
     const updated = await tx.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
@@ -233,6 +247,54 @@ export async function publishContest(contestId: string) {
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
+
+
+export async function unpublishContest(contestId: string) {
+  return prisma.$transaction(async (tx) => {
+    const contest = await tx.contest.findUnique({
+      where: { id: contestId },
+      include: { _count: { select: { entries: true, scores: true, settlements: true } } },
+    });
+    if (!contest) throw new ContestRuntimeError("Contest not found", 404);
+    if (!contest.configPublishedAt) throw new ContestRuntimeError("Contest is not published", 409);
+    if (contest._count.entries > 0 || contest._count.scores > 0 || contest._count.settlements > 0) {
+      throw new ContestRuntimeError("Cannot unpublish a contest that already has operations", 409);
+    }
+
+    const updated = await tx.contest.update({
+      where: { id: contestId },
+      data: { configPublishedAt: null, status: ContestStatus.DRAFT },
+      include: contestDraftInclude,
+    });
+    await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.DRAFT } });
+    return { contest: updated };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
+
+export async function archiveContest(contestId: string) {
+  const contest = await prisma.contest.update({
+    where: { id: contestId },
+    data: { status: ContestStatus.CANCELED },
+    include: contestDraftInclude,
+  });
+  return { contest };
+}
+
+export async function deleteContestDraft(contestId: string) {
+  return prisma.$transaction(async (tx) => {
+    const contest = await tx.contest.findUnique({
+      where: { id: contestId },
+      include: { _count: { select: { entries: true, scores: true, rankings: true, settlements: true } } },
+    });
+    if (!contest) throw new ContestRuntimeError("Contest not found", 404);
+    if (contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0) {
+      throw new ContestRuntimeError("Cannot delete a contest that already contains operations", 409);
+    }
+
+    await tx.contest.delete({ where: { id: contestId } });
+    return { deleted: true };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
 type DraftIssue = {
   code: string;
   severity: "ERROR" | "WARN";

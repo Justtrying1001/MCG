@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { handleApiError } from "@/lib/api-error";
-import { createContestDraft } from "@/lib/domain/contests/config-runtime";
+import { createContestDraft, generateUniqueContestCode } from "@/lib/domain/contests/config-runtime";
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
 const createSchema = z.object({
-  code: z.string().trim().min(1),
+  code: z.string().trim().min(1).optional(),
+  autoGenerateCode: z.boolean().optional(),
   title: z.string().trim().min(1),
   description: z.string().optional().nullable(),
   startsAt: z.string().nullable().optional(),
@@ -51,6 +52,9 @@ const createSchema = z.object({
   const lockAt = asDate(value.lockAt);
   const endsAt = asDate(value.endsAt);
 
+  if (!value.autoGenerateCode && !value.code?.trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["code"], message: "code is required when autoGenerateCode is false" });
+  }
   if (value.startsAt && !startsAt) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startsAt"], message: "Invalid startsAt datetime" });
   }
@@ -75,7 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid payload", issues: parsed.error.issues }, { status: 400 });
     }
 
-    const result = await createContestDraft(parsed.data);
+    const code = parsed.data.autoGenerateCode
+      ? await generateUniqueContestCode(parsed.data.title)
+      : parsed.data.code!.trim();
+
+    const result = await createContestDraft({ ...parsed.data, code });
     return NextResponse.json({ ok: true, contest: result.contest }, { status: 201 });
   } catch (error) {
     if (error instanceof ContestRuntimeError) {

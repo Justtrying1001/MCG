@@ -80,7 +80,10 @@ async function getContestRule(tx: Prisma.TransactionClient, contestId: string) {
 export async function listContestsMvp() {
   return prismaSafe((tx) =>
     tx.contest.findMany({
-      where: { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] } },
+      where: {
+        configPublishedAt: { not: null },
+        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
+      },
       include: {
         rules: true,
         _count: { select: { entries: true } },
@@ -103,6 +106,11 @@ export async function getContestDetailMvp(contestId: string, userId?: string) {
 
     if (!contest) {
       throw new ContestRuntimeError("Contest not found", 404);
+    }
+
+    const publicStatuses: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED];
+    if (!contest.configPublishedAt || !publicStatuses.includes(contest.status)) {
+      throw new ContestRuntimeError("Contest is not publicly available", 404);
     }
 
     const userEntry = userId
