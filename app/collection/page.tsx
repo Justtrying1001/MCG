@@ -10,29 +10,34 @@ import type { MvpCardView } from "@/types/cards";
 type CollectionSortKey = "name" | "rarity" | "edition" | "quantity";
 
 const rarityRank: Record<string, number> = {
-  COMMON: 0,
-  UNCOMMON: 1,
-  RARE: 2,
-  EPIC: 3,
-  LEGENDARY: 4,
+  COMMON: 0, UNCOMMON: 1, RARE: 2, EPIC: 3, LEGENDARY: 4,
 };
+
+const rarityChips = [
+  { key: "",          label: "All",        cls: "" },
+  { key: "COMMON",    label: "Common",     cls: "rc-common" },
+  { key: "UNCOMMON",  label: "Uncommon",   cls: "rc-uncommon" },
+  { key: "RARE",      label: "Rare",       cls: "rc-rare" },
+  { key: "EPIC",      label: "Epic",       cls: "rc-epic" },
+  { key: "LEGENDARY", label: "Legendary",  cls: "rc-legendary" },
+];
 
 export default function CollectionPage() {
   const { me } = useSession();
-  const [search, setSearch] = useState("");
-  const [faction, setFaction] = useState("");
-  const [sortBy, setSortBy] = useState<CollectionSortKey>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [zoomedCard, setZoomedCard] = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
+  const [search,      setSearch]      = useState("");
+  const [rarityFilter,setRarityFilter]= useState("");
+  const [faction,     setFaction]     = useState("");
+  const [sortBy,      setSortBy]      = useState<CollectionSortKey>("rarity");
+  const [sortDir,     setSortDir]     = useState<"asc" | "desc">("desc");
+  const [zoomedCard,  setZoomedCard]  = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
 
-  const isAuthUser = me?.mode === "user";
-  const mvpCollection = me?.mvpCollection;
+  const isAuthUser       = me?.mode === "user";
+  const mvpCollection    = me?.mvpCollection;
   const useMvpCollection = isAuthUser && Array.isArray(mvpCollection);
 
   const sourceCollection = useMemo(() => {
     if (!me) return [];
-    if (isAuthUser) return mvpCollection ?? [];
-    return me.mvpCollection;
+    return isAuthUser ? (mvpCollection ?? []) : me.mvpCollection;
   }, [isAuthUser, me, mvpCollection]);
 
   const factions = useMemo(
@@ -43,120 +48,179 @@ export default function CollectionPage() {
   const visibleCards = useMemo(() => {
     const filtered = sourceCollection
       .filter((item) => !faction || item.card.faction === faction)
+      .filter((item) => !rarityFilter || item.card.rarity === rarityFilter)
       .filter((item) =>
-        `${item.card.displayName} ${item.card.symbol} ${item.card.faction || ""} ${item.card.rarity} ${item.card.edition}`
+        `${item.card.displayName} ${item.card.symbol} ${item.card.faction ?? ""} ${item.card.rarity} ${item.card.edition}`
           .toLowerCase()
           .includes(search.toLowerCase())
       );
 
     const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === "rarity") {
-        return (rarityRank[a.card.rarity] ?? -1) - (rarityRank[b.card.rarity] ?? -1);
-      }
-      if (sortBy === "edition") {
-        return (a.card.setEditionLabel || a.card.edition || "").localeCompare(b.card.setEditionLabel || b.card.edition || "");
-      }
-      if (sortBy === "quantity") {
-        return a.instanceCount - b.instanceCount;
-      }
+      if (sortBy === "rarity")    return (rarityRank[a.card.rarity] ?? -1) - (rarityRank[b.card.rarity] ?? -1);
+      if (sortBy === "edition")   return (a.card.setEditionLabel || a.card.edition || "").localeCompare(b.card.setEditionLabel || b.card.edition || "");
+      if (sortBy === "quantity")  return a.instanceCount - b.instanceCount;
       return a.card.displayName.localeCompare(b.card.displayName);
     });
 
     return sortDir === "asc" ? sorted : sorted.reverse();
-  }, [faction, search, sortBy, sortDir, sourceCollection]);
+  }, [faction, rarityFilter, search, sortBy, sortDir, sourceCollection]);
 
-  const totalCards = sourceCollection.reduce((acc, x) => acc + x.instanceCount, 0);
-  const uniqueCards = sourceCollection.length;
-  const legendaryCount = sourceCollection.filter((x) => x.card.rarity === "LEGENDARY").length;
+  /* Stats */
+  const totalCards    = sourceCollection.reduce((acc, x) => acc + x.instanceCount, 0);
+  const uniqueCards   = sourceCollection.length;
+  const legendaryCount= sourceCollection.filter((x) => x.card.rarity === "LEGENDARY").length;
+  const epicCount     = sourceCollection.filter((x) => x.card.rarity === "EPIC").length;
 
   return (
     <SiteShell>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Collection</h1>
-          <p className="page-subtitle">MVP view: basic collection stats, filters, and sorting.</p>
-        </div>
-      </div>
+      <div className="hub-page">
 
-      {me && (
-        <div className="collection-stat-row">
-          <div className="collection-stat-box">
-            <span>Total cards</span>
-            <strong>{totalCards}</strong>
+        {/* ── Page Header ── */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Collection</h1>
+            <p className="page-subtitle">
+              Your binder — every card you own, sorted by rarity, faction, or edition.
+            </p>
           </div>
-          <div className="collection-stat-box">
-            <span>Unique owned</span>
-            <strong>{uniqueCards}</strong>
-          </div>
-          <div className="collection-stat-box">
-            <span>Legendary</span>
-            <strong>{legendaryCount}</strong>
-          </div>
+          {me && (
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--text-3)" }}>
+                {visibleCards.length} shown
+              </span>
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="filters-bar collection-simple-toolbar">
-        <input
-          className="filter-input"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search cards..."
-          aria-label="Search cards"
+        {/* ── Stats Banner ── */}
+        {me && (
+          <div className="collection-stats-banner">
+            <div className="csb-card">
+              <div className="csb-num">{totalCards}</div>
+              <div className="csb-lbl">Total Cards</div>
+            </div>
+            <div className="csb-card">
+              <div className="csb-num">{uniqueCards}</div>
+              <div className="csb-lbl">Unique</div>
+            </div>
+            <div className="csb-card">
+              <div className="csb-num" style={{ color: "var(--rarity-legendary)" }}>{legendaryCount}</div>
+              <div className="csb-lbl">Legendary</div>
+            </div>
+            <div className="csb-card">
+              <div className="csb-num" style={{ color: "var(--rarity-epic)" }}>{epicCount}</div>
+              <div className="csb-lbl">Epic</div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Rarity Filter Chips ── */}
+        {me && (
+          <div className="rarity-filter-chips">
+            {rarityChips.map(({ key, label, cls }) => (
+              <button
+                key={key}
+                type="button"
+                className={`rarity-chip ${cls}${rarityFilter === key ? " rc-active" : ""}`}
+                onClick={() => setRarityFilter(key)}
+              >
+                {key && <span className="rarity-chip-dot" />}
+                {label}
+                {key && (
+                  <span style={{ opacity: 0.65, marginLeft: 2, fontSize: "0.68rem" }}>
+                    ({sourceCollection.filter((x) => x.card.rarity === key).length})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Filters Bar ── */}
+        {me && (
+          <div className="filters-bar">
+            <input
+              className="filter-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search cards, factions, editions…"
+              aria-label="Search cards"
+            />
+            {factions.length > 0 && (
+              <select className="filter-select" value={faction} onChange={(e) => setFaction(e.target.value)}>
+                <option value="">All factions</option>
+                {factions.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
+            <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}>
+              <option value="rarity">Sort: Rarity</option>
+              <option value="name">Sort: Name</option>
+              <option value="edition">Sort: Edition</option>
+              <option value="quantity">Sort: Quantity</option>
+            </select>
+            <select className="filter-select" value={sortDir} onChange={(e) => setSortDir(e.target.value as "asc" | "desc")}>
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
+        )}
+
+        {/* ── Cards Grid ── */}
+        {!me ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">▦</div>
+            <p className="empty-state-title">Connect to view your collection</p>
+            <p className="empty-state-desc">
+              Sign in with X for a persistent collection, or start a guest session to preview.
+            </p>
+          </div>
+        ) : isAuthUser && !useMvpCollection ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">⚠</div>
+            <p className="empty-state-title">Collection data unavailable</p>
+            <p className="empty-state-desc">
+              Refresh your session and verify the API returns your collection.
+            </p>
+          </div>
+        ) : visibleCards.length > 0 ? (
+          <div className="card-grid">
+            {visibleCards.map((item) => (
+              <button
+                key={item.templateId}
+                type="button"
+                className="card-tile-trigger"
+                onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}
+                title={`${item.card.displayName} · ×${item.instanceCount}`}
+              >
+                <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
+              </button>
+            ))}
+          </div>
+        ) : me && sourceCollection.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">◈</div>
+            <p className="empty-state-title">Your collection is empty</p>
+            <p className="empty-state-desc">
+              Open your first pack to start collecting cards.
+            </p>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state-icon">◈</div>
+            <p className="empty-state-title">No cards match your filters</p>
+            <p className="empty-state-desc">
+              Try a different rarity, faction, or search term.
+            </p>
+          </div>
+        )}
+
+        <CardZoomModal
+          card={zoomedCard.card}
+          quantity={zoomedCard.quantity}
+          open={Boolean(zoomedCard.card)}
+          onClose={() => setZoomedCard({ card: null })}
         />
-        <select className="filter-select" value={faction} onChange={(e) => setFaction(e.target.value)}>
-          <option value="">All factions</option>
-          {factions.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-        <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}>
-          <option value="name">Sort: Name</option>
-          <option value="rarity">Sort: Rarity</option>
-          <option value="edition">Sort: Edition</option>
-          <option value="quantity">Sort: Quantity</option>
-        </select>
-        <select className="filter-select" value={sortDir} onChange={(e) => setSortDir(e.target.value as "asc" | "desc") }>
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
       </div>
-
-      {!me ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">▦</div>
-          <p className="empty-state-title">Connect or start guest mode to view your collection</p>
-          <p className="empty-state-desc">Use X for persistent collection, or guest mode for temporary testing.</p>
-        </div>
-      ) : isAuthUser && !useMvpCollection ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">⚠</div>
-          <p className="empty-state-title">MVP collection payload unavailable</p>
-          <p className="empty-state-desc">Refresh your session and verify `/api/me` returns `mvpCollection`.</p>
-        </div>
-      ) : visibleCards.length > 0 ? (
-        <div className="card-grid">
-          {visibleCards.map((item) => (
-            <button
-              key={item.templateId}
-              type="button"
-              className="card-tile-trigger"
-              onClick={() => setZoomedCard({ card: item.card, quantity: item.instanceCount })}
-            >
-              <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <div className="empty-state-icon">◈</div>
-          <p className="empty-state-title">No cards match your filters</p>
-          <p className="empty-state-desc">Try another search term, faction, or sorting option.</p>
-        </div>
-      )}
-
-      <CardZoomModal card={zoomedCard.card} quantity={zoomedCard.quantity} open={Boolean(zoomedCard.card)} onClose={() => setZoomedCard({ card: null })} />
     </SiteShell>
   );
 }
