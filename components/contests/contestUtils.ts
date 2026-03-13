@@ -1,4 +1,6 @@
-import type { ContestStatus } from "@/components/contests/types";
+import type { ContestListItem, ContestStatus } from "@/components/contests/types";
+
+const CONTEST_CACHE_KEY = "mcg_contests_cache_v1";
 
 export function formatDate(value: string | null) {
   if (!value) return "—";
@@ -8,24 +10,24 @@ export function formatDate(value: string | null) {
 export function getContestStatusMeta(status: ContestStatus) {
   switch (status) {
     case "OPEN":
-      return { label: "Open", icon: "🟢", cta: "Join", tone: "open" as const };
+      return { label: "Open", icon: "🟢", cta: "Join contest", tone: "open" as const };
     case "LOCKED":
       return { label: "Locked", icon: "🟣", cta: "View lineup", tone: "locked" as const };
     case "LIVE":
-      return { label: "Live", icon: "🟡", cta: "Track", tone: "live" as const };
+      return { label: "Live", icon: "🟡", cta: "Track scores", tone: "live" as const };
     case "SETTLED":
-      return { label: "Settled", icon: "🏁", cta: "View results", tone: "settled" as const };
+      return { label: "Settled", icon: "🏁", cta: "See results", tone: "settled" as const };
     case "CANCELED":
-      return { label: "Cancelled", icon: "⛔", cta: "Details", tone: "cancelled" as const };
+      return { label: "Cancelled", icon: "⛔", cta: "Read details", tone: "cancelled" as const };
     default:
-      return { label: "Draft", icon: "📝", cta: "Prepare", tone: "draft" as const };
+      return { label: "Draft", icon: "📝", cta: "Preview", tone: "draft" as const };
   }
 }
 
 export function getCountdownLabel(status: ContestStatus) {
   if (status === "OPEN") return "Lock in";
   if (status === "LOCKED" || status === "LIVE") return "Ends in";
-  return "Window";
+  return "Timeline";
 }
 
 export function getTargetDate(status: ContestStatus, lockAt: string | null, endsAt: string | null) {
@@ -42,4 +44,20 @@ export function formatCountdown(targetDate: string | null, nowTs: number) {
   const mins = Math.floor((diff % 3_600_000) / 60_000);
   const secs = Math.floor((diff % 60_000) / 1000);
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+export function saveContestCache(contests: ContestListItem[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CONTEST_CACHE_KEY, JSON.stringify(contests));
+}
+
+export function loadContestCache() {
+  if (typeof window === "undefined") return [] as ContestListItem[];
+  const raw = window.localStorage.getItem(CONTEST_CACHE_KEY);
+  if (!raw) return [] as ContestListItem[];
+  try {
+    return JSON.parse(raw) as ContestListItem[];
+  } catch {
+    return [] as ContestListItem[];
+  }
 }

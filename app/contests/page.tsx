@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { ContestFiltersBar } from "@/components/contests/ContestFiltersBar";
+import { ContestHistoryCard } from "@/components/contests/ContestHistoryCard";
 import { ContestTile } from "@/components/contests/ContestTile";
+import { loadContestCache, saveContestCache } from "@/components/contests/contestUtils";
 import type { ContestListItem } from "@/components/contests/types";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 
-type ContestTab = "open" | "live" | "settled";
+type ContestTab = "upcoming" | "open" | "locked" | "live" | "settled";
 
 export default function ContestsPage() {
   const { me, loading } = useSession();
@@ -15,6 +18,7 @@ export default function ContestsPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<ContestTab>("open");
+  const [query, setQuery] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -30,56 +34,76 @@ export default function ContestsPage() {
       setError("");
       const res = await fetch("/api/contests", { cache: "no-store" });
       if (!res.ok) {
-        const text = await res.text();
-        setError(text || "Cannot load contests");
+        const cached = loadContestCache();
+        if (cached.length) {
+          setContests(cached);
+          setError("Showing cached contests. Connect with X to load live updates.");
+        } else {
+          const text = await res.text();
+          setError(text || "Cannot load contests");
+        }
         setIsLoading(false);
         return;
       }
 
       const payload = (await res.json()) as { contests: ContestListItem[] };
-      setContests(payload.contests ?? []);
+      const nextContests = payload.contests ?? [];
+      setContests(nextContests);
+      saveContestCache(nextContests);
       setIsLoading(false);
     })();
   }, [loading]);
 
   const grouped = useMemo(() => {
     return {
-      open: contests.filter((c) => c.status === "OPEN" || c.status === "DRAFT"),
-      live: contests.filter((c) => c.status === "LOCKED" || c.status === "LIVE"),
+      upcoming: contests.filter((c) => c.status === "DRAFT"),
+      open: contests.filter((c) => c.status === "OPEN"),
+      locked: contests.filter((c) => c.status === "LOCKED"),
+      live: contests.filter((c) => c.status === "LIVE"),
       settled: contests.filter((c) => c.status === "SETTLED" || c.status === "CANCELED"),
     };
   }, [contests]);
 
-  const displayed = grouped[tab];
+  const displayed = useMemo(() => {
+    return grouped[tab].filter((contest) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return contest.title.toLowerCase().includes(q) || contest.code.toLowerCase().includes(q);
+    });
+  }, [grouped, query, tab]);
+
+  const featured = contests.find((contest) => contest.status === "OPEN") ?? contests[0] ?? null;
   const isGuest = !loading && me?.mode === "guest";
 
   return (
     <SiteShell>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contests Arena</h1>
-          <p className="page-subtitle">Choose your tournament, lock your lineup, and climb the leaderboard.</p>
+          <h1 className="page-title">Contest Hub</h1>
+          <p className="page-subtitle">Discover competitions, build lineups, track live rounds, and review your results.</p>
         </div>
       </div>
 
       <section className="contest-dashboard">
         <div className="contest-info-panel">
-          <p className="contest-inline-note">🧭 Deadlines: lineup lock at contest lock time · live scoring during LIVE status.</p>
-          <p className="contest-inline-note">🎁 Rewards: season points + exclusive cards based on your final rank.</p>
+          <p className="contest-inline-note">🧭 Deadlines: lock time determines entry close. Locked contests switch to live tracking until settlement.</p>
+          <p className="contest-inline-note">🎁 Rewards: points and card rewards depend on rank, entry volume, and settlement output.</p>
+          {isGuest ? <p className="contest-inline-note">Guest mode: browse contests and team building. Connect with X to submit entries.</p> : null}
         </div>
 
-        <div className="contest-tabs" role="tablist" aria-label="Contest categories">
-          <button type="button" className={`contest-tab${tab === "open" ? " active" : ""}`} onClick={() => setTab("open")} role="tab" aria-selected={tab === "open"}>Active & Upcoming</button>
-          <button type="button" className={`contest-tab${tab === "live" ? " active" : ""}`} onClick={() => setTab("live")} role="tab" aria-selected={tab === "live"}>Live</button>
-          <button type="button" className={`contest-tab${tab === "settled" ? " active" : ""}`} onClick={() => setTab("settled")} role="tab" aria-selected={tab === "settled"}>Completed</button>
-        </div>
+        {featured ? (
+          <section className="contest-section">
+            <h2 className="contest-section-title">Featured contest</h2>
+            <div className="contest-list">
+              <ContestTile contest={featured} nowTs={nowTs} />
+            </div>
+          </section>
+        ) : null}
 
-        {isGuest ? <GuestNotice /> : null}
+        <ContestFiltersBar tab={tab} setTab={setTab} query={query} setQuery={setQuery} />
 
         {isLoading ? (
           <div className="empty-state"><p className="empty-state-title">Loading contests…</p></div>
-        ) : error ? (
-          <div className="empty-state"><p className="empty-state-title">{error}</p></div>
         ) : contests.length === 0 ? (
           <div className="empty-state">
             <p className="empty-state-title">No contests are currently published.</p>
@@ -87,21 +111,23 @@ export default function ContestsPage() {
           </div>
         ) : (
           <section className="contest-section">
-            <h2 className="contest-section-title">{tab === "open" ? "Build your lineup" : tab === "live" ? "Current round" : "History"}</h2>
+            <h2 className="contest-section-title">{tab === "upcoming" ? "Upcoming" : tab === "open" ? "Open for entry" : tab === "locked" ? "Locked" : tab === "live" ? "Live" : "Settled / Results"}</h2>
+            {error ? <p className="contest-inline-note">{error}</p> : null}
             <div className="contest-list contest-scroller">
-              {displayed.length ? displayed.map((contest) => <ContestTile contest={contest} nowTs={nowTs} key={contest.id} />) : <p className="contest-inline-note">No contests available in this section.</p>}
+              {displayed.length ? displayed.map((contest) => <ContestTile contest={contest} nowTs={nowTs} key={contest.id} />) : <p className="contest-inline-note">No contests available in this filter.</p>}
             </div>
           </section>
         )}
+
+        {grouped.settled.length ? (
+          <section className="contest-section">
+            <h2 className="contest-section-title">Recent results history</h2>
+            <div className="contest-list">
+              {grouped.settled.slice(0, 3).map((contest) => <ContestHistoryCard key={contest.id} contest={contest} />)}
+            </div>
+          </section>
+        ) : null}
       </section>
     </SiteShell>
-  );
-}
-
-function GuestNotice() {
-  return (
-    <div className="contest-guest-notice">
-      Guest mode can browse contests, rewards, and details. Connect with X to participate.
-    </div>
   );
 }

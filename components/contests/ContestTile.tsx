@@ -1,6 +1,9 @@
 import Link from "next/link";
 
-import { formatCountdown, getContestStatusMeta, getCountdownLabel, getTargetDate } from "@/components/contests/contestUtils";
+import { ContestCountdown } from "@/components/contests/ContestCountdown";
+import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
+import { ContestStatusBadge } from "@/components/contests/ContestStatusBadge";
+import { getContestStatusMeta } from "@/components/contests/contestUtils";
 import type { ContestListItem } from "@/components/contests/types";
 
 type Props = {
@@ -11,7 +14,6 @@ type Props = {
 export function ContestTile({ contest, nowTs }: Props) {
   const meta = getContestStatusMeta(contest.status);
   const rule = contest.rules[0];
-  const countdown = formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs);
 
   return (
     <Link href={`/contests/${contest.id}`} className={`contest-tile contest-tile-${meta.tone}`}>
@@ -21,20 +23,19 @@ export function ContestTile({ contest, nowTs }: Props) {
           <p className="contest-code">{contest.code}</p>
           <h3 className="contest-title">{contest.title}</h3>
         </div>
-        <span className={`contest-status status-${contest.status.toLowerCase()}`}>{meta.label}</span>
+        <ContestStatusBadge status={contest.status} />
       </div>
 
-      <div className="contest-timer-row">
-        <p>{getCountdownLabel(contest.status)}</p>
-        <strong>{countdown}</strong>
-      </div>
+      <ContestCountdown status={contest.status} lockAt={contest.lockAt} endsAt={contest.endsAt} nowTs={nowTs} />
 
       <div className="contest-meta-grid">
         <ContestMeta label="Entries" value={String(contest._count.entries)} />
         <ContestMeta label="Roster" value={String(rule?.maxRosterSize ?? 5)} />
-        <ContestMeta label="Reward" value={`${Math.max(50, (rule?.maxRosterSize ?? 5) * 30)} pts`} />
-        <ContestMeta label="CTA" value={meta.cta} />
+        <ContestMeta label="Restriction" value={rule?.cardSetId ? "Set locked" : "Any set"} />
+        <ContestMeta label="Action" value={meta.cta} />
       </div>
+
+      <ContestRewardPreview rosterSize={rule?.maxRosterSize ?? 5} entries={contest._count.entries} />
       <p className="contest-cta">{meta.cta} →</p>
     </Link>
   );

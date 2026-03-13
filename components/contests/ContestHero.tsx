@@ -1,3 +1,6 @@
+import { ContestCountdown } from "@/components/contests/ContestCountdown";
+import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
+import { ContestStatusBadge } from "@/components/contests/ContestStatusBadge";
 import { formatDate } from "@/components/contests/contestUtils";
 import type { ContestStatus } from "@/components/contests/types";
 
@@ -11,6 +14,7 @@ type Props = {
   rosterSize: number;
   restrictedSet: boolean;
   entries: number;
+  nowTs: number;
 };
 
 export function ContestHero(props: Props) {
@@ -19,20 +23,21 @@ export function ContestHero(props: Props) {
       <div>
         <p className="contest-code">{props.code}</p>
         <h2 className="contest-hero-title">{props.title}</h2>
-        <p className="contest-inline-note">Draft your lineup before lock and climb the ranking in real time.</p>
+        <p className="contest-inline-note">Build strategically before lock, then track your rank through every phase.</p>
       </div>
       <div className="contest-hero-badges">
-        <span className={`contest-status status-${props.status.toLowerCase()}`}>{props.status}</span>
-        <span className="contest-reward-chip">🏆 {Math.max(100, props.rosterSize * 40)} pts</span>
+        <ContestStatusBadge status={props.status} />
+        <span className="contest-reward-chip">Roster size: {props.rosterSize}</span>
       </div>
+      <ContestCountdown status={props.status} lockAt={props.lockAt} endsAt={props.endsAt} nowTs={props.nowTs} />
       <div className="contest-meta-grid">
         <HeroMeta label="Entries" value={String(props.entries)} />
-        <HeroMeta label="Roster" value={String(props.rosterSize)} />
         <HeroMeta label="Starts" value={formatDate(props.startsAt)} />
         <HeroMeta label="Lock" value={formatDate(props.lockAt)} />
         <HeroMeta label="Ends" value={formatDate(props.endsAt)} />
         <HeroMeta label="Set" value={props.restrictedSet ? "Restricted" : "Any"} />
       </div>
+      <ContestRewardPreview rosterSize={props.rosterSize} entries={props.entries} />
     </section>
   );
 }
