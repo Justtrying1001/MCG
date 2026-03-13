@@ -6,6 +6,9 @@ import { MilestoneQuestCard } from "@/components/quests/MilestoneQuestCard";
 import { SocialQuestCard } from "@/components/quests/SocialQuestCard";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
+import { resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
+
+import styles from "./rewards.module.css";
 
 import styles from "./rewards.module.css";
 

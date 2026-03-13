@@ -7,6 +7,7 @@ const {
   updateContestDraftMock,
   validateContestDraftMock,
   publishContestMock,
+  generateUniqueContestCodeMock,
 } = vi.hoisted(() => ({
   requireInternalAdminAccessMock: vi.fn(),
   createContestDraftMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   updateContestDraftMock: vi.fn(),
   validateContestDraftMock: vi.fn(),
   publishContestMock: vi.fn(),
+  generateUniqueContestCodeMock: vi.fn(),
 }));
 
 vi.mock("@/lib/internal-auth", () => ({ requireInternalAdminAccess: requireInternalAdminAccessMock }));
@@ -23,6 +25,7 @@ vi.mock("@/lib/domain/contests/config-runtime", () => ({
   updateContestDraft: updateContestDraftMock,
   validateContestDraft: validateContestDraftMock,
   publishContest: publishContestMock,
+  generateUniqueContestCode: generateUniqueContestCodeMock,
 }));
 
 import { GET, PATCH } from "@/app/api/internal/contest-configs/[contestId]/route";
@@ -34,6 +37,7 @@ describe("contest config internal routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireInternalAdminAccessMock.mockReturnValue({ ok: true, actor: { id: "admin:a" } });
+    generateUniqueContestCodeMock.mockResolvedValue("AUTO-CODE-1");
   });
 
   it("creates draft", async () => {
@@ -48,6 +52,19 @@ describe("contest config internal routes", () => {
     const response = await CREATE(new Request("http://localhost", { method: "POST", body: JSON.stringify({ code: "", title: "" }) }) as any);
     expect(response.status).toBe(400);
     expect(createContestDraftMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts auto-generated code payload even if incoming code is empty", async () => {
+    createContestDraftMock.mockResolvedValue({ contest: { id: "c2", code: "AUTO-CODE-1" } });
+
+    const response = await CREATE(new Request("http://localhost", {
+      method: "POST",
+      body: JSON.stringify({ code: "", autoGenerateCode: true, title: "Week 2" }),
+    }) as any);
+
+    expect(response.status).toBe(201);
+    expect(generateUniqueContestCodeMock).toHaveBeenCalledWith("Week 2");
+    expect(createContestDraftMock).toHaveBeenCalledWith(expect.objectContaining({ code: "AUTO-CODE-1", title: "Week 2" }));
   });
 
   it("gets and patches draft", async () => {

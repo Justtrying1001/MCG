@@ -228,6 +228,7 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
           plannedSupply: selected.plannedSupply,
           issuedSupply: selected.issuedSupply + 1,
           instanceCount: 1,
+          editionNumber: selected.issuedSupply + 1,
         })
       );
 

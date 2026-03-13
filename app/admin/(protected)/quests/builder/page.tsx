@@ -160,6 +160,8 @@ export default function QuestBuilderPage() {
       return;
     }
 
+    setSaving(true);
+    setMessage("");
     const response = await fetch(questId ? `/api/internal/quests/${questId}` : "/api/internal/quests", {
       method: questId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
