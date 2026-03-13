@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
         startAt: true,
         endAt: true,
+        config: true,
       },
       orderBy: [{ createdAt: "desc" }],
       take: 300,
@@ -33,6 +34,10 @@ export async function GET(request: NextRequest) {
         ...quest,
         startAt: quest.startAt?.toISOString() ?? null,
         endAt: quest.endAt?.toISOString() ?? null,
+        lifecycleStatus:
+          quest.config && typeof quest.config === "object" && !Array.isArray(quest.config)
+            ? ((quest.config as Record<string, unknown>).lifecycleStatus ?? "ACTIVE")
+            : "ACTIVE",
       })),
     });
   } catch (error) {

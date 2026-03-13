@@ -48,7 +48,7 @@ type State = {
     title: string;
     description: string | null;
     rewardPoints: number;
-    validationMode: "MANUAL_REVIEW";
+    validationMode: "MANUAL_REVIEW" | "AUTO";
     oneTime: boolean;
     isActive: boolean;
     startAt: Date | null;
@@ -253,4 +253,28 @@ describe("social submit runtime", () => {
 
     expect(state.submissions[0].status).toBe("SUBMITTED");
   });
+
+  it("auto validation mode approves and credits on submit", async () => {
+    const state = createState();
+    state.quest.validationMode = "AUTO";
+    state.quest.config.proofRequired = false;
+
+    prismaMock.$transaction.mockImplementation(async (arg: any) => {
+      if (typeof arg === "function") return arg(createTx(state), {});
+      if (Array.isArray(arg)) return Promise.all(arg);
+      return null;
+    });
+
+    const result = await submitSocialQuestMvp({
+      questId: state.quest.id,
+      userId: state.user.id,
+      note: "done",
+    });
+
+    expect(result.status).toBe("APPROVED");
+    expect(state.progress?.status).toBe("COMPLETED");
+    expect(state.ledgerEntries).toHaveLength(1);
+    expect(state.user.points).toBe(200);
+  });
+
 });

@@ -12,14 +12,16 @@ const {
 
 vi.mock("@/lib/internal-auth", () => ({ requireInternalAdminAccess: requireInternalAdminAccessMock }));
 vi.mock("@/lib/domain/quests/runtime", () => ({
-  QuestRuntimeError: class QuestRuntimeError extends Error { status = 400; },
+  QuestRuntimeError: class QuestRuntimeError extends Error {
+    status = 400;
+  },
   listInternalQuestsMvp: listInternalQuestsMvpMock,
   createQuestDefinitionMvp: createQuestDefinitionMvpMock,
 }));
 
-import { GET } from "@/app/api/internal/quests/route";
+import { GET, POST } from "@/app/api/internal/quests/route";
 
-describe("GET /api/internal/quests", () => {
+describe("/api/internal/quests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -46,5 +48,45 @@ describe("GET /api/internal/quests", () => {
 
     expect(response.status).toBe(200);
     expect(body.quests[0].analytics.totalPointsDistributed).toBe(1500);
+  });
+
+  it("creates quest payload for authorized admin", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    createQuestDefinitionMvpMock.mockResolvedValue({
+      id: "q-new",
+      code: "Q_SOCIAL",
+      config: { targetUrl: "https://x.com/memecardgame", ctaLabel: "Open on X" },
+    });
+
+    const response = await POST(new Request("http://localhost/api/internal/quests", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: "Q_SOCIAL" }),
+    }) as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.quest.id).toBe("q-new");
+    expect(createQuestDefinitionMvpMock).toHaveBeenCalled();
+  });
+
+  it("creates milestone quest payload for authorized admin", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    createQuestDefinitionMvpMock.mockResolvedValue({
+      id: "q-m1",
+      code: "Q_MILESTONE_PACK_3",
+      type: "CONTEST_COUNT_MILESTONE",
+      config: { milestoneType: "PACK_OPEN_COUNT", targetValue: 3, threshold: 3 },
+    });
+
+    const response = await POST(new Request("http://localhost/api/internal/quests", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: "Q_MILESTONE_PACK_3" }),
+    }) as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.quest.config.milestoneType).toBe("PACK_OPEN_COUNT");
   });
 });
