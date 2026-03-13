@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
 
-export type ClaudeRarityCode = "B" | "A" | "S" | "S+";
+export type ClaudeRarityCode = "B" | "A" | "S" | "E" | "S+";
 export type ClaudeEditionCode = "BASE" | "REVERSE" | "BRILLANTE" | "HOLO" | "MCG_ART";
 
 export type RarityTheme = {
   code: ClaudeRarityCode;
-  label: "Common" | "Uncommon" | "Rare" | "Legendary";
+  label: "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
   accent: string;
   glowCol: string;
   borderOut: string;
@@ -92,6 +92,25 @@ const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
     cornerDetail: true,
     cornerDot: false,
   },
+  E: {
+    code: "E",
+    label: "Epic",
+    accent: "#8563d2",
+    glowCol: "rgba(133,99,210,0.34)",
+    borderOut: "#362655",
+    borderIn: "#49346f",
+    wire: "rgba(133,99,210,0.2)",
+    wireAcc: "rgba(133,99,210,0.33)",
+    bgCard: "#140f24",
+    bgHeader: "#100b1d",
+    bgFooter: "#0f091b",
+    txtName: "#e6ddfb",
+    txtSub: "#775cae",
+    txtFlavor: "#8a78b8",
+    cornerStroke: "#7a5bb4",
+    cornerDetail: true,
+    cornerDot: true,
+  },
   "S+": {
     code: "S+",
     label: "Legendary",
@@ -177,7 +196,8 @@ export const resolveRarity = (rarity: string): ClaudeRarityCode => {
     UNCOMMON: "A",
     S: "S",
     RARE: "S",
-    EPIC: "S",
+    E: "E",
+    EPIC: "E",
     "S+": "S+",
     LEGENDARY: "S+",
   };
