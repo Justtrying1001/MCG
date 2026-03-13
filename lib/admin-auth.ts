@@ -64,18 +64,24 @@ export function verifyAdminCredentials(username: string, password: string) {
   const expectedUsername = requireEnv("ADMIN_USERNAME");
   const hashConfig = parseAdminPasswordHash(requireEnv("ADMIN_PASSWORD_HASH"));
 
-  if (username !== expectedUsername) {
-    return false;
-  }
-
+  // Always derive the digest regardless of username correctness so that
+  // response time is constant — prevents username enumeration via timing.
   const actualDigest = deriveDigest(password, hashConfig);
   const expectedDigest = hashConfig.digest;
 
   const actualBuffer = Buffer.from(actualDigest, "hex");
   const expectedBuffer = Buffer.from(expectedDigest, "hex");
-  if (actualBuffer.length !== expectedBuffer.length) return false;
+  const passwordOk = actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
 
-  return timingSafeEqual(actualBuffer, expectedBuffer);
+  // Pad both to the same length before comparing so length differences
+  // don't leak timing information.
+  const maxLen = Math.max(username.length, expectedUsername.length, 1);
+  const usernameOk = timingSafeEqual(
+    Buffer.from(username.padEnd(maxLen)),
+    Buffer.from(expectedUsername.padEnd(maxLen)),
+  );
+
+  return passwordOk && usernameOk;
 }
 
 export function createAdminPasswordHash(password: string) {

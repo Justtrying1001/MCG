@@ -1,8 +1,17 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 
 import type { AdminAccessContext } from "@/lib/admin-ops";
 import { parseAdminRole } from "@/lib/admin-ops";
 import { getAdminSessionFromRequest } from "@/lib/admin-auth";
+
+function secureStringEqual(a: string, b: string): boolean {
+  // Always compare same-length buffers to avoid length-based timing leaks
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
 
 export function requireInternalAdmin(request: NextRequest): { ok: true; keyId: string; role: ReturnType<typeof parseAdminRole> } | { ok: false; status: number; error: string } {
   const expected = process.env.INTERNAL_ADMIN_KEY;
@@ -11,7 +20,7 @@ export function requireInternalAdmin(request: NextRequest): { ok: true; keyId: s
   }
 
   const provided = request.headers.get("x-internal-admin-key");
-  if (!provided || provided !== expected) {
+  if (!provided || !secureStringEqual(provided, expected)) {
     return { ok: false, status: 403, error: "Forbidden" };
   }
 
