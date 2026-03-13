@@ -5,6 +5,7 @@ export type ClaudeEditionCode = "BASE" | "REVERSE" | "BRILLANTE" | "HOLO" | "MCG
 
 export type RarityTheme = {
   code: ClaudeRarityCode;
+  label: "Common" | "Uncommon" | "Rare" | "Legendary";
   accent: string;
   glowCol: string;
   borderOut: string;
@@ -25,6 +26,7 @@ export type RarityTheme = {
 export type EditionTheme = {
   code: ClaudeEditionCode;
   label: string;
+  badgeLabel: string;
   editionClass: "ed-base" | "ed-reverse" | "ed-brillante" | "ed-holo" | "ed-mcgart";
   needsReverseLayers: boolean;
   needsBrillanteLayer: boolean;
@@ -35,6 +37,7 @@ export type EditionTheme = {
 const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
   B: {
     code: "B",
+    label: "Common",
     accent: "#3d4a5c",
     glowCol: "rgba(61,74,92,0)",
     borderOut: "#181e27",
@@ -53,6 +56,7 @@ const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
   },
   A: {
     code: "A",
+    label: "Uncommon",
     accent: "#5a7a8a",
     glowCol: "rgba(90,122,138,0.12)",
     borderOut: "#1e2d38",
@@ -71,6 +75,7 @@ const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
   },
   S: {
     code: "S",
+    label: "Rare",
     accent: "#7090b8",
     glowCol: "rgba(112,144,184,0.22)",
     borderOut: "#243050",
@@ -89,6 +94,7 @@ const RARITY_THEMES: Record<ClaudeRarityCode, RarityTheme> = {
   },
   "S+": {
     code: "S+",
+    label: "Legendary",
     accent: "#b89a60",
     glowCol: "rgba(184,154,96,0.35)",
     borderOut: "#3a2e18",
@@ -111,6 +117,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   BASE: {
     code: "BASE",
     label: "Base",
+    badgeLabel: "",
     editionClass: "ed-base",
     needsReverseLayers: false,
     needsBrillanteLayer: false,
@@ -120,6 +127,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   REVERSE: {
     code: "REVERSE",
     label: "Reverse",
+    badgeLabel: "REV",
     editionClass: "ed-reverse",
     needsReverseLayers: true,
     needsBrillanteLayer: false,
@@ -129,6 +137,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   BRILLANTE: {
     code: "BRILLANTE",
     label: "Brillante",
+    badgeLabel: "BRILL",
     editionClass: "ed-brillante",
     needsReverseLayers: false,
     needsBrillanteLayer: true,
@@ -138,6 +147,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   HOLO: {
     code: "HOLO",
     label: "Holo",
+    badgeLabel: "HOLO",
     editionClass: "ed-holo",
     needsReverseLayers: false,
     needsBrillanteLayer: false,
@@ -147,6 +157,7 @@ const EDITION_THEMES: Record<ClaudeEditionCode, EditionTheme> = {
   MCG_ART: {
     code: "MCG_ART",
     label: "MCG Art",
+    badgeLabel: "MCG ART",
     editionClass: "ed-mcgart",
     needsReverseLayers: false,
     needsBrillanteLayer: false,

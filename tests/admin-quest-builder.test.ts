@@ -111,4 +111,43 @@ describe("quest builder", () => {
     expect(preview.ctaCopy).toContain("disabled");
     expect(preview.ctaCopy).toContain("Link unavailable");
   });
+
+  it("enforces valid url scheme and warns for objective/url mismatch", () => {
+    const invalidScheme = validateQuestBuilderInput({
+      code: "X",
+      title: "Y",
+      objectiveType: "FOLLOW_X",
+      targetUrl: "ftp://x.com/memecardgame",
+      rewardPoints: 5,
+    });
+
+    expect(invalidScheme.blocking).toBe(true);
+    expect(invalidScheme.issues.some((issue) => issue.field === "targetUrl" && issue.severity === "ERROR")).toBe(true);
+
+    const mismatch = validateQuestBuilderInput({
+      code: "X2",
+      title: "Y2",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: "https://x.com/memecardgame",
+      rewardPoints: 5,
+    });
+
+    expect(mismatch.blocking).toBe(false);
+    expect(mismatch.issues.some((issue) => issue.message.includes("tweet URL"))).toBe(true);
+  });
+
+  it("builds CTA fallback preview when no custom label", () => {
+    const preview = buildQuestUserPreview({
+      code: "Q",
+      title: "Like this tweet",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: null,
+      rewardPoints: 10,
+    });
+
+    expect(preview.ctaCopy).toContain("disabled");
+    expect(preview.ctaCopy).toContain("Link unavailable");
+  });
 });
