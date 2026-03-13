@@ -1,140 +1,238 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-import { ContestFiltersBar } from "@/components/contests/ContestFiltersBar";
-import { ContestHistoryCard } from "@/components/contests/ContestHistoryCard";
-import { ContestTile } from "@/components/contests/ContestTile";
-import { loadContestCache, saveContestCache } from "@/components/contests/contestUtils";
-import type { ContestListItem } from "@/components/contests/types";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 
-type ContestTab = "upcoming" | "open" | "locked" | "live" | "settled";
+type ContestListItem = {
+  id: string;
+  code: string;
+  title: string;
+  status: "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
+  startsAt: string | null;
+  lockAt: string | null;
+  endsAt: string | null;
+  rules: Array<{ id: string; cardSetId: string | null; maxRosterSize: number | null }>;
+  _count: { entries: number };
+};
+
+type Tab = "active" | "settled";
+
+function statusClass(s: ContestListItem["status"]) {
+  switch (s) {
+    case "LIVE":   return "contest-status status-live";
+    case "OPEN":   return "contest-status status-open";
+    case "LOCKED": return "contest-status status-locked";
+    default: return "contest-status status-settled";
+  }
+}
+function cardClass(s: ContestListItem["status"]) {
+  switch (s) {
+    case "LIVE":   return "contest-card-v2 ccv2-live";
+    case "OPEN":   return "contest-card-v2 ccv2-open";
+    case "LOCKED": return "contest-card-v2 ccv2-locked";
+    default: return "contest-card-v2 ccv2-settled";
+  }
+}
+
+function formatDate(v: string | null) {
+  if (!v) return "—";
+  return new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 export default function ContestsPage() {
   const { me, loading } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<ContestTab>("open");
-  const [query, setQuery] = useState("");
-  const [nowTs, setNowTs] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  const [error,    setError]    = useState("");
+  const [isLoading,setIsLoading]= useState(true);
+  const [tab,      setTab]      = useState<Tab>("active");
 
   useEffect(() => {
     if (loading) return;
+    if (!me || me.mode === "guest") { setIsLoading(false); return; }
 
     void (async () => {
-      setIsLoading(true);
-      setError("");
+      setIsLoading(true); setError("");
       const res = await fetch("/api/contests", { cache: "no-store" });
       if (!res.ok) {
-        const cached = loadContestCache();
-        if (cached.length) {
-          setContests(cached);
-          setError("Showing cached contests. Connect with X to load live updates.");
-        } else {
-          const text = await res.text();
-          setError(text || "Cannot load contests");
-        }
-        setIsLoading(false);
-        return;
+        setError((await res.text()) || "Cannot load contests");
+        setIsLoading(false); return;
       }
-
-      const payload = (await res.json()) as { contests: ContestListItem[] };
-      const nextContests = payload.contests ?? [];
-      setContests(nextContests);
-      saveContestCache(nextContests);
+      const p = (await res.json()) as { contests: ContestListItem[] };
+      setContests(p.contests ?? []);
       setIsLoading(false);
     })();
   }, [loading]);
 
-  const grouped = useMemo(() => {
-    return {
-      upcoming: contests.filter((c) => c.status === "DRAFT"),
-      open: contests.filter((c) => c.status === "OPEN"),
-      locked: contests.filter((c) => c.status === "LOCKED"),
-      live: contests.filter((c) => c.status === "LIVE"),
-      settled: contests.filter((c) => c.status === "SETTLED" || c.status === "CANCELED"),
-    };
-  }, [contests]);
+  const grouped = useMemo(() => ({
+    active:  contests.filter((c) => ["OPEN","LOCKED","LIVE"].includes(c.status)),
+    settled: contests.filter((c) => c.status === "SETTLED"),
+  }), [contests]);
 
-  const displayed = useMemo(() => {
-    return grouped[tab].filter((contest) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      return contest.title.toLowerCase().includes(q) || contest.code.toLowerCase().includes(q);
-    });
-  }, [grouped, query, tab]);
-
-  const featured = contests.find((contest) => contest.status === "OPEN") ?? contests[0] ?? null;
-  const isGuest = !loading && me?.mode === "guest";
+  const guestBlocked  = !loading && me?.mode === "guest";
+  const visible       = tab === "active" ? grouped.active : grouped.settled;
+  const featuredLive  = grouped.active.find((c) => c.status === "LIVE") ?? null;
 
   return (
     <SiteShell>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Contest Hub</h1>
-          <p className="page-subtitle">Discover competitions, build lineups, track live rounds, and review your results.</p>
-        </div>
-      </div>
+      <div className="hub-page">
 
-      <section className="contest-dashboard premium-contest-dashboard">
-        <div className="contest-hero-strip">
-          <div className="contest-info-panel spotlight">
-            <p className="contest-inline-note">🏆 Compete for prestige rewards and leaderboard ranking.</p>
-            <p className="contest-inline-note">⚡ Lock pressure: lineup validation matters most right before lock.</p>
-            {isGuest ? <p className="contest-inline-note">Guest mode: build and explore freely. Connect with X to submit entries.</p> : null}
-          </div>
-          <div className="contest-kpi-row">
-            <div className="contest-kpi"><p>Open</p><strong>{grouped.open.length}</strong></div>
-            <div className="contest-kpi"><p>Live</p><strong>{grouped.live.length}</strong></div>
-            <div className="contest-kpi"><p>Settled</p><strong>{grouped.settled.length}</strong></div>
+        {/* ── Page Header ── */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Contests</h1>
+            <p className="page-subtitle">
+              Build your lineup, lock it in, and track results on the leaderboard.
+            </p>
           </div>
         </div>
 
-        {featured ? (
-          <section className="contest-section">
-            <h2 className="contest-section-title">Featured contest</h2>
-            <div className="contest-list featured-list">
-              <ContestTile contest={featured} nowTs={nowTs} />
-            </div>
-          </section>
-        ) : null}
-
-        <ContestFiltersBar tab={tab} setTab={setTab} query={query} setQuery={setQuery} />
-
-        {isLoading ? (
-          <div className="empty-state"><p className="empty-state-title">Loading contests…</p></div>
-        ) : contests.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-state-title">No contests are currently published.</p>
-            <p className="empty-state-desc">Check back soon for the next lock window.</p>
+        {/* ── Guest Notice ── */}
+        {guestBlocked && (
+          <div className="warning-banner">
+            Contests require an authenticated account with owned card instances.
+            Guest mode can open packs and preview your collection, but cannot enter competitions.
           </div>
-        ) : (
-          <section className="contest-section">
-            <h2 className="contest-section-title">{tab === "upcoming" ? "Upcoming" : tab === "open" ? "Open for entry" : tab === "locked" ? "Locked" : tab === "live" ? "Live" : "Settled / Results"}</h2>
-            {error ? <p className="contest-inline-note">{error}</p> : null}
-            <div className="contest-list contest-scroller">
-              {displayed.length ? displayed.map((contest) => <ContestTile contest={contest} nowTs={nowTs} key={contest.id} />) : <p className="contest-inline-note">No contests available in this filter.</p>}
-            </div>
-          </section>
         )}
 
-        {grouped.settled.length ? (
-          <section className="contest-section">
-            <h2 className="contest-section-title">Recent results history</h2>
-            <div className="contest-list">
-              {grouped.settled.slice(0, 3).map((contest) => <ContestHistoryCard key={contest.id} contest={contest} />)}
+        {/* ── Tab Navigation ── */}
+        {!guestBlocked && (
+          <div className="hub-tabs">
+            <button
+              type="button"
+              className={`hub-tab${tab === "active" ? " active" : ""}`}
+              onClick={() => setTab("active")}
+            >
+              Active & Upcoming
+              {grouped.active.length > 0 && (
+                <span className="hub-tab-badge">{grouped.active.length}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={`hub-tab${tab === "settled" ? " active" : ""}`}
+              onClick={() => setTab("settled")}
+            >
+              Results
+              {grouped.settled.length > 0 && (
+                <span className="hub-tab-badge">{grouped.settled.length}</span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* ── Featured Live Banner ── */}
+        {!guestBlocked && featuredLive && tab === "active" && (
+          <Link href={`/contests/${featuredLive.id}`} className="contest-featured-banner">
+            <div>
+              <div className="cfb-eyebrow">
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--emerald)", display: "inline-block", animation: "pulse-dot 1.6s ease-in-out infinite" }} />
+                Live now
+              </div>
+              <div className="cfb-title">{featuredLive.title}</div>
+              <div className="cfb-stats">
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{featuredLive._count.entries}</div>
+                  <div className="cfb-stat-label">Entries</div>
+                </div>
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{featuredLive.rules[0]?.maxRosterSize ?? 5}</div>
+                  <div className="cfb-stat-label">Roster</div>
+                </div>
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{formatDate(featuredLive.endsAt)}</div>
+                  <div className="cfb-stat-label">Ends</div>
+                </div>
+              </div>
             </div>
-          </section>
-        ) : null}
-      </section>
+            <div className="cfb-actions">
+              <span className="btn btn-primary">View Contest →</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace" }}>
+                {featuredLive.code}
+              </span>
+            </div>
+          </Link>
+        )}
+
+        {/* ── Content ── */}
+        {isLoading ? (
+          <div className="empty-state">
+            <p className="empty-state-title">Loading contests…</p>
+          </div>
+        ) : error ? (
+          <div className="contest-error">{error}</div>
+        ) : !me || me.mode === "guest" ? null : visible.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">🏆</div>
+            <p className="empty-state-title">
+              {tab === "active" ? "No active contests right now" : "No settled contests yet"}
+            </p>
+            <p className="empty-state-desc">
+              {tab === "active"
+                ? "Check back soon for the next lock window."
+                : "Results will appear here after contests close."}
+            </p>
+          </div>
+        ) : (
+          <div className="contest-grid-v2">
+            {visible.map((contest) => {
+              const rule = contest.rules[0];
+              return (
+                <Link
+                  key={contest.id}
+                  href={`/contests/${contest.id}`}
+                  className={cardClass(contest.status)}
+                >
+                  <div className="ccv2-top-bar" />
+
+                  <div className="ccv2-head">
+                    <div className="ccv2-title">{contest.title}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      {contest.status === "LIVE" && (
+                        <div style={{
+                          width: 7, height: 7, borderRadius: "50%",
+                          background: "var(--emerald)",
+                          boxShadow: "0 0 6px rgba(31,122,92,0.8)",
+                          animation: "pulse-dot 1.6s ease-in-out infinite",
+                          flexShrink: 0,
+                        }} />
+                      )}
+                      <span className={statusClass(contest.status)}>{contest.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="ccv2-body">
+                    <div>
+                      <div className="ccv2-stat-label">Entries</div>
+                      <div className="ccv2-stat-value">{contest._count.entries}</div>
+                    </div>
+                    <div>
+                      <div className="ccv2-stat-label">Roster</div>
+                      <div className="ccv2-stat-value">{rule?.maxRosterSize ?? 5} cards</div>
+                    </div>
+                    <div>
+                      <div className="ccv2-stat-label">Lock at</div>
+                      <div className="ccv2-stat-value">{formatDate(contest.lockAt)}</div>
+                    </div>
+                  </div>
+
+                  <div className="ccv2-footer">
+                    <span style={{ fontSize: "0.74rem", color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {contest.code}
+                    </span>
+                    {(contest.status === "OPEN" || contest.status === "LIVE") ? (
+                      <span className="ccv2-enter-btn">Enter →</span>
+                    ) : (
+                      <span style={{ fontSize: "0.78rem", color: "var(--text-3)" }}>View →</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+      </div>
     </SiteShell>
   );
 }
