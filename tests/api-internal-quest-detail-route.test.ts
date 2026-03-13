@@ -67,4 +67,24 @@ describe("/api/internal/quests/[questId]", () => {
     expect(updateQuestDefinitionMvpMock).toHaveBeenCalledWith("q1", { code: "contest_2" });
     expect(body.quest.config.ctaLabel).toBe("View Tweet");
   });
+
+  it("updates milestone quest payload via PATCH", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    updateQuestDefinitionMvpMock.mockResolvedValue({
+      id: "q-m1",
+      code: "Q_MILESTONE_PACK_3",
+      config: { milestoneType: "PACK_OPEN_COUNT", targetValue: 3, threshold: 3 },
+    });
+
+    const response = await PATCH(new Request("http://localhost/api/internal/quests/q-m1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: "Q_MILESTONE_PACK_3" }),
+    }) as any, { params: { questId: "q-m1" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.quest.config.targetValue).toBe(3);
+    expect(body.quest.config.milestoneType).toBe("PACK_OPEN_COUNT");
+  });
 });

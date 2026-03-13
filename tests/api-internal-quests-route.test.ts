@@ -69,4 +69,24 @@ describe("/api/internal/quests", () => {
     expect(body.quest.id).toBe("q-new");
     expect(createQuestDefinitionMvpMock).toHaveBeenCalled();
   });
+
+  it("creates milestone quest payload for authorized admin", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    createQuestDefinitionMvpMock.mockResolvedValue({
+      id: "q-m1",
+      code: "Q_MILESTONE_PACK_3",
+      type: "CONTEST_COUNT_MILESTONE",
+      config: { milestoneType: "PACK_OPEN_COUNT", targetValue: 3, threshold: 3 },
+    });
+
+    const response = await POST(new Request("http://localhost/api/internal/quests", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: "Q_MILESTONE_PACK_3" }),
+    }) as any);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.quest.config.milestoneType).toBe("PACK_OPEN_COUNT");
+  });
 });

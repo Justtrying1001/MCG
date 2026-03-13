@@ -84,7 +84,7 @@ export default function QuestLibraryPage() {
               <p style={{ fontWeight: 700 }}>{row.title}</p>
               <p className="contest-inline-note">{formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
             </div>
-            <span className="contest-inline-note" style={{ color: "#d1d5db" }}>{row.type}</span>
+            <span className="admin-badge neutral">{row.type === "CONTEST_COUNT_MILESTONE" ? "MILESTONE" : "SOCIAL"}</span>
             <span className="admin-badge neutral">{row.validationMode}</span>
             <span>{row.rewardPoints} pts</span>
             <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>

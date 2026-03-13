@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getMilestoneObjectiveText,
   getQuestObjectiveText,
   parseSocialTargetUrl,
   resolveSocialCtaLabel,
@@ -44,6 +45,7 @@ describe("quests social helpers", () => {
   it("creates objective text by quest type", () => {
     expect(getQuestObjectiveText({ objectiveType: "FOLLOW_X" })).toContain("Follow");
     expect(getQuestObjectiveText({ objectiveType: "SOCIAL_ENGAGEMENT", socialAction: "RETWEET" })).toContain("RT");
-    expect(getQuestObjectiveText({ objectiveType: "CONTEST_MILESTONE", milestoneThreshold: 4 })).toContain("4");
+    expect(getQuestObjectiveText({ objectiveType: "MILESTONE", milestoneType: "PACK_OPEN_COUNT", milestoneTargetValue: 4 })).toContain("Open 4 packs");
+    expect(getMilestoneObjectiveText("CARD_COLLECTION_COUNT", 50)).toContain("50 cards");
   });
 });

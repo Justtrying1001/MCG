@@ -4,6 +4,7 @@ import {
   sanitizeOptionalText,
   validateSocialTargetForBuilder,
   type BuilderObjectiveType,
+  type MilestoneType,
   type SocialAction,
 } from "@/lib/domain/quests/social";
 
@@ -16,6 +17,8 @@ export type QuestBuilderInput = {
   description?: string | null;
   objectiveType?: QuestObjectiveType;
   socialAction?: SocialEngagementAction;
+  milestoneType?: MilestoneType;
+  targetValue?: number;
   targetUrl?: string | null;
   ctaLabel?: string | null;
   instructions?: string | null;
@@ -47,10 +50,14 @@ export function validateQuestBuilderInput(input: QuestBuilderInput) {
     issues.push({ field: "rewardPoints", severity: "ERROR", message: "rewardPoints must be a non-negative integer" });
   }
 
-  if (objectiveType === "CONTEST_MILESTONE") {
-    const threshold = Number(input.milestoneThreshold ?? 0);
-    if (!Number.isInteger(threshold) || threshold <= 0) {
-      issues.push({ field: "milestoneThreshold", severity: "ERROR", message: "milestone threshold must be a positive integer" });
+  if (objectiveType === "MILESTONE") {
+    const targetValue = Number(input.targetValue ?? input.milestoneThreshold ?? 0);
+    if (!Number.isInteger(targetValue) || targetValue <= 0) {
+      issues.push({ field: "targetValue", severity: "ERROR", message: "target value must be a positive integer" });
+    }
+
+    if (!input.milestoneType) {
+      issues.push({ field: "milestoneType", severity: "ERROR", message: "milestone type is required" });
     }
   }
 
@@ -82,7 +89,7 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
       ? "SOCIAL_ENGAGEMENT_X"
       : "CONTEST_COUNT_MILESTONE";
 
-  const validationMode = input.validationMode ?? (objectiveType === "CONTEST_MILESTONE" ? "AUTO" : "MANUAL_REVIEW");
+  const validationMode = input.validationMode ?? (objectiveType === "MILESTONE" ? "AUTO" : "MANUAL_REVIEW");
 
   const base = {
     code: String(input.code ?? "").trim(),
@@ -98,10 +105,14 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
   } as const;
 
   if (type === "CONTEST_COUNT_MILESTONE") {
+    const targetValue = Number(input.targetValue ?? input.milestoneThreshold ?? 0);
+
     return {
       ...base,
       config: {
-        threshold: Number(input.milestoneThreshold ?? 0),
+        milestoneType: input.milestoneType ?? "CONTEST_PARTICIPATION_COUNT",
+        targetValue,
+        threshold: targetValue,
       },
     };
   }
@@ -128,7 +139,8 @@ export function buildQuestUserPreview(input: QuestBuilderInput) {
     objective: getQuestObjectiveText({
       objectiveType,
       socialAction: input.socialAction,
-      milestoneThreshold: input.milestoneThreshold ?? 0,
+      milestoneType: input.milestoneType,
+      milestoneTargetValue: Number(input.targetValue ?? input.milestoneThreshold ?? 0),
     }),
     rewardCopy: `Reward: ${Number(input.rewardPoints ?? 0)} points`,
     proofCopy: (objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT")

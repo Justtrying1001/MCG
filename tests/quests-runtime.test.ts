@@ -38,6 +38,8 @@ import {
 type State = {
   user: { id: string; points: number };
   contestEntriesCount: number;
+  packOpenCount: number;
+  collectionCardCount: number;
   quests: Array<any>;
   progressByUserQuest: Map<string, any>;
   progressById: Map<string, any>;
@@ -52,6 +54,12 @@ function createTx(state: State) {
   return {
     contestEntry: {
       count: vi.fn(async () => state.contestEntriesCount),
+    },
+    packOpening: {
+      count: vi.fn(async () => state.packOpenCount),
+    },
+    userCard: {
+      aggregate: vi.fn(async () => ({ _sum: { quantity: state.collectionCardCount } })),
     },
     questDefinition: {
       findMany: vi.fn(async () => state.quests),
@@ -230,6 +238,8 @@ describe("quests runtime phase 3", () => {
     const state: State = {
       user: { id: "u1", points: 0 },
       contestEntriesCount: 1,
+      packOpenCount: 0,
+      collectionCardCount: 0,
       quests: [
         {
           id: "q1",
@@ -275,4 +285,85 @@ describe("quests runtime phase 3", () => {
     expect(progress.status).toBe("COMPLETED");
     expect(progress.progressValue).toBe(3);
   });
+
+  it("auto-completes PACK_OPEN_COUNT milestone from pack openings", async () => {
+    const state: State = {
+      user: { id: "u1", points: 0 },
+      contestEntriesCount: 0,
+      packOpenCount: 2,
+      collectionCardCount: 0,
+      quests: [
+        {
+          id: "q_pack",
+          code: "pack_3",
+          type: "CONTEST_COUNT_MILESTONE",
+          title: "Open 3 packs",
+          description: null,
+          rewardPoints: 150,
+          validationMode: "AUTO",
+          oneTime: true,
+          isActive: true,
+          startAt: null,
+          endAt: null,
+          config: { milestoneType: "PACK_OPEN_COUNT", targetValue: 3, threshold: 3 },
+        },
+      ],
+      progressByUserQuest: new Map(),
+      progressById: new Map(),
+      ledgerEntries: [],
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await syncContestEntryQuestProgression(state.user.id);
+    expect(state.user.points).toBe(0);
+
+    state.packOpenCount = 3;
+    await syncContestEntryQuestProgression(state.user.id);
+
+    expect(state.user.points).toBe(150);
+    expect(state.ledgerEntries).toHaveLength(1);
+    expect(state.progressByUserQuest.get("u1:q_pack").status).toBe("COMPLETED");
+  });
+
+  it("auto-completes CARD_COLLECTION_COUNT milestone from user cards", async () => {
+    const state: State = {
+      user: { id: "u1", points: 0 },
+      contestEntriesCount: 0,
+      packOpenCount: 0,
+      collectionCardCount: 49,
+      quests: [
+        {
+          id: "q_col",
+          code: "collect_50",
+          type: "CONTEST_COUNT_MILESTONE",
+          title: "Collect 50 cards",
+          description: null,
+          rewardPoints: 500,
+          validationMode: "AUTO",
+          oneTime: true,
+          isActive: true,
+          startAt: null,
+          endAt: null,
+          config: { milestoneType: "CARD_COLLECTION_COUNT", targetValue: 50, threshold: 50 },
+        },
+      ],
+      progressByUserQuest: new Map(),
+      progressById: new Map(),
+      ledgerEntries: [],
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await syncContestEntryQuestProgression(state.user.id);
+    expect(state.user.points).toBe(0);
+
+    state.collectionCardCount = 50;
+    await syncContestEntryQuestProgression(state.user.id);
+
+    expect(state.user.points).toBe(500);
+    expect(state.ledgerEntries).toHaveLength(1);
+    expect(state.progressByUserQuest.get("u1:q_col").status).toBe("COMPLETED");
+  });
+
 });
