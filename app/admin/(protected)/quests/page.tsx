@@ -29,6 +29,7 @@ export default function QuestLibraryPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const load = async () => {
     const response = await fetch("/api/internal/quests/library", { cache: "no-store" });
@@ -44,6 +45,11 @@ export default function QuestLibraryPage() {
   }, []);
 
   const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT") => {
+    if (action === "DELETE_SOFT") {
+      const confirmed = window.confirm("Soft-delete this quest? It will disappear from user-facing pages and default admin list.");
+      if (!confirmed) return;
+    }
+
     setBusyId(questId);
     setMessage("");
     const response = await fetch(`/api/internal/quests/${questId}/lifecycle`, {
@@ -59,18 +65,19 @@ export default function QuestLibraryPage() {
     }
     await load();
     setBusyId(null);
-    setMessage("Quest lifecycle updated.");
+    setMessage(action === "DELETE_SOFT" ? "Quest deleted (soft delete)." : "Quest lifecycle updated.");
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
       if (campaignFilter && !row.code.toLowerCase().startsWith(campaignFilter.toLowerCase())) return false;
+      if (!showDeleted && (row.lifecycleStatus ?? "ACTIVE") === "DELETED") return false;
       if (typeFilter !== "ALL" && row.type !== typeFilter) return false;
       if (!q) return true;
       return row.code.toLowerCase().includes(q) || row.title.toLowerCase().includes(q);
     });
-  }, [campaignFilter, rows, query, typeFilter]);
+  }, [campaignFilter, rows, query, showDeleted, typeFilter]);
 
   const types = [...new Set(rows.map((row) => row.type))];
 
@@ -95,6 +102,10 @@ export default function QuestLibraryPage() {
           <option value="ALL">All objective types</option>
           {types.map((type) => <option key={type} value={type}>{type}</option>)}
         </select>
+        <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} />
+          show deleted
+        </label>
         <span className="admin-badge neutral">{filtered.length} quests</span>
       </section>
 

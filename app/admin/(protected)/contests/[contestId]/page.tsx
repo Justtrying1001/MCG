@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 
@@ -32,9 +34,12 @@ type OverviewPayload = {
 };
 
 export default function ContestOverviewPage({ params }: { params: { contestId: string } }) {
+  const router = useRouter();
   const [data, setData] = useState<OverviewPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busyDelete, setBusyDelete] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -55,6 +60,25 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     void load();
   }, [params.contestId]);
 
+  const deleteContest = async () => {
+    const confirmed = window.confirm("Delete this contest draft? This action is permanent and only works if there are no entries/scores/rankings/settlements.");
+    if (!confirmed) return;
+    setBusyDelete(true);
+    setMessage("");
+    setError("");
+    const response = await fetch(`/api/internal/contests/${params.contestId}`, { method: "DELETE" });
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (!response.ok) {
+      setError(payload?.error ?? "Cannot delete contest");
+      setBusyDelete(false);
+      return;
+    }
+    setMessage("Contest deleted.");
+    setBusyDelete(false);
+    router.push("/admin/contests");
+    router.refresh();
+  };
+
   return (
     <div style={{ display: "grid", gap: "1rem" }}>
       <section className="contest-section">
@@ -62,6 +86,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
       </section>
 
       {loading ? <section className="contest-section"><p className="contest-inline-note">Loading overview…</p></section> : null}
+      {message ? <section className="contest-section"><p className="contest-inline-note">{message}</p></section> : null}
       {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
@@ -112,6 +137,9 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
             <Link href={`/admin/contests/${params.contestId}/settlement`} className="contest-inline-note">Settlement workbench</Link>
             <Link href={`/admin/contests/${params.contestId}/audit`} className="contest-inline-note">Contest audit timeline</Link>
             <Link href={`/admin/contests/legacy/${params.contestId}`} className="contest-inline-note">Open legacy detail (temporary)</Link>
+            {data.contest.status === "DRAFT" && data.contest._count.entries === 0 && data.contest._count.scores === 0 && data.contest._count.rankings === 0 && data.contest._count.settlements === 0 ? (
+              <Button variant="ghost" onClick={() => void deleteContest()} disabled={busyDelete}>Delete contest</Button>
+            ) : null}
           </section>
         </>
       ) : null}

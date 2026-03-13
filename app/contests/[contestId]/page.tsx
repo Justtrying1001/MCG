@@ -231,6 +231,23 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
           {error ? <div className="contest-error">{error}</div> : null}
 
+          <section className="contest-section selected-team-spotlight">
+            <div>
+              <p className="contest-code">Selected Team</p>
+              <h3 className="contest-section-title">{detail.userEntry ? "Team locked for this contest" : "Build and lock your team"}</h3>
+              <p className="contest-inline-note">
+                {detail.userEntry
+                  ? `Your lineup is submitted (${detail.userEntry.status}).`
+                  : `Choose ${maxRosterSize} cards before lock to confirm your contest entry.`}
+              </p>
+            </div>
+            <div className="selected-team-pill-row" aria-live="polite">
+              <span className="selected-team-pill">Slots filled: {filledSlots}/{maxRosterSize}</span>
+              <span className="selected-team-pill">Status: {detail.userEntry ? "Submitted" : canManageLineup ? "Ready to lock" : "Locked"}</span>
+              <span className="selected-team-pill">Eligible cards: {filteredOptions.length}</span>
+            </div>
+          </section>
+
           <section className="contest-grid-2">
             <section className="contest-section contest-builder-panel">
               <h3 className="contest-section-title">Team builder</h3>
@@ -263,6 +280,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                   />
                 ))}
               </div>
+
+              {!detail.userEntry ? (
+                <p className="contest-inline-note">Selected cards: {selectedCards.filter(Boolean).map((card) => card?.name).join(" · ") || "None yet"}</p>
+              ) : null}
 
               {canManageLineup ? (
                 <div className="eligible-strip" role="list" aria-label="Eligible cards preview">

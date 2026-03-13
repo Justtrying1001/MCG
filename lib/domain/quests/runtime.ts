@@ -411,6 +411,10 @@ async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient
 }
 
 export async function applyContestEntryQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
+  const maybeTx = tx as unknown as Record<string, unknown>;
+  if (!maybeTx.contestEntry || !maybeTx.packOpeningEvent || !maybeTx.questDefinition || !maybeTx.userQuestProgress || !maybeTx.rewardLedgerEntry) {
+    return;
+  }
   await applyAutoMilestoneQuestProgressionTx(tx, userId);
 }
 

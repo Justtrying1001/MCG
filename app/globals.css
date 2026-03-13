@@ -2012,6 +2012,219 @@ a { color: inherit; text-decoration: none; }
   padding: 0.7rem;
 }
 
+.premium-contest-dashboard {
+  display: grid;
+  gap: 1rem;
+}
+
+.contest-hero {
+  border: 1px solid rgba(200, 155, 60, 0.35);
+  background: linear-gradient(145deg, rgba(38, 37, 56, 0.92), rgba(23, 40, 61, 0.92));
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.contest-hero-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.contest-reward-chip {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.contest-grid-2 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.9rem;
+}
+
+.contest-builder-panel,
+.contest-info-panel,
+.selected-team-spotlight {
+  border: 1px solid var(--border-hi);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.selected-team-spotlight {
+  border-color: rgba(200, 155, 60, 0.45);
+  background: linear-gradient(150deg, rgba(200, 155, 60, 0.16), rgba(87, 109, 188, 0.14));
+}
+
+.selected-team-pill-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.selected-team-pill {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.42);
+  font-size: 0.74rem;
+  padding: 0.22rem 0.52rem;
+}
+
+.lineup-progress-shell {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.45rem;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.lineup-progress-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lineup-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lineup-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f4c66a, #6aa9ff);
+}
+
+.lineup-slot {
+  position: relative;
+  border: 1px dashed rgba(255, 255, 255, 0.32);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.7rem;
+}
+
+.lineup-slot.filled {
+  border-style: solid;
+  border-color: rgba(200, 155, 60, 0.7);
+  background: rgba(200, 155, 60, 0.1);
+}
+
+.lineup-slot-main {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 0.24rem;
+}
+
+.contest-slot-subline { font-size: 0.72rem; color: var(--text-2); }
+
+.lineup-slot-remove {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+}
+
+.eligible-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.eligible-pill {
+  border: 1px solid var(--border-hi);
+  border-radius: 999px;
+  padding: 0.28rem 0.56rem;
+  display: inline-flex;
+  gap: 0.36rem;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.eligible-pill.selected {
+  border-color: rgba(200, 155, 60, 0.8);
+  background: rgba(200, 155, 60, 0.18);
+}
+
+.eligible-pill.locked { opacity: 0.55; }
+
+.contest-action-row.sticky-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.lineup-cta-ready {
+  background: linear-gradient(135deg, #d97706, #ef4444);
+  color: #fff;
+}
+
+.contest-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(3, 8, 20, 0.64);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.contest-modal {
+  width: min(980px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(29, 36, 57, 0.98), rgba(19, 23, 35, 0.98));
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.contest-modal-head,
+.contest-modal-filters {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.contest-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.55rem;
+}
+
+.contest-option-state {
+  font-size: 0.7rem;
+  border-radius: 999px;
+  width: fit-content;
+  padding: 0.14rem 0.42rem;
+}
+
+.contest-option-state.selected { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+.contest-option-state.locked { background: rgba(239, 68, 68, 0.22); color: #fda4af; }
+
+@media (max-width: 900px) {
+  .contest-grid-2 { grid-template-columns: 1fr; }
+}
+
 /* --------------------------------------------------------------------------
    ADMIN UI REDESIGN (PHASE 4 UX PASS)
    -------------------------------------------------------------------------- */

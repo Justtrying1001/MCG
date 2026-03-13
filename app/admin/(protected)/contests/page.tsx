@@ -26,6 +26,7 @@ export default function AdminContestsCatalogPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContestStatus | "ALL">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -54,7 +55,13 @@ export default function AdminContestsCatalogPage() {
   }, [contests, query, statusFilter]);
 
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
+    if (action === "delete") {
+      const confirmed = window.confirm("Delete this contest draft? This action is permanent and only works if there are no entries/scores/rankings/settlements.");
+      if (!confirmed) return;
+    }
+
     setBusyId(contestId);
+    setMessage("");
     const response = await (action === "publish"
       ? fetch(`/api/internal/contest-configs/${contestId}/publish`, { method: "POST" })
       : action === "delete"
@@ -70,6 +77,7 @@ export default function AdminContestsCatalogPage() {
       setError(payload?.error ?? `Cannot ${action} contest`);
     } else {
       setError("");
+      setMessage(action === "delete" ? "Contest deleted." : `Contest ${action} successful.`);
       await load();
     }
     setBusyId(null);
@@ -83,7 +91,7 @@ export default function AdminContestsCatalogPage() {
           <p className="admin-subtitle">Pilotage complet: créer, éditer, publier, archiver et opérer le lifecycle depuis un seul module lisible.</p>
         </div>
         <div className="admin-actions-row">
-          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Nouveau contest</Link>
+          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create New Contest · Start here</Link>
           <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
         </div>
       </section>
@@ -98,6 +106,7 @@ export default function AdminContestsCatalogPage() {
       </section>
 
       {loading ? <section className="admin-panel"><p className="contest-inline-note">Chargement…</p></section> : null}
+      {message ? <section className="admin-panel"><p className="contest-inline-note">{message}</p></section> : null}
       {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
 
       {!loading ? (
