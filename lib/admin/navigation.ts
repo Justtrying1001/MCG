@@ -15,29 +15,28 @@ export type AdminNavGroup = {
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     id: "operations",
-    label: "Run Operations",
+    label: "Core",
     items: [
-      { href: "/admin", label: "Dashboard", hint: "Priority queues & incidents", critical: true },
-      { href: "/admin/contests", label: "Contests", hint: "Run lifecycle, scoring, settlement", critical: true },
-      { href: "/admin/moderation", label: "Moderation", hint: "Review queue & decisions", critical: true },
-      { href: "/admin/rewards", label: "Rewards", hint: "Compensations & grants", critical: true },
+      { href: "/admin", label: "Dashboard", hint: "Operational overview", critical: true },
+      { href: "/admin/contests", label: "Contests", hint: "Lifecycle, scoring, settlement", critical: true },
+      { href: "/admin/moderation", label: "Moderation", hint: "Review queue and decisions", critical: true },
+      { href: "/admin/rewards", label: "Rewards", hint: "Compensations and grants", critical: true },
     ],
   },
   {
     id: "build",
-    label: "Setup & Catalog",
+    label: "Build",
     items: [
-      { href: "/admin/quests", label: "Quests", hint: "Social quest definitions and builder" },
+      { href: "/admin/quests", label: "Quests", hint: "Social quest definitions" },
       { href: "/admin/milestones", label: "Milestones", hint: "Milestone definitions and rewards" },
-      { href: "/admin/users", label: "Users", hint: "User context lookup" },
+      { href: "/admin/users", label: "Users", hint: "User context and activity" },
     ],
   },
   {
     id: "governance",
-    label: "Audit & Governance",
+    label: "Audit",
     items: [
-      { href: "/admin/activity-log", label: "Activity Log", hint: "Trace actions and failures" },
-      { href: "/admin/analytics", label: "Analytics", hint: "Baseline operational metrics" },
+      { href: "/admin/activity-log", label: "Activity Log", hint: "Trace operations and failures" },
     ],
   },
   {

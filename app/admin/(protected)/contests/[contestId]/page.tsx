@@ -73,7 +73,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
       setBusyDelete(false);
       return;
     }
-    setMessage("Contest deleted.");
+    setMessage("Contest deleted successfully.");
     setBusyDelete(false);
     router.push("/admin/contests");
     router.refresh();

@@ -30,6 +30,7 @@ export default function MilestoneLibraryPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const load = async () => {
     const response = await fetch("/api/internal/quests/library", { cache: "no-store" });
@@ -69,6 +70,22 @@ export default function MilestoneLibraryPage() {
     setMessage(action === "DELETE_SOFT" ? "Milestone deleted (soft delete)." : "Milestone lifecycle updated.");
   };
 
+
+  const seedCoreMilestones = async () => {
+    setSeeding(true);
+    setMessage("");
+    const response = await fetch("/api/internal/quests/milestones/seed", { method: "POST" });
+    const payload = (await response.json().catch(() => null)) as { error?: string; createdCount?: number; existingCount?: number } | null;
+    if (!response.ok) {
+      setMessage(payload?.error ?? "Cannot seed milestones");
+      setSeeding(false);
+      return;
+    }
+    setMessage(`Core milestones synced. Created: ${payload?.createdCount ?? 0} · Existing: ${payload?.existingCount ?? 0}`);
+    await load();
+    setSeeding(false);
+  };
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
@@ -85,9 +102,11 @@ export default function MilestoneLibraryPage() {
           <h1 className="admin-title">Milestone Library</h1>
           <p className="admin-subtitle">Manage progression milestones, thresholds, rewards and lifecycle with dedicated admin controls.</p>
           {message ? <p className="contest-inline-note">{message}</p> : null}
+          {rows.length === 0 ? <p className="contest-inline-note">No milestones found in DB. Use “Seed Core Milestones” to load the baseline 15 milestones.</p> : null}
         </div>
         <div className="quest-library-hero-actions">
           <Link href="/admin/quests/builder?objectiveType=MILESTONE" className="btn btn-primary quest-primary-action">Create Milestone</Link>
+          <button type="button" className="btn btn-ghost" onClick={() => void seedCoreMilestones()} disabled={seeding}>{seeding ? "Seeding…" : "Seed Core Milestones"}</button>
           <Link href="/admin/quests" className="btn btn-ghost">Go to quests</Link>
         </div>
       </section>
