@@ -42,6 +42,7 @@ export async function getSalePackRuntimeConfig() {
   const slots = Array.from({ length: pack.cardsPerPack }).map((_, index) => {
     const slotType = slotTypeForIndex(index, pack.cardsPerPack);
     const byRarity = new Map<string, number>();
+    const byRarityEdition = new Map<string, number>();
     let total = 0;
 
     for (const template of templates) {
@@ -56,6 +57,8 @@ export async function getSalePackRuntimeConfig() {
       if (weight <= 0) continue;
       total += weight;
       byRarity.set(template.rarity.code, (byRarity.get(template.rarity.code) ?? 0) + weight);
+      const key = `${template.rarity.code}__${template.edition.code}`;
+      byRarityEdition.set(key, (byRarityEdition.get(key) ?? 0) + weight);
     }
 
     const rarityOdds = Array.from(byRarity.entries())
@@ -65,11 +68,23 @@ export async function getSalePackRuntimeConfig() {
       }))
       .sort((a, b) => b.pct - a.pct);
 
+    const rarityEditionOdds = Array.from(byRarityEdition.entries())
+      .map(([key, weight]) => {
+        const [rarityCode, editionCode] = key.split("__");
+        return {
+          rarityCode,
+          editionCode,
+          pct: total > 0 ? Number(((weight / total) * 100).toFixed(2)) : 0,
+        };
+      })
+      .sort((a, b) => b.pct - a.pct);
+
     return {
       index,
       type: slotType,
       label: slotLabel(slotType),
       rarityOdds,
+      rarityEditionOdds,
     };
   });
 

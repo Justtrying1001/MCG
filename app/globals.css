@@ -324,7 +324,7 @@ a { color: inherit; text-decoration: none; }
    -------------------------------------------------------------------------- */
 .hero-wrap {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(158deg, rgba(22, 24, 29, 0.96), rgba(11, 11, 13, 0.99));
@@ -494,7 +494,7 @@ a { color: inherit; text-decoration: none; }
 
 .feature-panel {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(158deg, rgba(22, 24, 29, 0.90), rgba(11, 11, 13, 0.95));
@@ -581,19 +581,66 @@ a { color: inherit; text-decoration: none; }
     radial-gradient(120% 100% at 50% 0%, rgba(200, 155, 60, 0.08) 0%, transparent 52%),
     radial-gradient(80% 120% at 90% 100%, rgba(214, 58, 50, 0.06) 0%, transparent 64%),
     linear-gradient(162deg, rgba(22, 24, 29, 0.96), rgba(11, 11, 13, 0.99));
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
-  gap: clamp(1.2rem, 2.5vw, 2.6rem);
+  display: block;
   padding: clamp(1.4rem, 2.8vw, 2.8rem);
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pack-info {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.pack-stage-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.95fr) minmax(420px, 1.05fr);
+  gap: clamp(1.1rem, 2.2vw, 2rem);
+  align-items: center;
+}
+
+.pack-overview-card {
+  order: 1;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.pack-supply-progress {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.pack-supply-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-3);
+}
+
+.pack-supply-head span:last-child {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pack-supply-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.pack-supply-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+  transition: width 400ms ease-out;
 }
 
 .pack-info-title {
@@ -606,6 +653,170 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.9rem;
   color: var(--text-2);
   line-height: 1.65;
+}
+
+.pack-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pack-pill {
+  border-radius: 999px;
+  border: 1px solid rgba(216, 166, 62, 0.22);
+  background: rgba(216, 166, 62, 0.08);
+  color: color-mix(in oklab, var(--text) 88%, #fff);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.32rem 0.62rem;
+}
+
+
+.pack-metrics {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pack-metric-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.5rem 0.65rem;
+}
+
+.pack-metric-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pack-metric-value {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+
+
+.pack-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.pack-kpi-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.55rem 0.65rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.pack-kpi-label {
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 700;
+}
+
+.pack-kpi-value {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.pack-rates-table-wrap {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.7rem 0.75rem;
+}
+
+
+.pack-rates-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.pack-rates-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.35rem;
+}
+
+.pack-rates-table th,
+.pack-rates-table td {
+  text-align: left;
+  font-size: 0.74rem;
+  padding: 0.34rem 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pack-rates-table th {
+  color: var(--text-3);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pack-rates-table td {
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.pack-rates-table tbody tr:last-child td { border-bottom: 0; }
+
+
+.pack-drop-hover {
+  position: relative;
+}
+
+.pack-drop-trigger {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  border: 1px dashed rgba(216, 166, 62, 0.35);
+  border-radius: 10px;
+  background: rgba(216, 166, 62, 0.06);
+  padding: 0.55rem 0.65rem;
+}
+
+.pack-drop-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  width: auto;
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(216, 166, 62, 0.28);
+  background: linear-gradient(165deg, rgba(16, 18, 24, 0.98), rgba(9, 9, 12, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(216, 166, 62, 0.16);
+  padding: 0.75rem;
+  z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+  pointer-events: none;
+  overflow-x: auto;
+}
+
+.pack-drop-hover:hover .pack-drop-popover,
+.pack-drop-hover:focus-within .pack-drop-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .pack-odds {
@@ -640,6 +851,7 @@ a { color: inherit; text-decoration: none; }
 .pack-odds-pct    { color: var(--text-3); font-weight: 700; }
 
 .pack-center {
+  order: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -705,6 +917,7 @@ a { color: inherit; text-decoration: none; }
     inset 0 -20px 32px rgba(0, 0, 0, 0.34);
   z-index: 1;
   pointer-events: none;
+  overflow-x: auto;
 }
 
 .pack-front-panel {
@@ -790,6 +1003,7 @@ a { color: inherit; text-decoration: none; }
   background-size: 2px 2px, 3px 3px;
   background-position: 0 0, 1px 1px;
   pointer-events: none;
+  overflow-x: auto;
 }
 
 .pack-glint {
@@ -803,6 +1017,7 @@ a { color: inherit; text-decoration: none; }
   animation: pack-glint 4s ease-in-out infinite;
   z-index: 4;
   pointer-events: none;
+  overflow-x: auto;
 }
 
 .pack-open-flash {
@@ -812,6 +1027,7 @@ a { color: inherit; text-decoration: none; }
   opacity: 0;
   z-index: 10;
   pointer-events: none;
+  overflow-x: auto;
 }
 
 .pack-visual-inner {
@@ -1759,20 +1975,12 @@ a { color: inherit; text-decoration: none; }
   .hero-cards-wrap { display: none; }
 
   /* Pack stage — stack vertically, keep info visible */
-  .pack-stage {
+  .pack-stage-layout {
     grid-template-columns: 1fr;
-    justify-items: stretch;
-    gap: 1.2rem;
+    gap: 1rem;
   }
   .pack-center { order: 1; justify-self: center; }
-  .pack-info   { order: 2; }
-  .pack-right  {
-    order: 3;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .pack-right .pack-side-card { flex: 1; min-width: 200px; }
+  .pack-overview-card { order: 2; }
 }
 
 /* ── Mobile (≤ 640px) ── */
@@ -1815,6 +2023,8 @@ a { color: inherit; text-decoration: none; }
   /* Pack odds — wrap inline on mobile */
   .pack-odds                   { flex-direction: row; flex-wrap: wrap; gap: 0.4rem; }
   .pack-odds-row               { flex: 1; min-width: 120px; }
+  .pack-rates-split             { grid-template-columns: 1fr; }
+  .pack-drop-popover            { left: 0; right: 0; width: auto; max-width: 100%; }
 
   /* Page header tighter */
   .page-header                 { gap: 0.75rem; }
@@ -3936,6 +4146,7 @@ a { color: inherit; text-decoration: none; }
   background: transparent;
   transition: background 220ms ease;
   pointer-events: none;
+  overflow-x: auto;
 }
 .card-tile-trigger:hover {
   transform: scale(1.06) translateY(-6px);
@@ -4072,6 +4283,7 @@ a { color: inherit; text-decoration: none; }
   opacity: 0;
   transition: opacity 220ms ease;
   pointer-events: none;
+  overflow-x: auto;
 }
 .contest-card-v2:hover::before { opacity: 1; }
 
@@ -4111,6 +4323,7 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: radial-gradient(ellipse 60% 100% at 0% 50%, rgba(255,255,255,0.025), transparent);
   pointer-events: none;
+  overflow-x: auto;
 }
 
 /* Gold shimmer on claimable */
