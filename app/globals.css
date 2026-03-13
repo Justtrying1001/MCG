@@ -581,9 +581,7 @@ a { color: inherit; text-decoration: none; }
     radial-gradient(120% 100% at 50% 0%, rgba(200, 155, 60, 0.08) 0%, transparent 52%),
     radial-gradient(80% 120% at 90% 100%, rgba(214, 58, 50, 0.06) 0%, transparent 64%),
     linear-gradient(162deg, rgba(22, 24, 29, 0.96), rgba(11, 11, 13, 0.99));
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
-  gap: clamp(1.2rem, 2.5vw, 2.6rem);
+  display: block;
   padding: clamp(1.4rem, 2.8vw, 2.8rem);
   align-items: center;
   position: relative;
@@ -594,6 +592,54 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.pack-stage-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 0.9fr);
+  gap: clamp(1.1rem, 2.2vw, 2rem);
+  align-items: center;
+}
+
+.pack-overview-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.pack-supply-progress {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.pack-supply-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-3);
+}
+
+.pack-supply-head span:last-child {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pack-supply-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.pack-supply-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+  transition: width 400ms ease-out;
 }
 
 .pack-info-title {
@@ -1920,20 +1966,12 @@ a { color: inherit; text-decoration: none; }
   .hero-cards-wrap { display: none; }
 
   /* Pack stage — stack vertically, keep info visible */
-  .pack-stage {
+  .pack-stage-layout {
     grid-template-columns: 1fr;
-    justify-items: stretch;
-    gap: 1.2rem;
+    gap: 1rem;
   }
   .pack-center { order: 1; justify-self: center; }
-  .pack-info   { order: 2; }
-  .pack-right  {
-    order: 3;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .pack-right .pack-side-card { flex: 1; min-width: 200px; }
+  .pack-overview-card { order: 2; }
 }
 
 /* ── Mobile (≤ 640px) ── */
@@ -1977,7 +2015,9 @@ a { color: inherit; text-decoration: none; }
   .pack-odds                   { flex-direction: row; flex-wrap: wrap; gap: 0.4rem; }
   .pack-odds-row               { flex: 1; min-width: 120px; }
   .pack-rates-split             { grid-template-columns: 1fr; }
-  .pack-drop-popover            { width: min(94vw, 420px); }
+  .pack-drop-popover            { width: min(94vw, 420px); left: 50%; transform: translate(-50%, 6px); }
+  .pack-drop-hover:hover .pack-drop-popover,
+  .pack-drop-hover:focus-within .pack-drop-popover { transform: translate(-50%, 0); }
 
   /* Page header tighter */
   .page-header                 { gap: 0.75rem; }

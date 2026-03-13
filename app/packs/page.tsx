@@ -182,149 +182,111 @@ export default function PacksPage() {
         {/* ── Pack Stage ── */}
         <div className={`pack-stage${openingPhase === "tearing" ? " is-opening" : ""}`}>
 
-          {/* LEFT — Info Panel */}
-          <div className="pack-info">
-            <div>
-              <p className="pack-info-title">Genesis Booster · S01</p>
-              <p className="pack-info-desc">
-                Minimal info, maximum suspense. The cards stay center stage.
-              </p>
-              {typeof packRemaining === "number" && typeof packPlanned === "number" && (
-                <div style={{ marginTop: "0.85rem" }}>
-                  <div style={{
-                    display: "flex", justifyContent: "space-between",
-                    fontSize: "0.74rem", color: "var(--text-3)", marginBottom: "0.35rem",
-                  }}>
-                    <span>Packs remaining</span>
-                    <span style={{ fontWeight: 700, color: "var(--text)" }}>
-                      {packRemaining} / {packPlanned}
-                    </span>
-                  </div>
-                  <div style={{
-                    height: 6, borderRadius: 999,
-                    background: "rgba(255,255,255,0.06)", overflow: "hidden",
-                  }}>
-                    <div style={{
-                      height: "100%", borderRadius: 999,
-                      background: "var(--gold)",
-                      width: `${Math.round((packRemaining / Math.max(packPlanned, 1)) * 100)}%`,
-                      transition: "width 400ms ease-out",
-                    }} />
-                  </div>
-                </div>
+          <div className="pack-stage-layout">
+            <div className="pack-center">
+              <div className={`pack-visual${openingPhase === "idle" ? " pack-visual-idle" : ""}${openingPhase === "tearing" ? " is-tearing" : ""}`}>
+                <Image
+                  src={officialPackImage}
+                  alt="Official MCG Genesis Booster pack"
+                  className="pack-visual-image"
+                  priority
+                />
+                <div className="pack-open-flash" />
+              </div>
+
+              <div className="pack-action-copy">
+                <p className="pack-action-title">Genesis Booster — Standard Pull</p>
+                <p className="pack-action-desc">Reveal all {cardsPerPack} cards in sequence.</p>
+              </div>
+
+              <Button
+                onClick={() => void openPack()}
+                disabled={!me || isOpening || openingPhase === "tearing"}
+                className="btn-lg"
+              >
+                {openingPhase === "tearing"
+                  ? "Breaking seal…"
+                  : isOpening
+                    ? "Preparing reveal…"
+                    : "Open Pack"}
+              </Button>
+
+              {openingPhase === "tearing" && (
+                <p className="pack-opening-status">Foil tearing… cards incoming.</p>
               )}
             </div>
 
-            <div className="pack-metrics">
-              <div className="pack-metric-line">
-                <span className="pack-metric-label">Price</span>
-                <span className="pack-metric-value">{GAME_CONFIG.PACK_COST} pts</span>
-              </div>
-              <div className="pack-metric-line">
-                <span className="pack-metric-label">Supply</span>
-                <span className="pack-metric-value">
-                  {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packsSold === "number" ? packsSold.toLocaleString() : "—"} sold · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
-                </span>
-              </div>
-            </div>
+            <aside className="pack-overview-card">
+              <p className="pack-info-title">Genesis Booster · S01</p>
+              <p className="pack-info-desc">Fast open, clean UI, cards first.</p>
 
-            <div className="pack-pill-row">
-              <span className="pack-pill">{cardsPerPack} cards</span>
-            </div>
+              <div className="pack-metrics">
+                <div className="pack-metric-line">
+                  <span className="pack-metric-label">Price</span>
+                  <span className="pack-metric-value">{GAME_CONFIG.PACK_COST} pts</span>
+                </div>
+                <div className="pack-metric-line">
+                  <span className="pack-metric-label">Supply</span>
+                  <span className="pack-metric-value">
+                    {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packsSold === "number" ? packsSold.toLocaleString() : "—"} sold · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
+                  </span>
+                </div>
+              </div>
 
-            <div className="pack-drop-hover">
-              <p className="pack-drop-trigger">
-                Hover to view live drop rates by rarity and edition.
-              </p>
-              <div className="pack-drop-popover" role="tooltip" aria-label="Drop rates details">
-                <div className="pack-rates-split">
-                  <div>
-                    <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
-                    <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
-                      <thead>
-                        <tr>
-                          <th>Rarity</th>
-                          <th>Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rarityRows.slice(0, 5).map((row) => (
-                          <tr key={`rarity_${row.label}`}>
-                            <td>{row.label}</td>
-                            <td>{row.rate}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              {typeof packRemaining === "number" && typeof packPlanned === "number" && (
+                <div className="pack-supply-progress">
+                  <div className="pack-supply-head">
+                    <span>Live supply</span>
+                    <span>{packRemaining.toLocaleString()} / {packPlanned.toLocaleString()}</span>
                   </div>
-                  <div>
-                    <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
-                    <table className="pack-rates-table" aria-label="Pack drop rates by edition">
-                      <thead>
-                        <tr>
-                          <th>Edition</th>
-                          <th>Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {editionRows.slice(0, 5).map((row) => (
-                          <tr key={`edition_${row.label}`}>
-                            <td>{row.label}</td>
-                            <td>{row.rate}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="pack-supply-track">
+                    <div
+                      className="pack-supply-fill"
+                      style={{ width: `${Math.round((packRemaining / Math.max(packPlanned, 1)) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="pack-pill-row">
+                <span className="pack-pill">{cardsPerPack} cards</span>
+              </div>
+
+              <div className="pack-drop-hover">
+                <p className="pack-drop-trigger">Hover for live drop rates by rarity and edition.</p>
+                <div className="pack-drop-popover" role="tooltip" aria-label="Drop rates details">
+                  <div className="pack-rates-split">
+                    <div>
+                      <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
+                      <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
+                        <thead><tr><th>Rarity</th><th>Rate</th></tr></thead>
+                        <tbody>
+                          {rarityRows.slice(0, 5).map((row) => (
+                            <tr key={`rarity_${row.label}`}><td>{row.label}</td><td>{row.rate}%</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
+                      <table className="pack-rates-table" aria-label="Pack drop rates by edition">
+                        <thead><tr><th>Edition</th><th>Rate</th></tr></thead>
+                        <tbody>
+                          {editionRows.slice(0, 5).map((row) => (
+                            <tr key={`edition_${row.label}`}><td>{row.label}</td><td>{row.rate}%</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* CENTER — Pack Visual & CTA */}
-          <div className="pack-center">
-            <div className={`pack-visual${openingPhase === "idle" ? " pack-visual-idle" : ""}${openingPhase === "tearing" ? " is-tearing" : ""}`}>
-              <Image
-                src={officialPackImage}
-                alt="Official MCG Genesis Booster pack"
-                className="pack-visual-image"
-                priority
-              />
-              <div className="pack-open-flash" />
-            </div>
-
-            <div className="pack-action-copy">
-              <p className="pack-action-title">Genesis Booster — Standard Pull</p>
-              <p className="pack-action-desc">
-                Reveal all 5 cards manually, one at a time. The ritual is yours.
-              </p>
-            </div>
-
-            <Button
-              onClick={() => void openPack()}
-              disabled={!me || isOpening || openingPhase === "tearing"}
-              className="btn-lg"
-            >
-              {openingPhase === "tearing"
-                ? "Breaking seal…"
-                : isOpening
-                  ? "Preparing reveal…"
-                  : "Open Pack"}
-            </Button>
-
-            {openingPhase === "tearing" && (
-              <p className="pack-opening-status">Foil tearing… cards incoming.</p>
-            )}
-          </div>
-
-          {/* RIGHT — Summary */}
-          <div className="pack-right">
-            <div className="pack-side-card">
-              <p className="pack-side-card-label">Pack summary</p>
-              <p className="pack-side-card-copy">
-                {cardsPerPack} cards. Open and flip in order. Premium guaranteed. Signed-in pulls are saved.
-              </p>
-            </div>
+              <div className="pack-side-card">
+                <p className="pack-side-card-label">Pack summary</p>
+                <p className="pack-side-card-copy">{cardsPerPack} cards. Flip in order. Premium guaranteed.</p>
+              </div>
+            </aside>
           </div>
         </div>
 
