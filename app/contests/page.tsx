@@ -70,8 +70,9 @@ export default function ContestsPage() {
     settled: contests.filter((c) => c.status === "SETTLED"),
   }), [contests]);
 
-  const guestBlocked = !loading && me?.mode === "guest";
-  const visible      = tab === "active" ? grouped.active : grouped.settled;
+  const guestBlocked  = !loading && me?.mode === "guest";
+  const visible       = tab === "active" ? grouped.active : grouped.settled;
+  const featuredLive  = grouped.active.find((c) => c.status === "LIVE") ?? null;
 
   return (
     <SiteShell>
@@ -119,6 +120,39 @@ export default function ContestsPage() {
               )}
             </button>
           </div>
+        )}
+
+        {/* ── Featured Live Banner ── */}
+        {!guestBlocked && featuredLive && tab === "active" && (
+          <Link href={`/contests/${featuredLive.id}`} className="contest-featured-banner">
+            <div>
+              <div className="cfb-eyebrow">
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--emerald)", display: "inline-block", animation: "pulse-dot 1.6s ease-in-out infinite" }} />
+                Live now
+              </div>
+              <div className="cfb-title">{featuredLive.title}</div>
+              <div className="cfb-stats">
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{featuredLive._count.entries}</div>
+                  <div className="cfb-stat-label">Entries</div>
+                </div>
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{featuredLive.rules[0]?.maxRosterSize ?? 5}</div>
+                  <div className="cfb-stat-label">Roster</div>
+                </div>
+                <div className="cfb-stat">
+                  <div className="cfb-stat-value">{formatDate(featuredLive.endsAt)}</div>
+                  <div className="cfb-stat-label">Ends</div>
+                </div>
+              </div>
+            </div>
+            <div className="cfb-actions">
+              <span className="btn btn-primary">View Contest →</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace" }}>
+                {featuredLive.code}
+              </span>
+            </div>
+          </Link>
         )}
 
         {/* ── Content ── */}

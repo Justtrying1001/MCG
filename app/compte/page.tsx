@@ -120,7 +120,7 @@ export default function AccountPage() {
 
             {/* ── Stats Hub Grid ── */}
             <div className="stats-hub-grid">
-              <div className="stats-hub-card">
+              <div className="stats-hub-card shc-gold">
                 <div className="shc-head">
                   <div className="shc-icon" style={{ background: "rgba(200,155,60,0.12)", color: "var(--gold)", fontSize: "1.2rem" }}>
                     ⬡
@@ -150,7 +150,7 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="stats-hub-card">
+              <div className="stats-hub-card shc-blue">
                 <div className="shc-head">
                   <div className="shc-icon" style={{ background: "rgba(46,107,255,0.12)", color: "var(--arc-blue)", fontSize: "1.2rem" }}>
                     ▦
@@ -181,7 +181,7 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="stats-hub-card">
+              <div className="stats-hub-card shc-green">
                 <div className="shc-head">
                   <div className="shc-icon" style={{ background: "rgba(31,122,92,0.12)", color: "var(--emerald)", fontSize: "1.2rem" }}>
                     🏆
@@ -211,6 +211,41 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
+
+            {/* ── Achievement Grid ── */}
+            {me.mode === "user" && (
+              <div style={{
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--border)",
+                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
+                padding: "1.2rem 1.5rem",
+              }}>
+                <div style={{
+                  fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
+                  textTransform: "uppercase", color: "var(--text-3)",
+                  marginBottom: "1rem",
+                }}>
+                  Achievements
+                </div>
+                <div className="achievement-grid">
+                  {[
+                    { icon: "🃏", name: "First Pull",       unlocked: (me.user.packsOpened ?? 0) >= 1 },
+                    { icon: "📦", name: "10 Packs",         unlocked: (me.user.packsOpened ?? 0) >= 10 },
+                    { icon: "⚡", name: "50 Packs",         unlocked: (me.user.packsOpened ?? 0) >= 50 },
+                    { icon: "🏆", name: "Competitor",       unlocked: (competitive?.contestsEntered ?? 0) >= 1 },
+                    { icon: "🥇", name: "Top 3",            unlocked: (competitive?.bestRank ?? 999) <= 3 },
+                    { icon: "✦",  name: "Legendary",        unlocked: (account?.level ?? 1) >= 1 },
+                    { icon: "💎", name: "Collector",        unlocked: (collection?.ownedTemplateCount ?? 0) >= 25 },
+                    { icon: "🔥", name: "On Fire",          unlocked: (collection?.ownedTemplateCount ?? 0) >= 50 },
+                  ].map(({ icon, name, unlocked }) => (
+                    <div key={name} className={`achievement-badge ${unlocked ? "unlocked" : "locked"}`}>
+                      <span className="achievement-icon">{icon}</span>
+                      <span className="achievement-name">{name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── Recent Contest Results ── */}
             {competitive?.recentResults?.length ? (

@@ -238,7 +238,7 @@ export default function PacksPage() {
 
           {/* CENTER — Pack Visual & CTA */}
           <div className="pack-center">
-            <div className={`pack-visual${openingPhase === "tearing" ? " is-tearing" : ""}`}>
+            <div className={`pack-visual${openingPhase === "idle" ? " pack-visual-idle" : ""}${openingPhase === "tearing" ? " is-tearing" : ""}`}>
               <Image
                 src={officialPackImage}
                 alt="Official MCG Genesis Booster pack"
@@ -275,7 +275,7 @@ export default function PacksPage() {
           {/* RIGHT — Tips & Info */}
           <div className="pack-right">
             <div className="pack-side-card">
-              <p className="pack-side-card-label">What's inside?</p>
+              <p className="pack-side-card-label">What&apos;s inside?</p>
               <p className="pack-side-card-copy">
                 Each Genesis Booster contains 5 cards with at least one premium-edition hit.
                 Legendaries and full-art cards are rare, but in every pack.
@@ -285,7 +285,7 @@ export default function PacksPage() {
               <p className="pack-side-card-label">How it works</p>
               <p className="pack-side-card-copy">
                 Cards are face-down after opening. Click each card to reveal it in sequence.
-                Once revealed, they're permanently part of your collection.
+                Once revealed, they&apos;re permanently part of your collection.
               </p>
             </div>
           </div>

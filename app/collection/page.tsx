@@ -70,6 +70,12 @@ export default function CollectionPage() {
   const uniqueCards   = sourceCollection.length;
   const legendaryCount= sourceCollection.filter((x) => x.card.rarity === "LEGENDARY").length;
   const epicCount     = sourceCollection.filter((x) => x.card.rarity === "EPIC").length;
+  const rareCount     = sourceCollection.filter((x) => x.card.rarity === "RARE").length;
+  const uncommonCount = sourceCollection.filter((x) => x.card.rarity === "UNCOMMON").length;
+  const commonCount   = sourceCollection.filter((x) => x.card.rarity === "COMMON").length;
+
+  const collectionProg = me?.mode === "user" ? me.coexistence?.v2?.collectionProgression : undefined;
+  const completionPct  = collectionProg?.completionPct ?? (uniqueCards > 0 ? Math.min(Math.round((uniqueCards / 100) * 100), 100) : 0);
 
   return (
     <SiteShell>
@@ -110,6 +116,37 @@ export default function CollectionPage() {
             <div className="csb-card">
               <div className="csb-num" style={{ color: "var(--rarity-epic)" }}>{epicCount}</div>
               <div className="csb-lbl">Epic</div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Collection Completion Bar ── */}
+        {me && uniqueCards > 0 && (
+          <div className="collection-completion-bar">
+            <div className="collection-completion-bg" />
+            <div className="ccb-inner">
+              <div>
+                <div className="ccb-label">Collection Completion</div>
+                <div className="ccb-pct">{completionPct}<span style={{ fontSize: "1rem", opacity: 0.5 }}>%</span></div>
+                <div className="ccb-track">
+                  <div className="ccb-fill" style={{ width: `${completionPct}%` }} />
+                </div>
+              </div>
+              <div className="ccb-rarity-grid">
+                {[
+                  { label: "Legendary", color: "var(--rarity-legendary)", count: legendaryCount },
+                  { label: "Epic",      color: "var(--rarity-epic)",      count: epicCount },
+                  { label: "Rare",      color: "var(--rarity-rare)",      count: rareCount },
+                  { label: "Uncommon",  color: "var(--rarity-uncommon)",  count: uncommonCount },
+                  { label: "Common",    color: "var(--rarity-common)",    count: commonCount },
+                ].map(({ label, color, count }) => (
+                  <div key={label} className="ccb-rarity-row">
+                    <span className="ccb-rarity-dot" style={{ background: color }} />
+                    <span className="ccb-rarity-label" style={{ color }}>{label}</span>
+                    <span className="ccb-rarity-count">{count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

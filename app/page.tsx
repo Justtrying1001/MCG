@@ -17,31 +17,34 @@ type ContestListItem = {
   _count: { entries: number };
 };
 
-function statusLabel(s: ContestListItem["status"]) {
-  switch (s) {
-    case "OPEN":    return "Open";
-    case "LIVE":    return "Live";
-    case "LOCKED":  return "Locked";
-    case "SETTLED": return "Settled";
-    default: return s;
-  }
-}
-function statusClass(s: ContestListItem["status"]) {
-  switch (s) {
-    case "LIVE":   return "contest-status status-live";
-    case "OPEN":   return "contest-status status-open";
-    case "LOCKED": return "contest-status status-locked";
-    default: return "contest-status status-settled";
-  }
-}
 function contestCardClass(s: ContestListItem["status"]) {
-  switch (s) {
-    case "LIVE":   return "contest-strip-card c-live";
-    case "OPEN":   return "contest-strip-card c-open";
-    case "LOCKED": return "contest-strip-card c-locked";
-    default: return "contest-strip-card c-settled";
-  }
+  if (s === "LIVE")   return "contest-strip-card c-live";
+  if (s === "OPEN")   return "contest-strip-card c-open";
+  if (s === "LOCKED") return "contest-strip-card c-locked";
+  return "contest-strip-card c-settled";
 }
+function statusLabel(s: ContestListItem["status"]) {
+  return { LIVE: "Live", OPEN: "Open", LOCKED: "Locked", SETTLED: "Settled", DRAFT: "Draft", CANCELED: "Canceled" }[s] ?? s;
+}
+function statusCls(s: ContestListItem["status"]) {
+  if (s === "LIVE" || s === "OPEN") return "contest-status status-open";
+  if (s === "LOCKED") return "contest-status status-locked";
+  return "contest-status status-settled";
+}
+
+/* Static ticker entries to simulate live activity */
+const TICKER_ITEMS = [
+  { rarity: "legendary", label: "Genesis Pepe · Legendary pulled" },
+  { rarity: "epic",      label: "Bull Matrix · Epic revealed" },
+  { rarity: "rare",      label: "Signal Drop · Rare opened" },
+  { rarity: "legendary", label: "Moon Cat · Legendary drop" },
+  { rarity: "uncommon",  label: "Pack #1847 opened" },
+  { rarity: "rare",      label: "Diamond Ape · Rare pulled" },
+  { rarity: "epic",      label: "Turbo Doge · Epic hit" },
+  { rarity: "legendary", label: "Satoshi Chad · Legendary" },
+  { rarity: "uncommon",  label: "Pack #2031 opened" },
+  { rarity: "rare",      label: "Rocket Frog · Rare revealed" },
+];
 
 export default function HomePage() {
   const { me, loading } = useSession();
@@ -53,12 +56,15 @@ export default function HomePage() {
     if (!isAuth) return;
     fetch("/api/contests", { cache: "no-store" })
       .then((r) => r.ok ? r.json() : null)
-      .then((p) => { if (p?.contests) setContests(p.contests.slice(0, 3)); })
+      .then((p) => { if (p?.contests) setContests(p.contests.filter((c: ContestListItem) => ["OPEN","LIVE","LOCKED"].includes(c.status)).slice(0, 3)); })
       .catch(() => {});
   }, [isAuth]);
 
-  const v2 = me?.mode === "user" ? me.coexistence?.v2 : undefined;
+  const v2      = me?.mode === "user" ? me.coexistence?.v2 : undefined;
   const account = v2?.accountProgression;
+
+  /* Double ticker items so the loop is seamless */
+  const tickerItems = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
     <SiteShell>
@@ -68,8 +74,9 @@ export default function HomePage() {
 
       <div className="hub-page">
 
-        {/* ── Hero ── */}
-        <section className="hero-wrap">
+        {/* ═══ HERO ═══ */}
+        <section className="hero-wrap" style={{ position: "relative", overflow: "hidden" }}>
+          <div className="hero-aurora" />
           <div className="hero-bg-glow" />
           <div className="hero-grid-lines" />
 
@@ -85,10 +92,16 @@ export default function HomePage() {
               Open sealed boosters, build high-synergy rosters, and compete
               for the rarest cards in the set.
             </p>
+
             <div className="cta-row">
-              <Link href="/packs"      className="btn btn-primary btn-lg">Open a Pack</Link>
-              <Link href="/collection" className="btn btn-ghost btn-lg">My Collection</Link>
+              <Link href="/packs"      className="btn btn-primary btn-lg" style={{ boxShadow: "0 8px 32px rgba(214,58,50,0.40)" }}>
+                Open a Pack
+              </Link>
+              <Link href="/collection" className="btn btn-ghost btn-lg">
+                My Collection
+              </Link>
             </div>
+
             <div className="hero-pills">
               <span className="hero-pill">5-tier rarity system</span>
               <span className="hero-pill">Sealed pack ritual</span>
@@ -116,47 +129,65 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Player Progress Strip (authenticated) ── */}
+        {/* ═══ LIVE TICKER ═══ */}
+        <div className="ticker-wrap">
+          <div className="ticker-inner" aria-hidden="true">
+            {tickerItems.map((item, i) => (
+              <span key={i} className="ticker-item">
+                <span className={`ticker-item-dot rarity-${item.rarity}`} />
+                {item.label}
+                <span style={{ color: "var(--border-hi)", margin: "0 0.5rem" }}>·</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ═══ PLAYER PROGRESS (authenticated) ═══ */}
         {isAuth && me && (
           <div className="player-progress-strip fade-in-up">
             <div className="pps-avatar">{me.user.displayName.slice(0, 1).toUpperCase()}</div>
             <div className="pps-info">
               <div className="pps-name">Welcome back, {me.user.displayName}</div>
               <div className="pps-level">
-                {account ? `Level ${account.level} · ${account.xp} XP` : "Progression loading…"}
+                {account ? `Level ${account.level} · ${account.xp} XP total` : "Progression loading…"}
               </div>
               {account && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.12rem" }}>
                   <div style={{
-                    flex: 1, maxWidth: 240, height: 4, borderRadius: 999,
-                    background: "rgba(255,255,255,0.07)", overflow: "hidden",
+                    flex: 1, maxWidth: 220, height: 5, borderRadius: 999,
+                    background: "rgba(255,255,255,0.06)", overflow: "hidden",
                   }}>
                     <div style={{
-                      height: "100%", borderRadius: 999, background: "var(--gold)",
+                      height: "100%", borderRadius: 999,
+                      background: "linear-gradient(90deg, var(--gold), rgba(200,155,60,0.65))",
+                      boxShadow: "0 0 6px rgba(200,155,60,0.35)",
                       width: `${Math.round(((account.xp - account.levelXpFloor) / Math.max(account.levelXpCeil - account.levelXpFloor, 1)) * 100)}%`,
-                      transition: "width 400ms ease-out",
+                      transition: "width 600ms cubic-bezier(0.22,1,0.36,1)",
                     }} />
                   </div>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-3)" }}>
-                    {account.levelXpCeil - account.xp} XP to next level
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-3)", whiteSpace: "nowrap" }}>
+                    {account.levelXpCeil - account.xp} XP to Lv {account.level + 1}
                   </span>
                 </div>
               )}
             </div>
             <div className="pps-right">
-              <div className="pps-points-value">{me.user.points}</div>
+              <div className="pps-points-value">{me.user.points.toLocaleString()}</div>
               <div className="pps-points-label">Points</div>
             </div>
           </div>
         )}
 
-        {/* ── Active Contests (authenticated) ── */}
+        {/* ═══ ACTIVE CONTESTS (authenticated) ═══ */}
         {isAuth && (
           <section className="hub-section">
             <div className="hub-section-head">
               <div>
                 <div className="hub-section-label">Live competition</div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, letterSpacing: "-0.01em", marginTop: "0.2rem" }}>
+                <div style={{
+                  fontSize: "1.15rem", fontWeight: 800,
+                  letterSpacing: "-0.02em", marginTop: "0.2rem",
+                }}>
                   Active Contests
                 </div>
               </div>
@@ -174,46 +205,53 @@ export default function HomePage() {
                     <div className="c-top-bar" />
                     <div className="c-strip-top">
                       {contest.status === "LIVE" && <div className="c-live-dot" />}
-                      <span className={statusClass(contest.status)} style={{ marginLeft: "auto" }}>
+                      <span className={statusCls(contest.status)} style={{ marginLeft: "auto" }}>
                         {statusLabel(contest.status)}
                       </span>
                     </div>
                     <div className="c-strip-name">{contest.title}</div>
                     <div className="c-strip-meta">
                       <span className="c-meta-chip">
-                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+                        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
                         {contest._count.entries} entries
                       </span>
                       {contest.lockAt && (
                         <span className="c-meta-chip">
-                          Locks {new Date(contest.lockAt).toLocaleDateString()}
+                          Locks {new Date(contest.lockAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                         </span>
                       )}
                     </div>
+                    {/* Entry count visual bar — max visual at 50 entries */}
+                    <div className="c-entry-bar">
+                      <div className="c-entry-fill" style={{ width: `${Math.min((contest._count.entries / 50) * 100, 100)}%` }} />
+                    </div>
                     <div className="c-strip-footer">
-                      <span style={{ fontSize: "0.74rem", color: "var(--text-3)" }}>{contest.code}</span>
+                      <span style={{ fontSize: "0.72rem", color: "var(--text-3)", fontFamily: "'JetBrains Mono', monospace" }}>
+                        {contest.code}
+                      </span>
                       <span className="c-strip-cta">Enter →</span>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div style={{
-                borderRadius: "var(--radius)", border: "1px solid var(--border)",
-                background: "rgba(255,255,255,0.02)",
-                padding: "2rem", textAlign: "center", color: "var(--text-3)", fontSize: "0.88rem",
-              }}>
-                No active contests right now. Check back soon for the next window.
+              <div className="empty-state-premium">
+                <div className="esp-icon">🏆</div>
+                <p className="esp-title">No active contests right now</p>
+                <p className="esp-desc">Check back soon for the next competition window.</p>
               </div>
             )}
           </section>
         )}
 
-        {/* ── Quick Actions ── */}
+        {/* ═══ QUICK ACTIONS ═══ */}
         <section className="hub-section">
           <div className="hub-section-head">
             <div className="hub-section-label">Get started</div>
           </div>
+
           <div className="quick-action-grid">
             <Link href="/packs" className="quick-action-tile qa-red">
               <div className="qa-icon">
@@ -223,7 +261,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="qa-title">Open Packs</div>
-              <div className="qa-desc">Crack the seal. Reveal 5 cards one by one with the full ritual experience.</div>
+              <div className="qa-desc">Crack the seal. Five cards revealed one by one — every pull is permanent.</div>
               <span className="qa-arrow">→</span>
             </Link>
 
@@ -234,7 +272,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="qa-title">My Collection</div>
-              <div className="qa-desc">Browse your binder. Filter by rarity, edition, and faction.</div>
+              <div className="qa-desc">Browse your binder. Filter by rarity, edition, faction — click to zoom any card.</div>
               <span className="qa-arrow">→</span>
             </Link>
 
@@ -245,7 +283,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="qa-title">Competitions</div>
-              <div className="qa-desc">Build your lineup, lock it in, and climb the leaderboard.</div>
+              <div className="qa-desc">Lock your lineup, track the leaderboard live, claim rewards after settlement.</div>
               <span className="qa-arrow">→</span>
             </Link>
 
@@ -256,13 +294,13 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="qa-title">Quests & Rewards</div>
-              <div className="qa-desc">Complete missions, hit milestones, and earn points and special drops.</div>
+              <div className="qa-desc">Complete social missions and collection milestones to earn points and special drops.</div>
               <span className="qa-arrow">→</span>
             </Link>
           </div>
         </section>
 
-        {/* ── Pack Teaser Banner ── */}
+        {/* ═══ PACK TEASER BANNER ═══ */}
         <section className="pack-teaser-banner">
           <div className="pack-teaser-body">
             <div className="pack-teaser-label">Genesis Booster · Season 01</div>
@@ -271,45 +309,74 @@ export default function HomePage() {
               One sealed ritual.
             </h2>
             <p className="pack-teaser-desc">
-              Slot-weighted pulls with dynamic odds. Three standard cards, one premium edition slot,
-              one hit slot — every pack is a chance at legendary.
+              Slot-weighted distribution with dynamic odds.
+              3 standard slots · 1 premium edition slot · 1 hit slot.
+              Every pack is a legitimate chance at Legendary.
             </p>
-            <div className="pack-teaser-actions">
-              <Link href="/packs" className="btn btn-primary">Open a Pack</Link>
+            <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                padding: "0.25rem 0.65rem", borderRadius: 999,
+                background: "rgba(216,166,62,0.10)", border: "1px solid rgba(216,166,62,0.22)",
+                fontSize: "0.74rem", fontWeight: 700, color: "var(--rarity-legendary)",
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                Legendary drop possible
+              </span>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                padding: "0.25rem 0.65rem", borderRadius: 999,
+                background: "rgba(110,76,207,0.10)", border: "1px solid rgba(110,76,207,0.22)",
+                fontSize: "0.74rem", fontWeight: 700, color: "var(--rarity-epic)",
+              }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "currentColor" }} />
+                1 guaranteed hit slot
+              </span>
+            </div>
+            <div className="pack-teaser-actions" style={{ marginTop: "0.8rem" }}>
+              <Link href="/packs" className="btn btn-primary" style={{ boxShadow: "0 6px 24px rgba(214,58,50,0.32)" }}>
+                Open a Pack
+              </Link>
               <Link href="/collection" className="btn btn-ghost">Browse Collection</Link>
             </div>
           </div>
+
           <div className="pack-teaser-visual">
-            <div style={{
-              position: "absolute", inset: 0,
-              borderRadius: "var(--radius)",
-              border: "1px solid rgba(200, 155, 60, 0.30)",
-              background: `
-                radial-gradient(120% 65% at 50% 6%, rgba(255,255,255,0.08), transparent 70%),
-                radial-gradient(120% 70% at 50% 100%, rgba(0,0,0,0.35), transparent 72%),
-                linear-gradient(180deg, rgba(16, 20, 35, 0.90), rgba(8, 10, 20, 0.85))
-              `,
-              display: "grid", placeItems: "center",
-              boxShadow: "0 40px 80px rgba(0,0,0,0.75), 0 0 40px rgba(200,155,60,0.10)",
-            }}>
+            <div className="pack-mock-card">
               <div style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 900, fontSize: "1.5rem", letterSpacing: "0.3em",
-                textTransform: "uppercase", color: "var(--text)", textAlign: "center",
+                textTransform: "uppercase", color: "var(--text)",
+                textAlign: "center", position: "relative", zIndex: 1,
               }}>
-                MCG<br />
-                <span style={{ fontSize: "0.55rem", letterSpacing: "0.18em", color: "rgba(233,242,255,0.7)" }}>
-                  GENESIS · BOOSTER
-                </span>
+                MCG
+              </div>
+              <div style={{
+                fontSize: "0.48rem", letterSpacing: "0.2em", textTransform: "uppercase",
+                color: "rgba(233,242,255,0.65)", textAlign: "center", position: "relative", zIndex: 1,
+              }}>
+                Genesis Booster
+              </div>
+              <div style={{
+                width: 48, height: 48, borderRadius: "50%",
+                border: "1px solid rgba(200,155,60,0.28)",
+                background: "radial-gradient(circle, rgba(200,155,60,0.14), transparent 72%)",
+                position: "relative", zIndex: 1,
+              }} />
+              <div style={{
+                fontSize: "0.42rem", letterSpacing: "0.14em", textTransform: "uppercase",
+                color: "rgba(233,242,255,0.45)", textAlign: "center", position: "relative", zIndex: 1,
+              }}>
+                Contains 5 cards
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Feature Highlights ── */}
+        {/* ═══ FEATURE PANELS ═══ */}
         <div className="feature-grid">
           <article className="feature-panel">
-            <div className="feature-panel-icon">◈</div>
+            <div className="feature-panel-icon" style={{ background: "rgba(214,58,50,0.10)", color: "var(--red)" }}>◈</div>
             <h3>Crack the seal</h3>
             <p>
               Sealed booster ritual — five face-down cards, revealed one by one.
@@ -317,7 +384,7 @@ export default function HomePage() {
             </p>
           </article>
           <article className="feature-panel">
-            <div className="feature-panel-icon">▦</div>
+            <div className="feature-panel-icon" style={{ background: "rgba(200,155,60,0.10)", color: "var(--gold)" }}>▦</div>
             <h3>Build your binder</h3>
             <p>
               Six rarity tiers. Foil variants. Full-art chases.
@@ -325,7 +392,7 @@ export default function HomePage() {
             </p>
           </article>
           <article className="feature-panel">
-            <div className="feature-panel-icon">🏆</div>
+            <div className="feature-panel-icon" style={{ background: "rgba(31,122,92,0.10)", color: "var(--emerald)" }}>🏆</div>
             <h3>Enter contests</h3>
             <p>
               Build your lineup from owned cards, enter active contests,
