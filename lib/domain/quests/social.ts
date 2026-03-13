@@ -1,7 +1,21 @@
 export type BuilderObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "MILESTONE";
 export type SocialAction = "LIKE" | "RETWEET" | "COMMENT";
 export type SocialUrlKind = "PROFILE" | "TWEET" | "UNKNOWN";
-export type MilestoneType = "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
+export type MilestoneType =
+  | "PACK_OPEN_COUNT"
+  | "TOTAL_CARDS_COLLECTED"
+  | "UNIQUE_CARDS_COLLECTED"
+  | "CONTESTS_JOINED"
+  | "CONTESTS_WON"
+  | "CONTESTS_TOP3"
+  | "RARE_PLUS_CARDS_OWNED"
+  | "EPIC_PLUS_CARDS_OWNED"
+  | "LEGENDARY_CARDS_OWNED"
+  | "REWARDS_CLAIMED"
+  | "REWARD_POINTS_EARNED"
+  | "ROSTER_SUBMISSIONS_COUNT"
+  | "CONTESTS_SETTLED_COUNT"
+  | "POINTS_BALANCE_REACHED";
 
 export type SocialValidationIssue = {
   field: "targetUrl";
@@ -111,11 +125,34 @@ export function getMilestoneObjectiveText(milestoneType: MilestoneType | null | 
   switch (milestoneType) {
     case "PACK_OPEN_COUNT":
       return `Open ${target} packs`;
-    case "CARD_COLLECTION_COUNT":
-      return `Collect ${target} cards`;
-    case "CONTEST_PARTICIPATION_COUNT":
+    case "TOTAL_CARDS_COLLECTED":
+      return `Collect ${target} total cards`;
+    case "UNIQUE_CARDS_COLLECTED":
+      return `Collect ${target} unique cards`;
+    case "CONTESTS_JOINED":
+      return `Join ${target} contests`;
+    case "CONTESTS_WON":
+      return `Win ${target} contests`;
+    case "CONTESTS_TOP3":
+      return `Reach top 3 in ${target} contests`;
+    case "RARE_PLUS_CARDS_OWNED":
+      return `Own ${target} Rare+ cards`;
+    case "EPIC_PLUS_CARDS_OWNED":
+      return `Own ${target} Epic+ cards`;
+    case "LEGENDARY_CARDS_OWNED":
+      return `Own ${target} Legendary cards`;
+    case "REWARDS_CLAIMED":
+      return `Claim ${target} quest rewards`;
+    case "REWARD_POINTS_EARNED":
+      return `Earn ${target} reward points`;
+    case "ROSTER_SUBMISSIONS_COUNT":
+      return `Submit ${target} contest rosters`;
+    case "CONTESTS_SETTLED_COUNT":
+      return `Settle ${target} contest entries`;
+    case "POINTS_BALANCE_REACHED":
+      return `Reach ${target} points balance`;
     default:
-      return `Participate in ${target} contests`;
+      return `Reach milestone ${target}`;
   }
 }
 

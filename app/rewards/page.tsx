@@ -1,5 +1,7 @@
 "use client";
 
+import type { MilestoneType } from "@/lib/domain/quests/social";
+
 import { useEffect, useMemo, useState } from "react";
 
 import { MilestoneQuestCard } from "@/components/quests/MilestoneQuestCard";
@@ -35,7 +37,7 @@ type QuestRow = {
   validationMode: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   latestSubmissionStatus: "SUBMITTED" | "APPROVED" | "REJECTED" | null;
   configSummary: {
-    milestoneType?: "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
+    milestoneType?: MilestoneType;
     targetValue?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;

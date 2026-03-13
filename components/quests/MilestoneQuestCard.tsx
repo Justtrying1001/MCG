@@ -1,3 +1,4 @@
+import type { MilestoneType } from "@/lib/domain/quests/social";
 import { getMilestoneObjectiveText } from "@/lib/domain/quests/social";
 
 import styles from "./QuestCards.module.css";
@@ -12,7 +13,7 @@ type MilestoneQuest = {
   progressValue: number;
   targetValue: number | null;
   configSummary: {
-    milestoneType?: "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
+    milestoneType?: MilestoneType;
     targetValue?: number;
   };
 };

@@ -12,6 +12,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { creditPointsWithLedger } from "@/lib/domain/rewards/ledger";
+import type { MilestoneType } from "@/lib/domain/quests/social";
 
 export class QuestRuntimeError extends Error {
   status: number;
@@ -31,7 +32,6 @@ type SocialQuestConfigSummary = {
   socialAction: string | null;
 };
 
-type MilestoneType = "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
 type MilestoneConfigSummary = {
   milestoneType: MilestoneType;
   targetValue: number;
@@ -127,11 +127,24 @@ function isSocialSubmitQuest(type: QuestType) {
 }
 
 function parseMilestoneType(value: unknown): MilestoneType | null {
-  if (value === "PACK_OPEN_COUNT" || value === "CONTEST_PARTICIPATION_COUNT" || value === "CARD_COLLECTION_COUNT") {
-    return value;
-  }
+  const allowed: MilestoneType[] = [
+    "PACK_OPEN_COUNT",
+    "TOTAL_CARDS_COLLECTED",
+    "UNIQUE_CARDS_COLLECTED",
+    "CONTESTS_JOINED",
+    "CONTESTS_WON",
+    "CONTESTS_TOP3",
+    "RARE_PLUS_CARDS_OWNED",
+    "EPIC_PLUS_CARDS_OWNED",
+    "LEGENDARY_CARDS_OWNED",
+    "REWARDS_CLAIMED",
+    "REWARD_POINTS_EARNED",
+    "ROSTER_SUBMISSIONS_COUNT",
+    "CONTESTS_SETTLED_COUNT",
+    "POINTS_BALANCE_REACHED",
+  ];
 
-  return null;
+  return allowed.includes(value as MilestoneType) ? (value as MilestoneType) : null;
 }
 
 function parseContestMilestoneThreshold(config: Prisma.JsonValue | null): number | null {
@@ -148,7 +161,7 @@ function parseMilestoneConfig(config: Prisma.JsonValue | null): MilestoneConfigS
   if (!Number.isInteger(targetValue) || targetValue <= 0) return null;
 
   return {
-    milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTEST_PARTICIPATION_COUNT",
+    milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTESTS_JOINED",
     targetValue,
   };
 }
@@ -222,7 +235,7 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
 
     return {
       ...root,
-      milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTEST_PARTICIPATION_COUNT",
+      milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTESTS_JOINED",
       targetValue,
       threshold: targetValue,
     };
@@ -257,16 +270,53 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
 }
 
 async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: string) {
-  const [contestParticipations, packOpenCount, collectionAggregate] = await Promise.all([
+  const [
+    contestParticipations,
+    packOpenCount,
+    totalCardsCollected,
+    uniqueCardsGrouped,
+    contestsWon,
+    contestsTop3,
+    rarePlusCardsOwned,
+    epicPlusCardsOwned,
+    legendaryCardsOwned,
+    rewardsClaimed,
+    rewardPointsEarned,
+    rosterSubmissions,
+    contestsSettled,
+    user,
+  ] = await Promise.all([
     tx.contestEntry.count({ where: { userId } }),
-    tx.packOpening.count({ where: { userId } }),
-    tx.userCard.aggregate({ where: { userId }, _sum: { quantity: true } }),
+    tx.packOpeningEvent.count({ where: { userId } }),
+    tx.ownedCardInstance.count({ where: { userId } }),
+    tx.ownedCardInstance.groupBy({ by: ["cardTemplateId"], where: { userId } }),
+    tx.contestRanking.count({ where: { userId, rank: 1 } }),
+    tx.contestRanking.count({ where: { userId, rank: { lte: 3 } } }),
+    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: { in: ["RARE", "EPIC", "LEGENDARY"] } } } } }),
+    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: { in: ["EPIC", "LEGENDARY"] } } } } }),
+    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: "LEGENDARY" } } } }),
+    tx.rewardLedgerEntry.count({ where: { userId, entryType: RewardLedgerEntryType.CREDIT, reasonType: RewardLedgerReasonType.QUEST_REWARD } }),
+    tx.rewardLedgerEntry.aggregate({ where: { userId, entryType: RewardLedgerEntryType.CREDIT }, _sum: { amount: true } }),
+    tx.rosterLock.count({ where: { contestEntry: { userId } } }),
+    tx.contestEntry.count({ where: { userId, status: "SETTLED" } }),
+    tx.user.findUnique({ where: { id: userId }, select: { points: true } }),
   ]);
 
   return {
-    CONTEST_PARTICIPATION_COUNT: contestParticipations,
+    CONTESTS_JOINED: contestParticipations,
     PACK_OPEN_COUNT: packOpenCount,
-    CARD_COLLECTION_COUNT: collectionAggregate._sum.quantity ?? 0,
+    TOTAL_CARDS_COLLECTED: totalCardsCollected,
+    UNIQUE_CARDS_COLLECTED: uniqueCardsGrouped.length,
+    CONTESTS_WON: contestsWon,
+    CONTESTS_TOP3: contestsTop3,
+    RARE_PLUS_CARDS_OWNED: rarePlusCardsOwned,
+    EPIC_PLUS_CARDS_OWNED: epicPlusCardsOwned,
+    LEGENDARY_CARDS_OWNED: legendaryCardsOwned,
+    REWARDS_CLAIMED: rewardsClaimed,
+    REWARD_POINTS_EARNED: rewardPointsEarned._sum.amount ?? 0,
+    ROSTER_SUBMISSIONS_COUNT: rosterSubmissions,
+    CONTESTS_SETTLED_COUNT: contestsSettled,
+    POINTS_BALANCE_REACHED: user?.points ?? 0,
   } as const;
 }
 
