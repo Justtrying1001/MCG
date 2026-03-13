@@ -56,6 +56,7 @@ function loadMvpTokensFromMaster() {
   }
 
   return rows.map((row) => ({
+    tokenId: row.tokenId ?? null,
     slug: row.slug ?? row.coingeckoId ?? row.baseCardId,
     displayName: row.displayName,
     imageUrl: row.imageUrl ?? null,
@@ -98,137 +99,137 @@ async function run() {
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const row of RARITY_SEED) {
-      await tx.rarity.upsert({
-        where: { code: row.code },
-        update: { weight: row.weight },
-        create: row,
-      });
-    }
+  // IMPORTANT: keep seeding out of a single long interactive transaction.
+  // Vercel/Neon can close long-lived transaction IDs and trigger Prisma P2028.
+  for (const row of RARITY_SEED) {
+    await prisma.rarity.upsert({
+      where: { code: row.code },
+      update: { weight: row.weight },
+      create: row,
+    });
+  }
 
-    for (const row of EDITION_SEED) {
-      await tx.edition.upsert({
-        where: { code: row.code },
-        update: { weight: row.weight },
-        create: row,
-      });
-    }
+  for (const row of EDITION_SEED) {
+    await prisma.edition.upsert({
+      where: { code: row.code },
+      update: { weight: row.weight },
+      create: row,
+    });
+  }
 
-    const cardSet = await tx.cardSet.upsert({
-      where: { code: MVP_CARD_SET.code },
-      update: { displayName: MVP_CARD_SET.displayName, isActive: true },
-      create: { code: MVP_CARD_SET.code, displayName: MVP_CARD_SET.displayName, isActive: true },
+  const cardSet = await prisma.cardSet.upsert({
+    where: { code: MVP_CARD_SET.code },
+    update: { displayName: MVP_CARD_SET.displayName, isActive: true },
+    create: { code: MVP_CARD_SET.code, displayName: MVP_CARD_SET.displayName, isActive: true },
+  });
+
+  const rarities = await prisma.rarity.findMany({ where: { code: { in: RARITY_SEED.map((r) => r.code) } } });
+  const editions = await prisma.edition.findMany({ where: { code: { in: EDITION_SEED.map((e) => e.code) } } });
+
+  const rarityByCode = new Map(rarities.map((r) => [r.code, r]));
+  const editionByCode = new Map(editions.map((e) => [e.code, e]));
+
+  for (const token of mvpTokens) {
+    const tokenProject = await prisma.tokenProject.upsert({
+      where: { slug: token.slug },
+      update: { displayName: token.displayName, isActive: true },
+      create: { slug: token.slug, displayName: token.displayName, isActive: true },
     });
 
-    const rarities = await tx.rarity.findMany({ where: { code: { in: RARITY_SEED.map((r) => r.code) } } });
-    const editions = await tx.edition.findMany({ where: { code: { in: EDITION_SEED.map((e) => e.code) } } });
+    for (const rarity of RARITY_SEED) {
+      const rarityRow = rarityByCode.get(rarity.code);
+      if (!rarityRow) throw new Error(`Missing rarity ${rarity.code}`);
 
-    const rarityByCode = new Map(rarities.map((r) => [r.code, r]));
-    const editionByCode = new Map(editions.map((e) => [e.code, e]));
+      for (const edition of EDITION_SEED) {
+        const editionRow = editionByCode.get(edition.code);
+        if (!editionRow) throw new Error(`Missing edition ${edition.code}`);
 
-    for (const token of mvpTokens) {
-      const tokenProject = await tx.tokenProject.upsert({
-        where: { slug: token.slug },
-        update: { displayName: token.displayName, isActive: true },
-        create: { slug: token.slug, displayName: token.displayName, isActive: true },
-      });
+        const plannedSupply = SUPPLY_MATRIX[rarity.code][edition.code];
 
-      for (const rarity of RARITY_SEED) {
-        const rarityRow = rarityByCode.get(rarity.code);
-        if (!rarityRow) throw new Error(`Missing rarity ${rarity.code}`);
-
-        for (const edition of EDITION_SEED) {
-          const editionRow = editionByCode.get(edition.code);
-          if (!editionRow) throw new Error(`Missing edition ${edition.code}`);
-
-          const plannedSupply = SUPPLY_MATRIX[rarity.code][edition.code];
-
-          await tx.cardTemplate.upsert({
-            where: {
-              tokenProjectId_cardSetId_rarityId_editionId: {
-                tokenProjectId: tokenProject.id,
-                cardSetId: cardSet.id,
-                rarityId: rarityRow.id,
-                editionId: editionRow.id,
-              },
-            },
-            update: {
-              name: token.displayName,
-              imageUrl: token.imageUrl,
-              isActive: true,
-              plannedSupply,
-              metadata: {
-                source: "phase_c_mvp_controlled_emission_seed",
-                tokenIdentity: {
-                  tokenId: token.tokenId,
-                  slug: token.slug,
-                  projectId: token.projectId,
-                  coingeckoId: token.coingeckoId,
-                },
-                token: {
-                  symbol: token.symbol,
-                  marketCapRank: token.marketCapRank,
-                  projectTier: token.projectTier,
-                  primaryChain: token.primaryChain,
-                  faction: token.faction,
-                },
-              },
-            },
-            create: {
+        await prisma.cardTemplate.upsert({
+          where: {
+            tokenProjectId_cardSetId_rarityId_editionId: {
               tokenProjectId: tokenProject.id,
               cardSetId: cardSet.id,
               rarityId: rarityRow.id,
               editionId: editionRow.id,
-              name: token.displayName,
-              imageUrl: token.imageUrl,
-              isActive: true,
-              plannedSupply,
-              metadata: {
-                source: "phase_c_mvp_controlled_emission_seed",
-                tokenIdentity: {
-                  tokenId: token.tokenId,
-                  slug: token.slug,
-                  projectId: token.projectId,
-                  coingeckoId: token.coingeckoId,
-                },
-                token: {
-                  symbol: token.symbol,
-                  marketCapRank: token.marketCapRank,
-                  projectTier: token.projectTier,
-                  primaryChain: token.primaryChain,
-                  faction: token.faction,
-                },
+            },
+          },
+          update: {
+            name: token.displayName,
+            imageUrl: token.imageUrl,
+            isActive: true,
+            plannedSupply,
+            metadata: {
+              source: "phase_c_mvp_controlled_emission_seed",
+              tokenIdentity: {
+                tokenId: token.tokenId,
+                slug: token.slug,
+                projectId: token.projectId,
+                coingeckoId: token.coingeckoId,
+              },
+              token: {
+                symbol: token.symbol,
+                marketCapRank: token.marketCapRank,
+                projectTier: token.projectTier,
+                primaryChain: token.primaryChain,
+                faction: token.faction,
               },
             },
-          });
-        }
+          },
+          create: {
+            tokenProjectId: tokenProject.id,
+            cardSetId: cardSet.id,
+            rarityId: rarityRow.id,
+            editionId: editionRow.id,
+            name: token.displayName,
+            imageUrl: token.imageUrl,
+            isActive: true,
+            plannedSupply,
+            metadata: {
+              source: "phase_c_mvp_controlled_emission_seed",
+              tokenIdentity: {
+                tokenId: token.tokenId,
+                slug: token.slug,
+                projectId: token.projectId,
+                coingeckoId: token.coingeckoId,
+              },
+              token: {
+                symbol: token.symbol,
+                marketCapRank: token.marketCapRank,
+                projectTier: token.projectTier,
+                primaryChain: token.primaryChain,
+                faction: token.faction,
+              },
+            },
+          },
+        });
       }
     }
+  }
 
-    for (const pack of MVP_PACKS) {
-      await tx.packDefinition.upsert({
-        where: { code: pack.code },
-        update: {
-          displayName: pack.displayName,
-          cardSetId: cardSet.id,
-          source: pack.source,
-          plannedPackCount: pack.plannedPackCount,
-          cardsPerPack: CARDS_PER_PACK,
-          isActive: true,
-        },
-        create: {
-          code: pack.code,
-          displayName: pack.displayName,
-          cardSetId: cardSet.id,
-          source: pack.source,
-          plannedPackCount: pack.plannedPackCount,
-          cardsPerPack: CARDS_PER_PACK,
-          isActive: true,
-        },
-      });
-    }
-  });
+  for (const pack of MVP_PACKS) {
+    await prisma.packDefinition.upsert({
+      where: { code: pack.code },
+      update: {
+        displayName: pack.displayName,
+        cardSetId: cardSet.id,
+        source: pack.source,
+        plannedPackCount: pack.plannedPackCount,
+        cardsPerPack: CARDS_PER_PACK,
+        isActive: true,
+      },
+      create: {
+        code: pack.code,
+        displayName: pack.displayName,
+        cardSetId: cardSet.id,
+        source: pack.source,
+        plannedPackCount: pack.plannedPackCount,
+        cardsPerPack: CARDS_PER_PACK,
+        isActive: true,
+      },
+    });
+  }
 
   console.log("MVP controlled-emission bootstrap completed.");
   console.log(`Tokens: ${mvpTokens.length}`);

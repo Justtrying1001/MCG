@@ -1507,6 +1507,43 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* --------------------------------------------------------------------------
+   COLLECTION REWORK — MVP SIMPLE
+   -------------------------------------------------------------------------- */
+.collection-simple-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.collection-stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.65rem;
+}
+
+.collection-stat-box {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.collection-stat-box span {
+  color: var(--text-2);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.collection-stat-box strong {
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
    SITE FOOTER
    -------------------------------------------------------------------------- */
 .site-footer {
@@ -1742,6 +1779,8 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 640px) {
   /* Global spacing */
   .page-content { padding: 1rem 0.85rem; gap: 1rem; }
+
+  .collection-simple-toolbar { flex-direction: column; align-items: stretch; }
 
   /* Card grids */
   .card-grid          { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
@@ -2351,4 +2390,3 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 }
-
