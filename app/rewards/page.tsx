@@ -134,9 +134,7 @@ export default function RewardsPage() {
       setActionMsg(p?.error ?? "Quest submission failed");
       setSubmittingId(null); return;
     }
-    setActionMsg(source === "auto"
-      ? "Quest auto-validated. Rewards have been delivered."
-      : "Quest submitted. Rewards will be applied after review.");
+    setActionMsg("Quest submitted. Rewards will be applied after review.");
     await loadData();
     setSubmittingId(null);
   };
