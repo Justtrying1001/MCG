@@ -23,9 +23,9 @@ vi.mock("@/lib/domain/quests/runtime", () => ({
   updateQuestDefinitionMvp: updateQuestDefinitionMvpMock,
 }));
 
-import { GET } from "@/app/api/internal/quests/[questId]/route";
+import { GET, PATCH } from "@/app/api/internal/quests/[questId]/route";
 
-describe("GET /api/internal/quests/[questId]", () => {
+describe("/api/internal/quests/[questId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -46,5 +46,25 @@ describe("GET /api/internal/quests/[questId]", () => {
     expect(response.status).toBe(200);
     expect(getInternalQuestDetailMvpMock).toHaveBeenCalledWith("q1");
     expect(body.analytics.totalPointsDistributed).toBe(1500);
+  });
+
+  it("updates quest payload via PATCH", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
+    updateQuestDefinitionMvpMock.mockResolvedValue({
+      id: "q1",
+      code: "contest_2",
+      config: { targetUrl: "https://x.com/memecardgame/status/123", ctaLabel: "View Tweet" },
+    });
+
+    const response = await PATCH(new Request("http://localhost/api/internal/quests/q1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: "contest_2" }),
+    }) as any, { params: { questId: "q1" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateQuestDefinitionMvpMock).toHaveBeenCalledWith("q1", { code: "contest_2" });
+    expect(body.quest.config.ctaLabel).toBe("View Tweet");
   });
 });

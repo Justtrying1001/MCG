@@ -50,21 +50,21 @@ export default function QuestLibraryPage() {
   const types = [...new Set(rows.map((row) => row.type))];
 
   return (
-    <div className="admin-page">
-      <section className="admin-page-header">
+    <div className="admin-page quest-admin-page">
+      <section className="admin-panel quest-library-hero">
         <div>
           <h1 className="admin-title">Quest Library</h1>
-          <p className="admin-subtitle">Operational library for validation policy, reward amounts, and moderation jump points.</p>
+          <p className="admin-subtitle">Manage social and milestone quests with clean validation, moderation-ready settings and user-facing previews.</p>
           {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
         </div>
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-          <Link href="/admin/quests/builder" className="admin-badge success">Create quest</Link>
-          <Link href="/admin/quests/legacy" className="admin-badge neutral">Legacy fallback</Link>
+        <div className="quest-library-hero-actions">
+          <Link href="/admin/quests/builder" className="btn btn-primary quest-primary-action">Create Quest</Link>
+          <Link href="/admin/quests/legacy" className="btn btn-ghost">Legacy fallback</Link>
         </div>
       </section>
 
-      <section className="admin-toolbar">
-        <input className="input" placeholder="Search code/title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "260px" }} />
+      <section className="admin-toolbar quest-library-toolbar">
+        <input className="input" placeholder="Search by code or title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "320px" }} />
         <select className="input" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
           <option value="ALL">All objective types</option>
           {types.map((type) => <option key={type} value={type}>{type}</option>)}
@@ -72,13 +72,13 @@ export default function QuestLibraryPage() {
         <span className="admin-badge neutral">{filtered.length} quests</span>
       </section>
 
-      <section className="admin-table">
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.5fr 1fr 0.8fr 0.8fr 1.7fr" }}>
+      <section className="admin-table quest-library-table">
+        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 1.7fr" }}>
           <span>Code</span><span>Quest</span><span>Objective</span><span>Validation</span><span>Reward</span><span>Actions</span>
         </div>
         {loading ? <div className="admin-table-row"><p className="contest-inline-note">Loading quest library…</p></div> : null}
         {!loading && filtered.map((row) => (
-          <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.5fr 1fr 0.8fr 0.8fr 1.7fr" }}>
+          <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 1.7fr" }}>
             <span className="contest-code">{row.code}</span>
             <div>
               <p style={{ fontWeight: 700 }}>{row.title}</p>

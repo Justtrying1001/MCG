@@ -2166,3 +2166,104 @@ a { color: inherit; text-decoration: none; }
   .contest-wizard-layout { grid-template-columns: 1fr; }
   .contest-wizard-summary { position: static; }
 }
+
+.quest-admin-page {
+  gap: 1rem;
+}
+
+.quest-library-hero {
+  padding: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.quest-library-hero-actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.quest-primary-action {
+  min-width: 180px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.quest-library-toolbar {
+  padding: 0.7rem;
+}
+
+.quest-library-table .admin-table-row,
+.quest-library-table .admin-table-head {
+  padding-top: 0.72rem;
+  padding-bottom: 0.72rem;
+}
+
+.quest-builder-shell {
+  gap: 1rem;
+  padding: 1rem;
+}
+
+
+.quest-builder-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.quest-builder-main {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.quest-builder-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.quest-builder-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.quest-form-section {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.8rem;
+}
+
+.quest-user-card {
+  gap: 0.8rem;
+}
+
+.quest-meta-grid {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.quest-social-action-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 980px) {
+  .quest-library-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .quest-builder-layout {
+    grid-template-columns: 1fr;
+  }
+}
