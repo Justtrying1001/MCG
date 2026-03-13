@@ -2,18 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { MilestoneQuestCard } from "@/components/quests/MilestoneQuestCard";
+import { SocialQuestCard } from "@/components/quests/SocialQuestCard";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
+
+import styles from "./rewards.module.css";
 
 type LedgerRow = {
   id: string;
   entryType: "CREDIT" | "DEBIT";
   amount: number;
   reasonType: string;
-  reasonRef: string | null;
   createdAt: string;
 };
+
+type QuestStatus = "AVAILABLE" | "IN_PROGRESS" | "CLAIMABLE" | "COMPLETED" | "REJECTED";
 
 type QuestRow = {
   id: string;
@@ -22,26 +26,21 @@ type QuestRow = {
   title: string;
   description: string | null;
   rewardPoints: number;
-  status: "AVAILABLE" | "IN_PROGRESS" | "CLAIMABLE" | "COMPLETED" | "REJECTED";
+  status: QuestStatus;
   progressValue: number;
   targetValue: number | null;
   isActive: boolean;
   completedAt: string | null;
   validationMode: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   latestSubmissionStatus: "SUBMITTED" | "APPROVED" | "REJECTED" | null;
-  latestSubmission: {
-    id: string;
-    status: "SUBMITTED" | "APPROVED" | "REJECTED";
-    proofUrl: string | null;
-    note: string | null;
-    createdAt: string;
-    reviewedAt: string | null;
-  } | null;
   configSummary: {
-    threshold?: number;
+    milestoneType?: "PACK_OPEN_COUNT" | "CONTEST_PARTICIPATION_COUNT" | "CARD_COLLECTION_COUNT";
+    targetValue?: number;
     proofRequired?: boolean;
     targetUrl?: string | null;
+    ctaLabel?: string | null;
     instructions?: string | null;
+    socialAction?: string | null;
   };
 };
 
@@ -49,15 +48,29 @@ function isSocialQuest(quest: QuestRow) {
   return quest.type === "SOCIAL_FOLLOW_X" || quest.type === "SOCIAL_ENGAGEMENT_X";
 }
 
+function isMilestoneQuest(quest: QuestRow) {
+  return quest.type === "CONTEST_COUNT_MILESTONE";
+}
+
+function applyStatusFilter(rows: QuestRow[], statusFilter: "ALL" | QuestStatus) {
+  if (statusFilter === "ALL") return rows;
+  return rows.filter((row) => row.status === statusFilter);
+}
+
+function applySort(rows: QuestRow[], sortBy: "REWARD_DESC" | "REWARD_ASC" | "RECENT") {
+  const copy = [...rows];
+  if (sortBy === "REWARD_DESC") return copy.sort((a, b) => b.rewardPoints - a.rewardPoints);
+  if (sortBy === "REWARD_ASC") return copy.sort((a, b) => a.rewardPoints - b.rewardPoints);
+  return copy.sort((a, b) => b.code.localeCompare(a.code));
+}
+
 export default function RewardsPage() {
   const { me, loading } = useSession();
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
   const [error, setError] = useState("");
-  const [submitMessageByQuestId, setSubmitMessageByQuestId] = useState<Record<string, string>>({});
-  const [submittingQuestId, setSubmittingQuestId] = useState<string | null>(null);
-  const [proofUrlByQuestId, setProofUrlByQuestId] = useState<Record<string, string>>({});
-  const [noteByQuestId, setNoteByQuestId] = useState<Record<string, string>>({});
+  const [statusFilter, setStatusFilter] = useState<"ALL" | QuestStatus>("ALL");
+  const [sortBy, setSortBy] = useState<"REWARD_DESC" | "REWARD_ASC" | "RECENT">("REWARD_DESC");
 
   const loadData = async () => {
     const [ledgerRes, questsRes] = await Promise.all([
@@ -84,116 +97,24 @@ export default function RewardsPage() {
     void loadData();
   }, [loading, me]);
 
-  const submitQuest = async (quest: QuestRow) => {
-    setSubmitMessageByQuestId((prev) => ({ ...prev, [quest.id]: "" }));
-    setSubmittingQuestId(quest.id);
+  const viewModel = useMemo(() => {
+    const social = quests.filter(isSocialQuest);
+    const milestones = quests.filter(isMilestoneQuest);
+    const underReview = quests.filter((quest) => quest.latestSubmissionStatus === "SUBMITTED");
+    const completed = quests.filter((quest) => quest.status === "COMPLETED" || quest.latestSubmissionStatus === "APPROVED");
 
-    const response = await fetch(`/api/quests/${quest.id}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        proofUrl: proofUrlByQuestId[quest.id] ?? "",
-        note: noteByQuestId[quest.id] ?? "",
-      }),
-    });
+    const filteredSocial = applySort(applyStatusFilter(social, statusFilter), sortBy);
+    const filteredMilestones = applySort(applyStatusFilter(milestones, statusFilter), sortBy);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setSubmitMessageByQuestId((prev) => ({ ...prev, [quest.id]: payload?.error ?? "Submission failed" }));
-      setSubmittingQuestId(null);
-      return;
-    }
-
-    setSubmitMessageByQuestId((prev) => ({ ...prev, [quest.id]: "Submission sent for review." }));
-    setSubmittingQuestId(null);
-    setProofUrlByQuestId((prev) => ({ ...prev, [quest.id]: "" }));
-    setNoteByQuestId((prev) => ({ ...prev, [quest.id]: "" }));
-    await loadData();
-  };
-
-  const buckets = useMemo(() => {
-    const available: QuestRow[] = [];
-    const underReview: QuestRow[] = [];
-    const needsResubmission: QuestRow[] = [];
-    const completed: QuestRow[] = [];
-
-    for (const quest of quests) {
-      if (quest.status === "COMPLETED" || quest.latestSubmissionStatus === "APPROVED") {
-        completed.push(quest);
-      } else if (quest.latestSubmissionStatus === "SUBMITTED") {
-        underReview.push(quest);
-      } else if (quest.latestSubmissionStatus === "REJECTED" || quest.status === "REJECTED") {
-        needsResubmission.push(quest);
-      } else {
-        available.push(quest);
-      }
-    }
-
-    return { available, underReview, needsResubmission, completed };
-  }, [quests]);
-
-  const renderQuestCard = (quest: QuestRow, allowSubmit: boolean) => {
-    const canSubmit = allowSubmit && isSocialQuest(quest);
-
-    return (
-      <div key={quest.id} className="contest-card">
-        <div className="contest-card-top">
-          <p className="contest-code">{quest.code}</p>
-          <span className="contest-status status-open">{quest.status}</span>
-        </div>
-        <h3 className="contest-title">{quest.title}</h3>
-        <p className="contest-inline-note">{quest.description ?? "—"}</p>
-        <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
-
-        {quest.targetValue ? (
-          <p className="contest-inline-note">Progress: {quest.progressValue} / {quest.targetValue}</p>
-        ) : null}
-
-        {isSocialQuest(quest) ? (
-          <>
-            <p className="contest-inline-note">Validation: {quest.validationMode}</p>
-            <p className="contest-inline-note">Proof required: {quest.configSummary.proofRequired ? "Yes" : "No"}</p>
-            {quest.configSummary.targetUrl ? (
-              <p className="contest-inline-note">Target URL: <a href={quest.configSummary.targetUrl} target="_blank" rel="noreferrer">{quest.configSummary.targetUrl}</a></p>
-            ) : null}
-            {quest.configSummary.instructions ? (
-              <p className="contest-inline-note">Instructions: {quest.configSummary.instructions}</p>
-            ) : null}
-          </>
-        ) : null}
-
-        {canSubmit ? (
-          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.6rem" }}>
-            <input
-              className="input"
-              placeholder="proof URL (optional unless required)"
-              value={proofUrlByQuestId[quest.id] ?? ""}
-              onChange={(event) => setProofUrlByQuestId((prev) => ({ ...prev, [quest.id]: event.target.value }))}
-            />
-            <input
-              className="input"
-              placeholder="note (optional)"
-              value={noteByQuestId[quest.id] ?? ""}
-              onChange={(event) => setNoteByQuestId((prev) => ({ ...prev, [quest.id]: event.target.value }))}
-            />
-            <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
-              <Button onClick={() => void submitQuest(quest)} disabled={submittingQuestId === quest.id}>
-                {submittingQuestId === quest.id ? "Submitting…" : "Submit proof"}
-              </Button>
-              {submitMessageByQuestId[quest.id] ? <span className="contest-inline-note">{submitMessageByQuestId[quest.id]}</span> : null}
-            </div>
-          </div>
-        ) : null}
-      </div>
-    );
-  };
+    return { social: filteredSocial, milestones: filteredMilestones, completed, underReview };
+  }, [quests, statusFilter, sortBy]);
 
   return (
     <SiteShell>
-      <div className="page-header">
+      <div className={`page-header ${styles.hero}`}>
         <div>
           <h1 className="page-title">Rewards & Quests</h1>
-          <p className="page-subtitle">Track your points ledger and quest progression.</p>
+          <p className="page-subtitle">Complete social actions and milestones to progress your account rewards.</p>
         </div>
       </div>
 
@@ -203,40 +124,54 @@ export default function RewardsPage() {
       {error ? <p className="contest-error">{error}</p> : null}
 
       {me?.mode === "user" ? (
-        <div style={{ display: "grid", gap: "1rem" }}>
+        <div className={styles.layout}>
           <section className="contest-section">
-            <h2 className="contest-section-title">Available quests</h2>
-            {buckets.available.length === 0 ? <p className="contest-inline-note">No available quests right now.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.available.map((quest) => renderQuestCard(quest, true))}</div>}
+            <h2 className="contest-section-title">Quest filters</h2>
+            <div className={styles.controls}>
+              <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | QuestStatus)}>
+                <option value="ALL">All statuses</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="IN_PROGRESS">In progress</option>
+                <option value="CLAIMABLE">Claimable</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+              <select className="input" value={sortBy} onChange={(event) => setSortBy(event.target.value as "REWARD_DESC" | "REWARD_ASC" | "RECENT")}>
+                <option value="REWARD_DESC">Sort: reward high → low</option>
+                <option value="REWARD_ASC">Sort: reward low → high</option>
+                <option value="RECENT">Sort: latest code first</option>
+              </select>
+            </div>
           </section>
 
           <section className="contest-section">
-            <h2 className="contest-section-title">Under review</h2>
-            {buckets.underReview.length === 0 ? <p className="contest-inline-note">No submissions under review.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.underReview.map((quest) => renderQuestCard(quest, false))}</div>}
+            <h2 className="contest-section-title">Social quests</h2>
+            <div className={styles.cards}>
+              {viewModel.social.length === 0 ? <p className="contest-inline-note">No social quests for current filters.</p> : null}
+              {viewModel.social.map((quest) => <SocialQuestCard key={quest.id} quest={quest} />)}
+            </div>
           </section>
 
           <section className="contest-section">
-            <h2 className="contest-section-title">Needs resubmission</h2>
-            {buckets.needsResubmission.length === 0 ? <p className="contest-inline-note">No rejected quests.</p> : <div style={{ display: "grid", gap: "0.6rem" }}>{buckets.needsResubmission.map((quest) => renderQuestCard(quest, true))}</div>}
+            <h2 className="contest-section-title">Milestones</h2>
+            <div className={styles.cards}>
+              {viewModel.milestones.length === 0 ? <p className="contest-inline-note">No milestones for current filters.</p> : null}
+              {viewModel.milestones.map((quest) => <MilestoneQuestCard key={quest.id} quest={quest} />)}
+            </div>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Completed quests</h2>
-            {buckets.completed.length === 0 ? <p className="contest-inline-note">No completed quests yet.</p> : (
-              <div style={{ display: "grid", gap: "0.6rem" }}>
-                {buckets.completed.map((quest) => (
-                  <div key={quest.id} className="contest-card">
-                    <div className="contest-card-top">
-                      <p className="contest-code">{quest.code}</p>
-                      <span className="contest-status status-settled">COMPLETED</span>
-                    </div>
-                    <h3 className="contest-title">{quest.title}</h3>
-                    <p className="contest-inline-note">Reward: {quest.rewardPoints} points</p>
-                    <p className="contest-inline-note">Completed at: {quest.completedAt ? new Date(quest.completedAt).toLocaleString() : "-"}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          {viewModel.underReview.length > 0 ? (
+            <section className="contest-section">
+              <h2 className="contest-section-title">Under review</h2>
+              <p className="contest-inline-note">{viewModel.underReview.length} submissions are currently under review by moderators.</p>
+            </section>
+          ) : null}
+
+          {viewModel.completed.length > 0 ? (
+            <section className="contest-section">
+              <h2 className="contest-section-title">Completed</h2>
+              <p className="contest-inline-note">{viewModel.completed.length} quests completed.</p>
+            </section>
+          ) : null}
 
           <section className="contest-section">
             <h2 className="contest-section-title">Points history</h2>
