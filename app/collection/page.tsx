@@ -51,6 +51,15 @@ export default function CollectionPage() {
     [sourceCollection]
   );
 
+  const editionChips = useMemo(
+    () => editions.map((editionLabel) => ({
+      key: editionLabel,
+      label: editionLabel,
+      count: sourceCollection.filter((item) => (item.card.setEditionLabel || item.card.edition || "") === editionLabel).length,
+    })),
+    [editions, sourceCollection]
+  );
+
   const rarityStats = useMemo(() => {
     const seed = {
       COMMON: { unique: 0, owned: 0 },
@@ -112,7 +121,8 @@ export default function CollectionPage() {
   const commonCount   = rarityStats.COMMON.unique;
 
   const collectionProg = me?.mode === "user" ? me.coexistence?.v2?.collectionProgression : undefined;
-  const completionPct  = collectionProg?.completionPct ?? (uniqueCards > 0 ? Math.min(Math.round((uniqueCards / 100) * 100), 100) : 0);
+  const projectionPct  = me?.mode === "user" ? me.coexistence?.v2?.collectionProjection?.completionPct : undefined;
+  const completionPct  = collectionProg?.completionPct ?? projectionPct ?? null;
 
   return (
     <SiteShell>
@@ -164,10 +174,16 @@ export default function CollectionPage() {
             <div className="ccb-inner">
               <div>
                 <div className="ccb-label">Collection Completion</div>
-                <div className="ccb-pct">{completionPct}<span style={{ fontSize: "1rem", opacity: 0.5 }}>%</span></div>
-                <div className="ccb-track">
-                  <div className="ccb-fill" style={{ width: `${completionPct}%` }} />
+                <div className="ccb-pct">
+                  {completionPct ?? "—"}
+                  {completionPct !== null && <span style={{ fontSize: "1rem", opacity: 0.5 }}>%</span>}
                 </div>
+                <div className="ccb-track">
+                  <div className="ccb-fill" style={{ width: `${completionPct ?? 0}%` }} />
+                </div>
+                {completionPct === null && (
+                  <div className="ccb-note">Completion available for signed-in profiles only.</div>
+                )}
               </div>
               <div className="ccb-rarity-grid">
                 {[
@@ -203,6 +219,32 @@ export default function CollectionPage() {
         )}
 
         {/* ── Rarity Filter Chips ── */}
+        {me && (
+          <div className="edition-filter-chips">
+            <button
+              type="button"
+              className={`rarity-chip ${edition === "" ? " rc-active" : ""}`}
+              onClick={() => setEdition("")}
+            >
+              All editions
+            </button>
+            {editionChips.map((editionChip) => (
+              <button
+                key={editionChip.key}
+                type="button"
+                className={`rarity-chip ${edition === editionChip.key ? " rc-active" : ""}`}
+                onClick={() => setEdition(editionChip.key)}
+              >
+                <span className="rarity-chip-dot" />
+                {editionChip.label}
+                <span style={{ opacity: 0.65, marginLeft: 2, fontSize: "0.68rem" }}>
+                  ({editionChip.count})
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {me && (
           <div className="rarity-filter-chips">
             {rarityChips.map(({ key, label, cls }) => (
