@@ -21,7 +21,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const { me, loading, refresh, setMe, startGuest, clearGuest } = useSession();
   const [openMobile, setOpenMobile] = useState(false);
 
-  const loginWithX = () => { window.location.href = "/api/auth/x/start"; };
+  const loginWithX = () => {
+    const current = new URL(window.location.href);
+    const invite = current.searchParams.get("invite") ?? current.searchParams.get("ref");
+    const destination = invite ? `/api/auth/x/start?invite=${encodeURIComponent(invite)}` : "/api/auth/x/start";
+    window.location.href = destination;
+  };
 
   const logout = async () => {
     if (me?.mode === "guest") {

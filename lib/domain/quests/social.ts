@@ -15,7 +15,8 @@ export type MilestoneType =
   | "REWARD_POINTS_EARNED"
   | "ROSTER_SUBMISSIONS_COUNT"
   | "CONTESTS_SETTLED_COUNT"
-  | "POINTS_BALANCE_REACHED";
+  | "POINTS_BALANCE_REACHED"
+  | "INVITED_FRIENDS";
 
 export type SocialValidationIssue = {
   field: "targetUrl";
@@ -153,6 +154,8 @@ export function getMilestoneObjectiveText(milestoneType: MilestoneType | null | 
       return `Settle ${target} contest entries`;
     case "POINTS_BALANCE_REACHED":
       return `Reach ${target} points balance`;
+    case "INVITED_FRIENDS":
+      return `Invite ${target} friends`;
     default:
       return `Reach milestone ${target}`;
   }

@@ -14,7 +14,7 @@ export async function GET() {
     const sessionUser = await getSessionUser();
     if (!sessionUser) return new NextResponse("Unauthorized", { status: 401 });
 
-    const [user, ownedInstances, openingsCount] = await prisma.$transaction([
+    const [user, ownedInstances, openingsCount, invitedFriendsCount] = await prisma.$transaction([
       prisma.user.findUnique({ where: { id: sessionUser.id } }),
       prisma.ownedCardInstance.findMany({
         where: { userId: sessionUser.id },
@@ -32,6 +32,7 @@ export async function GET() {
         },
       }),
       prisma.packOpeningEvent.count({ where: { userId: sessionUser.id } }),
+      prisma.userInvite.count({ where: { inviterId: sessionUser.id } }),
     ]);
 
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
@@ -39,6 +40,7 @@ export async function GET() {
     const payload = buildUserPayload({
       user,
       ownedInstances,
+      invitedFriendsCount,
     });
 
     const collectionProjection = await buildCollectionProjectionV2(sessionUser.id);

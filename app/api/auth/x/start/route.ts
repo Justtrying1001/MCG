@@ -5,9 +5,12 @@ export const dynamic = "force-dynamic";
 
 const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
 const X_REQUEST_TOKEN_SECRET_COOKIE = "mcg_x_request_token_secret";
+const INVITE_CODE_COOKIE = "mcg_invite_code";
 
 export async function GET(req: Request) {
   try {
+    const url = new URL(req.url);
+    const inviteCode = url.searchParams.get("invite") ?? url.searchParams.get("ref") ?? "";
     const { oauthToken, oauthTokenSecret } = await getXRequestToken();
     const response = NextResponse.redirect(buildXAuthenticateUrl(oauthToken));
 
@@ -21,6 +24,9 @@ export async function GET(req: Request) {
 
     response.cookies.set({ name: X_REQUEST_TOKEN_COOKIE, value: oauthToken, ...baseCookie });
     response.cookies.set({ name: X_REQUEST_TOKEN_SECRET_COOKIE, value: oauthTokenSecret, ...baseCookie });
+    if (inviteCode.trim()) {
+      response.cookies.set({ name: INVITE_CODE_COOKIE, value: inviteCode.trim().toUpperCase(), ...baseCookie, maxAge: 7 * 24 * 60 * 60 });
+    }
 
     return response;
   } catch {

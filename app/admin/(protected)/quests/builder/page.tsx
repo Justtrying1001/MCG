@@ -253,6 +253,7 @@ export default function QuestBuilderPage() {
                       <option value="ROSTER_SUBMISSIONS_COUNT">Roster submissions</option>
                       <option value="CONTESTS_SETTLED_COUNT">Settled contests</option>
                       <option value="POINTS_BALANCE_REACHED">Points balance reached</option>
+                      <option value="INVITED_FRIENDS">Invited friends</option>
                     </select>
                     <input className="input" type="number" min={1} placeholder="Target value" value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
                   </>
