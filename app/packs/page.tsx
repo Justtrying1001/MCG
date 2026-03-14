@@ -9,7 +9,6 @@ import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
-import { PackGallery } from "@/components/packs/PackGallery";
 import { PackOddsDrawer } from "@/components/packs/PackOddsDrawer";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
@@ -173,14 +172,26 @@ export default function PacksPage() {
       .sort((a, b) => b.rate - a.rate);
   }, [cardsPerPack, packConfig?.slots]);
 
-  const galleryItems = useMemo(
-    () => [
-      { code: "S01-BASE", name: "Genesis Base Booster", kind: "base" as const, cards: cardsPerPack, status: "open" as const },
-      { code: "S01-PRM", name: "Genesis Premium Booster", kind: "premium" as const, cards: 8, status: "locked" as const },
-      { code: "EVT-001", name: "Event Spotlight Pack", kind: "event" as const, cards: 5, status: "locked" as const },
-    ],
-    [cardsPerPack],
-  );
+  const rarityOddsForDisplay = useMemo(() => {
+    // Use only STANDARD slots (indices 0–2) for the display odds
+    const standardSlots = (packConfig?.slots ?? []).filter((s) => s.type === "STANDARD");
+    if (standardSlots.length === 0) return undefined;
+    const aggregate = new Map<string, number>();
+    for (const slot of standardSlots) {
+      for (const odd of slot.rarityOdds ?? []) {
+        const key = odd.rarityCode.toUpperCase();
+        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / standardSlots.length);
+      }
+    }
+    return Array.from(aggregate.entries())
+      .map(([label, pct]) => ({ label, pct: Number(pct.toFixed(1)) }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [packConfig?.slots]);
+
+  const editionOddsForDisplay = useMemo(() => {
+    if (!editionRows.length) return undefined;
+    return editionRows.map((r) => ({ label: r.label, pct: r.rate }));
+  }, [editionRows]);
 
   return (
     <SiteShell>
@@ -190,7 +201,7 @@ export default function PacksPage() {
 
       <FeaturedPackStage
         packImageSrc={officialPackImage}
-        packName={packConfig?.pack?.displayName ?? "Genesis Booster"}
+        packName={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
         cardsPerPack={cardsPerPack}
         remaining={packRemaining}
         planned={packPlanned}
@@ -199,9 +210,10 @@ export default function PacksPage() {
         canOpen={Boolean(me) && !isOpening && openingPhase !== "tearing"}
         onOpen={() => void openPack()}
         onOpenOdds={() => setOddsOpen(true)}
+        rarityOdds={rarityOddsForDisplay}
+        editionOdds={editionOddsForDisplay}
+        userPoints={me?.user?.points}
       />
-
-      <PackGallery items={galleryItems} />
 
       <PackOddsDrawer
         open={oddsOpen}

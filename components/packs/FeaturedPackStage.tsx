@@ -1,8 +1,7 @@
 import Image from "next/image";
-import { Surface } from "@/components/ui/Surface";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Chip } from "@/components/ui/Chip";
-import { Button } from "@/components/ui/Button";
+import { GAME_CONFIG } from "@/lib/game-config";
+
+type Odd = { label: string; pct: number };
 
 type FeaturedPackStageProps = {
   packImageSrc: unknown;
@@ -15,6 +14,42 @@ type FeaturedPackStageProps = {
   canOpen: boolean;
   onOpen: () => void;
   onOpenOdds: () => void;
+  rarityOdds?: Odd[];
+  editionOdds?: Odd[];
+  userPoints?: number;
+};
+
+const DEFAULT_RARITY_ODDS: Odd[] = [
+  { label: "COMMON", pct: 73 },
+  { label: "UNCOMMON", pct: 18 },
+  { label: "RARE", pct: 6 },
+  { label: "EPIC", pct: 2.5 },
+  { label: "LEGENDARY", pct: 0.3 },
+];
+
+const DEFAULT_EDITION_ODDS: Odd[] = [
+  { label: "BASE", pct: 60 },
+  { label: "REVERSE", pct: 25 },
+  { label: "BRILLANTE", pct: 10 },
+  { label: "HOLO", pct: 4 },
+  { label: "FULL ART", pct: 1 },
+];
+
+const RARITY_COLOR: Record<string, string> = {
+  COMMON: "#7E8794",
+  UNCOMMON: "#4FA39A",
+  RARE: "#3C6DF2",
+  EPIC: "#6E4CCF",
+  LEGENDARY: "#D8A63E",
+};
+
+const EDITION_COLOR: Record<string, string> = {
+  BASE: "#6B7280",
+  REVERSE: "#38BDF8",
+  BRILLANTE: "#F59E0B",
+  HOLO: "#A855F7",
+  "FULL ART": "#D8A63E",
+  FULL_ART: "#D8A63E",
 };
 
 export function FeaturedPackStage({
@@ -28,40 +63,118 @@ export function FeaturedPackStage({
   canOpen,
   onOpen,
   onOpenOdds,
+  rarityOdds,
+  editionOdds,
+  userPoints,
 }: FeaturedPackStageProps) {
-  const label = openingPhase === "tearing"
-    ? "Breaking seal…"
-    : isOpening
-      ? "Preparing reveal…"
-      : "Open Pack";
+  const packCost = GAME_CONFIG.PACK_COST;
+  const displayRarity = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
+  const displayEdition = (editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS).map(
+    (o) => ({ ...o, label: o.label.replace("_", " ") }),
+  );
+  const canAfford = userPoints === undefined || userPoints >= packCost;
+
+  const ctaLabel =
+    openingPhase === "tearing"
+      ? "Breaking seal…"
+      : isOpening
+        ? "Preparing reveal…"
+        : `OPEN A PACK — ${packCost} PTS`;
+
+  const supplyText =
+    typeof remaining === "number"
+      ? `${remaining.toLocaleString()} packs remaining`
+      : typeof planned === "number"
+        ? `${planned.toLocaleString()} total planned`
+        : "Supply pending";
 
   return (
-    <Surface variant="raised" className="pack-featured-stage">
-      <div className="pack-featured-media">
-        <Image src={packImageSrc as Parameters<typeof Image>[0]["src"]} alt="MCG booster pack" className="pack-featured-image" priority />
-      </div>
+    <div className="ps-layout">
 
-      <div className="pack-featured-body">
-        <SectionHeader
-          eyebrow="Featured pack"
-          title={packName}
-          subtitle="Crack the seal and reveal cards one by one."
-          actions={<button type="button" className="mcg-btn ghost" onClick={onOpenOdds}>Odds & supply</button>}
-        />
-
-        <div className="pack-stage-chips">
-          <Chip label={`${cardsPerPack} cards`} />
-          <Chip label={typeof remaining === "number" ? `${remaining.toLocaleString()} left` : "Supply pending"} />
-          <Chip label={typeof planned === "number" ? `${planned.toLocaleString()} total` : "Planned supply"} />
-        </div>
-
-        <div className="pack-open-row">
-          <Button onClick={onOpen} disabled={!canOpen} className="btn-lg">
-            {label}
-          </Button>
-          {openingPhase === "tearing" ? <p className="pack-stage-note">Foil tearing… cards incoming.</p> : null}
+      {/* ── LEFT: Pack Hero ── */}
+      <div className="ps-hero">
+        <div className="ps-hero-glow" />
+        <div className="ps-hero-inner">
+          <div className="ps-hero-image-wrap">
+            <Image
+              src={packImageSrc as Parameters<typeof Image>[0]["src"]}
+              alt="MCG booster pack"
+              className="ps-hero-image"
+              priority
+            />
+          </div>
+          <div className="ps-hero-meta">
+            <span className="ps-edition-badge">GENESIS</span>
+            <h1 className="ps-pack-name">{packName.toUpperCase()}</h1>
+            <p className="ps-supply-counter">{supplyText}</p>
+          </div>
         </div>
       </div>
-    </Surface>
+
+      {/* ── RIGHT: Details Panel ── */}
+      <div className="ps-panel">
+
+        {/* 1 — Price */}
+        <div className="ps-price-block">
+          <span className="ps-price-label">PRICE</span>
+          <span className="ps-price-value">{packCost} PTS</span>
+          {!canAfford && <span className="ps-price-warn">Not enough points</span>}
+        </div>
+
+        {/* 2 — Pack at a glance */}
+        <div className="ps-section">
+          <h2 className="ps-section-title">WHAT&apos;S INSIDE</h2>
+          <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
+          <div className="ps-slots-row">
+            <span className="ps-slot-pill">STANDARD ×3</span>
+            <span className="ps-slot-pill ps-slot-pill--boost">EDITION BOOST</span>
+            <span className="ps-slot-pill ps-slot-pill--hit">RARITY HIT</span>
+          </div>
+        </div>
+
+        {/* 3 — Odds: two columns */}
+        <div className="ps-section">
+          <h2 className="ps-section-title">ODDS</h2>
+          <div className="ps-odds-grid">
+            <div className="ps-odds-col">
+              <p className="ps-odds-col-title">RARITY <span className="ps-odds-col-note">Slots 1–3</span></p>
+              {displayRarity.map((o) => (
+                <div key={o.label} className="ps-odd-row">
+                  <span className="ps-rarity-dot" style={{ background: RARITY_COLOR[o.label] ?? "#7E8794" }} />
+                  <span className="ps-rarity-label">{o.label}</span>
+                  <span className="ps-rarity-pct">{o.pct}%</span>
+                </div>
+              ))}
+            </div>
+            <div className="ps-odds-col">
+              <p className="ps-odds-col-title">EDITION <span className="ps-odds-col-note">Slot 4↑</span></p>
+              {displayEdition.map((o) => (
+                <div key={o.label} className="ps-odd-row">
+                  <span className="ps-rarity-dot" style={{ background: EDITION_COLOR[o.label] ?? "#7E8794" }} />
+                  <span className="ps-rarity-label">{o.label}</span>
+                  <span className="ps-rarity-pct">{o.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 4 — CTAs */}
+        <div className="ps-cta-block">
+          <button
+            type="button"
+            className="ps-btn-primary"
+            onClick={onOpen}
+            disabled={!canOpen}
+          >
+            {ctaLabel}
+          </button>
+          <button type="button" className="ps-btn-secondary" onClick={onOpenOdds}>
+            Full odds &amp; supply details
+          </button>
+        </div>
+
+      </div>
+    </div>
   );
 }
