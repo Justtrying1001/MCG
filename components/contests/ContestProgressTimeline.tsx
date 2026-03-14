@@ -1,19 +1,28 @@
 import type { ContestStatus } from "@/components/contests/types";
 import { toUserPhase } from "@/components/contests/contestLifecycle";
 
-const steps = ["OPEN", "TEAM_LOCK", "LIVE", "END", "RESULT"] as const;
+const steps = [
+  { key: "OPEN", label: "Open", hint: "Build and edit lineup freely" },
+  { key: "TEAM_LOCK", label: "Team Lock", hint: "Lineups freeze / contest starts" },
+  { key: "LIVE", label: "Live", hint: "Performance race in progress" },
+  { key: "END", label: "End / Computing", hint: "Scoring snapshots & compute" },
+  { key: "RESULT", label: "Result", hint: "Final ranks and rewards" },
+] as const;
 
 export function ContestProgressTimeline({ status }: { status: ContestStatus }) {
   const phase = toUserPhase(status);
-  const activeIndex = Math.max(0, steps.indexOf(phase));
+  const activeIndex = Math.max(0, steps.findIndex((step) => step.key === phase));
   return (
-    <div className="contest-timeline-v2" aria-label="Contest lifecycle timeline">
+    <section className="contest-timeline-shell" aria-label="Contest lifecycle timeline">
       {steps.map((step, index) => (
-        <div className={`contest-timeline-v2-step${index <= activeIndex ? " active" : ""}`} key={step}>
+        <article className={`contest-timeline-v2-step${index <= activeIndex ? " active" : ""}`} key={step.key}>
           <span>{index + 1}</span>
-          <p>{step === "TEAM_LOCK" ? "Team Lock / Start" : step === "END" ? "End / Computing" : step}</p>
-        </div>
+          <div>
+            <p>{step.label}</p>
+            <small>{step.hint}</small>
+          </div>
+        </article>
       ))}
-    </div>
+    </section>
   );
 }
