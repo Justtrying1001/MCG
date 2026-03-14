@@ -11,7 +11,7 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "vercel-build": "prisma migrate deploy && prisma generate && npm run bootstrap:mvp:cloud:deploy && next build",
+    "vercel-build": "npm run prisma:deploy:schema && prisma generate && npm run bootstrap:mvp:cloud:deploy && next build",
     "prisma:push:reset": "prisma db push --force-reset",
     "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs",
     "test": "vitest run",
@@ -22,7 +22,8 @@
     "check:mvp:bootstrap:allow-exhausted": "node prisma/check-mvp-bootstrap.mjs --allow-exhausted",
     "bootstrap:mvp:cloud:deploy": "npm run seed:mvp:controlled-emission && npm run check:mvp:bootstrap:allow-exhausted",
     "seed:milestone:rewards": "node prisma/seed-milestone-rewards.mjs",
-    "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs"
+    "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs",
+    "prisma:deploy:schema": "node prisma/deploy-schema.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
