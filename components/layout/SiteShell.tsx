@@ -59,6 +59,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, loading, refresh, setMe, startGuest, clearGuest } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const accountProgression = me?.mode === "user" ? me.coexistence?.v2?.accountProgression : undefined;
 
   const closeMenu = () => setMenuOpen(false);
   const loginWithX = () => { window.location.href = "/api/auth/x/start"; };
@@ -114,7 +115,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   {me.user.displayName.slice(0, 1).toUpperCase()}
                 </span>
                 <span style={{ fontWeight: 700, fontSize: "0.84rem" }}>{me.user.displayName}</span>
-                <span className="xp-badge">{me.user.points} XP</span>
+                <span className="xp-badge">{me.user.points} PTS</span>
+                {accountProgression ? <span className="level-chip">Lv {accountProgression.level}</span> : null}
               </div>
               <Button variant="ghost" className="btn-sm" onClick={logout}>
                 {me.mode === "guest" ? "Exit Guest" : "Logout"}
@@ -186,7 +188,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
                       {me.user.displayName.slice(0, 1).toUpperCase()}
                     </span>
                     <span>{me.user.displayName}</span>
-                    <span className="xp-badge">{me.user.points} XP</span>
+                    <span className="xp-badge">{me.user.points} PTS</span>
+                {accountProgression ? <span className="level-chip">Lv {accountProgression.level}</span> : null}
                   </div>
                   <Button variant="ghost" onClick={logout} style={{ width: "100%" }}>
                     {me.mode === "guest" ? "Exit Guest" : "Logout"}
