@@ -25,7 +25,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://pbs.twimg.com https://abs.twimg.com",
+      "img-src 'self' data: https://pbs.twimg.com https://abs.twimg.com https://coin-images.coingecko.com",
       "font-src 'self'",
       "connect-src 'self'",
       "frame-ancestors 'none'",
@@ -53,6 +53,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "pbs.twimg.com" },
       { protocol: "https", hostname: "abs.twimg.com" },
+      { protocol: "https", hostname: "coin-images.coingecko.com" },
     ],
   },
 };
