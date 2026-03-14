@@ -48,15 +48,21 @@ type QuestRow = {
 };
 
 type RewardsTab = "social" | "milestones" | "history";
-type MilestoneTemplate = { type: MilestoneType; title: string; targetValue: number; icon: string };
+type MilestoneTemplate = { key: string; type: MilestoneType; title: string; targetValue: number; icon: string };
 
 const milestoneCatalog: MilestoneTemplate[] = [
-  { type: "PACK_OPEN_COUNT", title: "Pack Explorer", targetValue: 5, icon: "📦" },
-  { type: "TOTAL_CARDS_COLLECTED", title: "Collection Starter", targetValue: 50, icon: "🃏" },
-  { type: "UNIQUE_CARDS_COLLECTED", title: "Unique Hunter", targetValue: 20, icon: "🧩" },
-  { type: "CONTESTS_JOINED", title: "Arena Challenger", targetValue: 3, icon: "⚔️" },
-  { type: "CONTESTS_TOP3", title: "Top 3 Finisher", targetValue: 2, icon: "🥉" },
-  { type: "REWARD_POINTS_EARNED", title: "Points Grinder", targetValue: 5000, icon: "✨" },
+  { key: "PACK_OPEN_COUNT:5", type: "PACK_OPEN_COUNT", title: "Pack Explorer", targetValue: 5, icon: "📦" },
+  { key: "TOTAL_CARDS_COLLECTED:50", type: "TOTAL_CARDS_COLLECTED", title: "Collection Starter", targetValue: 50, icon: "🃏" },
+  { key: "UNIQUE_CARDS_COLLECTED:20", type: "UNIQUE_CARDS_COLLECTED", title: "Unique Hunter", targetValue: 20, icon: "🧩" },
+  { key: "CONTESTS_JOINED:3", type: "CONTESTS_JOINED", title: "Arena Challenger", targetValue: 3, icon: "⚔️" },
+  { key: "CONTESTS_TOP3:2", type: "CONTESTS_TOP3", title: "Top 3 Finisher", targetValue: 2, icon: "🥉" },
+  { key: "REWARD_POINTS_EARNED:5000", type: "REWARD_POINTS_EARNED", title: "Points Grinder", targetValue: 5000, icon: "✨" },
+  { key: "INVITED_FRIENDS:5", type: "INVITED_FRIENDS", title: "Invites Bronze", targetValue: 5, icon: "🥉" },
+  { key: "INVITED_FRIENDS:10", type: "INVITED_FRIENDS", title: "Invites Iron", targetValue: 10, icon: "⚙️" },
+  { key: "INVITED_FRIENDS:20", type: "INVITED_FRIENDS", title: "Invites Silver", targetValue: 20, icon: "🥈" },
+  { key: "INVITED_FRIENDS:50", type: "INVITED_FRIENDS", title: "Invites Gold", targetValue: 50, icon: "🥇" },
+  { key: "INVITED_FRIENDS:100", type: "INVITED_FRIENDS", title: "Invites Platinum", targetValue: 100, icon: "💠" },
+  { key: "INVITED_FRIENDS:200", type: "INVITED_FRIENDS", title: "Invites Diamond", targetValue: 200, icon: "💎" },
 ];
 
 function isSocial(q: QuestRow) {
@@ -169,17 +175,15 @@ export default function RewardsPage() {
 
     const spotlight = quests.find((quest) => quest.status === "CLAIMABLE") ?? quests.find((quest) => quest.status === "IN_PROGRESS") ?? quests[0] ?? null;
 
-    const milestoneByType = new Map<MilestoneType, QuestRow>();
+    const milestoneByTypeAndThreshold = new Map<string, QuestRow>();
     milestones.forEach((milestoneQuest) => {
       const type = milestoneQuest.configSummary.milestoneType;
       if (!type) return;
-      const existing = milestoneByType.get(type);
-      if (!existing || (milestoneQuest.targetValue ?? 0) > (existing.targetValue ?? 0)) {
-        milestoneByType.set(type, milestoneQuest);
-      }
+      const key = `${type}:${milestoneQuest.targetValue ?? 0}`;
+      milestoneByTypeAndThreshold.set(key, milestoneQuest);
     });
 
-    return { social, milestones, completed, milestoneByType, spotlight };
+    return { social, milestones, completed, milestoneByTypeAndThreshold, spotlight };
   }, [quests]);
 
   const currentPoints = me?.mode === "user" ? me.user.points : 0;
@@ -217,6 +221,24 @@ export default function RewardsPage() {
           />
 
           {actionMsg ? <div className="contest-inline-note">{actionMsg}</div> : null}
+
+          <div className="mcg-surface" style={{ padding: "0.85rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+            <div>
+              <p className="mcg-eyebrow">Invite Program</p>
+              <p className="contest-inline-note">Invite code: <strong>{me.user.inviteCode}</strong> · Friends invited: <strong>{me.user.invitedFriendsCount}</strong></p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                const inviteUrl = `${window.location.origin}/?invite=${encodeURIComponent(me.user.inviteCode)}`;
+                void navigator.clipboard.writeText(inviteUrl);
+                setActionMsg("Invite link copied to clipboard.");
+              }}
+            >
+              Copy invite link
+            </button>
+          </div>
 
           <div className="rewards-tab-row-v2">
             <button type="button" className={`mcg-chip ${tab === "social" ? "selected" : ""}`} onClick={() => setTab("social")}>Social Quests ({vm.social.length})</button>
@@ -265,12 +287,12 @@ export default function RewardsPage() {
           {tab === "milestones" ? (
             <MilestoneTrack
               items={milestoneCatalog.map((milestone) => {
-                const linkedQuest = vm.milestoneByType.get(milestone.type);
+                const linkedQuest = vm.milestoneByTypeAndThreshold.get(milestone.key);
                 const progressValue = linkedQuest?.progressValue ?? 0;
                 const targetValue = linkedQuest?.targetValue ?? milestone.targetValue;
                 const done = linkedQuest?.status === "COMPLETED" || progressValue >= targetValue;
                 return {
-                  key: milestone.type,
+                  key: milestone.key,
                   title: milestone.title,
                   icon: milestone.icon,
                   objective: getMilestoneObjectiveText(milestone.type, targetValue),

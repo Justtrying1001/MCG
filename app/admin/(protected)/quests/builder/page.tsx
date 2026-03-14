@@ -223,7 +223,7 @@ export default function QuestBuilderPage() {
               <div className="admin-field-grid">
                 <select className="input" value={objectiveType} onChange={(event) => setObjectiveType(event.target.value as BuilderObjectiveType)}>
                   <option value="FOLLOW_X">Social · Follow X</option>
-                  <option value="SOCIAL_ENGAGEMENT">Social · Like / RT / Comment</option>
+                  <option value="SOCIAL_ENGAGEMENT">Social · Like / RT / Comment / Libre</option>
                   <option value="MILESTONE">Milestone / Objective</option>
                 </select>
 
@@ -232,6 +232,7 @@ export default function QuestBuilderPage() {
                     <option value="LIKE">LIKE</option>
                     <option value="RETWEET">RETWEET</option>
                     <option value="COMMENT">COMMENT</option>
+                    <option value="CUSTOM">CUSTOM / FREE</option>
                   </select>
                 ) : null}
 
@@ -252,6 +253,7 @@ export default function QuestBuilderPage() {
                       <option value="ROSTER_SUBMISSIONS_COUNT">Roster submissions</option>
                       <option value="CONTESTS_SETTLED_COUNT">Settled contests</option>
                       <option value="POINTS_BALANCE_REACHED">Points balance reached</option>
+                      <option value="INVITED_FRIENDS">Invited friends</option>
                     </select>
                     <input className="input" type="number" min={1} placeholder="Target value" value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
                   </>

@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession, getSessionCookieName, getSessionMaxAgeSeconds, getSessionUser } from "@/lib/auth";
 import { upsertUserFromXProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
+import { syncContestEntryQuestProgression } from "@/lib/domain/quests/runtime";
 import { exchangeXAccessToken, fetchXProfile } from "@/lib/x-oauth";
 
 function safeTokenCompare(a: string, b: string): boolean {
@@ -16,6 +17,7 @@ function safeTokenCompare(a: string, b: string): boolean {
 
 const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
 const X_REQUEST_TOKEN_SECRET_COOKIE = "mcg_x_request_token_secret";
+const INVITE_CODE_COOKIE = "mcg_invite_code";
 
 function logPrismaCallbackError(stage: string, error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -61,10 +63,12 @@ export async function GET(req: Request) {
   const cookieStore = cookies();
   const expectedRequestToken = cookieStore.get(X_REQUEST_TOKEN_COOKIE)?.value;
   const requestTokenSecret = cookieStore.get(X_REQUEST_TOKEN_SECRET_COOKIE)?.value;
+  const inviteCode = cookieStore.get(INVITE_CODE_COOKIE)?.value ?? null;
 
   const clearCookies = (response: NextResponse) => {
     response.cookies.set({ name: X_REQUEST_TOKEN_COOKIE, value: "", path: "/", maxAge: 0 });
     response.cookies.set({ name: X_REQUEST_TOKEN_SECRET_COOKIE, value: "", path: "/", maxAge: 0 });
+    response.cookies.set({ name: INVITE_CODE_COOKIE, value: "", path: "/", maxAge: 0 });
   };
 
   if (deniedToken) {
@@ -100,14 +104,24 @@ export async function GET(req: Request) {
     const profile = await fetchXProfile(accessToken.oauthToken, accessToken.oauthTokenSecret);
 
     let user;
+    let invitedByUserId: string | null = null;
     try {
       user = await prisma.$transaction(async (tx) => {
-        const { user: upsertedUser } = await upsertUserFromXProfileWithWelcome(tx, profile);
+        const result = await upsertUserFromXProfileWithWelcome(tx, profile, inviteCode);
+        invitedByUserId = result.invitedByUserId;
+        const { user: upsertedUser } = result;
         return upsertedUser;
       });
     } catch (error) {
       logPrismaCallbackError("user.upsert", error);
       throw error;
+    }
+
+    if (invitedByUserId) {
+      await Promise.allSettled([
+        syncContestEntryQuestProgression(invitedByUserId),
+        syncContestEntryQuestProgression(user.id),
+      ]);
     }
 
     let sessionToken: string;

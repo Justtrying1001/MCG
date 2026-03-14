@@ -79,6 +79,8 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
     displayName: string;
     avatarUrl: string | null;
     authProvider: string;
+    inviteCode: string;
+    invitedFriendsCount: number;
     points: number;
     packsOpened: number;
   };
