@@ -2,7 +2,10 @@ import { createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypt
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
-const ADMIN_SESSION_COOKIE = "mcg_admin_session";
+// __Host- prefix forces the browser to enforce: Secure=true, Path=/, no Domain.
+// This prevents subdomain-based cookie injection attacks.
+// Modern browsers honour __Host- on localhost without HTTPS, so dev is unaffected.
+const ADMIN_SESSION_COOKIE = "__Host-mcg_admin_session";
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 type AdminSessionPayload = {
