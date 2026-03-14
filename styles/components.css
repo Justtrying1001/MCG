@@ -297,10 +297,15 @@
   background: transparent;
   text-align: left;
   width: 100%;
+  padding: 0;
 }
 
 .collection-card-tile-trigger .mvp-premium-card {
   width: 100%;
+}
+
+.collection-card-tile-trigger:hover .mvp-premium-card {
+  transform: translateY(-4px);
 }
 
 .missing-shelf-wrap { padding: var(--space-2); display: grid; gap: var(--space-2); }
