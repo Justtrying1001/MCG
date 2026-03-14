@@ -2157,3 +2157,5 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
   .home-docs-icon { display: none; }
   .home-genesis { padding: var(--space-3); }
 }
+
+.admin-v2-card-danger { border-color: rgba(249,115,22,.65); background: rgba(249,115,22,.08); }

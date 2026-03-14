@@ -337,6 +337,14 @@ model PackDefinition {
   @@index([cardSetId])
 }
 
+model RewardPackSupply {
+  id            String   @id
+  totalSupply   Int
+  distributed   Int      @default(0)
+  lastUpdatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
 model DropTable {
   id               String   @id @default(cuid())
   packDefinitionId String

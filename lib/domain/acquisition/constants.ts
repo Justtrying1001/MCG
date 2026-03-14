@@ -8,3 +8,5 @@ export const MVP_SALE_PACK_DEFAULTS = {
   plannedPackCount: 10_000,
   cardsPerPack: 5,
 } as const;
+
+export const MVP_REWARD_PACK_TOTAL_SUPPLY = 6_000;
