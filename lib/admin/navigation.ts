@@ -6,22 +6,38 @@ export type AdminNavItem = {
 };
 
 export type AdminNavGroup = {
-  id: "operations" | "build" | "governance" | "support" | "legacy";
+  id: "overview" | "operations" | "governance" | "insights";
   label: string;
   items: AdminNavItem[];
-  deprecated?: boolean;
 };
 
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
-    id: "operations",
-    label: "Main",
+    id: "overview",
+    label: "Overview",
     items: [
-      { href: "/admin", label: "Dashboard", hint: "Simple operational overview" },
-      { href: "/admin/contests", label: "Contests", hint: "Create, run and settle contests" },
-      { href: "/admin/quests", label: "Quests", hint: "Social quests management" },
-      { href: "/admin/milestones", label: "Milestones", hint: "Milestones management" },
-      { href: "/admin/users", label: "Users", hint: "User activity and context" },
+      { href: "/admin", label: "Dashboard", hint: "Health, workload, and quick actions" },
+      { href: "/admin/activity-log", label: "Activity log", hint: "Who did what and when" },
+      { href: "/admin/analytics", label: "Analytics", hint: "Operational trends" },
+    ],
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    items: [
+      { href: "/admin/contests", label: "Contests", hint: "Create, publish, lifecycle, settlement" },
+      { href: "/admin/moderation", label: "Moderation", hint: "Queue review and decisions", critical: true },
+      { href: "/admin/rewards", label: "Rewards", hint: "Manual compensation and grants", critical: true },
+      { href: "/admin/quests", label: "Quests", hint: "Quest catalog and builder" },
+      { href: "/admin/milestones", label: "Milestones", hint: "Milestone progression management" },
+    ],
+  },
+  {
+    id: "governance",
+    label: "Users",
+    items: [
+      { href: "/admin/users", label: "User context", hint: "Search and user-level diagnostics" },
+      { href: "/admin/campaigns", label: "Campaigns", hint: "Catalog and dependencies" },
     ],
   },
 ];

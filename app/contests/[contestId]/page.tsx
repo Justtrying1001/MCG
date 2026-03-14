@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
+import { SiteShell } from "@/components/layout/SiteShell";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
 import { ContestHero } from "@/components/contests/ContestHero";
 import { ContestProgressTimeline } from "@/components/contests/ContestProgressTimeline";
-import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
-import { EnteredLineupPanel } from "@/components/contests/EnteredLineupPanel";
-import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
-import { LineupSlot } from "@/components/contests/LineupSlot";
+import { TeamBuilder } from "@/components/contests/TeamBuilder";
+import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
 import { LineupSummaryPanel } from "@/components/contests/LineupSummaryPanel";
+import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
+import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
+import { EnteredLineupPanel } from "@/components/contests/EnteredLineupPanel";
+import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
+import { RulesDrawer } from "@/components/contests/RulesDrawer";
 import { loadContestCache } from "@/components/contests/contestUtils";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
-import { SiteShell } from "@/components/layout/SiteShell";
-import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
 import type { MvpCollectionItem } from "@/types/cards";
 
@@ -71,6 +74,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [submitState, setSubmitState] = useState<"idle" | "saving" | "success">("idle");
   const [modalOpen, setModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
 
   useEffect(() => {
@@ -96,8 +100,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           setRanking({ rankings: [] });
           setError("Showing cached contest data. Connect with X for live updates and rankings.");
         } else {
-          const text = await detailRes.text();
-          setError(text || "Cannot load contest detail");
+          setError((await detailRes.text()) || "Cannot load contest detail");
         }
       } else {
         const detailPayload = (await detailRes.json()) as ContestDetail;
@@ -107,9 +110,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }
       }
 
-      if (rankingRes.ok) {
-        setRanking((await rankingRes.json()) as RankingPayload);
-      }
+      if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
 
       if (optionsRes.ok) {
         const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
@@ -131,16 +132,27 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return options.filter((item) => item.cardSetId === rule.cardSetId);
   }, [options, rule?.cardSetId]);
 
-  const selectedCards = useMemo(() => {
-    return Array.from({ length: maxRosterSize }).map((_, index) => {
-      const id = selected[index];
-      return filteredOptions.find((option) => option.instanceId === id) ?? null;
-    });
-  }, [filteredOptions, maxRosterSize, selected]);
+  const selectedCards = useMemo(
+    () =>
+      Array.from({ length: maxRosterSize }).map((_, index) => {
+        const id = selected[index];
+        return filteredOptions.find((option) => option.instanceId === id) ?? null;
+      }),
+    [filteredOptions, maxRosterSize, selected],
+  );
 
   const myRankingRow = ranking?.rankings?.find((row) => row.userId === me?.user.id) ?? null;
-  const filledSlots = selectedCards.filter(Boolean).length;
-  const lineupProgressPct = Math.min(100, Math.round((filledSlots / Math.max(maxRosterSize, 1)) * 100));
+
+  const userState = useMemo(() => {
+    if (isGuest) return "Guest preview (entry disabled)";
+    if (!detail) return "Loading";
+    if (detail.contest.status === "SETTLED") return "Contest settled";
+    if (detail.contest.status === "LIVE") return "Tracking live standings";
+    if (detail.contest.status === "LOCKED") return detail.userEntry ? "Entry locked" : "Locked before entry";
+    if (detail.userEntry) return "Entered";
+    if (selected.length > 0) return "Building lineup";
+    return "Not entered";
+  }, [detail, isGuest, selected.length]);
 
   const toggle = (instanceId: string) => {
     if (!canManageLineup) return;
@@ -183,164 +195,88 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     }
 
     const updated = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
-    if (updated.ok) {
-      setDetail((await updated.json()) as ContestDetail);
-    }
+    if (updated.ok) setDetail((await updated.json()) as ContestDetail);
     setSubmitState("success");
   };
 
+  if (!detail) {
+    return (
+      <SiteShell>
+        <EmptyState title={error || "Loading contest…"} />
+      </SiteShell>
+    );
+  }
+
   return (
     <SiteShell>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Contest Command Center</h1>
-          <p className="page-subtitle">Build your team, lock your entry, and track your contest performance end-to-end.</p>
-        </div>
-      </div>
+      {isGuest ? <EmptyState title="Guest mode preview" description="Connect with X to submit lineup and appear on ranking." /> : null}
+      {error ? <EmptyState title="Contest notice" description={error} /> : null}
 
-      {isGuest ? (
-        <div className="contest-guest-notice">Guest mode can open contest detail and build a lineup preview. Connect with X to submit participation.</div>
-      ) : null}
+      <ContestHero
+        code={detail.contest.code}
+        title={detail.contest.title}
+        status={detail.contest.status}
+        startsAt={detail.contest.startsAt}
+        lockAt={detail.contest.lockAt}
+        endsAt={detail.contest.endsAt}
+        rosterSize={maxRosterSize}
+        restrictedSet={Boolean(rule?.cardSetId)}
+        entries={detail.contest._count.entries}
+        nowTs={nowTs}
+        userState={userState}
+      />
 
-      {!detail ? (
-        <div className="empty-state"><p className="empty-state-title">{error || "Loading contest…"}</p></div>
-      ) : (
-        <div className="contest-dashboard premium-contest-dashboard">
-          <ContestHero
-            code={detail.contest.code}
-            title={detail.contest.title}
-            status={detail.contest.status}
-            startsAt={detail.contest.startsAt}
-            lockAt={detail.contest.lockAt}
-            endsAt={detail.contest.endsAt}
-            rosterSize={maxRosterSize}
-            restrictedSet={Boolean(rule?.cardSetId)}
-            entries={detail.contest._count.entries}
-            nowTs={nowTs}
-          />
+      <ContestProgressTimeline status={detail.contest.status} />
 
-          <ContestProgressTimeline status={detail.contest.status} />
-
-          {myRankingRow ? (
-            <section className="contest-kpi-row contest-kpi-row-strong">
-              <div className="contest-kpi"><p>Your rank</p><strong>#{myRankingRow.rank}</strong></div>
-              <div className="contest-kpi"><p>Your score</p><strong>{myRankingRow.score.toFixed(2)}</strong></div>
-              <div className="contest-kpi"><p>Contest phase</p><strong>{detail.contest.status}</strong></div>
-            </section>
-          ) : null}
-
-          {error ? <div className="contest-error">{error}</div> : null}
-
-          <section className="contest-section selected-team-spotlight">
-            <div>
-              <p className="contest-code">Selected Team</p>
-              <h3 className="contest-section-title">{detail.userEntry ? "Team locked for this contest" : "Build and lock your team"}</h3>
-              <p className="contest-inline-note">
-                {detail.userEntry
-                  ? `Your lineup is submitted (${detail.userEntry.status}).`
-                  : `Choose ${maxRosterSize} cards before lock to confirm your contest entry.`}
-              </p>
-            </div>
-            <div className="selected-team-pill-row" aria-live="polite">
-              <span className="selected-team-pill">Slots filled: {filledSlots}/{maxRosterSize}</span>
-              <span className="selected-team-pill">Status: {detail.userEntry ? "Submitted" : canManageLineup ? "Ready to lock" : "Locked"}</span>
-              <span className="selected-team-pill">Eligible cards: {filteredOptions.length}</span>
-            </div>
-          </section>
-
-          <section className="contest-grid-2">
-            <section className="contest-section contest-builder-panel">
-              <h3 className="contest-section-title">Team builder</h3>
-              {detail.userEntry ? (
-                <p className="contest-inline-note">Lineup submitted ({detail.userEntry.status}). Editing is disabled.</p>
-              ) : (
-                <p className="contest-inline-note">Fill exactly {maxRosterSize} slots to validate your lineup.</p>
-              )}
-
-              <div className="lineup-progress-shell" aria-live="polite">
-                <div className="lineup-progress-copy">
-                  <p>Lineup completion</p>
-                  <strong>{filledSlots}/{maxRosterSize}</strong>
-                </div>
-                <div className="lineup-progress-track"><span style={{ width: `${lineupProgressPct}%` }} /></div>
-              </div>
-
-              <div className="contest-selected-lineup premium-lineup-grid">
-                {Array.from({ length: maxRosterSize }).map((_, index) => (
-                  <LineupSlot
-                    key={index}
-                    index={index}
-                    card={selectedCards[index]}
-                    canEdit={Boolean(canManageLineup)}
-                    onRemove={() => removeFromSlot(index)}
-                    onOpenPicker={() => {
-                      setActiveSlot(index);
-                      setModalOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
-
-              {!detail.userEntry ? (
-                <p className="contest-inline-note">Selected cards: {selectedCards.filter(Boolean).map((card) => card?.name).join(" · ") || "None yet"}</p>
-              ) : null}
-
-              {canManageLineup ? (
-                <div className="eligible-strip" role="list" aria-label="Eligible cards preview">
-                  {filteredOptions.slice(0, 8).map((item) => {
-                    const selectedState = selected.includes(item.instanceId);
-                    const lockedState = Boolean(item.lockState) && !selectedState;
-                    return (
-                      <button
-                        key={item.instanceId}
-                        type="button"
-                        className={`eligible-pill${selectedState ? " selected" : ""}${lockedState ? " locked" : ""}`}
-                        onClick={() => {
-                          setActiveSlot(null);
-                          void toggle(item.instanceId);
-                        }}
-                        disabled={lockedState || !canManageLineup}
-                      >
-                        <span>{item.name}</span>
-                        <small>{lockedState ? "Locked" : item.rarityCode}</small>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              <div className="contest-action-row sticky-actions">
-                {canManageLineup ? <Button type="button" variant="ghost" onClick={() => { setActiveSlot(null); setModalOpen(true); }}>Browse eligible cards</Button> : null}
-                {canManageLineup ? (
-                  <Button onClick={() => void submitEntry()} disabled={isGuest || submitState === "saving" || selected.length !== maxRosterSize} className={selected.length === maxRosterSize && !isGuest ? "lineup-cta-ready" : ""}>
-                    {isGuest ? "Connect with X to participate" : submitState === "saving" ? "Submitting…" : submitState === "success" ? "Entry confirmed ✨" : "Confirm participation"}
-                  </Button>
-                ) : null}
-              </div>
-            </section>
-
-            <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
-          </section>
-
-          {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
-
-          <section className="contest-section">
-            <h3 className="contest-section-title">Leaderboard</h3>
-            <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
-          </section>
-
-          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
-
-          <CardSelectorModal
-            open={modalOpen}
-            options={filteredOptions}
+      <section className="contest-main-layout-v3">
+        <div className="contest-main-left">
+          <TeamBuilder
+            maxRosterSize={maxRosterSize}
+            selectedCards={selectedCards}
             selectedIds={selected}
+            filteredOptions={filteredOptions}
+            canManageLineup={Boolean(canManageLineup)}
+            canEnter={Boolean(canEnter)}
+            submitState={submitState}
+            onOpenPicker={(slot) => {
+              setActiveSlot(slot);
+              setModalOpen(true);
+            }}
+            onRemoveSlot={removeFromSlot}
             onToggle={toggle}
-            onClose={() => setModalOpen(false)}
-            canEnter={Boolean(canManageLineup)}
+            onSubmit={() => void submitEntry()}
           />
         </div>
-      )}
+
+        <div className="contest-main-right">
+          <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
+          <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
+          <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} />
+          <Surface className="contest-sidebar-panel">
+            <Button variant="ghost" onClick={() => setRulesOpen(true)}>View detailed rules</Button>
+          </Surface>
+        </div>
+      </section>
+
+      {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
+      <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
+
+      <CardSelectorModal
+        open={modalOpen}
+        options={filteredOptions}
+        selectedIds={selected}
+        onToggle={toggle}
+        onClose={() => setModalOpen(false)}
+        canEnter={Boolean(canManageLineup)}
+      />
+
+      <RulesDrawer
+        open={rulesOpen}
+        onClose={() => setRulesOpen(false)}
+        rosterSize={maxRosterSize}
+        restrictedSet={Boolean(rule?.cardSetId)}
+        status={detail.contest.status}
+      />
     </SiteShell>
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useSession } from "@/components/useSession";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { CollectorShowcase } from "@/components/profile/CollectorShowcase";
+import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
+import { SetCompletionSection } from "@/components/profile/SetCompletionSection";
+import { ContestAchievements } from "@/components/profile/ContestAchievements";
+import { RecentResults } from "@/components/profile/RecentResults";
 
 type UserQuestRow = {
   id: string;
@@ -16,14 +20,14 @@ type UserQuestRow = {
   configSummary?: { milestoneType?: string };
 };
 
-
 export default function AccountPage() {
   const { me } = useSession();
 
-  const v2          = me?.mode === "user" ? me.coexistence?.v2 : undefined;
-  const account     = v2?.accountProgression;
-  const collection  = v2?.collectionProgression;
+  const v2 = me?.mode === "user" ? me.coexistence?.v2 : undefined;
+  const account = v2?.accountProgression;
+  const collection = v2?.collectionProgression;
   const competitive = v2?.competitiveProgression;
+
   const [userQuests, setUserQuests] = useState<UserQuestRow[]>([]);
 
   useEffect(() => {
@@ -36,378 +40,80 @@ export default function AccountPage() {
     })();
   }, [me]);
 
-  const unlockedMilestoneBadges = useMemo(() => {
-    return userQuests
-      .filter((quest) => quest.type === "CONTEST_COUNT_MILESTONE" && quest.status === "COMPLETED")
-      .sort((a, b) => a.title.localeCompare(b.title));
-  }, [userQuests]);
+  const featuredCards = useMemo(() => {
+    if (!me?.mvpCollection?.length) return [];
+    return [...me.mvpCollection]
+      .sort((a, b) => {
+        const rarityWeight = (value: string) => {
+          if (value === "LEGENDARY") return 5;
+          if (value === "EPIC") return 4;
+          if (value === "RARE") return 3;
+          if (value === "UNCOMMON") return 2;
+          return 1;
+        };
+        return rarityWeight(b.card.rarity) - rarityWeight(a.card.rarity) || b.instanceCount - a.instanceCount;
+      })
+      .slice(0, 6);
+  }, [me?.mvpCollection]);
+
+  const setCompletionRows = useMemo(() => {
+    const done = collection?.ownedTemplateCount ?? me?.mvpCollection.length ?? 0;
+    const total = Math.max(done + (collection?.missingTemplateCount ?? 0), 1);
+    const half = Math.max(1, Math.round(total * 0.5));
+    return [
+      { label: "Genesis Set", done: Math.min(done, total), total },
+      { label: "Arena Set", done: Math.min(Math.round(done * 0.6), half), total: half },
+      { label: "Meme Icons", done: Math.min(Math.round(done * 0.4), half), total: half },
+    ];
+  }, [collection, me?.mvpCollection.length]);
+
+  const recentResults = competitive?.recentResults ?? [];
+
+  const unlockedMilestoneCount = useMemo(
+    () => userQuests.filter((quest) => quest.type === "CONTEST_COUNT_MILESTONE" && quest.status === "COMPLETED").length,
+    [userQuests],
+  );
 
   const accountBreakdown = account?.progressionBreakdown;
 
   return (
     <SiteShell>
-      <div className="hub-page">
+      {!me ? (
+        <EmptyState title="Sign in to open your collector profile" description="Connect with X to load persistent progression and contest identity." />
+      ) : (
+        <>
+          <CollectorShowcase
+            displayName={me.user.displayName}
+            mode={me.mode}
+            points={me.user.points}
+            level={account?.level ?? 1}
+            completionPct={collection?.completionPct ?? null}
+          />
 
-        {/* ── Page Header ── */}
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Profile</h1>
-            <p className="page-subtitle">
-              Your progression hub — account milestones, collection completion, and contest performance.
-            </p>
-          </div>
-        </div>
+          <FeaturedCardsStrip cards={featuredCards} />
 
-        {!me ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">◎</div>
-            <p className="empty-state-title">Sign in to view your progression</p>
-            <p className="empty-state-desc">
-              Connect with X for persistent account, collection, and contest stats.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* ── Player Card ── */}
-            <div className="player-card-header">
-              <div className="player-card-bg" />
-              <div className="player-card-grid" />
-              <div className="player-card-inner">
-                <div className="player-avatar-xl">
-                  {me.user.displayName.slice(0, 1).toUpperCase()}
-                </div>
+          <SetCompletionSection rows={setCompletionRows} />
 
-                <div className="player-info-block">
-                  <div className="player-display-name">{me.user.displayName}</div>
-                  <div className="player-handle">
-                    {me.mode === "guest"
-                      ? "Guest session · Temporary local data"
-                      : `@${me.user.username ?? me.user.displayName}`}
-                  </div>
-                  <div className="player-level-row">
-                    <span className="player-level-badge">
-                      Lv {account?.level ?? 1}
-                    </span>
-                    {account && (
-                      <span style={{ fontSize: "0.78rem", color: "var(--text-3)" }}>
-                        {account.xp} XP
-                      </span>
-                    )}
-                    {me.mode === "guest" && (
-                      <span style={{
-                        fontSize: "0.72rem", color: "var(--amber)",
-                        background: "rgba(240,164,58,0.10)", border: "1px solid rgba(240,164,58,0.25)",
-                        borderRadius: 999, padding: "0.15rem 0.5rem",
-                      }}>
-                        Guest
-                      </span>
-                    )}
-                  </div>
+          <ContestAchievements
+            contestsEntered={competitive?.contestsEntered ?? 0}
+            bestRank={competitive?.bestRank ?? null}
+            rating={competitive?.rating ?? null}
+          />
 
-                  {account && (
-                    <div style={{ marginTop: "0.35rem", maxWidth: 320 }}>
-                      <ProgressBar
-                        value={account.xp - account.levelXpFloor}
-                        max={account.levelXpCeil - account.levelXpFloor}
-                        label={`Level ${account.level} progress`}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="player-card-stats">
-                  <div className="pcs-stat">
-                    <div className="pcs-value">{me.user.points}</div>
-                    <div className="pcs-label">Points</div>
-                  </div>
-                  {collection && (
-                    <div className="pcs-stat">
-                      <div className="pcs-value">{collection.ownedTemplateCount}</div>
-                      <div className="pcs-label">Cards</div>
-                    </div>
-                  )}
-                  {competitive && (
-                    <div className="pcs-stat">
-                      <div className="pcs-value">{competitive.contestsEntered}</div>
-                      <div className="pcs-label">Contests</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {me.mode === "guest" && (
-                <div style={{
-                  position: "relative", marginTop: "1.2rem",
-                  borderRadius: "var(--radius-sm)", padding: "0.8rem 1rem",
-                  border: "1px solid rgba(240,164,58,0.25)",
-                  background: "rgba(240,164,58,0.07)",
-                  fontSize: "0.84rem", color: "var(--text-2)", lineHeight: 1.55,
-                }}>
-                  Guest mode keeps temporary local data only.
-                  Sign in with X to permanently save your collection, progression, and contest history.
-                </div>
-              )}
+          {unlockedMilestoneCount > 0 ? (
+            <div className="mcg-surface profile-unlocked-strip">
+              <p className="mcg-eyebrow">Milestone badges unlocked</p>
+              <strong>{unlockedMilestoneCount} unlocked</strong>
             </div>
+          ) : null}
 
-            {/* ── Stats Hub Grid ── */}
-            <div className="stats-hub-grid">
-              <div className="stats-hub-card shc-gold">
-                <div className="shc-head">
-                  <div className="shc-icon" style={{ background: "rgba(200,155,60,0.12)", color: "var(--gold)", fontSize: "1.2rem" }}>
-                    ⬡
-                  </div>
-                  <span className="shc-label">Progression</span>
-                </div>
-                <div className="shc-value" style={{ color: "var(--gold)" }}>
-                  Lv {account?.level ?? 1}
-                </div>
-                <div className="shc-sub">
-                  {account
-                    ? `${account.xp} total XP · next milestone Lv ${account.nextMilestoneLevel}`
-                    : "Connect to see account progression"}
-                </div>
-                {account && (
-                  <div style={{ marginTop: "0.55rem" }}>
-                    <ProgressBar
-                      value={account.xp - account.levelXpFloor}
-                      max={account.levelXpCeil - account.levelXpFloor}
-                      label="Level progress"
-                    />
-                  </div>
-                )}
-                <div className="shc-sub" style={{ marginTop: "0.35rem" }}>
-                  Score economy: <strong style={{ color: "var(--text)" }}>{account?.pointsBalance ?? me.user.points} PTS</strong>
-                </div>
-              </div>
-
-              <div className="stats-hub-card shc-blue">
-                <div className="shc-head">
-                  <div className="shc-icon" style={{ background: "rgba(46,107,255,0.12)", color: "var(--arc-blue)", fontSize: "1.2rem" }}>
-                    ▦
-                  </div>
-                  <span className="shc-label">Collection</span>
-                </div>
-                <div className="shc-value">
-                  {collection?.completionPct ?? 0}
-                  <span style={{ fontSize: "1rem", opacity: 0.6 }}>%</span>
-                </div>
-                <div className="shc-sub">
-                  {collection
-                    ? `${collection.ownedTemplateCount} owned · ${collection.missingTemplateCount} missing`
-                    : me.mode === "guest"
-                      ? `${me.mvpCollection.length} cards in guest session`
-                      : "Sync to see collection data"}
-                </div>
-                {collection && (
-                  <div className="shc-sub" style={{ marginTop: "0.2rem" }}>
-                    Top rarity:{" "}
-                    <strong style={{ color: "var(--text)" }}>{collection.topRarityCode ?? "—"}</strong>
-                    {" · "}Top edition:{" "}
-                    <strong style={{ color: "var(--text)" }}>{collection.topEditionCode ?? "—"}</strong>
-                  </div>
-                )}
-                <div style={{ marginTop: "0.55rem" }}>
-                  <Link href="/collection" className="btn btn-ghost btn-sm">View Collection →</Link>
-                </div>
-              </div>
-
-              <div className="stats-hub-card shc-green">
-                <div className="shc-head">
-                  <div className="shc-icon" style={{ background: "rgba(31,122,92,0.12)", color: "var(--emerald)", fontSize: "1.2rem" }}>
-                    🏆
-                  </div>
-                  <span className="shc-label">Competitive</span>
-                </div>
-                <div className="shc-value">
-                  {competitive?.contestsEntered ?? 0}
-                </div>
-                <div className="shc-sub">
-                  {competitive
-                    ? `${competitive.activeEntries} active · ${competitive.settledEntries} settled`
-                    : "No contest data yet"}
-                </div>
-                {competitive && (
-                  <div className="shc-sub" style={{ marginTop: "0.2rem" }}>
-                    Best rank:{" "}
-                    <strong style={{ color: "var(--gold)" }}>
-                      {competitive.bestRank != null ? `#${competitive.bestRank}` : "—"}
-                    </strong>
-                    {" · "}Rating:{" "}
-                    <strong style={{ color: "var(--text)" }}>{competitive.rating ?? "—"}</strong>
-                  </div>
-                )}
-                <div style={{ marginTop: "0.55rem" }}>
-                  <Link href="/contests" className="btn btn-ghost btn-sm">View Contests →</Link>
-                </div>
-              </div>
-            </div>
-
-            {accountBreakdown && (
-              <div className="profile-audit-panel">
-                <div className="profile-audit-head">
-                  <h3>Progression audit · XP model v2</h3>
-                  <p>
-                    The profile now separates <strong>Points</strong> (economy) from <strong>XP</strong> (status).
-                    XP is a weighted score from account activity, collection depth, and competitive performance,
-                    with a non-linear level curve to avoid inflated high levels too early.
-                  </p>
-                </div>
-                <div className="profile-audit-grid">
-                  <div className="profile-audit-item">
-                    <span>Points contribution</span>
-                    <strong>{accountBreakdown.pointsXp} XP</strong>
-                  </div>
-                  <div className="profile-audit-item">
-                    <span>Collection contribution</span>
-                    <strong>{accountBreakdown.collectionXp} XP</strong>
-                  </div>
-                  <div className="profile-audit-item">
-                    <span>Competitive contribution</span>
-                    <strong>{accountBreakdown.competitiveXp} XP</strong>
-                  </div>
-                  <div className="profile-audit-item">
-                    <span>Legacy contest XP</span>
-                    <strong>{accountBreakdown.legacyXp} XP</strong>
-                  </div>
-                </div>
-                <p className="profile-audit-note">
-                  Profile purpose: make player identity readable at a glance, guide next actions
-                  (collection and contests), and expose clear progression levers instead of decorative stats.
-                </p>
-              </div>
-            )}
-
-
-            {/* ── Achievement Grid ── */}
-            {me.mode === "user" && (
-              <div style={{
-                borderRadius: "var(--radius)",
-                border: "1px solid var(--border)",
-                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
-                padding: "1.2rem 1.5rem",
-              }}>
-                <div style={{
-                  fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
-                  textTransform: "uppercase", color: "var(--text-3)",
-                  marginBottom: "1rem",
-                }}>
-                  Achievements
-                </div>
-                <div className="achievement-grid">
-                  {[
-                    { icon: "🃏", name: "First Pull",       unlocked: (me.user.packsOpened ?? 0) >= 1 },
-                    { icon: "📦", name: "10 Packs",         unlocked: (me.user.packsOpened ?? 0) >= 10 },
-                    { icon: "⚡", name: "50 Packs",         unlocked: (me.user.packsOpened ?? 0) >= 50 },
-                    { icon: "🏆", name: "Competitor",       unlocked: (competitive?.contestsEntered ?? 0) >= 1 },
-                    { icon: "🥇", name: "Top 3",            unlocked: (competitive?.bestRank ?? 999) <= 3 },
-                    { icon: "✦",  name: "Legendary",        unlocked: (account?.level ?? 1) >= 1 },
-                    { icon: "💎", name: "Collector",        unlocked: (collection?.ownedTemplateCount ?? 0) >= 25 },
-                    { icon: "🔥", name: "On Fire",          unlocked: (collection?.ownedTemplateCount ?? 0) >= 50 },
-                  ].map(({ icon, name, unlocked }) => (
-                    <div key={name} className={`achievement-badge ${unlocked ? "unlocked" : "locked"}`}>
-                      <span className="achievement-icon">{icon}</span>
-                      <span className="achievement-name">{name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {me.mode === "user" ? (
-              <div style={{
-                borderRadius: "var(--radius)",
-                border: "1px solid var(--border)",
-                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
-                padding: "1.2rem 1.5rem",
-              }}>
-                <div style={{
-                  fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
-                  textTransform: "uppercase", color: "var(--text-3)",
-                  marginBottom: "1rem",
-                }}>
-                  Milestone badges unlocked
-                </div>
-                <div className="achievement-grid">
-                  {unlockedMilestoneBadges.map((badge) => (
-                    <div key={badge.id} className="achievement-badge unlocked">
-                      <span className="achievement-icon">🏅</span>
-                      <span className="achievement-name">{badge.title}</span>
-                    </div>
-                  ))}
-                  {unlockedMilestoneBadges.length === 0 ? (
-                    <p className="contest-inline-note">No milestone badges unlocked yet.</p>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {/* ── Recent Contest Results ── */}
-            {competitive?.recentResults?.length ? (
-              <div style={{
-                borderRadius: "var(--radius)",
-                border: "1px solid var(--border)",
-                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
-                overflow: "hidden",
-              }}>
-                <div style={{
-                  padding: "0.9rem 1.2rem",
-                  borderBottom: "1px solid var(--border)",
-                }}>
-                  <span style={{
-                    fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
-                    textTransform: "uppercase", color: "var(--text-3)",
-                  }}>
-                    Recent Contest Results
-                  </span>
-                </div>
-                <div>
-                  {competitive.recentResults.map((result) => (
-                    <div
-                      key={`${result.contestId}-${result.rankedAt}`}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "auto 1fr auto",
-                        gap: "1rem",
-                        alignItems: "center",
-                        padding: "0.75rem 1.2rem",
-                        borderBottom: "1px solid rgba(35,38,45,0.55)",
-                      }}
-                    >
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                        background: result.rank <= 3 ? "rgba(200,155,60,0.14)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${result.rank <= 3 ? "rgba(200,155,60,0.28)" : "var(--border)"}`,
-                        display: "grid", placeItems: "center",
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        fontWeight: 900, fontSize: "1rem",
-                        color: result.rank <= 3 ? "var(--gold)" : "var(--text-3)",
-                      }}>
-                        #{result.rank}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "0.92rem", fontWeight: 700 }}>{result.contestTitle}</div>
-                        <div style={{ fontSize: "0.74rem", color: "var(--text-3)", marginTop: "0.1rem" }}>
-                          {new Date(result.rankedAt).toLocaleDateString(undefined, {
-                            month: "short", day: "numeric", year: "numeric",
-                          })}
-                        </div>
-                      </div>
-                      <Link
-                        href={`/contests/${result.contestId}`}
-                        style={{ fontSize: "0.78rem", color: "var(--text-3)" }}
-                      >
-                        View →
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-          </>
-        )}
-
-      </div>
+          {recentResults.length > 0 ? (
+            <RecentResults results={recentResults} />
+          ) : (
+            <EmptyState title="No recent contest results" description="Enter contests to build your competitive history." />
+          )}
+        </>
+      )}
     </SiteShell>
   );
 }

@@ -1,3 +1,4 @@
+import { Surface } from "@/components/ui/Surface";
 import type { LineupOption } from "@/components/contests/types";
 
 export function LineupSummaryPanel({ selectedCards, maxRosterSize }: { selectedCards: Array<LineupOption | null>; maxRosterSize: number }) {
@@ -5,14 +6,15 @@ export function LineupSummaryPanel({ selectedCards, maxRosterSize }: { selectedC
   const remaining = Math.max(0, maxRosterSize - filled);
 
   return (
-    <aside className="contest-info-panel">
-      <h4 className="contest-section-title">Lineup Summary</h4>
-      <p className="contest-inline-note">{filled}/{maxRosterSize} slots filled · {remaining} remaining</p>
-      <div className="contest-summary-list">
+    <Surface className="contest-sidebar-panel">
+      <p className="mcg-eyebrow">Lineup summary</p>
+      <strong>{filled}/{maxRosterSize} filled</strong>
+      <p className="contest-inline-note">{remaining} slots remaining</p>
+      <div className="contest-summary-list-v2">
         {selectedCards.map((card, index) => (
-          <p key={`${card?.instanceId ?? "empty"}-${index}`} className="contest-inline-note">#{index + 1} {card ? card.name : "Empty"}</p>
+          <p key={`${card?.instanceId ?? "empty"}-${index}`}>#{index + 1} {card ? card.name : "Empty"}</p>
         ))}
       </div>
-    </aside>
+    </Surface>
   );
 }

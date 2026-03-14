@@ -1,0 +1,44 @@
+:root {
+  --ink-deep: #0f1419;
+  --ink-mid: #1b232c;
+  --ink-light: #263240;
+
+  --clay: #c4715a;
+  --slate: #8fa1b3;
+  --chalk: #e9f2ff;
+  --fog: #b8c4cc;
+
+  --success: #6fbf8f;
+  --warning: #e3b05f;
+  --danger: #d86d6d;
+
+  --rarity-common: #9ba8a3;
+  --rarity-uncommon: #6b8f71;
+  --rarity-rare: #5c7a8b;
+  --rarity-epic: #8b7fab;
+  --rarity-legendary: #d4a84b;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 3px 12px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 42px rgba(0, 0, 0, 0.42);
+
+  --bp-sm: 640px;
+  --bp-md: 860px;
+  --bp-lg: 1120px;
+  --bp-xl: 1280px;
+
+  --content-max: 1280px;
+  --nav-h: 72px;
+}

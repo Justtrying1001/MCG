@@ -3,6 +3,11 @@ import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./design-system.css";
+import "../styles/tokens.css";
+import "../styles/semantic.css";
+import "../styles/motion.css";
+import "../styles/layout.css";
+import "../styles/components.css";
 
 export const metadata: Metadata = {
   title: "MCG · Meme Card Game",

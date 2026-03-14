@@ -1,15 +1,19 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
-import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { Modal } from "@/components/ui/Modal";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
+import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
+import { PackGallery } from "@/components/packs/PackGallery";
+import { PackOddsDrawer } from "@/components/packs/PackOddsDrawer";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
 import type { MvpCardView } from "@/types/cards";
-import Image from "next/image";
-import { useMemo, useState, useEffect } from "react";
 import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
@@ -24,25 +28,38 @@ type PackConfigPayload = {
     remainingPackCount: number;
     isActive: boolean;
   };
-  slots: Array<{ index: number; type: string; label: string; rarityOdds: Array<{ rarityCode: string; pct: number }>; rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }> }>;
+  slots: Array<{
+    index: number;
+    type: string;
+    label: string;
+    rarityOdds: Array<{ rarityCode: string; pct: number }>;
+    rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }>;
+  }>;
 };
 
 export default function PacksPage() {
   const { me, refresh, updateGuestState } = useSession();
-  const [resultMvp, setResultMvp]       = useState<MvpCardView[]>([]);
-  const [isOpening, setIsOpening]       = useState(false);
-  const [revealed, setRevealed]         = useState<boolean[]>([]);
+  const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
+  const [isOpening, setIsOpening] = useState(false);
+  const [revealed, setRevealed] = useState<boolean[]>([]);
   const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
-  const [packConfig, setPackConfig]     = useState<PackConfigPayload | null>(null);
-  const [zoomedCard, setZoomedCard]     = useState<MvpCardView | null>(null);
+  const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
+  const [zoomedCard, setZoomedCard] = useState<MvpCardView | null>(null);
+  const [oddsOpen, setOddsOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
     fetch("/api/pack/config")
-      .then((r) => r.ok ? r.json() : null)
-      .then((p) => { if (active) setPackConfig(p as PackConfigPayload | null); })
-      .catch(() => { if (active) setPackConfig(null); });
-    return () => { active = false; };
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (active) setPackConfig(p as PackConfigPayload | null);
+      })
+      .catch(() => {
+        if (active) setPackConfig(null);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const revealSize = resultMvp.length;
@@ -57,20 +74,26 @@ export default function PacksPage() {
     setResultMvp([]);
     setRevealed([]);
 
-    const guestState = me.mode === "guest" ? {
-      points: me.user.points, packsOpened: me.user.packsOpened,
-      mvpCollection: me.mvpCollection, openingsCount: me.openingsCount,
-    } : undefined;
+    const guestState =
+      me.mode === "guest"
+        ? {
+            points: me.user.points,
+            packsOpened: me.user.packsOpened,
+            mvpCollection: me.mvpCollection,
+            openingsCount: me.openingsCount,
+          }
+        : undefined;
 
-    const res = await fetch(
-      me.mode === "guest" ? "/api/guest/pack/open" : "/api/pack/open",
-      { method: "POST", headers: { "Content-Type": "application/json" },
-        body: guestState ? JSON.stringify({ state: guestState }) : undefined }
-    );
+    const res = await fetch(me.mode === "guest" ? "/api/guest/pack/open" : "/api/pack/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: guestState ? JSON.stringify({ state: guestState }) : undefined,
+    });
 
     if (!res.ok) {
       alert(await res.text());
-      setIsOpening(false); setOpeningPhase("idle");
+      setIsOpening(false);
+      setOpeningPhase("idle");
       return;
     }
 
@@ -79,7 +102,8 @@ export default function PacksPage() {
 
     if (pulledMvp.length === 0) {
       alert("Pack opened but MVP reveal payload is missing. Please refresh and retry.");
-      setIsOpening(false); setOpeningPhase("idle");
+      setIsOpening(false);
+      setOpeningPhase("idle");
       if (me.mode === "guest") updateGuestState(payload.state);
       else await refresh();
       return;
@@ -90,7 +114,7 @@ export default function PacksPage() {
       setRevealed(new Array(pulledMvp.length).fill(false));
       setOpeningPhase("revealing");
       setIsOpening(false);
-    }, 1000);
+    }, 900);
 
     if (me.mode === "guest") updateGuestState(payload.state);
     else await refresh();
@@ -102,32 +126,34 @@ export default function PacksPage() {
   };
 
   const closeReveal = () => {
-    setResultMvp([]); setRevealed([]);
-    setOpeningPhase("idle"); setZoomedCard(null);
+    setResultMvp([]);
+    setRevealed([]);
+    setOpeningPhase("idle");
+    setZoomedCard(null);
   };
 
   const revealCards = useMemo(
-    () => resultMvp.map((card, i) => ({
-      key: `${card.templateId}_${i}`,
-      render: <MvpCardTile card={card} quantity={1} variant="reveal" />,
-    })),
-    [resultMvp]
+    () =>
+      resultMvp.map((card, i) => ({
+        key: `${card.templateId}_${i}`,
+        render: <MvpCardTile card={card} quantity={1} variant="reveal" />,
+      })),
+    [resultMvp],
   );
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
-  const packPlanned   = packConfig?.pack?.plannedPackCount;
-  const cardsPerPack  = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+  const packPlanned = packConfig?.pack?.plannedPackCount;
+  const cardsPerPack = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+
   const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
     const aggregate = new Map<string, number>();
-
     for (const slot of packConfig?.slots ?? []) {
       for (const odd of slot.rarityOdds ?? []) {
         const key = odd.rarityCode.toUpperCase();
-        aggregate.set(key, (aggregate.get(key) ?? 0) + (odd.pct / totalSlots));
+        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / totalSlots);
       }
     }
-
     return Array.from(aggregate.entries())
       .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
       .sort((a, b) => b.rate - a.rate);
@@ -136,226 +162,109 @@ export default function PacksPage() {
   const editionRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
     const aggregate = new Map<string, number>();
-
     for (const slot of packConfig?.slots ?? []) {
       for (const odd of slot.rarityEditionOdds ?? []) {
         const key = odd.editionCode.toUpperCase();
-        aggregate.set(key, (aggregate.get(key) ?? 0) + (odd.pct / totalSlots));
+        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / totalSlots);
       }
     }
-
     return Array.from(aggregate.entries())
       .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
       .sort((a, b) => b.rate - a.rate);
   }, [cardsPerPack, packConfig?.slots]);
 
+  const galleryItems = useMemo(
+    () => [
+      { code: "S01-BASE", name: "Genesis Base Booster", kind: "base" as const, cards: cardsPerPack, status: "open" as const },
+      { code: "S01-PRM", name: "Genesis Premium Booster", kind: "premium" as const, cards: 8, status: "locked" as const },
+      { code: "EVT-001", name: "Event Spotlight Pack", kind: "event" as const, cards: 5, status: "locked" as const },
+    ],
+    [cardsPerPack],
+  );
+
   return (
     <SiteShell>
-      <div className="hub-page">
+      {!me ? (
+        <EmptyState title="Connect to open packs" description="Sign in with X or start a guest session to reveal cards." />
+      ) : null}
 
-        {/* ── Page Header ── */}
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Open Packs</h1>
-            <p className="page-subtitle">
-              Open a Genesis Booster, flip each card in order, and keep every reveal.
-            </p>
+      <FeaturedPackStage
+        packImageSrc={officialPackImage}
+        packName={packConfig?.pack?.displayName ?? "Genesis Booster"}
+        cardsPerPack={cardsPerPack}
+        remaining={packRemaining}
+        planned={packPlanned}
+        isOpening={isOpening}
+        openingPhase={openingPhase}
+        canOpen={Boolean(me) && !isOpening && openingPhase !== "tearing"}
+        onOpen={() => void openPack()}
+        onOpenOdds={() => setOddsOpen(true)}
+      />
+
+      <PackGallery items={galleryItems} />
+
+      <PackOddsDrawer
+        open={oddsOpen}
+        onClose={() => setOddsOpen(false)}
+        rarityRows={rarityRows}
+        editionRows={editionRows}
+        remaining={packRemaining}
+        planned={packPlanned}
+      />
+
+      <Modal
+        title={allRevealed ? "Pack complete — all cards revealed" : "Pack reveal — flip cards in order"}
+        open={revealSize > 0 && openingPhase === "revealing"}
+        onClose={closeReveal}
+      >
+        <div className="reveal-progress-wrap">
+          <div className="pack-reveal-head-row">
+            <p className="reveal-progress-text">Revealed {revealedCount} / {revealSize}</p>
+            {!allRevealed ? <p className="reveal-next-copy">Next: click card #{nextRevealIndex + 1}</p> : null}
+          </div>
+          <div className="reveal-progress-track">
+            <div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(revealSize, 1)) * 100}%` }} />
           </div>
         </div>
 
-        {/* ── Mode Banner ── */}
-        {!me ? (
-          <div className="warning-banner">
-            Sign in with X or start a guest session to open packs and reveal cards.
-          </div>
-        ) : me.mode === "guest" ? (
-          <div className="info-banner">
-            Guest mode is local and temporary. Connect with X to save your collection permanently.
-          </div>
-        ) : (
-          <div className="success-banner">
-            Authenticated — every card you pull is saved directly to your collection.
-          </div>
-        )}
-
-        {/* ── Pack Stage ── */}
-        <div className={`pack-stage${openingPhase === "tearing" ? " is-opening" : ""}`}>
-
-          <div className="pack-stage-layout">
-            <div className="pack-center">
-              <div className={`pack-visual${openingPhase === "idle" ? " pack-visual-idle" : ""}${openingPhase === "tearing" ? " is-tearing" : ""}`}>
-                <Image
-                  src={officialPackImage}
-                  alt="Official MCG Genesis Booster pack"
-                  className="pack-visual-image"
-                  priority
-                />
-                <div className="pack-open-flash" />
-              </div>
-
-              <div className="pack-action-copy">
-                <p className="pack-action-title">Genesis Booster — Standard Pull</p>
-                <p className="pack-action-desc">Flip all {cardsPerPack} cards one by one.</p>
-              </div>
-
-              <Button
-                onClick={() => void openPack()}
-                disabled={!me || isOpening || openingPhase === "tearing"}
-                className="btn-lg"
+        <div className="pack-reveal-grid">
+          {revealCards.map((card, index) => {
+            const isCardRevealed = revealed[index];
+            const isNext = index === nextRevealIndex;
+            return (
+              <button
+                key={card.key}
+                className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`}
+                onClick={() => {
+                  if (isCardRevealed) {
+                    setZoomedCard(resultMvp[index] ?? null);
+                    return;
+                  }
+                  handleReveal(index);
+                }}
+                disabled={!isCardRevealed && !isNext}
               >
-                {openingPhase === "tearing"
-                  ? "Breaking seal…"
-                  : isOpening
-                    ? "Preparing reveal…"
-                    : "Open Pack"}
-              </Button>
-
-              {openingPhase === "tearing" && (
-                <p className="pack-opening-status">Foil tearing… cards incoming.</p>
-              )}
-            </div>
-
-            <aside className="pack-overview-card">
-              <p className="pack-info-title">Genesis Booster · S01</p>
-              <p className="pack-info-desc">A premium five-card pull with live supply and transparent odds.</p>
-
-              <div className="pack-metrics">
-                <div className="pack-metric-line">
-                  <span className="pack-metric-label">Price</span>
-                  <span className="pack-metric-value">{GAME_CONFIG.PACK_COST} pts</span>
-                </div>
-                <div className="pack-metric-line">
-                  <span className="pack-metric-label">Supply</span>
-                  <span className="pack-metric-value">
-                    {typeof packRemaining === "number" ? packRemaining.toLocaleString() : "—"} left · {typeof packPlanned === "number" ? packPlanned.toLocaleString() : "—"} total
-                  </span>
-                </div>
-              </div>
-
-              {typeof packRemaining === "number" && typeof packPlanned === "number" && (
-                <div className="pack-supply-progress">
-                  <div className="pack-supply-head">
-                    <span>Live supply</span>
-                    <span>{packRemaining.toLocaleString()} / {packPlanned.toLocaleString()}</span>
+                <div className="reveal-slot-inner">
+                  <div className="reveal-slot-face reveal-slot-back">
+                    <Image src={versoImage} alt="Card back" className="reveal-slot-back-image" />
+                    <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
                   </div>
-                  <div className="pack-supply-track">
-                    <div
-                      className="pack-supply-fill"
-                      style={{ width: `${Math.round((packRemaining / Math.max(packPlanned, 1)) * 100)}%` }}
-                    />
-                  </div>
+                  <div className="reveal-slot-face reveal-slot-front">{card.render}</div>
                 </div>
-              )}
-
-              <div className="pack-pill-row">
-                <span className="pack-pill">{cardsPerPack} cards</span>
-              </div>
-
-              <div className="pack-drop-hover">
-                <p className="pack-drop-trigger">Hover to view current drop rates by rarity and edition.</p>
-                <div className="pack-drop-popover" role="tooltip" aria-label="Drop rates details">
-                  <div className="pack-rates-split">
-                    <div>
-                      <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By rarity</p>
-                      <table className="pack-rates-table" aria-label="Pack drop rates by rarity">
-                        <thead><tr><th>Rarity</th><th>Rate</th></tr></thead>
-                        <tbody>
-                          {rarityRows.slice(0, 5).map((row) => (
-                            <tr key={`rarity_${row.label}`}><td>{row.label}</td><td>{row.rate}%</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div>
-                      <p className="pack-odds-label" style={{ marginBottom: "0.2rem" }}>By edition</p>
-                      <table className="pack-rates-table" aria-label="Pack drop rates by edition">
-                        <thead><tr><th>Edition</th><th>Rate</th></tr></thead>
-                        <tbody>
-                          {editionRows.slice(0, 5).map((row) => (
-                            <tr key={`edition_${row.label}`}><td>{row.label}</td><td>{row.rate}%</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pack-side-card">
-                <p className="pack-side-card-label">How it works</p>
-                <p className="pack-side-card-copy">Open one pack, reveal five cards in sequence, and add them instantly to your collection.</p>
-              </div>
-            </aside>
-          </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* ── Reveal Modal ── */}
-        <Modal
-          title={allRevealed ? "Pack complete — all cards revealed" : "Pack reveal — flip cards in order"}
-          open={revealSize > 0 && openingPhase === "revealing"}
-          onClose={closeReveal}
-        >
-          <div className="reveal-progress-wrap">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-              <p className="reveal-progress-text">Revealed {revealedCount} / {revealSize}</p>
-              {!allRevealed && (
-                <p className="reveal-next-copy">Next: click card #{nextRevealIndex + 1}</p>
-              )}
-            </div>
-            <div className="reveal-progress-track">
-              <div
-                className="reveal-progress-fill"
-                style={{ width: `${(revealedCount / Math.max(revealSize, 1)) * 100}%` }}
-              />
-            </div>
+        {allRevealed ? (
+          <div className="reveal-complete-row">
+            <p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p>
+            <Button onClick={closeReveal}>Done</Button>
           </div>
+        ) : null}
+      </Modal>
 
-          <div className="pack-reveal-grid">
-            {revealCards.map((card, index) => {
-              const isCardRevealed = revealed[index];
-              const isNext = index === nextRevealIndex;
-              return (
-                <button
-                  key={card.key}
-                  className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`}
-                  onClick={() => {
-                    if (isCardRevealed) { setZoomedCard(resultMvp[index] ?? null); return; }
-                    handleReveal(index);
-                  }}
-                  disabled={!isCardRevealed && !isNext}
-                >
-                  <div className="reveal-slot-inner">
-                    <div className="reveal-slot-face reveal-slot-back">
-                      <Image src={versoImage} alt="Card back" className="reveal-slot-back-image" />
-                      <span className="back-label">
-                        {isNext ? "Click to reveal" : "Awaiting previous"}
-                      </span>
-                    </div>
-                    <div className="reveal-slot-face reveal-slot-front">{card.render}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {allRevealed && (
-            <div className="reveal-complete-row">
-              <p className="reveal-complete-copy">
-                Full pack revealed. Cards have been added to your collection.
-              </p>
-              <Button onClick={closeReveal}>Done</Button>
-            </div>
-          )}
-        </Modal>
-
-        <CardZoomModal
-          card={zoomedCard}
-          quantity={1}
-          open={Boolean(zoomedCard)}
-          onClose={() => setZoomedCard(null)}
-        />
-
-      </div>
+      <CardZoomModal card={zoomedCard} quantity={1} open={Boolean(zoomedCard)} onClose={() => setZoomedCard(null)} />
     </SiteShell>
   );
 }

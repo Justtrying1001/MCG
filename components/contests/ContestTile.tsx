@@ -1,51 +1,48 @@
 import Link from "next/link";
-
-import { ContestCountdown } from "@/components/contests/ContestCountdown";
-import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
-import { ContestStatusBadge } from "@/components/contests/ContestStatusBadge";
-import { getContestStatusMeta } from "@/components/contests/contestUtils";
+import { Surface } from "@/components/ui/Surface";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ContestListItem } from "@/components/contests/types";
+import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
 
-type Props = {
-  contest: ContestListItem;
-  nowTs: number;
-};
-
-export function ContestTile({ contest, nowTs }: Props) {
-  const meta = getContestStatusMeta(contest.status);
-  const rule = contest.rules[0];
-
-  return (
-    <Link href={`/contests/${contest.id}`} className={`contest-tile contest-tile-${meta.tone}`}>
-      <div className="contest-tile-head">
-        <span className="contest-art" aria-hidden>{meta.icon}</span>
-        <div>
-          <p className="contest-code">{contest.code}</p>
-          <h3 className="contest-title">{contest.title}</h3>
-        </div>
-        <ContestStatusBadge status={contest.status} />
-      </div>
-
-      <ContestCountdown status={contest.status} lockAt={contest.lockAt} endsAt={contest.endsAt} nowTs={nowTs} />
-
-      <div className="contest-meta-grid">
-        <ContestMeta label="Entries" value={String(contest._count.entries)} />
-        <ContestMeta label="Roster" value={String(rule?.maxRosterSize ?? 5)} />
-        <ContestMeta label="Restriction" value={rule?.cardSetId ? "Set locked" : "Any set"} />
-        <ContestMeta label="Action" value={meta.cta} />
-      </div>
-
-      <ContestRewardPreview rosterSize={rule?.maxRosterSize ?? 5} entries={contest._count.entries} />
-      <p className="contest-cta">{meta.cta} →</p>
-    </Link>
-  );
+function tone(status: ContestListItem["status"]) {
+  if (status === "LIVE") return "live" as const;
+  if (status === "OPEN") return "open" as const;
+  if (status === "LOCKED") return "locked" as const;
+  return "settled" as const;
 }
 
-function ContestMeta({ label, value }: { label: string; value: string }) {
+function cta(status: ContestListItem["status"]) {
+  if (status === "OPEN") return "Build lineup";
+  if (status === "LIVE") return "Track live";
+  if (status === "LOCKED") return "View lock";
+  return "View result";
+}
+
+export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowTs: number }) {
+  const roster = contest.rules[0]?.maxRosterSize ?? 5;
+  const rewardPts = Math.max(100, roster * 40);
+  const countDown = formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs);
+
   return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
+    <Surface as="article" className="contest-grid-card" variant="raised">
+      <div className="contest-grid-card-top">
+        <div>
+          <p className="mcg-eyebrow">{contest.code}</p>
+          <h3 className="contest-grid-card-title">{contest.title}</h3>
+        </div>
+        <StatusBadge tone={tone(contest.status)} label={contest.status} />
+      </div>
+
+      <div className="contest-grid-card-stats">
+        <span>Roster {roster}</span>
+        <span>Entries {contest._count.entries}</span>
+        <span>Reward {rewardPts} pts</span>
+      </div>
+
+      <div className="contest-grid-card-footer">
+        <p className="contest-countdown-inline">{countDown}</p>
+        <Link href={`/contests/${contest.id}`} className="mcg-btn ghost">{cta(contest.status)} →</Link>
+      </div>
+    </Surface>
   );
 }
