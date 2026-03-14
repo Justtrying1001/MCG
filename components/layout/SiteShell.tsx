@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
+import { Footer } from "@/components/layout/Footer";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -108,12 +109,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="mcg-container mcg-page-flow">{children}</div>
       </main>
 
-      <footer className="mcg-footer">
-        <div className="mcg-container mcg-footer-inner">
-          <span>© 2026 MCG · Cards first collectible experience</span>
-          <Link href="/admin" className="mcg-nav-link">Internal admin</Link>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -4,11 +4,18 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { AuthErrorNotice } from "@/components/auth/AuthErrorNotice";
 import { useSession } from "@/components/useSession";
-import { HeroDrop } from "@/components/home/HeroDrop";
-import { RecentPullsRail } from "@/components/home/RecentPullsRail";
+
+// State A — landing
+import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { GenesisPreviewStrip } from "@/components/home/GenesisPreviewStrip";
+import { StatsBar } from "@/components/home/StatsBar";
+import { DocsLearnSection } from "@/components/home/DocsLearnSection";
+
+// State B — dashboard
+import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
-import { CollectionProgressBlock } from "@/components/home/CollectionProgressBlock";
-import { RewardsMiniPanel } from "@/components/home/RewardsMiniPanel";
+import { RecentPullsRail } from "@/components/home/RecentPullsRail";
 
 type ContestListItem = {
   id: string;
@@ -40,21 +47,11 @@ export default function HomePage() {
       .catch(() => setContests([]));
   }, [isAuth]);
 
-  const collectionSummary = useMemo(() => {
-    if (me?.mode !== "user") {
-      return {
-        completionPct: null as number | null,
-        ownedCount: me?.mvpCollection?.length ?? 0,
-        missingCount: 0,
-      };
-    }
-
-    const v2 = me.coexistence?.v2;
-    const progress = v2?.collectionProgression;
+  const userInfo = useMemo(() => {
+    if (me?.mode !== "user") return null;
     return {
-      completionPct: progress?.completionPct ?? null,
-      ownedCount: progress?.ownedTemplateCount ?? 0,
-      missingCount: progress?.missingTemplateCount ?? 0,
+      displayName: me.user.displayName,
+      points: me.user.points,
     };
   }, [me]);
 
@@ -64,18 +61,28 @@ export default function HomePage() {
         <AuthErrorNotice />
       </Suspense>
 
-      <HeroDrop />
-      <RecentPullsRail />
-      <ActiveContestsRail contests={contests} />
-
-      <div className="mcg-home-grid-2">
-        <CollectionProgressBlock
-          completionPct={collectionSummary.completionPct}
-          ownedCount={collectionSummary.ownedCount}
-          missingCount={collectionSummary.missingCount}
-        />
-        <RewardsMiniPanel />
-      </div>
+      {isAuth && userInfo ? (
+        /* ── State B: Connected player dashboard ── */
+        <>
+          <PlayerDashboardHeader
+            displayName={userInfo.displayName}
+            points={userInfo.points}
+          />
+          <RecentPullsRail />
+          <ActiveContestsRail contests={contests} />
+          <GenesisPreviewStrip />
+          <DocsLearnSection />
+        </>
+      ) : (
+        /* ── State A: Landing / conversion ── */
+        <>
+          <HomeHeroLanding />
+          <StatsBar />
+          <HowItWorks />
+          <GenesisPreviewStrip />
+          <DocsLearnSection />
+        </>
+      )}
     </SiteShell>
   );
 }
