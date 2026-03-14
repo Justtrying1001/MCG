@@ -5,46 +5,44 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
+import { AdminStatusBadge } from "@/components/admin/AdminUi";
 import { ADMIN_NAV_GROUPS, isNavItemActive } from "@/lib/admin/navigation";
 
 export function AdminShell({ children, username }: { children: ReactNode; username: string }) {
   const pathname = usePathname();
 
   return (
-    <div className="admin-shell">
-      <header className="admin-topbar">
-        <div className="admin-brand">
-          <span className="admin-brand-badge">MCG</span>
+    <div className="admin-v2-shell">
+      <header className="admin-v2-topbar">
+        <div className="admin-v2-brand">
+          <span className="admin-v2-brand-badge">MCG</span>
           <div>
-            <p className="admin-brand-title">Admin Control Center</p>
-            <p className="admin-brand-subtitle">Operate · Configure · Audit</p>
+            <p className="admin-v2-brand-title">Operator Console</p>
+            <p className="admin-v2-brand-subtitle">Operate · Review · Execute safely</p>
           </div>
         </div>
 
-        <div className="admin-identity">
-          <span className="admin-chip">Signed in as <strong>{username}</strong></span>
+        <div className="admin-v2-identity">
+          <span className="admin-v2-chip">Signed in as <strong>{username}</strong></span>
           <AdminLogoutButton />
         </div>
       </header>
 
-      <div className="admin-layout-grid">
-        <aside className="admin-sidebar">
+      <div className="admin-v2-layout">
+        <aside className="admin-v2-sidebar">
           {ADMIN_NAV_GROUPS.map((group) => (
-            <div key={group.id} className="admin-nav-group">
-              <p className="admin-sidebar-label" style={{ color: group.deprecated ? "#fca5a5" : undefined }}>
-                {group.label}
-              </p>
-              <nav className="admin-nav-list">
+            <div key={group.id} className="admin-v2-nav-group">
+              <p className="admin-v2-nav-group-label">{group.label}</p>
+              <nav className="admin-v2-nav-list">
                 {group.items.map((item) => {
                   const active = isNavItemActive(pathname, item.href);
                   return (
-                    <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? "is-active" : ""} ${group.deprecated ? "is-legacy" : ""}`}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "0.35rem", alignItems: "center" }}>
-                        <span className="admin-nav-label">{item.label}</span>
-                        {item.critical ? <span className="admin-badge warn">critical</span> : null}
-                        {group.deprecated ? <span className="admin-badge danger">legacy</span> : null}
+                    <Link key={item.href} href={item.href} className={`admin-v2-nav-item ${active ? "is-active" : ""}`}>
+                      <div className="admin-v2-nav-row">
+                        <span className="admin-v2-nav-label">{item.label}</span>
+                        {item.critical ? <AdminStatusBadge tone="warn" label="critical" /> : null}
                       </div>
-                      <span className="admin-nav-hint">{item.hint}</span>
+                      <span className="admin-v2-nav-hint">{item.hint}</span>
                     </Link>
                   );
                 })}
@@ -53,7 +51,7 @@ export function AdminShell({ children, username }: { children: ReactNode; userna
           ))}
         </aside>
 
-        <main className="admin-content">{children}</main>
+        <main className="admin-v2-content">{children}</main>
       </div>
     </div>
   );

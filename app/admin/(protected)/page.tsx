@@ -1,6 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatStrip,
+  AdminStatusBadge,
+  AdminTableHead,
+  AdminTableRow,
+  AdminDataTable,
+} from "@/components/admin/AdminUi";
 
 type EssentialsPayload = {
   packs: {
@@ -35,61 +47,86 @@ export default function AdminHomePage() {
     })();
   }, []);
 
-  return (
-    <div className="admin-page">
-      <section className="admin-page-header">
-        <div>
-          <h1 className="admin-title">Admin Dashboard</h1>
-          <p className="admin-subtitle">Simple operational overview for packs, contests, quests and milestones.</p>
-        </div>
-      </section>
+  const alerts = useMemo(() => {
+    if (!data) return [] as Array<{ label: string; tone: "warn" | "danger" | "success" }>;
+    const rows: Array<{ label: string; tone: "warn" | "danger" | "success" }> = [];
+    if (data.contests.live === 0) rows.push({ label: "No live contest", tone: "warn" });
+    if (data.packs.onSale === 0) rows.push({ label: "No pack on sale", tone: "danger" });
+    if (data.quests.totalSocial < 3) rows.push({ label: "Low social quest inventory", tone: "warn" });
+    if (rows.length === 0) rows.push({ label: "Core systems healthy", tone: "success" });
+    return rows;
+  }, [data]);
 
-      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading dashboard…</p></section> : null}
-      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
+  return (
+    <div className="admin-page admin-v2-page">
+      <AdminPageHeader
+        title="Dashboard"
+        subtitle="Operator overview for health, workload and quick execution paths."
+        actions={
+          <div className="admin-v2-action-row">
+            <Link href="/admin/contests" className="admin-v2-link-chip">Contests</Link>
+            <Link href="/admin/moderation" className="admin-v2-link-chip">Moderation queue</Link>
+            <Link href="/admin/rewards" className="admin-v2-link-chip">Manual rewards</Link>
+          </div>
+        }
+      />
+
+      {loading ? <AdminPanel><AdminEmptyState title="Loading dashboard…" /></AdminPanel> : null}
+      {error ? <AdminPanel><AdminEmptyState title="Dashboard unavailable" description={error} /></AdminPanel> : null}
 
       {data ? (
-        <div style={{ display: "grid", gap: "0.8rem" }}>
-          <section className="admin-kpi-grid">
-            <Card title="Packs" lines={[
-              `Opened packs: ${data.packs.opened}`,
-              `Planned packs: ${data.packs.planned}`,
-              `Packs in rewards: ${data.packs.inRewards}`,
-              `Packs on sale: ${data.packs.onSale}`,
-            ]} />
-            <Card title="Contests" lines={[
-              `Total contests: ${data.contests.total}`,
-              `Live contests: ${data.contests.live}`,
-            ]} />
-            <Card title="Quests" lines={[
-              `Social quests: ${data.quests.totalSocial}`,
-            ]} />
-            <Card title="Milestones" lines={[
-              `Total milestones: ${data.milestones.total}`,
-            ]} />
-          </section>
+        <>
+          <AdminStatStrip items={[
+            { label: "Packs opened", value: String(data.packs.opened) },
+            { label: "Packs on sale", value: String(data.packs.onSale), tone: data.packs.onSale > 0 ? "success" : "danger" },
+            { label: "Contests live", value: String(data.contests.live), tone: data.contests.live > 0 ? "success" : "warn" },
+            { label: "Social quests", value: String(data.quests.totalSocial), tone: data.quests.totalSocial >= 3 ? "success" : "warn" },
+            { label: "Milestones", value: String(data.milestones.total) },
+          ]} />
 
-          <section className="admin-panel">
-            <p className="admin-section-title">Pack details (set / edition runtime reference)</p>
-            <div style={{ display: "grid", gap: "0.35rem" }}>
+          <div className="admin-v2-split">
+            <AdminPanel>
+              <p className="admin-v2-section-title">Alerts & pending actions</p>
+              <div className="admin-v2-list-stack">
+                {alerts.map((alert) => (
+                  <div key={alert.label} className="admin-v2-list-row">
+                    <span>{alert.label}</span>
+                    <AdminStatusBadge tone={alert.tone} label={alert.tone.toUpperCase()} />
+                  </div>
+                ))}
+              </div>
+            </AdminPanel>
+
+            <AdminPanel>
+              <p className="admin-v2-section-title">Quick execution paths</p>
+              <div className="admin-v2-quick-grid">
+                <Link href="/admin/contests/create" className="admin-v2-quick-card">Create contest</Link>
+                <Link href="/admin/moderation" className="admin-v2-quick-card">Review submissions</Link>
+                <Link href="/admin/quests/builder" className="admin-v2-quick-card">Build quest</Link>
+                <Link href="/admin/users" className="admin-v2-quick-card">Inspect user context</Link>
+              </div>
+            </AdminPanel>
+          </div>
+
+          <AdminPanel>
+            <p className="admin-v2-section-title">Pack inventory snapshot</p>
+            <AdminDataTable columns="1.2fr .8fr .8fr .9fr">
+              <AdminTableHead>
+                <span>Pack</span><span>Opened</span><span>Planned</span><span>Source</span>
+              </AdminTableHead>
               {data.packs.rows.map((row) => (
-                <p key={row.id} className="contest-inline-note">{row.displayName || row.code} · opened {row.openedPackCount}/{row.plannedPackCount} · {row.source}</p>
+                <AdminTableRow key={row.id}>
+                  <span>{row.displayName || row.code}</span>
+                  <span>{row.openedPackCount}</span>
+                  <span>{row.plannedPackCount}</span>
+                  <span className="contest-inline-note">{row.source}</span>
+                </AdminTableRow>
               ))}
-              {data.packs.rows.length === 0 ? <p className="contest-inline-note">No pack rows found.</p> : null}
-            </div>
-          </section>
-        </div>
+              {data.packs.rows.length === 0 ? <AdminTableRow><span>No pack rows found.</span></AdminTableRow> : null}
+            </AdminDataTable>
+          </AdminPanel>
+        </>
       ) : null}
-    </div>
-  );
-}
-
-function Card({ title, lines }: { title: string; lines: string[] }) {
-  return (
-    <div className="admin-kpi" style={{ minHeight: 140 }}>
-      <p className="admin-kpi-label" style={{ fontSize: "0.82rem" }}>{title}</p>
-      <div style={{ display: "grid", gap: "0.3rem" }}>
-        {lines.map((line) => <p key={line} className="contest-inline-note">{line}</p>)}
-      </div>
     </div>
   );
 }

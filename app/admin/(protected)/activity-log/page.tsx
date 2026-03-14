@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  AdminDataTable,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+  AdminTableHead,
+  AdminTableRow,
+  AdminToolbar,
+} from "@/components/admin/AdminUi";
+
 type Row = {
   id: string;
   module: string;
@@ -33,39 +44,39 @@ export default function ActivityLogPage() {
   }, [statusFilter]);
 
   return (
-    <div className="admin-page">
-      <section className="admin-page-header">
-        <div>
-          <h1 className="admin-title">Activity Log</h1>
-          <p className="admin-subtitle">Audit timeline for actor attribution, execution outcomes, and failure diagnostics.</p>
-        </div>
-      </section>
+    <div className="admin-page admin-v2-page">
+      <AdminPageHeader
+        title="Activity log"
+        subtitle="Audit timeline for actor attribution, execution outcomes and failure diagnostics."
+      />
 
-      <section className="admin-toolbar">
+      <AdminToolbar>
         <label className="contest-inline-note">Status</label>
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
           <option value="ALL">ALL</option><option value="VALIDATED">VALIDATED</option><option value="EXECUTED">EXECUTED</option><option value="FAILED">FAILED</option>
         </select>
-        <span className="admin-badge neutral">{rows.length} events</span>
-      </section>
+        <AdminStatusBadge tone="neutral" label={`${rows.length} events`} />
+      </AdminToolbar>
 
-      <section className="admin-table">
-        <div className="admin-table-head" style={{ gridTemplateColumns: "0.9fr 1.2fr 0.9fr 1.2fr 1.1fr 1fr" }}>
-          <span>Module</span><span>Action</span><span>Status</span><span>Actor</span><span>Target</span><span>Time</span>
-        </div>
-        {rows.map((row) => (
-          <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "0.9fr 1.2fr 0.9fr 1.2fr 1.1fr 1fr" }}>
-            <span className="contest-code">{row.module}</span>
-            <span>{row.actionType}</span>
-            <span className={`admin-badge ${row.status === "FAILED" ? "danger" : row.status === "EXECUTED" ? "success" : "warn"}`}>{row.status}</span>
-            <span>{row.actorLabel}</span>
-            <span className="contest-inline-note">{row.targetType ?? "—"}/{row.targetId ?? "—"}</span>
-            <span className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</span>
-            {row.errorCode ? <p className="contest-error" style={{ gridColumn: "1 / -1" }}>{row.errorCode}: {row.errorMessage ?? ""}</p> : null}
-          </div>
-        ))}
-        {rows.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No actions found for this filter.</p></div> : null}
-      </section>
+      <AdminPanel>
+        <AdminDataTable columns=".8fr 1.1fr .8fr 1.1fr 1.1fr .9fr">
+          <AdminTableHead>
+            <span>Module</span><span>Action</span><span>Status</span><span>Actor</span><span>Target</span><span>Time</span>
+          </AdminTableHead>
+          {rows.map((row) => (
+            <AdminTableRow key={row.id}>
+              <span className="contest-code">{row.module}</span>
+              <span>{row.actionType}</span>
+              <AdminStatusBadge tone={row.status === "FAILED" ? "danger" : row.status === "EXECUTED" ? "success" : "warn"} label={row.status} />
+              <span>{row.actorLabel}</span>
+              <span className="contest-inline-note">{row.targetType ?? "—"}/{row.targetId ?? "—"}</span>
+              <span className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</span>
+              {row.errorCode ? <p className="contest-error">{row.errorCode}: {row.errorMessage ?? ""}</p> : null}
+            </AdminTableRow>
+          ))}
+          {rows.length === 0 ? <AdminTableRow><AdminEmptyState title="No actions found for this filter." /></AdminTableRow> : null}
+        </AdminDataTable>
+      </AdminPanel>
     </div>
   );
 }

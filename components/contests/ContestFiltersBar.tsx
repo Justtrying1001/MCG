@@ -1,24 +1,48 @@
-type ContestTab = "upcoming" | "open" | "locked" | "live" | "settled";
+import { Surface } from "@/components/ui/Surface";
 
-export function ContestFiltersBar({ tab, setTab, query, setQuery }: { tab: ContestTab; setTab: (tab: ContestTab) => void; query: string; setQuery: (value: string) => void }) {
-  const tabs: Array<{ key: ContestTab; label: string }> = [
-    { key: "upcoming", label: "Upcoming" },
-    { key: "open", label: "Open for entry" },
-    { key: "locked", label: "Locked" },
-    { key: "live", label: "Live" },
-    { key: "settled", label: "Settled / Results" },
-  ];
+export type ContestSort = "urgency" | "reward" | "date";
 
+export function ContestFiltersBar({
+  query,
+  onQuery,
+  status,
+  onStatus,
+  sort,
+  onSort,
+}: {
+  query: string;
+  onQuery: (value: string) => void;
+  status: string;
+  onStatus: (value: string) => void;
+  sort: ContestSort;
+  onSort: (value: ContestSort) => void;
+}) {
   return (
-    <div className="contest-filters-shell">
-      <div className="contest-tabs" role="tablist" aria-label="Contest sections">
-        {tabs.map((entry) => (
-          <button key={entry.key} type="button" className={`contest-tab${tab === entry.key ? " active" : ""}`} onClick={() => setTab(entry.key)} role="tab" aria-selected={tab === entry.key}>
-            {entry.label}
-          </button>
-        ))}
+    <Surface>
+      <div className="contest-filters-bar">
+        <input
+          className="collection-search-input"
+          placeholder="Search by code or title"
+          value={query}
+          onChange={(event) => onQuery(event.target.value)}
+          aria-label="Search contests"
+        />
+
+        <select className="collection-select" value={status} onChange={(event) => onStatus(event.target.value)}>
+          <option value="ALL">All status</option>
+          <option value="OPEN">Open</option>
+          <option value="LOCKED">Locked</option>
+          <option value="LIVE">Live</option>
+          <option value="SETTLED">Settled</option>
+          <option value="CANCELED">Canceled</option>
+        </select>
+
+        <select className="collection-select" value={sort} onChange={(event) => onSort(event.target.value as ContestSort)}>
+          <option value="urgency">Sort: urgency</option>
+          <option value="reward">Sort: reward</option>
+          <option value="date">Sort: date</option>
+        </select>
       </div>
-      <input className="filter-input" placeholder="Search contest code or title" value={query} onChange={(event) => setQuery(event.target.value)} />
-    </div>
+    </Surface>
   );
 }

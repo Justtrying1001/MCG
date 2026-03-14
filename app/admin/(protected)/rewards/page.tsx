@@ -9,6 +9,15 @@ import {
   isCompensationValidationBlocked,
   listBlockingCompensationIssues,
 } from "@/lib/admin/rewards-workbench";
+import {
+  AdminDataTable,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+  AdminTableHead,
+  AdminTableRow,
+} from "@/components/admin/AdminUi";
 
 type CandidateUser = { id: string; xUsername: string | null; displayName: string | null; points: number };
 type GrantRow = {
@@ -83,11 +92,11 @@ export default function AdminRewardsPage() {
       return;
     }
     if (!reasonLabel.trim()) {
-      setMessage("reason label is required");
+      setMessage("Reason label is required");
       return;
     }
     if (!reasonCode.trim()) {
-      setMessage("reasonCode is required");
+      setMessage("Reason code is required");
       return;
     }
 
@@ -97,12 +106,7 @@ export default function AdminRewardsPage() {
     const validateResponse = await fetch("/api/internal/compensations/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildCompensationValidatePayload({
-        userId,
-        amount: parsedAmount,
-        reasonLabel,
-        reasonCode,
-      })),
+      body: JSON.stringify(buildCompensationValidatePayload({ userId, amount: parsedAmount, reasonLabel, reasonCode })),
     });
 
     const validation = (await validateResponse.json().catch(() => null)) as { validationToken?: string; error?: string; blocking?: boolean; issues?: Array<{ severity?: string; message?: string }> } | null;
@@ -135,7 +139,7 @@ export default function AdminRewardsPage() {
       return;
     }
 
-    const idempotencyKey = `comp-ui:${userId.trim()}:${Date.now()}`;
+    const idempotencyKey = `manual-grant-${validation.validationToken}`;
     const executeResponse = await fetch("/api/internal/compensations/execute", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
@@ -157,78 +161,78 @@ export default function AdminRewardsPage() {
   };
 
   return (
-    <div className="admin-page">
-      <section className="admin-page-header">
-        <div>
-          <h1 className="admin-title">Rewards & Compensation Ops</h1>
-          <p className="admin-subtitle">Critical flow: search user → validate compensation → preview impact → execute with idempotency.</p>
-        </div>
-        <div className="admin-actions-row">
-          <Link href="/admin/users" className="admin-badge neutral">User context</Link>
-          <Link href="/admin/activity-log" className="admin-badge neutral">Audit log</Link>
-        </div>
+    <div className="admin-page admin-v2-page">
+      <AdminPageHeader
+        title="Rewards operations"
+        subtitle="Secure manual compensation flow: validate, preview impact, then execute."
+        actions={
+          <div className="admin-v2-action-row">
+            <Link href="/admin/users" className="admin-v2-link-chip">User context</Link>
+            <Link href="/admin/activity-log" className="admin-v2-link-chip">Audit log</Link>
+          </div>
+        }
+      />
+
+      <section className="admin-v2-callout danger">
+        <strong>High-risk action</strong>
+        <p className="contest-inline-note">Manual grants update user economy immediately. Verify reason label/code and preview before applying.</p>
       </section>
 
-      <section className="admin-callout danger">
-        <p style={{ fontWeight: 700, fontSize: "0.8rem" }}>High-risk action</p>
-        <p className="contest-inline-note">Manual grants change user economy immediately. Always verify reason label/code and preview impact before apply.</p>
-      </section>
-
-      <section className="admin-split">
-        <div className="admin-panel admin-section-stack">
-          <p className="admin-section-title">1) Select recipient</p>
+      <div className="admin-v2-split">
+        <AdminPanel>
+          <p className="admin-v2-section-title">1) Select recipient</p>
           <input className="input" placeholder="Search by id / @username / display name" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
           {searching ? <p className="contest-inline-note">Searching users…</p> : null}
           {searchResults.length > 0 ? (
-            <div style={{ display: "grid", gap: "0.35rem" }}>
+            <div className="admin-v2-list-stack">
               {searchResults.map((candidate) => (
-                <button key={candidate.id} type="button" className="admin-panel" style={{ textAlign: "left", padding: "0.45rem" }} onClick={() => { setUserId(candidate.id); setSearchTerm(candidate.xUsername ? `@${candidate.xUsername}` : candidate.id); }}>
-                  <p style={{ fontWeight: 700 }}>{candidate.displayName || candidate.id}</p>
-                  <p className="contest-inline-note">@{candidate.xUsername || "—"} · {candidate.points} pts</p>
+                <button key={candidate.id} type="button" className="admin-v2-list-row action" onClick={() => { setUserId(candidate.id); setSearchTerm(candidate.xUsername ? `@${candidate.xUsername}` : candidate.id); }}>
+                  <span>
+                    <strong>{candidate.displayName || candidate.id}</strong>
+                    <small className="contest-inline-note">@{candidate.xUsername || "—"} · {candidate.points} pts</small>
+                  </span>
                 </button>
               ))}
             </div>
           ) : null}
 
-          <p className="admin-section-title">2) Compensation payload</p>
-          <div className="admin-field-grid">
+          <p className="admin-v2-section-title">2) Compensation payload</p>
+          <div className="admin-v2-form-grid">
             <input className="input" placeholder="userId" value={userId} onChange={(event) => setUserId(event.target.value)} />
             <input className="input" type="number" min={1} placeholder="amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
             <input className="input" placeholder="reason label" value={reasonLabel} onChange={(event) => setReasonLabel(event.target.value)} />
-            <input className="input" placeholder="reason code (required)" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
+            <input className="input" placeholder="reason code" value={reasonCode} onChange={(event) => setReasonCode(event.target.value)} />
           </div>
 
-          <div className="admin-actions-row">
+          <div className="admin-v2-action-row">
             <Button onClick={() => void submit()} disabled={submitting}>{submitting ? "Applying…" : "Validate + Preview + Apply"}</Button>
             {message ? <span className="contest-inline-note">{message}</span> : null}
           </div>
-        </div>
+        </AdminPanel>
 
-        <div className="admin-panel admin-section-stack">
-          <div className="admin-actions-row" style={{ justifyContent: "space-between" }}>
-            <p className="admin-section-title">Recent manual grants</p>
+        <AdminPanel>
+          <div className="admin-v2-action-row between">
+            <p className="admin-v2-section-title">Recent manual grants</p>
             <Button variant="ghost" type="button" onClick={() => void loadRows()}>Refresh</Button>
           </div>
-          {loadingRows ? <p className="contest-inline-note">Loading grants…</p> : null}
+          {loadingRows ? <AdminEmptyState title="Loading grants…" /> : null}
           {rowsError ? <p className="contest-error">{rowsError}</p> : null}
           {!loadingRows ? (
-            <div style={{ display: "grid", gap: "0.45rem" }}>
+            <AdminDataTable columns=".9fr .8fr 1.4fr .8fr">
+              <AdminTableHead><span>Type</span><span>Amount</span><span>User / Reason</span><span>Time</span></AdminTableHead>
               {rows.map((row) => (
-                <div key={row.id} className="admin-callout">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <p className="contest-code">ADMIN_GRANT</p>
-                    <span className="admin-badge success">+{row.amount}</span>
-                  </div>
-                  <p className="contest-inline-note">{row.user?.displayName || "—"} @{row.user?.xUsername || "—"}</p>
-                  <p className="contest-inline-note">{row.metadata?.reasonLabel || row.reasonRef || "—"} · {row.metadata?.reasonCode || "—"}</p>
-                  <p className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</p>
-                </div>
+                <AdminTableRow key={row.id}>
+                  <span className="contest-code">ADMIN_GRANT</span>
+                  <AdminStatusBadge tone="success" label={`+${row.amount}`} />
+                  <span className="contest-inline-note">{row.user?.displayName || "—"} @{row.user?.xUsername || "—"} · {row.metadata?.reasonCode || "—"}</span>
+                  <span className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</span>
+                </AdminTableRow>
               ))}
-              {rows.length === 0 ? <p className="contest-inline-note">No manual grants yet.</p> : null}
-            </div>
+              {rows.length === 0 ? <AdminTableRow><span>No manual grants yet.</span></AdminTableRow> : null}
+            </AdminDataTable>
           ) : null}
-        </div>
-      </section>
+        </AdminPanel>
+      </div>
     </div>
   );
 }

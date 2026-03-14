@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatStrip,
+  AdminTableRow,
+  AdminDataTable,
+  AdminTableHead,
+  AdminStatusBadge,
+} from "@/components/admin/AdminUi";
+
 type SearchUser = {
   id: string;
   xUsername: string;
@@ -55,72 +66,75 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="admin-page">
-      <section className="admin-page-header">
-        <div>
-          <h1 className="admin-title">User Context Workbench</h1>
-          <p className="admin-subtitle">Search-first user context for moderation, rewards, contests, milestones and forensic activity timeline.</p>
-        </div>
-      </section>
+    <div className="admin-page admin-v2-page">
+      <AdminPageHeader
+        title="Users"
+        subtitle="Search-first diagnostics for rewards, quests, contest participation and account activity."
+      />
 
-      <section className="admin-split">
-        <div className="admin-panel">
-          <p className="admin-section-title">Search</p>
+      <div className="admin-v2-split">
+        <AdminPanel>
+          <p className="admin-v2-section-title">Search users</p>
           <input className="input" placeholder="Search by userId, @username, display name" value={query} onChange={(event) => setQuery(event.target.value)} />
           {loading ? <p className="contest-inline-note">Searching…</p> : null}
-          <div style={{ display: "grid", gap: "0.35rem" }}>
+          <div className="admin-v2-list-stack">
             {rows.map((row) => (
-              <button key={row.id} type="button" className="admin-panel" style={{ textAlign: "left", padding: "0.48rem" }} onClick={() => void loadContext(row.id)}>
-                <p style={{ fontWeight: 700 }}>{row.displayName} (@{row.xUsername})</p>
-                <p className="contest-inline-note">{row.points} pts</p>
+              <button key={row.id} type="button" className="admin-v2-list-row action" onClick={() => void loadContext(row.id)}>
+                <span>
+                  <strong>{row.displayName} (@{row.xUsername})</strong>
+                  <small className="contest-inline-note">{row.points} pts</small>
+                </span>
               </button>
             ))}
-            {query.trim() && !loading && rows.length === 0 ? <p className="contest-inline-note">No users found.</p> : null}
+            {query.trim() && !loading && rows.length === 0 ? <AdminEmptyState title="No users found." /> : null}
           </div>
-        </div>
+        </AdminPanel>
 
-        <div className="admin-panel">
-          <p className="admin-section-title">Selected user context</p>
-          {contextLoading ? <p className="contest-inline-note">Loading context…</p> : null}
+        <AdminPanel>
+          <p className="admin-v2-section-title">Selected user context</p>
+          {contextLoading ? <AdminEmptyState title="Loading context…" /> : null}
           {!contextLoading && selected ? (
             <>
-              <p style={{ fontWeight: 700 }}>{selected.user.displayName ?? selected.user.id} (@{selected.user.xUsername ?? "—"})</p>
+              <p><strong>{selected.user.displayName ?? selected.user.id}</strong> (@{selected.user.xUsername ?? "—"})</p>
               <p className="contest-inline-note">{selected.user.points} total points · created {new Date(selected.user.createdAt).toLocaleString()}</p>
-              <div className="admin-kpi-grid">
-                <Kpi label="Manual grants" value={String(selected.rewards.grantsCount)} />
-                <Kpi label="Manual points total" value={String(selected.rewards.totalManualGranted)} />
-                <Kpi label="Quest pending" value={String(selected.quests.pendingSubmissions)} />
-                <Kpi label="Quest approved" value={String(selected.quests.approvedSubmissions)} />
-                <Kpi label="Quest rejected" value={String(selected.quests.rejectedSubmissions)} />
-                <Kpi label="Quest completed" value={String(selected.quests.completedProgress)} />
-                <Kpi label="Contest entries" value={String(selected.contests.entriesCount)} />
-                <Kpi label="Contest settled" value={String(selected.contests.settlementsCount)} />
-              </div>
 
-              <div style={{ marginTop: "0.8rem", display: "grid", gap: "0.45rem" }}>
-                <p className="admin-section-title">Milestones unlocked</p>
+              <AdminStatStrip items={[
+                { label: "Manual grants", value: String(selected.rewards.grantsCount) },
+                { label: "Granted points", value: String(selected.rewards.totalManualGranted) },
+                { label: "Quest pending", value: String(selected.quests.pendingSubmissions), tone: selected.quests.pendingSubmissions > 0 ? "warn" : "neutral" },
+                { label: "Quest completed", value: String(selected.quests.completedProgress), tone: "success" },
+                { label: "Contest entries", value: String(selected.contests.entriesCount) },
+                { label: "Contest settled", value: String(selected.contests.settlementsCount) },
+              ]} />
+
+              <p className="admin-v2-section-title">Milestones unlocked</p>
+              <div className="admin-v2-list-stack">
                 {selected.milestones.map((item) => (
-                  <p key={item.questId} className="contest-inline-note">🏅 {item.title} ({item.code}) · {item.completedAt ? new Date(item.completedAt).toLocaleString() : "—"}</p>
+                  <div key={item.questId} className="admin-v2-list-row">
+                    <span>🏅 {item.title} ({item.code})</span>
+                    <span className="contest-inline-note">{item.completedAt ? new Date(item.completedAt).toLocaleString() : "—"}</span>
+                  </div>
                 ))}
-                {selected.milestones.length === 0 ? <p className="contest-inline-note">No milestones unlocked yet.</p> : null}
+                {selected.milestones.length === 0 ? <AdminEmptyState title="No milestones unlocked yet." /> : null}
               </div>
 
-              <div style={{ marginTop: "0.8rem", display: "grid", gap: "0.45rem" }}>
-                <p className="admin-section-title">Activity timeline (who did what)</p>
+              <p className="admin-v2-section-title">Recent activity</p>
+              <AdminDataTable columns="1fr 2fr 1fr">
+                <AdminTableHead><span>Time</span><span>Event</span><span>Type</span></AdminTableHead>
                 {selected.activity.map((item, idx) => (
-                  <p key={`${item.ref}-${idx}`} className="contest-inline-note">{new Date(item.at).toLocaleString()} · [{item.type}] {item.label}</p>
+                  <AdminTableRow key={`${item.ref}-${idx}`}>
+                    <span className="contest-inline-note">{new Date(item.at).toLocaleString()}</span>
+                    <span>{item.label}</span>
+                    <AdminStatusBadge tone="neutral" label={item.type} />
+                  </AdminTableRow>
                 ))}
-                {selected.activity.length === 0 ? <p className="contest-inline-note">No recent activity rows.</p> : null}
-              </div>
+                {selected.activity.length === 0 ? <AdminTableRow><span>No recent activity rows.</span></AdminTableRow> : null}
+              </AdminDataTable>
             </>
           ) : null}
-          {!contextLoading && !selected ? <p className="contest-inline-note">Select a user from search results to load context.</p> : null}
-        </div>
-      </section>
+          {!contextLoading && !selected ? <AdminEmptyState title="Select a user from search results to load context." /> : null}
+        </AdminPanel>
+      </div>
     </div>
   );
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
-  return <div className="admin-kpi"><p className="admin-kpi-label">{label}</p><p className="admin-kpi-value">{value}</p></div>;
 }

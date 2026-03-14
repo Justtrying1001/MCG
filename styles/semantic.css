@@ -1,0 +1,34 @@
+:root {
+  --color-bg-page: var(--ink-deep);
+  --color-surface-1: var(--ink-mid);
+  --color-surface-2: color-mix(in srgb, var(--ink-mid) 70%, var(--ink-light));
+  --color-border-subtle: rgba(184, 196, 204, 0.18);
+  --color-border-strong: rgba(184, 196, 204, 0.35);
+  --color-text-primary: var(--chalk);
+  --color-text-secondary: color-mix(in srgb, var(--chalk) 70%, var(--fog));
+  --color-text-muted: color-mix(in srgb, var(--fog) 68%, var(--ink-light));
+  --color-accent-primary: var(--clay);
+  --color-accent-secondary: var(--slate);
+
+  /* Legacy alias to avoid breaking untouched pages */
+  --bg-base: var(--ink-deep);
+  --bg-1: var(--ink-mid);
+  --bg-2: var(--ink-light);
+  --surface: rgba(27, 35, 44, 0.9);
+  --surface-hi: rgba(27, 35, 44, 1);
+  --border: var(--color-border-subtle);
+  --border-hi: var(--color-border-strong);
+  --text: var(--color-text-primary);
+  --text-2: var(--color-text-secondary);
+  --text-3: var(--color-text-muted);
+  --red: var(--clay);
+  --gold: var(--rarity-legendary);
+  --emerald: var(--success);
+  --arc-blue: var(--slate);
+  --amber: var(--warning);
+}
+
+html, body {
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}

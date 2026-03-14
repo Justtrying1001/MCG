@@ -4,6 +4,16 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import {
+  AdminDataTable,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+  AdminTableHead,
+  AdminTableRow,
+  AdminToolbar,
+} from "@/components/admin/AdminUi";
 
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 
@@ -27,7 +37,6 @@ export default function AdminContestsCatalogPage() {
   const [statusFilter, setStatusFilter] = useState<ContestStatus | "ALL">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [selected, setSelected] = useState<AdminContest | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -57,7 +66,7 @@ export default function AdminContestsCatalogPage() {
 
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
     if (action === "delete") {
-      const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with linked operations.");
+      const confirmed = window.confirm("Delete this contest? This action is permanent.");
       if (!confirmed) return;
     }
     setBusyId(contestId);
@@ -80,76 +89,64 @@ export default function AdminContestsCatalogPage() {
       setError("");
       setMessage(action === "delete" ? "Contest deleted." : `Contest ${action} successful.`);
       await load();
-      const updated = contests.find((c) => c.id === contestId);
-      if (updated) setSelected(updated);
     }
     setBusyId(null);
   };
 
   return (
-    <div className="admin-page">
-      <section className="admin-page-header">
-        <div>
-          <h1 className="admin-title">Contests</h1>
-          <p className="admin-subtitle">Card-based contest management. Open a contest card to run actions and inspect stats.</p>
-        </div>
-        <div className="admin-actions-row">
-          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create New Contest · Start here</Link>
-          <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
-        </div>
-      </section>
+    <div className="admin-page admin-v2-page">
+      <AdminPageHeader
+        title="Contests"
+        subtitle="Manage full lifecycle from draft to settlement with clear status visibility."
+        actions={
+          <div className="admin-v2-action-row">
+            <Link href="/admin/contests/create" className="admin-v2-link-chip">Create contest</Link>
+            <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
+          </div>
+        }
+      />
 
-      <section className="admin-toolbar">
-        <input className="input" placeholder="Search code / title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: 260 }} />
+      <AdminToolbar>
+        <input className="input" placeholder="Search code / title" value={query} onChange={(event) => setQuery(event.target.value)} />
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL")}>
           <option value="ALL">All statuses</option>
           {(["DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"] as ContestStatus[]).map((status) => <option key={status} value={status}>{status}</option>)}
         </select>
-        <span className="admin-badge neutral">{rows.length} contests</span>
-      </section>
+        <AdminStatusBadge tone="neutral" label={`${rows.length} contests`} />
+      </AdminToolbar>
 
-      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading…</p></section> : null}
-      {message ? <section className="admin-panel"><p className="contest-inline-note">{message}</p></section> : null}
-      {error ? <section className="admin-panel"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <AdminPanel><AdminEmptyState title="Loading contests…" /></AdminPanel> : null}
+      {message ? <AdminPanel><p className="contest-inline-note">{message}</p></AdminPanel> : null}
+      {error ? <AdminPanel><p className="contest-error">{error}</p></AdminPanel> : null}
 
-      <section className="admin-card-grid">
-        {rows.map((contest) => (
-          <button key={contest.id} type="button" className="admin-focus-card" onClick={() => setSelected(contest)}>
-            <span className="milestone-chip-icon" style={{ background: "rgba(245,158,11,0.18)", color: "#fbbf24" }}>🏟️</span>
-            <span className="milestone-chip-name">{contest.title}</span>
-          </button>
-        ))}
-        {!loading && rows.length === 0 ? <section className="admin-panel"><p className="contest-inline-note">No contests found.</p></section> : null}
-      </section>
-
-      {selected ? (
-        <div className="contest-modal-overlay" role="presentation" onClick={() => setSelected(null)}>
-          <div className="contest-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <div className="contest-modal-head">
-              <div>
-                <h4>{selected.title}</h4>
-                <p className="contest-inline-note">{selected.code} · {selected.status}</p>
-              </div>
-              <button type="button" className="btn btn-ghost" onClick={() => setSelected(null)}>Close</button>
-            </div>
-            <div style={{ display: "grid", gap: "0.35rem" }}>
-              <p className="contest-inline-note">Entries: {selected._count.entries}</p>
-              <p className="contest-inline-note">Scores: {selected._count.scores}</p>
-              <p className="contest-inline-note">Rankings: {selected._count.rankings}</p>
-              <p className="contest-inline-note">Settlements: {selected._count.settlements}</p>
-              <p className="contest-inline-note">Timing: {fmt(selected.startsAt)} → {fmt(selected.lockAt)} → {fmt(selected.endsAt)}</p>
-
-              <div className="admin-actions-row">
-                <Link href={`/admin/contests/${selected.id}`} className="admin-badge neutral">Open</Link>
-                <Link href={`/admin/contests/create?contestId=${selected.id}`} className="admin-badge neutral">Edit</Link>
-                {selected.status === "DRAFT" && !selected.configPublishedAt ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "publish")}>Publish</button> : null}
-                {selected.configPublishedAt && selected._count.entries === 0 && selected.status !== "SETTLED" ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "unpublish")}>Unpublish</button> : null}
-                {selected.status !== "CANCELED" ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "archive")}>Archive</button> : null}
-                {((selected.status === "CANCELED") || (selected._count.entries === 0 && selected._count.scores === 0 && selected._count.rankings === 0 && selected._count.settlements === 0)) ? <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void runAction(selected.id, "delete")}>Delete</button> : null}
-              </div>
-            </div>
-          </div>
-        </div>
+      {!loading ? (
+        <AdminPanel>
+          <AdminDataTable columns="1.2fr .7fr 1fr .7fr .7fr 1fr">
+            <AdminTableHead>
+              <span>Contest</span><span>Status</span><span>Schedule</span><span>Entries</span><span>Scores</span><span>Actions</span>
+            </AdminTableHead>
+            {rows.map((contest) => (
+              <AdminTableRow key={contest.id}>
+                <div>
+                  <strong>{contest.title}</strong>
+                  <p className="contest-inline-note">{contest.code}</p>
+                </div>
+                <AdminStatusBadge tone={statusTone(contest.status)} label={contest.status} />
+                <span className="contest-inline-note">{fmt(contest.startsAt)} → {fmt(contest.lockAt)}</span>
+                <span>{contest._count.entries}</span>
+                <span>{contest._count.scores}</span>
+                <div className="admin-v2-action-row">
+                  <Link href={`/admin/contests/${contest.id}`} className="admin-v2-link-chip">Open</Link>
+                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
+                  {contest.status === "DRAFT" && !contest.configPublishedAt ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "publish")}>Publish</button> : null}
+                  {contest.configPublishedAt && contest._count.entries === 0 && contest.status !== "SETTLED" ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "unpublish")}>Unpublish</button> : null}
+                  {contest.status !== "CANCELED" ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "archive")}>Archive</button> : null}
+                </div>
+              </AdminTableRow>
+            ))}
+            {rows.length === 0 ? <AdminTableRow><span>No contests found.</span></AdminTableRow> : null}
+          </AdminDataTable>
+        </AdminPanel>
       ) : null}
     </div>
   );
@@ -158,4 +155,11 @@ export default function AdminContestsCatalogPage() {
 function fmt(value: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
+}
+
+function statusTone(status: ContestStatus): "neutral" | "success" | "warn" | "danger" {
+  if (status === "LIVE") return "success";
+  if (status === "OPEN" || status === "LOCKED") return "warn";
+  if (status === "CANCELED") return "danger";
+  return "neutral";
 }

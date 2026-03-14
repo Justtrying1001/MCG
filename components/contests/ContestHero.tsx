@@ -1,10 +1,29 @@
-import { ContestCountdown } from "@/components/contests/ContestCountdown";
-import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
-import { ContestStatusBadge } from "@/components/contests/ContestStatusBadge";
-import { formatDate } from "@/components/contests/contestUtils";
+import { Surface } from "@/components/ui/Surface";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatDate, formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
 import type { ContestStatus } from "@/components/contests/types";
 
-type Props = {
+function tone(status: ContestStatus) {
+  if (status === "LIVE") return "live" as const;
+  if (status === "OPEN") return "open" as const;
+  if (status === "LOCKED") return "locked" as const;
+  return "settled" as const;
+}
+
+export function ContestHero({
+  code,
+  title,
+  status,
+  startsAt,
+  lockAt,
+  endsAt,
+  rosterSize,
+  restrictedSet,
+  entries,
+  nowTs,
+  userState,
+}: {
   code: string;
   title: string;
   status: ContestStatus;
@@ -15,38 +34,34 @@ type Props = {
   restrictedSet: boolean;
   entries: number;
   nowTs: number;
-};
-
-export function ContestHero(props: Props) {
+  userState: string;
+}) {
+  const countdown = formatCountdown(getTargetDate(status, lockAt, endsAt), nowTs);
   return (
-    <section className="contest-hero">
+    <Surface className="contest-detail-hero" variant="raised">
       <div>
-        <p className="contest-code">{props.code}</p>
-        <h2 className="contest-hero-title">{props.title}</h2>
-        <p className="contest-inline-note">Build strategically before lock, then track your rank through every phase.</p>
-      </div>
-      <div className="contest-hero-badges">
-        <ContestStatusBadge status={props.status} />
-        <span className="contest-reward-chip">Roster size: {props.rosterSize}</span>
-      </div>
-      <ContestCountdown status={props.status} lockAt={props.lockAt} endsAt={props.endsAt} nowTs={props.nowTs} />
-      <div className="contest-meta-grid">
-        <HeroMeta label="Entries" value={String(props.entries)} />
-        <HeroMeta label="Starts" value={formatDate(props.startsAt)} />
-        <HeroMeta label="Lock" value={formatDate(props.lockAt)} />
-        <HeroMeta label="Ends" value={formatDate(props.endsAt)} />
-        <HeroMeta label="Set" value={props.restrictedSet ? "Restricted" : "Any"} />
-      </div>
-      <ContestRewardPreview rosterSize={props.rosterSize} entries={props.entries} />
-    </section>
-  );
-}
+        <SectionHeader
+          eyebrow={`Contest ${code}`}
+          title={title}
+          subtitle="Compose your lineup with intention, confirm before lock, and track the race live."
+          actions={<StatusBadge tone={tone(status)} label={status} />}
+        />
 
-function HeroMeta({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
-    </div>
+        <div className="contest-hero-meta-row">
+          <span className="mcg-chip">Starts {formatDate(startsAt)}</span>
+          <span className="mcg-chip">Lock {formatDate(lockAt)}</span>
+          <span className="mcg-chip">Ends {formatDate(endsAt)}</span>
+          <span className="mcg-chip">Roster {rosterSize}</span>
+          <span className="mcg-chip">Entries {entries}</span>
+          <span className="mcg-chip">Set {restrictedSet ? "Restricted" : "Any"}</span>
+        </div>
+      </div>
+
+      <div className="contest-hero-cta-box">
+        <p className="mcg-eyebrow">Your status</p>
+        <p className="contest-hero-user-state">{userState}</p>
+        <p className="contest-hero-countdown">{countdown}</p>
+      </div>
+    </Surface>
   );
 }
