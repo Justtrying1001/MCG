@@ -1,8 +1,0 @@
-{
-  "source": "code-only",
-  "milestoneModelExists": true,
-  "questTypeUsed": "CONTEST_COUNT_MILESTONE",
-  "seededDefinitionsInCode": 15,
-  "idempotenceStrategy": "create-if-missing-by-unique-code",
-  "supportsAdminLifecycle": true
-}
