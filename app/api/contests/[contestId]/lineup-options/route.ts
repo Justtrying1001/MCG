@@ -23,6 +23,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
             cardSet: true,
             rarity: true,
             edition: true,
+            tokenProject: true,
           },
         },
       },
@@ -42,6 +43,8 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           rarityCode: instance.cardTemplate.rarity.code,
           editionCode: instance.cardTemplate.edition.code,
           name: instance.cardTemplate.name,
+          imageUrl: instance.cardTemplate.imageUrl,
+          tokenProjectName: instance.cardTemplate.tokenProject?.displayName ?? "Unknown project",
       }));
 
     return NextResponse.json({ options });

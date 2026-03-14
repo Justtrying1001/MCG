@@ -147,12 +147,8 @@ export async function enterContestMvp(params: {
 
     const existingEntry = await tx.contestEntry.findUnique({
       where: { contestId_userId: { contestId: params.contestId, userId: params.userId } },
-      select: { id: true },
+      include: { rosterLocks: true },
     });
-
-    if (existingEntry) {
-      throw new ContestRuntimeError("User already entered this contest", 409);
-    }
 
     const rule = await getContestRule(tx, params.contestId);
     const teamSizeMode = rule?.teamSizeMode ?? TEAM_SIZE_MODE_EXACT;
@@ -207,34 +203,53 @@ export async function enterContestMvp(params: {
       },
       select: {
         ownedCardInstanceId: true,
-        contestEntry: { select: { contestId: true } },
+        contestEntry: { select: { contestId: true, userId: true } },
       },
     });
 
-    if (activeLocks.length > 0) {
+    const conflictingLocks = activeLocks.filter((row) => {
+      const sameContest = row.contestEntry.contestId === params.contestId;
+      return !sameContest;
+    });
+
+    if (conflictingLocks.length > 0) {
       throw new ContestRuntimeError(
         "One or more card instances are already locked in an active contest",
         409
       );
     }
 
-    const entry = await tx.contestEntry.create({
-      data: {
-        contestId: params.contestId,
-        userId: params.userId,
-        status: ContestEntryStatus.LOCKED,
-        rosterLocks: {
-          createMany: {
-            data: lineupInstanceIds.map((ownedCardInstanceId) => ({ ownedCardInstanceId })),
+    const entry = existingEntry
+      ? await tx.contestEntry.update({
+          where: { id: existingEntry.id },
+          data: {
+            status: ContestEntryStatus.SUBMITTED,
+            rosterLocks: {
+              deleteMany: {},
+              createMany: {
+                data: lineupInstanceIds.map((ownedCardInstanceId) => ({ ownedCardInstanceId })),
+              },
+            },
           },
-        },
-      },
-      include: { rosterLocks: true },
-    });
+          include: { rosterLocks: true },
+        })
+      : await tx.contestEntry.create({
+          data: {
+            contestId: params.contestId,
+            userId: params.userId,
+            status: ContestEntryStatus.SUBMITTED,
+            rosterLocks: {
+              createMany: {
+                data: lineupInstanceIds.map((ownedCardInstanceId) => ({ ownedCardInstanceId })),
+              },
+            },
+          },
+          include: { rosterLocks: true },
+        });
 
     const entryFeeEnabled = rule?.entryFeeEnabled ?? false;
     const entryFeeAmount = rule?.entryFeeAmount ?? 0;
-    if (entryFeeEnabled) {
+    if (entryFeeEnabled && !existingEntry) {
       if (!Number.isInteger(entryFeeAmount) || entryFeeAmount <= 0) {
         throw new ContestRuntimeError("Contest entry fee is misconfigured", 500);
       }
@@ -260,12 +275,25 @@ export async function enterContestMvp(params: {
       }
     }
 
+    const previousLocks = existingEntry?.rosterLocks ?? [];
+    if (previousLocks.length) {
+      await tx.ownedCardInstance.updateMany({
+        where: {
+          id: { in: previousLocks.map((lock) => lock.ownedCardInstanceId) },
+          userId: params.userId,
+        },
+        data: { lockState: null },
+      });
+    }
+
     await tx.ownedCardInstance.updateMany({
       where: { id: { in: lineupInstanceIds }, userId: params.userId },
       data: { lockState: `CONTEST:${params.contestId}:ENTRY:${entry.id}` },
     });
 
-    await applyContestEntryQuestProgressionTx(tx, params.userId);
+    if (!existingEntry) {
+      await applyContestEntryQuestProgressionTx(tx, params.userId);
+    }
 
     return { contestId: params.contestId, entry };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

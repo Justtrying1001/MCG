@@ -1,25 +1,18 @@
 import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ContestListItem } from "@/components/contests/types";
 import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
-
-function tone(status: ContestListItem["status"]) {
-  if (status === "LIVE") return "live" as const;
-  if (status === "OPEN") return "open" as const;
-  if (status === "LOCKED") return "locked" as const;
-  return "settled" as const;
-}
+import { getPhaseLabel } from "@/components/contests/contestLifecycle";
 
 export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | null; nowTs: number }) {
   if (!contest) {
     return (
-      <Surface className="contest-hub-hero">
+      <Surface className="contest-hub-hero premium">
         <SectionHeader
           eyebrow="Contests"
-          title="Competition arena"
-          subtitle="Build your lineup and track your rank through lock, live, and settlement."
+          title="Competition Arena"
+          subtitle="Draft your best lineup, adapt before lock, then watch the race unfold."
           actions={<Link href="/collection" className="mcg-btn ghost">Build from collection</Link>}
         />
       </Surface>
@@ -31,13 +24,13 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
   const countdown = formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs);
 
   return (
-    <Surface className="contest-hub-hero" variant="raised">
+    <Surface className="contest-hub-hero premium" variant="raised">
       <div>
         <SectionHeader
           eyebrow="Featured contest"
           title={contest.title}
-          subtitle="Sorare-style lineup flow, adapted to MCG collectible cards."
-          actions={<StatusBadge tone={tone(contest.status)} label={contest.status} />}
+          subtitle="Premium TCG competition flow: compose, lock, race, settle."
+          actions={<span className={`contest-phase-pill phase-${contest.status.toLowerCase()}`}>{getPhaseLabel(contest.status)}</span>}
         />
         <div className="contest-hero-meta-row">
           <span className="mcg-chip">Code {contest.code}</span>
@@ -48,7 +41,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
       </div>
 
       <div className="contest-hero-cta-box">
-        <p className="mcg-eyebrow">Countdown</p>
+        <p className="mcg-eyebrow">Next milestone</p>
         <p className="contest-hero-countdown">{countdown}</p>
         <Link href={`/contests/${contest.id}`} className="mcg-btn primary">Enter featured contest</Link>
       </div>
