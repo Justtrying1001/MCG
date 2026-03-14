@@ -292,7 +292,10 @@ export async function deleteContestDraft(contestId: string) {
     const deletableBecauseCanceled = contest.status === ContestStatus.CANCELED;
 
     if (hasOperations && !deletableBecauseCanceled) {
-      throw new ContestRuntimeError("Cannot delete a non-canceled contest that already contains operations", 409);
+      throw new ContestRuntimeError(
+        "Delete is blocked: this contest already has entries/scores/rankings/settlements. Cancel it first, then delete if you still need a full purge.",
+        409,
+      );
     }
 
     await tx.contest.delete({ where: { id: contestId } });

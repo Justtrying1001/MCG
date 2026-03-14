@@ -2,14 +2,7 @@ import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import type { ContestListItem } from "@/components/contests/types";
 import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
-import { getActionability, getPhaseLabel } from "@/components/contests/contestLifecycle";
-
-function cta(status: ContestListItem["status"]) {
-  if (status === "OPEN") return "Build / Edit lineup";
-  if (status === "LIVE") return "Track live";
-  if (status === "LOCKED") return "View locked lineup";
-  return "View result";
-}
+import { getActionability, getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowTs: number }) {
   const roster = contest.rules[0]?.maxRosterSize ?? 5;
@@ -37,7 +30,7 @@ export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowT
 
       <div className="contest-grid-card-footer">
         <p className="contest-countdown-inline">{countDown}</p>
-        <Link href={`/contests/${contest.id}`} className="mcg-btn">{cta(contest.status)} →</Link>
+        <Link href={`/contests/${contest.id}`} className="mcg-btn">{getPrimaryCtaLabel(contest.status)} →</Link>
       </div>
     </Surface>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getActionability, getPhaseLabel, toUserPhase } from "@/components/contests/contestLifecycle";
+import { getActionability, getPhaseLabel, getPrimaryCtaLabel, toUserPhase } from "@/components/contests/contestLifecycle";
 
 describe("contest user lifecycle mapping", () => {
   it("maps technical statuses to user phases", () => {
@@ -12,6 +12,13 @@ describe("contest user lifecycle mapping", () => {
   it("exposes clear actionability", () => {
     expect(getActionability("OPEN").editable).toBe(true);
     expect(getActionability("LOCKED").editable).toBe(false);
+    expect(getActionability("SETTLED").message).toContain("view final ranking");
     expect(getPhaseLabel("LOCKED")).toMatch(/Team Lock/);
+  });
+
+  it("maps status to coherent CTA labels", () => {
+    expect(getPrimaryCtaLabel("OPEN")).toBe("Build / Edit lineup");
+    expect(getPrimaryCtaLabel("LIVE")).toBe("Track live ranking");
+    expect(getPrimaryCtaLabel("SETTLED")).toBe("View results & rewards");
   });
 });

@@ -3,7 +3,15 @@ import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { ContestListItem } from "@/components/contests/types";
 import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
-import { getPhaseLabel } from "@/components/contests/contestLifecycle";
+import { getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
+
+function getFeaturedSubtitle(status: ContestListItem["status"]) {
+  if (status === "OPEN") return "Entries are open now. Build your lineup before team lock.";
+  if (status === "LOCKED") return "Entry is closed. Review your locked lineup and wait for live scoring.";
+  if (status === "LIVE") return "Contest is running. Track your position and upcoming result phase.";
+  if (status === "SETTLED") return "Results are published. Check ranking, rewards, and next actions.";
+  return "Draft your best lineup, adapt before lock, then watch the race unfold.";
+}
 
 export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | null; nowTs: number }) {
   if (!contest) {
@@ -29,7 +37,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
         <SectionHeader
           eyebrow="Featured contest"
           title={contest.title}
-          subtitle="Premium TCG competition flow: compose, lock, race, settle."
+          subtitle={getFeaturedSubtitle(contest.status)}
           actions={<span className={`contest-phase-pill phase-${contest.status.toLowerCase()}`}>{getPhaseLabel(contest.status)}</span>}
         />
         <div className="contest-hero-meta-row">
@@ -43,7 +51,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
       <div className="contest-hero-cta-box">
         <p className="mcg-eyebrow">Next milestone</p>
         <p className="contest-hero-countdown">{countdown}</p>
-        <Link href={`/contests/${contest.id}`} className="mcg-btn primary">Enter featured contest</Link>
+        <Link href={`/contests/${contest.id}`} className="mcg-btn primary">{getPrimaryCtaLabel(contest.status)}</Link>
       </div>
     </Surface>
   );

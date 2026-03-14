@@ -23,6 +23,8 @@ export function ContestResultPanel({ status, myRank, myScore }: { status: string
         <div><span>Final rank</span><strong>{myRank ? `#${myRank}` : "Pending"}</strong></div>
         <div><span>Final score</span><strong>{typeof myScore === "number" ? myScore.toFixed(2) : "Pending"}</strong></div>
       </div>
+      <p className="contest-inline-note">Rewards are granted during settlement processing. If no reward appears, you can still review ranking and score.</p>
+      <p className="contest-inline-note">Your contest cards are unlocked and can now be reused in open contests.</p>
       <Link href="/contests" className="mcg-btn ghost">Explore next contests</Link>
     </Surface>
   );

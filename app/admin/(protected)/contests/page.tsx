@@ -13,6 +13,7 @@ import {
   AdminStatusBadge,
   AdminToolbar,
 } from "@/components/admin/AdminUi";
+import { getDeleteActionState, getStopActionState } from "@/lib/admin/contest-actions";
 
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 type ContestStage = "TEAM_BUILDING" | "TEAM_LOCK" | "CONTEST_RUNNING" | "CONTEST_ENDED" | "SCORING_COMPUTING" | "RESULTS_READY";
@@ -186,12 +187,12 @@ export default function AdminContestsCatalogPage() {
       });
       const validation = (await validate.json().catch(() => null)) as { error?: string; validationToken?: string; blocking?: boolean; issues?: Array<{ message: string }> } | null;
       if (!validate.ok || !validation?.validationToken) {
-        setError(validation?.error ?? "Cannot validate stop action");
+        setError(validation?.error ?? "Stop is unavailable for this contest lifecycle state.");
         setBusyId(null);
         return;
       }
       if (validation.blocking) {
-        setError((validation.issues ?? []).map((item) => item.message).join("; ") || "Stop action blocked");
+        setError((validation.issues ?? []).map((item) => item.message).join("; ") || "Stop action is blocked by lifecycle rules.");
         setBusyId(null);
         return;
       }
@@ -207,7 +208,12 @@ export default function AdminContestsCatalogPage() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setError(payload?.error ?? `Cannot ${action} contest`);
+      const fallback = action === "delete"
+        ? "Delete is not allowed for this contest. If it has operations, cancel it first."
+        : action === "stop"
+          ? "Stop is unavailable for this contest lifecycle state."
+          : `Cannot ${action} contest`;
+      setError(payload?.error ?? fallback);
     } else {
       setError("");
       setMessage(action === "delete" ? "Contest deleted." : `Contest ${action} successful.`);
@@ -258,6 +264,8 @@ export default function AdminContestsCatalogPage() {
         <section className="contest-console-grid">
           {rows.map((contest) => {
             const stage = getContestStage(contest);
+            const stopAction = getStopActionState(contest.status);
+            const deleteAction = getDeleteActionState(contest.status, contest._count);
             return (
               <article key={contest.id} className="contest-console-card">
                 <div className="contest-console-card-head">
@@ -288,10 +296,12 @@ export default function AdminContestsCatalogPage() {
                 <div className="contest-console-actions">
                   <button className="admin-v2-link-chip" onClick={() => void openConsole(contest.id)}>Open console</button>
                   <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
-                  {contest.status !== "CANCELED" ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "stop")}>Stop</button> : null}
+                  <button title={stopAction.reason || undefined} className="admin-v2-link-chip" disabled={busyId === contest.id || !stopAction.allowed} onClick={() => void runAction(contest.id, "stop")}>Stop</button>
                   {contest.status !== "CANCELED" ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "archive")}>Archive</button> : null}
-                  <button className="admin-v2-link-chip contest-danger-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "delete")}>Delete</button>
+                  <button title={deleteAction.reason || undefined} className="admin-v2-link-chip contest-danger-chip" disabled={busyId === contest.id || !deleteAction.allowed} onClick={() => void runAction(contest.id, "delete")}>Delete</button>
                 </div>
+                <p className="contest-inline-note">Stop: {stopAction.allowed ? "available" : stopAction.reason}</p>
+                <p className="contest-inline-note">Delete: {deleteAction.reason}</p>
               </article>
             );
           })}
@@ -394,14 +404,24 @@ export default function AdminContestsCatalogPage() {
 
                   <section className="contest-console-section contest-console-section-actions">
                     <h4>Actions</h4>
+                    {(() => {
+                      const stopAction = getStopActionState(consoleData.contest.status);
+                      const deleteAction = getDeleteActionState(consoleData.contest.status, consoleData.contest._count);
+                      return (
+                        <>
+                          <p className="contest-inline-note">Stop: {stopAction.allowed ? "available" : stopAction.reason}</p>
+                          <p className="contest-inline-note">Delete: {deleteAction.reason}</p>
+                        </>
+                      );
+                    })()}
                     <div className="contest-console-actions">
                       <Link href={`/admin/contests/create?contestId=${consoleData.contest.id}`} className="admin-v2-link-chip">Edit contest</Link>
                       <Link href={`/admin/contests/${consoleData.contest.id}/lifecycle`} className="admin-v2-link-chip">Lifecycle</Link>
                       <Link href={`/admin/contests/${consoleData.contest.id}/scoring`} className="admin-v2-link-chip">Scoring</Link>
                       <Link href={`/admin/contests/${consoleData.contest.id}/settlement`} className="admin-v2-link-chip">Settlement</Link>
-                      <button className="admin-v2-link-chip" disabled={busyId === consoleData.contest.id} onClick={() => void runAction(consoleData.contest.id, "stop")}>Stop</button>
+                      <button className="admin-v2-link-chip" disabled={busyId === consoleData.contest.id || !getStopActionState(consoleData.contest.status).allowed} onClick={() => void runAction(consoleData.contest.id, "stop")}>Stop</button>
                       <button className="admin-v2-link-chip" disabled={busyId === consoleData.contest.id} onClick={() => void runAction(consoleData.contest.id, "archive")}>Archive</button>
-                      <button className="admin-v2-link-chip contest-danger-chip" disabled={busyId === consoleData.contest.id} onClick={() => void runAction(consoleData.contest.id, "delete")}>Delete</button>
+                      <button className="admin-v2-link-chip contest-danger-chip" disabled={busyId === consoleData.contest.id || !getDeleteActionState(consoleData.contest.status, consoleData.contest._count).allowed} onClick={() => void runAction(consoleData.contest.id, "delete")}>Delete</button>
                     </div>
                   </section>
                 </>
