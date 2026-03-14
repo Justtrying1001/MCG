@@ -32,10 +32,10 @@ const DEFAULT_EDITION_ODDS: Odd[] = [
   { label: "REVERSE", pct: 25 },
   { label: "BRILLANTE", pct: 10 },
   { label: "HOLO", pct: 4 },
-  { label: "FULL_ART", pct: 1 },
+  { label: "FULL ART", pct: 1 },
 ];
 
-const RARITY_DOT_COLOR: Record<string, string> = {
+const RARITY_COLOR: Record<string, string> = {
   COMMON: "#7E8794",
   UNCOMMON: "#4FA39A",
   RARE: "#3C6DF2",
@@ -43,29 +43,14 @@ const RARITY_DOT_COLOR: Record<string, string> = {
   LEGENDARY: "#D8A63E",
 };
 
-const EDITION_DOT_COLOR: Record<string, string> = {
+const EDITION_COLOR: Record<string, string> = {
   BASE: "#6B7280",
   REVERSE: "#38BDF8",
   BRILLANTE: "#F59E0B",
   HOLO: "#A855F7",
+  "FULL ART": "#D8A63E",
   FULL_ART: "#D8A63E",
 };
-
-const SLOT_DEFINITIONS = [
-  { range: "Slots 1–3", type: "STANDARD", desc: "Standard draw" },
-  { range: "Slot 4", type: "EDITION BOOST", desc: "Higher chance of rare editions" },
-  { range: "Slot 5", type: "RARITY HIT", desc: "Guaranteed elevated rarity" },
-];
-
-// Placeholder card colors for preview strip (one per rarity tier + repeat)
-const PREVIEW_BORDER_COLORS = [
-  "#7E8794",
-  "#4FA39A",
-  "#3C6DF2",
-  "#6E4CCF",
-  "#D8A63E",
-  "#4FA39A",
-];
 
 export function FeaturedPackStage({
   packImageSrc,
@@ -83,8 +68,10 @@ export function FeaturedPackStage({
   userPoints,
 }: FeaturedPackStageProps) {
   const packCost = GAME_CONFIG.PACK_COST;
-  const displayRarityOdds = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
-  const displayEditionOdds = editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS;
+  const displayRarity = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
+  const displayEdition = (editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS).map(
+    (o) => ({ ...o, label: o.label.replace("_", " ") }),
+  );
   const canAfford = userPoints === undefined || userPoints >= packCost;
 
   const ctaLabel =
@@ -103,23 +90,24 @@ export function FeaturedPackStage({
 
   return (
     <div className="ps-layout">
+
       {/* ── LEFT: Pack Hero ── */}
       <div className="ps-hero">
         <div className="ps-hero-glow" />
-
-        <div className="ps-hero-image-wrap">
-          <Image
-            src={packImageSrc as Parameters<typeof Image>[0]["src"]}
-            alt="MCG booster pack"
-            className="ps-hero-image"
-            priority
-          />
-        </div>
-
-        <div className="ps-hero-meta">
-          <span className="ps-edition-badge">GENESIS</span>
-          <h1 className="ps-pack-name">{packName.toUpperCase()}</h1>
-          <p className="ps-supply-counter">{supplyText}</p>
+        <div className="ps-hero-inner">
+          <div className="ps-hero-image-wrap">
+            <Image
+              src={packImageSrc as Parameters<typeof Image>[0]["src"]}
+              alt="MCG booster pack"
+              className="ps-hero-image"
+              priority
+            />
+          </div>
+          <div className="ps-hero-meta">
+            <span className="ps-edition-badge">GENESIS</span>
+            <h1 className="ps-pack-name">{packName.toUpperCase()}</h1>
+            <p className="ps-supply-counter">{supplyText}</p>
+          </div>
         </div>
       </div>
 
@@ -130,96 +118,48 @@ export function FeaturedPackStage({
         <div className="ps-price-block">
           <span className="ps-price-label">PRICE</span>
           <span className="ps-price-value">{packCost} PTS</span>
-          {!canAfford && (
-            <span className="ps-price-warn">Not enough points</span>
-          )}
+          {!canAfford && <span className="ps-price-warn">Not enough points</span>}
         </div>
 
-        {/* 2 — What's inside */}
+        {/* 2 — Pack at a glance */}
         <div className="ps-section">
           <h2 className="ps-section-title">WHAT&apos;S INSIDE</h2>
           <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
-          <div className="ps-slots-list">
-            {SLOT_DEFINITIONS.map((slot) => (
-              <div key={slot.range} className="ps-slot-row">
-                <span className="ps-slot-range">{slot.range}</span>
-                <span className="ps-slot-pill">{slot.type}</span>
-                <span className="ps-slot-desc">{slot.desc}</span>
-              </div>
-            ))}
+          <div className="ps-slots-row">
+            <span className="ps-slot-pill">STANDARD ×3</span>
+            <span className="ps-slot-pill ps-slot-pill--boost">EDITION BOOST</span>
+            <span className="ps-slot-pill ps-slot-pill--hit">RARITY HIT</span>
           </div>
         </div>
 
-        {/* 3 — Rarity odds */}
+        {/* 3 — Odds: two columns */}
         <div className="ps-section">
-          <h2 className="ps-section-title">
-            RARITY ODDS{" "}
-            <span className="ps-section-note">(Slots 1–3)</span>
-          </h2>
-          <div className="ps-odds-list">
-            {displayRarityOdds.map((odd) => (
-              <div key={odd.label} className="ps-odd-row">
-                <span
-                  className="ps-rarity-dot"
-                  style={{
-                    background: RARITY_DOT_COLOR[odd.label] ?? "#7E8794",
-                  }}
-                />
-                <span className="ps-rarity-label">{odd.label}</span>
-                <span className="ps-rarity-pct">{odd.pct}%</span>
-              </div>
-            ))}
-          </div>
-          <p className="ps-odds-note">Slot 5 has elevated rarity odds.</p>
-        </div>
-
-        {/* 3b — Edition odds */}
-        <div className="ps-section">
-          <h2 className="ps-section-title">
-            EDITION ODDS{" "}
-            <span className="ps-section-note">(Slot 4 boosts rare editions)</span>
-          </h2>
-          <div className="ps-odds-list">
-            {displayEditionOdds.map((odd) => (
-              <div key={odd.label} className="ps-odd-row">
-                <span
-                  className="ps-rarity-dot"
-                  style={{
-                    background: EDITION_DOT_COLOR[odd.label] ?? "#7E8794",
-                  }}
-                />
-                <span className="ps-rarity-label">{odd.label.replace("_", " ")}</span>
-                <span className="ps-rarity-pct">{odd.pct}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4 — Card preview strip */}
-        <div className="ps-section">
-          <h2 className="ps-section-title">POSSIBLE PULLS</h2>
-          <div className="ps-preview-strip">
-            {PREVIEW_BORDER_COLORS.map((color, i) => (
-              <div
-                key={i}
-                className="ps-preview-card"
-                style={{ borderColor: color }}
-              >
-                <div
-                  className="ps-preview-card-inner"
-                  style={{
-                    background: `linear-gradient(145deg, ${color}22, #0F141908)`,
-                  }}
-                >
-                  <span className="ps-preview-card-label">?</span>
+          <h2 className="ps-section-title">ODDS</h2>
+          <div className="ps-odds-grid">
+            <div className="ps-odds-col">
+              <p className="ps-odds-col-title">RARITY <span className="ps-odds-col-note">Slots 1–3</span></p>
+              {displayRarity.map((o) => (
+                <div key={o.label} className="ps-odd-row">
+                  <span className="ps-rarity-dot" style={{ background: RARITY_COLOR[o.label] ?? "#7E8794" }} />
+                  <span className="ps-rarity-label">{o.label}</span>
+                  <span className="ps-rarity-pct">{o.pct}%</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="ps-odds-col">
+              <p className="ps-odds-col-title">EDITION <span className="ps-odds-col-note">Slot 4↑</span></p>
+              {displayEdition.map((o) => (
+                <div key={o.label} className="ps-odd-row">
+                  <span className="ps-rarity-dot" style={{ background: EDITION_COLOR[o.label] ?? "#7E8794" }} />
+                  <span className="ps-rarity-label">{o.label}</span>
+                  <span className="ps-rarity-pct">{o.pct}%</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <p className="ps-set-label">50 cards in Set 1 — GENESIS</p>
         </div>
 
-        {/* 5 — CTAs */}
+        {/* 4 — CTAs */}
         <div className="ps-cta-block">
           <button
             type="button"
@@ -229,12 +169,8 @@ export function FeaturedPackStage({
           >
             {ctaLabel}
           </button>
-          <button
-            type="button"
-            className="ps-btn-secondary"
-            onClick={onOpenOdds}
-          >
-            Full odds & supply details
+          <button type="button" className="ps-btn-secondary" onClick={onOpenOdds}>
+            Full odds &amp; supply details
           </button>
         </div>
 
