@@ -1,5 +1,5 @@
 export type BuilderObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "MILESTONE";
-export type SocialAction = "LIKE" | "RETWEET" | "COMMENT";
+export type SocialAction = "LIKE" | "RETWEET" | "COMMENT" | "CUSTOM";
 export type SocialUrlKind = "PROFILE" | "TWEET" | "UNKNOWN";
 export type MilestoneType =
   | "PACK_OPEN_COUNT"
@@ -102,6 +102,8 @@ export function resolveSocialCtaLabel(input: {
       return "Open Tweet";
     case "COMMENT":
       return "Reply on X";
+    case "CUSTOM":
+      return "Open task";
     default:
       return "Open on X";
   }
@@ -171,6 +173,8 @@ export function getQuestObjectiveText(input: {
         return "RT this tweet";
       case "COMMENT":
         return "Comment this tweet";
+      case "CUSTOM":
+        return "Complete this social task";
       default:
         return "Complete this tweet action";
     }
