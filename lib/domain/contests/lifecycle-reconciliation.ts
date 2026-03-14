@@ -1,6 +1,7 @@
 import { ContestStatus } from "@prisma/client";
 
 import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
+import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
 import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { prisma } from "@/lib/prisma";
 
@@ -63,6 +64,7 @@ async function runAutomationBeforeTransition(contestId: string, target: ContestS
   if (target === ContestStatus.SETTLED) {
     await captureEndSnapshot(contestId);
     await computeContestScoresFromSnapshots(contestId);
+    await executeAutoSettlementForContest(contestId);
   }
 }
 

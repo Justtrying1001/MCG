@@ -266,6 +266,12 @@ export default function AdminContestsCatalogPage() {
             const stage = getContestStage(contest);
             const stopAction = getStopActionState(contest.status);
             const deleteAction = getDeleteActionState(contest.status, contest._count);
+            const pipeline = {
+              startSnapshot: contest.status === "LIVE" || contest.status === "SETTLED",
+              endSnapshot: contest.status === "SETTLED",
+              scoring: contest._count.rankings > 0,
+              settlement: contest._count.settlements > 0,
+            };
             return (
               <article key={contest.id} className="contest-console-card">
                 <div className="contest-console-card-head">
@@ -293,9 +299,19 @@ export default function AdminContestsCatalogPage() {
                   <p><strong>Settlement:</strong> {contest._count.settlements > 0 ? "Done" : "Pending"}</p>
                 </div>
 
+                <div className="contest-console-meta-grid">
+                  <p>START snapshot: <strong>{pipeline.startSnapshot ? "✓" : "·"}</strong></p>
+                  <p>END snapshot: <strong>{pipeline.endSnapshot ? "✓" : "·"}</strong></p>
+                  <p>Scoring: <strong>{pipeline.scoring ? "✓" : "·"}</strong></p>
+                  <p>Settlement: <strong>{pipeline.settlement ? "✓" : "·"}</strong></p>
+                </div>
+
                 <div className="contest-console-actions">
                   <button className="admin-v2-link-chip" onClick={() => void openConsole(contest.id)}>Open console</button>
                   <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
+                  {contest.status === "LOCKED" ? <Link href={`/admin/contests/${contest.id}/lifecycle`} className="admin-v2-link-chip">Force snapshot START</Link> : null}
+                  {contest.status === "LIVE" ? <Link href={`/admin/contests/${contest.id}/lifecycle`} className="admin-v2-link-chip">Force snapshot END</Link> : null}
+                  <Link href={`/admin/contests/${contest.id}/operator`} className="admin-v2-link-chip">Operator view</Link>
                   <button title={stopAction.reason || undefined} className="admin-v2-link-chip" disabled={busyId === contest.id || !stopAction.allowed} onClick={() => void runAction(contest.id, "stop")}>Stop</button>
                   {contest.status !== "CANCELED" ? <button className="admin-v2-link-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "archive")}>Archive</button> : null}
                   <button title={deleteAction.reason || undefined} className="admin-v2-link-chip contest-danger-chip" disabled={busyId === contest.id || !deleteAction.allowed} onClick={() => void runAction(contest.id, "delete")}>Delete</button>

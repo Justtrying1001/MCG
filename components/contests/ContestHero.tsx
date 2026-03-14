@@ -16,6 +16,8 @@ export function ContestHero({
   entries,
   nowTs,
   userState,
+  seasonName,
+  leagueTierRequired,
 }: {
   code: string;
   title: string;
@@ -28,11 +30,16 @@ export function ContestHero({
   entries: number;
   nowTs: number;
   userState: string;
+  seasonName?: string | null;
+  leagueTierRequired?: string | null;
 }) {
   const countdown = formatCountdown(getTargetDate(status, lockAt, endsAt), nowTs);
   const actionability = getActionability(status);
+  const rewardPool = `${Math.max(100, rosterSize * 40)} pts + rewards`;
+
   return (
     <Surface className="contest-detail-hero premium" variant="raised">
+      <div className={`contest-hero-banner contest-banner-${status.toLowerCase()}`} aria-hidden />
       <div>
         <SectionHeader
           eyebrow={`Contest ${code}`}
@@ -41,13 +48,19 @@ export function ContestHero({
           actions={<span className={`contest-phase-pill phase-${status.toLowerCase()}`}>{getPhaseLabel(status)}</span>}
         />
 
-        <div className="contest-hero-meta-row">
-          <span className="mcg-chip">Starts {formatDate(startsAt)}</span>
-          <span className="mcg-chip">Team lock {formatDate(lockAt)}</span>
-          <span className="mcg-chip">Ends {formatDate(endsAt)}</span>
-          <span className="mcg-chip">Roster {rosterSize}</span>
-          <span className="mcg-chip">Entries {entries}</span>
+        <div className="contest-hero-meta-row compact">
+          <span className="mcg-chip">Reward pool {rewardPool}</span>
+          <span className="mcg-chip">Participants {entries}</span>
+          <span className="mcg-chip">Team size {rosterSize}</span>
           <span className="mcg-chip">Set {restrictedSet ? "Restricted" : "Any"}</span>
+          <span className="mcg-chip">Season {seasonName ?? "Unassigned"}</span>
+          <span className="mcg-chip">League {leagueTierRequired ?? "OPEN"}</span>
+        </div>
+
+        <div className="contest-hero-meta-row">
+          <span className="mcg-chip">Opens {formatDate(startsAt)}</span>
+          <span className="mcg-chip">Lock {formatDate(lockAt)}</span>
+          <span className="mcg-chip">Ends {formatDate(endsAt)}</span>
         </div>
       </div>
 

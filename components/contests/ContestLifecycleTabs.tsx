@@ -1,9 +1,8 @@
 import { Chip } from "@/components/ui/Chip";
 
-export type ContestLifecycleTab = "UPCOMING" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED";
+export type ContestLifecycleTab = "OPEN" | "LOCKED" | "LIVE" | "SETTLED";
 
 const tabs: Array<{ key: ContestLifecycleTab; label: string }> = [
-  { key: "UPCOMING", label: "Upcoming" },
   { key: "OPEN", label: "Open" },
   { key: "LOCKED", label: "Locked" },
   { key: "LIVE", label: "Live" },

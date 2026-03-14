@@ -12,16 +12,18 @@ type Props = {
   canEnter: boolean;
 };
 
-type SortMode = "rarity" | "name";
+type SortMode = "rarity" | "name" | "potential";
 
 export function CardSelectorModal({ open, options, selectedIds, onToggle, onClose, canEnter }: Props) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
   const [edition, setEdition] = useState("all");
+  const [token, setToken] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("rarity");
 
   const rarityOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.rarityCode))], [options]);
   const editionOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.editionCode))], [options]);
+  const tokenOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.tokenProjectName))], [options]);
   const rarityOrder = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
   const filtered = useMemo(() => {
@@ -29,11 +31,18 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
       const byQuery = card.name.toLowerCase().includes(query.toLowerCase()) || card.cardSetCode.toLowerCase().includes(query.toLowerCase());
       const byRarity = rarity === "all" || card.rarityCode === rarity;
       const byEdition = edition === "all" || card.editionCode === edition;
-      return byQuery && byRarity && byEdition;
+      const byToken = token === "all" || card.tokenProjectName === token;
+      return byQuery && byRarity && byEdition && byToken;
     });
 
     rows.sort((a, b) => {
       if (sortMode === "name") return a.name.localeCompare(b.name);
+      if (sortMode === "potential") {
+        const ai = rarityOrder.indexOf(a.rarityCode.toUpperCase());
+        const bi = rarityOrder.indexOf(b.rarityCode.toUpperCase());
+        if (ai !== bi) return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        return a.tokenProjectName.localeCompare(b.tokenProjectName);
+      }
       const ai = rarityOrder.indexOf(a.rarityCode.toUpperCase());
       const bi = rarityOrder.indexOf(b.rarityCode.toUpperCase());
       const rarityDelta = (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
@@ -42,7 +51,7 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
     });
 
     return rows;
-  }, [options, query, rarity, edition, sortMode]);
+  }, [options, query, rarity, edition, token, sortMode]);
 
   if (!open) return null;
 
@@ -69,16 +78,22 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
               <option value={value} key={value}>{value === "all" ? "All editions" : value}</option>
             ))}
           </select>
+          <select className="collection-select" value={token} onChange={(event) => setToken(event.target.value)}>
+            {tokenOptions.map((value) => (
+              <option value={value} key={value}>{value === "all" ? "All tokens" : value}</option>
+            ))}
+          </select>
           <select className="collection-select" value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
             <option value="rarity">Sort: Rarity</option>
             <option value="name">Sort: Name</option>
+            <option value="potential">Sort: Score potential</option>
           </select>
         </div>
 
         <div className="contest-modal-grid visual">
           {filtered.map((item) => {
             const isSelected = selectedIds.includes(item.instanceId);
-            const isLocked = Boolean(item.lockState) && !isSelected;
+            const isLocked = item.isLockedByActiveContest && !isSelected;
             return (
               <LineupCardTile
                 key={item.instanceId}

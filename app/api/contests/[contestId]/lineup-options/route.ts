@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ContestStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -6,6 +7,8 @@ import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
+
+const ACTIVE_CONTEST_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
 
 export async function GET(_request: Request, { params }: { params: { contestId: string } }) {
   try {
@@ -31,12 +34,31 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       take: 150,
     });
 
+    const activeLocks = await prisma.rosterLock.findMany({
+      where: {
+        ownedCardInstanceId: { in: instances.map((instance) => instance.id) },
+        contestEntry: {
+          contest: { status: { in: ACTIVE_CONTEST_STATUSES } },
+        },
+      },
+      select: {
+        ownedCardInstanceId: true,
+        contestEntry: { select: { contestId: true } },
+      },
+    });
+
+    const activeLockByInstance = new Map<string, string>();
+    for (const row of activeLocks) {
+      activeLockByInstance.set(row.ownedCardInstanceId, row.contestEntry.contestId);
+    }
+
     const options = instances
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)
       .map((instance) => ({
           instanceId: instance.id,
           cardTemplateId: instance.cardTemplateId,
           lockState: instance.lockState,
+          isLockedByActiveContest: Boolean(activeLockByInstance.get(instance.id) && activeLockByInstance.get(instance.id) !== params.contestId),
           cardSetId: instance.cardTemplate.cardSetId,
           cardSetCode: instance.cardTemplate.cardSet.code,
           cardSetName: instance.cardTemplate.cardSet.displayName,

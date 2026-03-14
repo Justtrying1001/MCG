@@ -41,8 +41,10 @@ async function captureSnapshot(contestId: string, phase: ContestSnapshotPhase): 
       markets = await fetchCoinsMarkets(geckoIds);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[contest-snapshot] CoinGecko fetch failed for contest=${contestId} phase=${phase}: ${message}`);
-      markets = [];
+      throw new ContestRuntimeError(
+        `CoinGecko snapshot fetch failed for ${phase} phase (${message}). Contest transition is blocked until snapshot succeeds.`,
+        503
+      );
     }
     const marketById = new Map(markets.map((row) => [row.id.toLowerCase(), row]));
 

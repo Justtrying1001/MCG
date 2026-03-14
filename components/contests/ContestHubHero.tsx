@@ -30,21 +30,26 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
   const rosterSize = contest.rules[0]?.maxRosterSize ?? 5;
   const rewardTeaser = `${Math.max(100, rosterSize * 40)} pts + booster chance`;
   const countdown = formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs);
+  const badge = contest.status === "LIVE" ? "Legendary Cup" : contest.status === "SETTLED" ? "Hall of Fame" : "Seasonal Clash";
 
   return (
     <Surface className="contest-hub-hero premium" variant="raised">
-      <div>
+      <div className={`contest-hero-banner contest-banner-${contest.status.toLowerCase()}`} aria-hidden />
+      <div className="contest-hub-hero-content">
         <SectionHeader
           eyebrow="Featured contest"
           title={contest.title}
           subtitle={getFeaturedSubtitle(contest.status)}
           actions={<span className={`contest-phase-pill phase-${contest.status.toLowerCase()}`}>{getPhaseLabel(contest.status)}</span>}
         />
+        <div className="contest-rarity-badge">{badge}</div>
         <div className="contest-hero-meta-row">
+          <span className="mcg-chip">Reward pool {rewardTeaser}</span>
+          <span className="mcg-chip">Participants {contest._count.entries}</span>
+          <span className="mcg-chip">Team size {rosterSize}</span>
+          <span className="mcg-chip">Season {contest.seasonName ?? "Unassigned"}</span>
+          <span className="mcg-chip">League {contest.leagueTierRequired ?? "OPEN"}</span>
           <span className="mcg-chip">Code {contest.code}</span>
-          <span className="mcg-chip">Roster {rosterSize}</span>
-          <span className="mcg-chip">Entries {contest._count.entries}</span>
-          <span className="mcg-chip">Reward {rewardTeaser}</span>
         </div>
       </div>
 
