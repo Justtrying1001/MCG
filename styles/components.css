@@ -239,6 +239,367 @@
 .pack-odds-table td { font-size: 0.86rem; }
 .pack-reveal-head-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-1); margin-bottom: var(--space-1); }
 
+/* ===== Pack Store Redesign ===== */
+.ps-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  min-height: calc(100vh - var(--nav-h, 64px));
+  align-items: start;
+}
+
+/* ─ LEFT: Hero ─ */
+.ps-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 48px 32px;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.ps-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 65% 55% at 50% 62%,
+    rgba(196, 113, 90, 0.20) 0%,
+    rgba(212, 168, 75, 0.07) 45%,
+    transparent 72%);
+  pointer-events: none;
+}
+
+.ps-hero-image-wrap { position: relative; z-index: 1; }
+
+.ps-hero-image {
+  width: min(360px, 85%);
+  height: auto;
+  object-fit: contain;
+  animation: ps-float 4.8s ease-in-out infinite;
+  filter:
+    drop-shadow(0 28px 48px rgba(196, 113, 90, 0.38))
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65));
+}
+
+@keyframes ps-float {
+  0%,  100% { transform: translateY(0px)    rotate(-0.4deg); }
+  50%        { transform: translateY(-14px)  rotate( 0.4deg); }
+}
+
+.ps-hero-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.ps-edition-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 168, 75, 0.45);
+  background: rgba(212, 168, 75, 0.10);
+  color: #D4A84B;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ps-pack-name {
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  color: var(--text, #F3F1EC);
+}
+
+.ps-supply-counter {
+  font-size: 0.82rem;
+  color: var(--text-3, #4A4A47);
+  letter-spacing: 0.04em;
+}
+
+/* ─ RIGHT: Details Panel ─ */
+.ps-panel {
+  display: grid;
+  align-content: start;
+  border-left: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+  background: linear-gradient(180deg, rgba(18, 22, 28, 0.65), rgba(12, 16, 21, 0.85));
+  position: sticky;
+  top: var(--nav-h, 64px);
+  max-height: calc(100vh - var(--nav-h, 64px));
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Price block */
+.ps-price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+}
+
+.ps-price-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-2, #8A8A84);
+}
+
+.ps-price-value {
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: #D4A84B;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.ps-price-warn {
+  font-size: 0.76rem;
+  color: #fca5a5;
+  margin-top: 2px;
+}
+
+/* Sections */
+.ps-section {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+  display: grid;
+  gap: 10px;
+}
+
+.ps-section-title {
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2, #8A8A84);
+}
+
+.ps-section-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 400;
+  opacity: 0.65;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.ps-cards-count {
+  font-size: 0.88rem;
+  color: var(--text-2, #8A8A84);
+}
+
+/* Slot breakdown */
+.ps-slots-list { display: grid; gap: 7px; }
+
+.ps-slot-row {
+  display: grid;
+  grid-template-columns: 64px auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.ps-slot-range {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-3, #4A4A47);
+  white-space: nowrap;
+}
+
+.ps-slot-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(196, 113, 90, 0.38);
+  background: rgba(196, 113, 90, 0.10);
+  color: #C4715A;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ps-slot-desc {
+  font-size: 0.76rem;
+  color: var(--text-2, #8A8A84);
+}
+
+/* Rarity odds */
+.ps-odds-list { display: grid; gap: 6px; }
+
+.ps-odd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ps-rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ps-rarity-label {
+  flex: 1;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text, #F3F1EC);
+}
+
+.ps-rarity-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--text-2, #8A8A84);
+}
+
+.ps-odds-note {
+  font-size: 0.7rem;
+  color: var(--text-3, #4A4A47);
+  font-style: italic;
+}
+
+/* Preview strip */
+.ps-preview-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.ps-preview-card {
+  flex-shrink: 0;
+  width: 52px;
+  height: 72px;
+  border-radius: 6px;
+  border: 1px solid;
+  overflow: hidden;
+}
+
+.ps-preview-card-inner {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.ps-preview-card-label {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.ps-set-label {
+  font-size: 0.68rem;
+  color: var(--text-3, #4A4A47);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* CTA block */
+.ps-cta-block {
+  padding: 20px 24px;
+  display: grid;
+  gap: 10px;
+}
+
+.ps-btn-primary {
+  width: 100%;
+  padding: 15px 24px;
+  border: none;
+  border-radius: 10px;
+  background: #C4715A;
+  color: #0F1419;
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  box-shadow: 0 4px 20px rgba(196, 113, 90, 0.30);
+}
+
+.ps-btn-primary:hover:not(:disabled) {
+  background: #d4826a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(196, 113, 90, 0.40);
+}
+
+.ps-btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+.ps-btn-primary:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.ps-btn-secondary {
+  width: 100%;
+  padding: 10px 24px;
+  border: 1px solid var(--border-hi, rgba(55, 60, 70, 0.88));
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2, #8A8A84);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ps-btn-secondary:hover {
+  border-color: rgba(196, 113, 90, 0.50);
+  color: var(--text, #F3F1EC);
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .ps-layout {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
+
+  .ps-hero {
+    min-height: 360px;
+    padding: 36px 24px;
+  }
+
+  .ps-panel {
+    border-left: none;
+    border-top: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .ps-cta-block {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-base, #0B0B0D);
+    border-top: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+    z-index: 10;
+  }
+}
+
 /* ===== Collection (phase 2) ===== */
 .collection-toolbar {
   padding: var(--space-2);
