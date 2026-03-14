@@ -29,13 +29,16 @@ export async function POST(request: Request) {
       value: token,
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      // __Host- prefix requires Secure=true unconditionally (browser enforces it).
+      // Modern browsers allow __Host- cookies on localhost without HTTPS.
+      secure: true,
       path: "/",
       maxAge: getAdminSessionMaxAgeSeconds(),
     });
 
     return response;
   } catch {
-    return NextResponse.json({ ok: false, error: "Admin auth is not configured" }, { status: 503 });
+    // MED-5: do not reveal whether env vars are missing — generic message only
+    return NextResponse.json({ ok: false, error: "Service unavailable" }, { status: 503 });
   }
 }

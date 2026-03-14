@@ -9,7 +9,9 @@ export async function POST() {
     value: "",
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Must match the Secure attribute used when the cookie was set so the browser
+    // correctly overwrites and expires it (required by __Host- prefix semantics).
+    secure: true,
     path: "/",
     maxAge: 0,
   });

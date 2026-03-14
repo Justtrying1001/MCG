@@ -1,5 +1,10 @@
 node_modules
 .next
+
+# Environment files — never commit real credentials.
+# .env.example is explicitly allowed (template only, no real values).
 .env
-.env.local
+.env.*
+!.env.example
+
 npm-debug.log*
