@@ -42,6 +42,8 @@ export default function AccountPage() {
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [userQuests]);
 
+  const accountBreakdown = account?.progressionBreakdown;
+
   return (
     <SiteShell>
       <div className="hub-page">
@@ -154,14 +156,14 @@ export default function AccountPage() {
                   <div className="shc-icon" style={{ background: "rgba(200,155,60,0.12)", color: "var(--gold)", fontSize: "1.2rem" }}>
                     ⬡
                   </div>
-                  <span className="shc-label">Account</span>
+                  <span className="shc-label">Progression</span>
                 </div>
                 <div className="shc-value" style={{ color: "var(--gold)" }}>
                   Lv {account?.level ?? 1}
                 </div>
                 <div className="shc-sub">
                   {account
-                    ? `${account.xp} XP · next milestone at Lv ${account.nextMilestoneLevel}`
+                    ? `${account.xp} total XP · next milestone Lv ${account.nextMilestoneLevel}`
                     : "Connect to see account progression"}
                 </div>
                 {account && (
@@ -174,8 +176,7 @@ export default function AccountPage() {
                   </div>
                 )}
                 <div className="shc-sub" style={{ marginTop: "0.35rem" }}>
-                  Points balance:{" "}
-                  <strong style={{ color: "var(--text)" }}>{account?.pointsBalance ?? me.user.points}</strong>
+                  Score economy: <strong style={{ color: "var(--text)" }}>{account?.pointsBalance ?? me.user.points} PTS</strong>
                 </div>
               </div>
 
@@ -240,6 +241,42 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
+
+            {accountBreakdown && (
+              <div className="profile-audit-panel">
+                <div className="profile-audit-head">
+                  <h3>Progression audit · XP model v2</h3>
+                  <p>
+                    The profile now separates <strong>Points</strong> (economy) from <strong>XP</strong> (status).
+                    XP is a weighted score from account activity, collection depth, and competitive performance,
+                    with a non-linear level curve to avoid inflated high levels too early.
+                  </p>
+                </div>
+                <div className="profile-audit-grid">
+                  <div className="profile-audit-item">
+                    <span>Points contribution</span>
+                    <strong>{accountBreakdown.pointsXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Collection contribution</span>
+                    <strong>{accountBreakdown.collectionXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Competitive contribution</span>
+                    <strong>{accountBreakdown.competitiveXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Legacy contest XP</span>
+                    <strong>{accountBreakdown.legacyXp} XP</strong>
+                  </div>
+                </div>
+                <p className="profile-audit-note">
+                  Profile purpose: make player identity readable at a glance, guide next actions
+                  (collection and contests), and expose clear progression levers instead of decorative stats.
+                </p>
+              </div>
+            )}
+
 
             {/* ── Achievement Grid ── */}
             {me.mode === "user" && (
