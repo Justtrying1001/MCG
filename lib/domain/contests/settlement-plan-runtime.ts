@@ -2,6 +2,7 @@ import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/c
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
+import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 
 const DISTRIBUTION_RULE_TYPES = {
   FIXED_RANKS: "FIXED_RANKS",
@@ -259,16 +260,14 @@ export async function executeSettlementPlan(planId: string) {
         }
 
         if (component.type === "PACK") {
-          await tx.rewardGrant.create({
-            data: {
+          for (let i = 0; i < component.quantity; i += 1) {
+            await grantRewardPackByDefinitionTx(tx, {
               userId: item.userId,
-              type: RewardType.PACK,
-              amount: component.quantity,
               packDefinitionId: component.packDefinitionId,
               sourceContestSettlementId: settlement.id,
-            },
-          });
-          rewardCount += 1;
+            });
+            rewardCount += 1;
+          }
           continue;
         }
 

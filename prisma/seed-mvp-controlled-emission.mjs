@@ -10,8 +10,8 @@ const MVP_CARD_SET = {
 };
 
 const MVP_PACKS = [
-  { code: "mvp_sale_pack", displayName: "MCG MVP Sale Pack", source: "SALE", plannedPackCount: 11000 },
-  { code: "mvp_reward_pack", displayName: "MCG MVP Reward Pack", source: "REWARD", plannedPackCount: 5000 },
+  { code: "mvp_sale_pack", displayName: "MCG MVP Sale Pack", source: "SALE", plannedPackCount: 10000 },
+  { code: "mvp_reward_pack", displayName: "MCG MVP Reward Pack", source: "REWARD", plannedPackCount: 6000 },
 ];
 
 const CARDS_PER_PACK = 5;
@@ -257,7 +257,7 @@ async function run() {
   console.log(`Tokens: ${mvpTokens.length}`);
   console.log(`Templates: ${expectedTemplates}`);
   console.log(`Planned card supply: ${perToken * MVP_TOKEN_COUNT}`);
-  console.log(`Packs: sale=11000 reward=5000 cardsPerPack=${CARDS_PER_PACK}`);
+  console.log(`Packs: sale=10000 reward=6000 cardsPerPack=${CARDS_PER_PACK}`);
 }
 
 run()

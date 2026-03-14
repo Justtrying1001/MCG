@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 import {
   ContestEntryStatus,
   ContestStatus,
@@ -395,6 +396,21 @@ export async function settleContestMvp(params: { contestId: string; rewards: Rew
     for (const reward of params.rewards) {
       if (reward.type === RewardType.POINTS && typeof reward.amount !== "number") {
         throw new ContestRuntimeError("POINTS rewards require amount", 400);
+      }
+
+      if (reward.type === RewardType.PACK) {
+        if (!reward.packDefinitionId) {
+          throw new ContestRuntimeError("PACK rewards require packDefinitionId", 400);
+        }
+        const quantity = Math.max(1, reward.amount ?? 1);
+        for (let i = 0; i < quantity; i += 1) {
+          await grantRewardPackByDefinitionTx(tx, {
+            userId: reward.userId,
+            packDefinitionId: reward.packDefinitionId,
+            sourceContestSettlementId: settlement.id,
+          });
+        }
+        continue;
       }
 
       await tx.rewardGrant.create({
