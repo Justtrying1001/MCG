@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 function runPrisma(args) {
@@ -18,6 +20,22 @@ function runPrisma(args) {
   return { ok: false, output, status: result.status ?? 1 };
 }
 
+function getMigrationDirectories() {
+  const migrationsRoot = join(process.cwd(), "prisma", "migrations");
+  return readdirSync(migrationsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function markApplied(migrationName) {
+  const resolve = runPrisma(["migrate", "resolve", "--applied", migrationName]);
+  if (!resolve.ok) {
+    process.stderr.write(resolve.output);
+    process.exit(resolve.status);
+  }
+}
+
 function main() {
   const migrate = runPrisma(["migrate", "deploy"]);
   if (migrate.ok) {
@@ -30,15 +48,28 @@ function main() {
     process.exit(migrate.status);
   }
 
-  console.warn("Prisma migrate deploy reported P3005 (non-empty non-baselined DB). Falling back to prisma db push.");
-
-  const push = runPrisma(["db", "push"]);
-  if (!push.ok) {
-    process.stderr.write(push.output);
-    process.exit(push.status);
+  const migrations = getMigrationDirectories();
+  if (migrations.length <= 1) {
+    process.stderr.write(migrate.output);
+    process.exit(migrate.status);
   }
 
-  console.log("Prisma db push fallback succeeded.");
+  const migrationsToBaseline = migrations.slice(0, -1);
+  console.warn(
+    `Prisma migrate deploy reported P3005. Baselining ${migrationsToBaseline.length} historical migration(s), then retrying deploy.`
+  );
+
+  for (const migrationName of migrationsToBaseline) {
+    markApplied(migrationName);
+  }
+
+  const redeploy = runPrisma(["migrate", "deploy"]);
+  if (!redeploy.ok) {
+    process.stderr.write(redeploy.output);
+    process.exit(redeploy.status);
+  }
+
+  console.log("Prisma migrate deploy succeeded after baseline recovery.");
 }
 
 main();
