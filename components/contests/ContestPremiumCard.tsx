@@ -6,7 +6,12 @@ import { formatCountdown, getTargetDate } from "@/components/contests/contestUti
 
 function formatDate(value: string | null) {
   if (!value) return "TBD";
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function getVisualToken(contest: ContestListItem) {
@@ -25,6 +30,7 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
     <Surface as="article" variant="raised" className={`contest-premium-card tone-${contest.status.toLowerCase()}`}>
       <div className="contest-premium-card-art" aria-hidden>
         <span>{visualToken}</span>
+        <small>{contest.seasonName ?? "MCG Arena"}</small>
       </div>
 
       <div className="contest-premium-card-body">
@@ -35,17 +41,17 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
 
         <h3 title={contest.title}>{contest.title}</h3>
 
-        <div className="contest-premium-meta">
-          <span>{timingLabel}: {formatDate(contest.status === "OPEN" ? contest.lockAt : contest.endsAt)}</span>
-          <span>Countdown: {countdown}</span>
-          <span>Reward: {rewardPreview}</span>
-          <span>Participants: {contest._count.entries}</span>
-          <span>Lineup: {rosterSize} cards</span>
+        <div className="contest-premium-meta-grid" aria-label="Contest quick stats">
+          <span><b>{timingLabel}</b>{formatDate(contest.status === "OPEN" ? contest.lockAt : contest.endsAt)}</span>
+          <span><b>Countdown</b>{countdown}</span>
+          <span><b>Reward</b>{rewardPreview}</span>
+          <span><b>Players</b>{contest._count.entries}</span>
+          <span><b>Lineup</b>{rosterSize} cards</span>
+          <span><b>League</b>{contest.leagueTierRequired ?? "OPEN"}</span>
         </div>
 
         <div className="contest-premium-footer">
-          <span className="contest-premium-league">{contest.leagueTierRequired ?? "OPEN LEAGUE"}</span>
-          <Link href={`/contests/${contest.id}`} className="mcg-btn">
+          <Link href={`/contests/${contest.id}`} className="mcg-btn contest-premium-cta">
             {getPrimaryCtaLabel(contest.status)}
           </Link>
         </div>
