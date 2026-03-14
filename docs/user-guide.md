@@ -60,12 +60,12 @@ Conséquence pratique : un nouveau compte ayant reçu le welcome reward peut ouv
 
 ### 4.1 Packs officiels runtime
 Deux packs MVP sont semés côté runtime :
-- `mvp_sale_pack` (SALE), planned pack count = **11 000**.
-- `mvp_reward_pack` (REWARD), planned pack count = **5 000**.
+- `mvp_sale_pack` (SALE), planned pack count = **10 000**.
+- `mvp_reward_pack` (REWARD), planned pack count = **6 000**.
 - Cartes par pack : **5**.
 
 ### 4.2 Capacité totale prévue
-- Packs totaux planifiés : 11 000 + 5 000 = **16 000 packs**.
+- Packs totaux planifiés : 10 000 + 6 000 = **16 000 packs**.
 - Cartes totales issues des packs : 16 000 × 5 = **80 000 cartes**.
 
 ### 4.3 Set et dataset
