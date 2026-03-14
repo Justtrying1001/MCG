@@ -118,7 +118,7 @@ export function FeaturedPackStage({
 
         {/* 2 — What's inside */}
         <div className="ps-section">
-          <h2 className="ps-section-title">WHAT'S INSIDE</h2>
+          <h2 className="ps-section-title">WHAT&apos;S INSIDE</h2>
           <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
           <div className="ps-slots-list">
             {SLOT_DEFINITIONS.map((slot) => (
