@@ -28,4 +28,6 @@ export type LineupOption = {
   rarityCode: string;
   editionCode: string;
   name: string;
+  imageUrl: string | null;
+  tokenProjectName: string;
 };

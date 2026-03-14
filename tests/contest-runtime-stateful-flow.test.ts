@@ -20,7 +20,7 @@ function createStatefulTx() {
   const state = {
     contest: {
       id: "contest_1",
-      status: ContestStatus.OPEN,
+      status: ContestStatus.OPEN as ContestStatus,
       lockAt: null as Date | null,
     },
     rule: {
@@ -82,6 +82,16 @@ function createStatefulTx() {
         }
         return { ...entry, rosterLocks: state.rosterLocks.filter((row) => row.contestEntryId === id) };
       }),
+      update: vi.fn(async ({ where, data }: any) => {
+        const entry = state.entries.find((row) => row.id === where.id);
+        if (!entry) throw new Error("entry not found");
+        entry.status = data.status;
+        state.rosterLocks = state.rosterLocks.filter((row) => row.contestEntryId !== where.id);
+        for (const row of data.rosterLocks.createMany.data) {
+          state.rosterLocks.push({ contestEntryId: where.id, ownedCardInstanceId: row.ownedCardInstanceId, contestId: entry.contestId });
+        }
+        return { ...entry, rosterLocks: state.rosterLocks.filter((row) => row.contestEntryId === where.id) };
+      }),
       updateMany: vi.fn(async ({ where, data }: any) => {
         let count = 0;
         for (const entry of state.entries) {
@@ -98,6 +108,16 @@ function createStatefulTx() {
         return state.ownedCardInstances
           .filter((row) => where.id.in.includes(row.id) && row.userId === where.userId)
           .map((row) => ({ id: row.id, cardTemplateId: row.cardTemplateId }));
+      }),
+      update: vi.fn(async ({ where, data }: any) => {
+        const entry = state.entries.find((row) => row.id === where.id);
+        if (!entry) throw new Error("entry not found");
+        entry.status = data.status;
+        state.rosterLocks = state.rosterLocks.filter((row) => row.contestEntryId !== where.id);
+        for (const row of data.rosterLocks.createMany.data) {
+          state.rosterLocks.push({ contestEntryId: where.id, ownedCardInstanceId: row.ownedCardInstanceId, contestId: entry.contestId });
+        }
+        return { ...entry, rosterLocks: state.rosterLocks.filter((row) => row.contestEntryId === where.id) };
       }),
       updateMany: vi.fn(async ({ where, data }: any) => {
         let count = 0;
@@ -198,18 +218,17 @@ describe("contest runtime stateful flow", () => {
       lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
     });
 
-    expect(result.entry.status).toBe("LOCKED");
+    expect(result.entry.status).toBe("SUBMITTED");
     expect(state.entries).toHaveLength(1);
     expect(state.rosterLocks).toHaveLength(5);
     expect(state.ownedCardInstances.filter((row) => row.userId === "u1").every((row) => row.lockState?.includes("CONTEST:contest_1"))).toBe(true);
 
-    await expect(
-      enterContestMvp({
-        contestId: "contest_1",
-        userId: "u1",
-        lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
-      })
-    ).rejects.toThrow(/already entered/i);
+    const updated = await enterContestMvp({
+      contestId: "contest_1",
+      userId: "u1",
+      lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
+    });
+    expect(updated.entry.status).toBe("SUBMITTED");
 
     await expect(
       enterContestMvp({

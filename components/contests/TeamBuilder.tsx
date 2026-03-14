@@ -32,7 +32,7 @@ export function TeamBuilder({
   const pct = Math.min(100, Math.round((filled / Math.max(maxRosterSize, 1)) * 100));
 
   return (
-    <section className="contest-team-builder">
+    <section className="contest-team-builder premium">
       <div className="contest-builder-head">
         <p className="mcg-eyebrow">Team builder</p>
         <strong>{filled}/{maxRosterSize} slots filled</strong>
@@ -56,13 +56,13 @@ export function TeamBuilder({
       <div className="contest-builder-actions">
         {canManageLineup ? (
           <>
-            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Browse all eligible cards</Button>
+            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Browse full gallery</Button>
             <Button onClick={onSubmit} disabled={!canEnter || selectedIds.length !== maxRosterSize || submitState === "saving"}>
-              {submitState === "saving" ? "Submitting…" : submitState === "success" ? "Entry confirmed" : "Confirm lineup"}
+              {submitState === "saving" ? "Saving lineup…" : "Save lineup"}
             </Button>
           </>
         ) : (
-          <p className="contest-inline-note">Lineup editing is unavailable in current contest state.</p>
+          <p className="contest-inline-note">Team lock is active. Lineup editing is disabled.</p>
         )}
       </div>
 

@@ -1,4 +1,5 @@
 import type { LineupOption } from "@/components/contests/types";
+import { LineupCardTile } from "@/components/contests/LineupCardTile";
 
 export function EligibleCardsPanel({
   options,
@@ -14,25 +15,21 @@ export function EligibleCardsPanel({
   return (
     <section className="contest-eligible-panel">
       <div className="contest-eligible-head">
-        <p className="mcg-eyebrow">Eligible cards</p>
-        <strong>{options.length} available</strong>
+        <p className="mcg-eyebrow">Card gallery</p>
+        <strong>{options.length} eligible cards</strong>
       </div>
-      <div className="contest-eligible-grid">
-        {options.slice(0, 12).map((item) => {
+      <div className="contest-eligible-grid visual">
+        {options.slice(0, 16).map((item) => {
           const isSelected = selectedIds.includes(item.instanceId);
           const isLocked = Boolean(item.lockState) && !isSelected;
           return (
-            <button
+            <LineupCardTile
               key={item.instanceId}
-              type="button"
-              className={`contest-eligible-card${isSelected ? " selected" : ""}${isLocked ? " locked" : ""}`}
-              onClick={() => onToggle(item.instanceId)}
+              option={item}
+              selected={isSelected}
               disabled={!canManage || isLocked}
-            >
-              <strong>{item.name}</strong>
-              <span>{item.rarityCode} · {item.editionCode}</span>
-              <span>{isLocked ? "Locked elsewhere" : item.cardSetCode}</span>
-            </button>
+              onClick={() => onToggle(item.instanceId)}
+            />
           );
         })}
       </div>

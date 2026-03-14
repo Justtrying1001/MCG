@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { LineupOption } from "@/components/contests/types";
+import { LineupCardTile } from "@/components/contests/LineupCardTile";
 
 type Props = {
   open: boolean;
@@ -49,22 +50,18 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
           </select>
         </div>
 
-        <div className="contest-modal-grid">
+        <div className="contest-modal-grid visual">
           {filtered.map((item) => {
             const isSelected = selectedIds.includes(item.instanceId);
             const isLocked = Boolean(item.lockState) && !isSelected;
             return (
-              <button
+              <LineupCardTile
                 key={item.instanceId}
-                className={`contest-option-card-v2${isSelected ? " selected" : ""}${isLocked ? " locked" : ""}`}
-                type="button"
-                onClick={() => onToggle(item.instanceId)}
+                option={item}
+                selected={isSelected}
                 disabled={isLocked || !canEnter}
-              >
-                <strong>{item.name}</strong>
-                <span>{item.rarityCode} · {item.editionCode}</span>
-                <span>{isLocked ? "Locked elsewhere" : item.cardSetCode}</span>
-              </button>
+                onClick={() => onToggle(item.instanceId)}
+              />
             );
           })}
         </div>
