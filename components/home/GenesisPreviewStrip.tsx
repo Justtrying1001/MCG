@@ -1,27 +1,29 @@
 import Link from "next/link";
+import Image from "next/image";
 
-// Placeholder card backs — 50 cards in Set 1, show a representative preview strip
-const PREVIEW_CARDS = [
-  { rarity: "Legendary", label: "?" },
-  { rarity: "Epic", label: "?" },
-  { rarity: "Rare", label: "?" },
-  { rarity: "Rare", label: "?" },
-  { rarity: "Uncommon", label: "?" },
-  { rarity: "Uncommon", label: "?" },
-  { rarity: "Common", label: "?" },
-  { rarity: "Common", label: "?" },
-  { rarity: "Common", label: "?" },
-  { rarity: "Epic", label: "?" },
-  { rarity: "Legendary", label: "?" },
-  { rarity: "Rare", label: "?" },
+const PREVIEW_TOKENS = [
+  { symbol: "PEPE",    label: "Pepe",           rarity: "Legendary", img: "https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg?1696528776" },
+  { symbol: "WIF",     label: "dogwifhat",       rarity: "Legendary", img: "https://coin-images.coingecko.com/coins/images/33566/large/dogwifhat.jpg?1702499428" },
+  { symbol: "BONK",   label: "Bonk",            rarity: "Epic",      img: "https://coin-images.coingecko.com/coins/images/28600/large/bonk.jpg?1696527587" },
+  { symbol: "SHIB",   label: "Shiba Inu",       rarity: "Epic",      img: "https://coin-images.coingecko.com/coins/images/11939/large/shiba.png?1696511800" },
+  { symbol: "DOGE",   label: "Dogecoin",        rarity: "Rare",      img: "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png?1696501409" },
+  { symbol: "FLOKI",  label: "FLOKI",           rarity: "Rare",      img: "https://coin-images.coingecko.com/coins/images/16746/large/PNG_image.png?1696516318" },
+  { symbol: "TRUMP",  label: "TRUMP",           rarity: "Rare",      img: "https://coin-images.coingecko.com/coins/images/53746/large/trump.png?1737171561" },
+  { symbol: "POPCAT", label: "Popcat",          rarity: "Uncommon",  img: "https://coin-images.coingecko.com/coins/images/33760/large/image.jpg?1702964227" },
+  { symbol: "PNUT",   label: "Peanut",          rarity: "Uncommon",  img: "https://coin-images.coingecko.com/coins/images/51301/large/Peanut_the_Squirrel.png?1734941241" },
+  { symbol: "MOG",    label: "Mog Coin",        rarity: "Uncommon",  img: "https://coin-images.coingecko.com/coins/images/31059/large/MOG_LOGO_200x200.png?1696529893" },
+  { symbol: "WOJAK",  label: "Wojak",           rarity: "Common",    img: "https://coin-images.coingecko.com/coins/images/29856/large/wojak.png?1696528782" },
+  { symbol: "BRETT",  label: "Based Brett",     rarity: "Common",    img: "https://coin-images.coingecko.com/coins/images/35529/large/1000050750.png?1709031995" },
+  { symbol: "GIGA",   label: "Gigachad",        rarity: "Common",    img: "https://coin-images.coingecko.com/coins/images/34755/large/IMG_0015.png?1705957165" },
+  { symbol: "TURBO",  label: "Turbo",           rarity: "Common",    img: "https://coin-images.coingecko.com/coins/images/30117/large/TurboMark-QL_200.png?1708079597" },
 ];
 
-const rarityClass: Record<string, string> = {
+const RARITY_CLASS: Record<string, string> = {
   Legendary: "genesis-card--legendary",
-  Epic: "genesis-card--epic",
-  Rare: "genesis-card--rare",
-  Uncommon: "genesis-card--uncommon",
-  Common: "genesis-card--common",
+  Epic:      "genesis-card--epic",
+  Rare:      "genesis-card--rare",
+  Uncommon:  "genesis-card--uncommon",
+  Common:    "genesis-card--common",
 };
 
 export function GenesisPreviewStrip() {
@@ -29,7 +31,7 @@ export function GenesisPreviewStrip() {
     <section className="home-genesis">
       <div className="home-genesis-header">
         <div>
-          <p className="mcg-eyebrow">Set 1</p>
+          <p className="home-genesis-eyebrow">Set 1</p>
           <h2 className="home-genesis-title">GENESIS. 50 cards. Live now.</h2>
         </div>
         <Link href="/packs" className="home-genesis-cta">
@@ -39,21 +41,29 @@ export function GenesisPreviewStrip() {
 
       <div className="home-genesis-strip-wrap">
         <div className="home-genesis-strip">
-          {PREVIEW_CARDS.map((card, i) => (
+          {PREVIEW_TOKENS.map((token) => (
             <div
-              key={i}
-              className={`genesis-card ${rarityClass[card.rarity] ?? ""}`}
-              aria-label={`${card.rarity} card`}
+              key={token.symbol}
+              className={`genesis-card ${RARITY_CLASS[token.rarity] ?? ""}`}
             >
-              <div className="genesis-card-back">
-                <div className="genesis-card-back-shine" aria-hidden="true" />
-                <div className="genesis-card-rarity">{card.rarity}</div>
-                <div className="genesis-card-question" aria-hidden="true">?</div>
+              <div className="genesis-card-img-wrap">
+                <Image
+                  src={token.img}
+                  alt={token.label}
+                  fill
+                  sizes="120px"
+                  className="genesis-card-img"
+                  unoptimized
+                />
+                <div className="genesis-card-overlay" />
+              </div>
+              <div className="genesis-card-footer">
+                <span className="genesis-card-rarity">{token.rarity}</span>
+                <span className="genesis-card-symbol">{token.symbol}</span>
               </div>
             </div>
           ))}
         </div>
-        {/* fade edges */}
         <div className="home-genesis-fade-left" aria-hidden="true" />
         <div className="home-genesis-fade-right" aria-hidden="true" />
       </div>

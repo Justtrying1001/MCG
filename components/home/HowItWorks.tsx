@@ -23,12 +23,12 @@ export function HowItWorks() {
   return (
     <section className="home-how-it-works">
       <div className="home-how-header">
-        <p className="mcg-eyebrow">How it works</p>
+        <p className="home-how-eyebrow">How it works</p>
         <h2 className="home-how-title">Three moves. One winner.</h2>
       </div>
       <div className="home-how-steps">
         {steps.map((step) => (
-          <div key={step.num} className="home-how-step">
+          <div key={step.num} className="home-how-step" data-num={step.num}>
             <div className="home-how-step-icon" aria-hidden="true">
               {step.icon}
             </div>

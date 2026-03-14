@@ -1,6 +1,42 @@
 "use client";
 
+import Image from "next/image";
 import { useSession } from "@/components/useSession";
+
+const HERO_CARDS = [
+  {
+    name: "PEPE",
+    label: "Pepe",
+    rarity: "Legendary",
+    symbol: "$PEPE",
+    img: "https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg?1696528776",
+    cls: "home-float-card--legendary",
+  },
+  {
+    name: "WIF",
+    label: "dogwifhat",
+    rarity: "Epic",
+    symbol: "$WIF",
+    img: "https://coin-images.coingecko.com/coins/images/33566/large/dogwifhat.jpg?1702499428",
+    cls: "home-float-card--epic",
+  },
+  {
+    name: "BONK",
+    label: "Bonk",
+    rarity: "Rare",
+    symbol: "$BONK",
+    img: "https://coin-images.coingecko.com/coins/images/28600/large/bonk.jpg?1696527587",
+    cls: "home-float-card--rare",
+  },
+  {
+    name: "DOGE",
+    label: "Dogecoin",
+    rarity: "Uncommon",
+    symbol: "$DOGE",
+    img: "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png?1696501409",
+    cls: "home-float-card--uncommon",
+  },
+];
 
 export function HomeHeroLanding() {
   const { startGuest } = useSession();
@@ -11,28 +47,28 @@ export function HomeHeroLanding() {
 
   return (
     <section className="home-hero-landing">
-      {/* abstract glow backdrop */}
       <div className="home-hero-glow" aria-hidden="true" />
       <div className="home-hero-glow home-hero-glow-2" aria-hidden="true" />
 
       <div className="home-hero-body">
+        {/* Left — copy */}
         <div className="home-hero-content">
-          <p className="mcg-eyebrow home-hero-eyebrow">Set 1 · Genesis · Live Now</p>
+          <p className="home-hero-eyebrow">Set 1 · Genesis · Live Now</p>
           <h1 className="home-hero-headline">
             COLLECT.<br />
             COMPETE.<br />
-            WIN.
+            <span className="home-hero-headline-accent">WIN.</span>
           </h1>
           <p className="home-hero-subline">
-            MCG is a trading card game built on meme tokens.
+            MCG is a trading card game built on meme tokens.<br />
             Pull cards, build rosters, let the market decide.
           </p>
           <div className="home-hero-ctas">
-            <button
-              className="home-hero-cta-primary"
-              onClick={connectWithX}
-            >
-              CONNECT WALLET
+            <button className="home-hero-cta-primary" onClick={connectWithX}>
+              <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{flexShrink:0}}>
+                <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z"/>
+              </svg>
+              CONNECT WITH X
             </button>
             <a
               href="https://mcg-2.gitbook.io/untitled/"
@@ -44,44 +80,32 @@ export function HomeHeroLanding() {
             </a>
           </div>
           <button className="home-hero-guest-link" onClick={startGuest}>
-            Try as guest →
+            Continue as guest →
           </button>
         </div>
 
-        {/* floating card visuals */}
+        {/* Right — real token cards */}
         <div className="home-hero-cards-float" aria-hidden="true">
-          <div className="home-float-card home-float-card--legendary">
-            <div className="home-float-card-shine" />
-            <div className="home-float-card-body">
-              <div className="home-float-card-rarity">Legendary</div>
-              <div className="home-float-card-name">Genesis Pepe</div>
-              <div className="home-float-card-type">Full Art</div>
+          {HERO_CARDS.map((card) => (
+            <div key={card.name} className={`home-float-card ${card.cls}`}>
+              <div className="home-float-card-art">
+                <Image
+                  src={card.img}
+                  alt={card.label}
+                  fill
+                  sizes="160px"
+                  className="home-float-card-img"
+                  unoptimized
+                />
+                <div className="home-float-card-art-overlay" />
+              </div>
+              <div className="home-float-card-body">
+                <span className="home-float-card-rarity">{card.rarity}</span>
+                <span className="home-float-card-name">{card.label}</span>
+                <span className="home-float-card-symbol">{card.symbol}</span>
+              </div>
             </div>
-          </div>
-          <div className="home-float-card home-float-card--epic">
-            <div className="home-float-card-shine" />
-            <div className="home-float-card-body">
-              <div className="home-float-card-rarity">Epic</div>
-              <div className="home-float-card-name">Bull Matrix</div>
-              <div className="home-float-card-type">Holo</div>
-            </div>
-          </div>
-          <div className="home-float-card home-float-card--rare">
-            <div className="home-float-card-shine" />
-            <div className="home-float-card-body">
-              <div className="home-float-card-rarity">Rare</div>
-              <div className="home-float-card-name">Moon Cat</div>
-              <div className="home-float-card-type">Reverse</div>
-            </div>
-          </div>
-          <div className="home-float-card home-float-card--uncommon">
-            <div className="home-float-card-shine" />
-            <div className="home-float-card-body">
-              <div className="home-float-card-rarity">Uncommon</div>
-              <div className="home-float-card-name">Turbo Doge</div>
-              <div className="home-float-card-type">Base</div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
