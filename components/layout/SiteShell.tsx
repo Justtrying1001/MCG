@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
+import { Footer } from "@/components/layout/Footer";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -22,7 +23,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const { me, loading, refresh, setMe, startGuest, clearGuest } = useSession();
   const [openMobile, setOpenMobile] = useState(false);
 
-  const loginWithX = () => { window.location.href = "/api/auth/x/start"; };
+  const loginWithX = () => {
+    const current = new URL(window.location.href);
+    const invite = current.searchParams.get("invite") ?? current.searchParams.get("ref");
+    const destination = invite ? `/api/auth/x/start?invite=${encodeURIComponent(invite)}` : "/api/auth/x/start";
+    window.location.href = destination;
+  };
 
   const logout = async () => {
     if (me?.mode === "guest") {
@@ -104,12 +110,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="mcg-container mcg-page-flow">{children}</div>
       </main>
 
-      <footer className="mcg-footer">
-        <div className="mcg-container mcg-footer-inner">
-          <span>© 2026 MCG · Cards first collectible experience</span>
-          <Link href="/admin" className="mcg-nav-link">Internal admin</Link>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

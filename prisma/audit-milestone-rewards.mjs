@@ -16,6 +16,13 @@ const SEEDED_CODES = [
   "ms_legendary_1",
   "ms_rewards_claimed_5",
   "ms_reward_points_5000",
+  "quest_invite_friend_1",
+  "ms_invites_5_bronze",
+  "ms_invites_10_iron",
+  "ms_invites_20_silver",
+  "ms_invites_50_gold",
+  "ms_invites_100_platinum",
+  "ms_invites_200_diamond",
 ];
 
 function staticAudit() {

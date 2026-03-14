@@ -42,7 +42,8 @@ type InMemoryState = {
   cardSet: { id: string; code: string } | null;
   openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
   ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
-  ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>;
+  ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>
+  rewardSupply: { id: string; totalSupply: number; distributed: number; lastUpdatedAt: Date } | null;
 };
 
 function createTx(state: InMemoryState) {
@@ -89,7 +90,32 @@ function createTx(state: InMemoryState) {
       }),
     },
 
+    rewardPackSupply: {
+      upsert: vi.fn(async ({ where, create, update }: any) => {
+        if (!state.rewardSupply || state.rewardSupply.id !== where.id) {
+          state.rewardSupply = { ...create, lastUpdatedAt: new Date() };
+          return state.rewardSupply;
+        }
+        state.rewardSupply = { ...state.rewardSupply, ...update, lastUpdatedAt: new Date() };
+        return state.rewardSupply;
+      }),
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        if (!state.rewardSupply || state.rewardSupply.id !== where.id) return { count: 0 };
+        if (state.rewardSupply.distributed < where.distributed.lt) {
+          state.rewardSupply.distributed += data.distributed.increment;
+          state.rewardSupply.lastUpdatedAt = new Date();
+          return { count: 1 };
+        }
+        return { count: 0 };
+      }),
+    },
+
     rewardGrant: {
+      count: vi.fn(async ({ where }: any) => {
+        if (!state.pack) return 0;
+        if (where?.packDefinitionId && where.packDefinitionId !== state.pack.id) return 0;
+        return state.rewardSupply?.distributed ?? 0;
+      }),
       create: vi.fn(async ({ data }: any) => ({ id: `rg_${state.ledgerEntries.length + 1}`, ...data })),
     },
     rewardLedgerEntry: {
@@ -147,6 +173,7 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
     openingEvents: [],
     ownedInstances: [],
     ledgerEntries: [],
+    rewardSupply: null,
     ...overrides,
   };
 }
@@ -294,6 +321,7 @@ describe("grantRewardPackMvpDbNative", () => {
     expect(state.pack?.openedPackCount).toBe(1);
     expect(state.ownedInstances).toHaveLength(5);
     expect(state.ledgerEntries).toHaveLength(0);
+    expect(state.rewardSupply?.distributed).toBe(1);
   });
 
   it("supports GRANT_ONLY reward delivery and still consumes reward stock", async () => {
@@ -309,6 +337,7 @@ describe("grantRewardPackMvpDbNative", () => {
     expect(result.pulledCardsMvp).toHaveLength(0);
     expect(state.pack?.openedPackCount).toBe(1);
     expect(state.ownedInstances).toHaveLength(0);
+    expect(state.rewardSupply?.distributed).toBe(1);
   });
 
   it("fails on inactive reward pack", async () => {
