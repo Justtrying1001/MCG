@@ -328,9 +328,10 @@
 }
 
 .ps-supply-counter {
-  font-size: 0.78rem;
-  color: var(--text-3, #4A4A47);
-  letter-spacing: 0.04em;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-2, #8A8A84);
+  letter-spacing: 0.05em;
 }
 
 /* ─ RIGHT: Details Panel ─ */
