@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { GAME_CONFIG } from "@/lib/game-config";
 
-type RarityOdd = { label: string; pct: number };
+type Odd = { label: string; pct: number };
 
 type FeaturedPackStageProps = {
   packImageSrc: unknown;
@@ -14,16 +14,25 @@ type FeaturedPackStageProps = {
   canOpen: boolean;
   onOpen: () => void;
   onOpenOdds: () => void;
-  rarityOdds?: RarityOdd[];
+  rarityOdds?: Odd[];
+  editionOdds?: Odd[];
   userPoints?: number;
 };
 
-const DEFAULT_RARITY_ODDS: RarityOdd[] = [
+const DEFAULT_RARITY_ODDS: Odd[] = [
   { label: "COMMON", pct: 73 },
   { label: "UNCOMMON", pct: 18 },
   { label: "RARE", pct: 6 },
   { label: "EPIC", pct: 2.5 },
   { label: "LEGENDARY", pct: 0.3 },
+];
+
+const DEFAULT_EDITION_ODDS: Odd[] = [
+  { label: "BASE", pct: 60 },
+  { label: "REVERSE", pct: 25 },
+  { label: "BRILLANTE", pct: 10 },
+  { label: "HOLO", pct: 4 },
+  { label: "FULL_ART", pct: 1 },
 ];
 
 const RARITY_DOT_COLOR: Record<string, string> = {
@@ -32,6 +41,14 @@ const RARITY_DOT_COLOR: Record<string, string> = {
   RARE: "#3C6DF2",
   EPIC: "#6E4CCF",
   LEGENDARY: "#D8A63E",
+};
+
+const EDITION_DOT_COLOR: Record<string, string> = {
+  BASE: "#6B7280",
+  REVERSE: "#38BDF8",
+  BRILLANTE: "#F59E0B",
+  HOLO: "#A855F7",
+  FULL_ART: "#D8A63E",
 };
 
 const SLOT_DEFINITIONS = [
@@ -62,10 +79,12 @@ export function FeaturedPackStage({
   onOpen,
   onOpenOdds,
   rarityOdds,
+  editionOdds,
   userPoints,
 }: FeaturedPackStageProps) {
   const packCost = GAME_CONFIG.PACK_COST;
-  const displayOdds = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
+  const displayRarityOdds = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
+  const displayEditionOdds = editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS;
   const canAfford = userPoints === undefined || userPoints >= packCost;
 
   const ctaLabel =
@@ -138,7 +157,7 @@ export function FeaturedPackStage({
             <span className="ps-section-note">(Slots 1–3)</span>
           </h2>
           <div className="ps-odds-list">
-            {displayOdds.map((odd) => (
+            {displayRarityOdds.map((odd) => (
               <div key={odd.label} className="ps-odd-row">
                 <span
                   className="ps-rarity-dot"
@@ -152,6 +171,28 @@ export function FeaturedPackStage({
             ))}
           </div>
           <p className="ps-odds-note">Slot 5 has elevated rarity odds.</p>
+        </div>
+
+        {/* 3b — Edition odds */}
+        <div className="ps-section">
+          <h2 className="ps-section-title">
+            EDITION ODDS{" "}
+            <span className="ps-section-note">(Slot 4 boosts rare editions)</span>
+          </h2>
+          <div className="ps-odds-list">
+            {displayEditionOdds.map((odd) => (
+              <div key={odd.label} className="ps-odd-row">
+                <span
+                  className="ps-rarity-dot"
+                  style={{
+                    background: EDITION_DOT_COLOR[odd.label] ?? "#7E8794",
+                  }}
+                />
+                <span className="ps-rarity-label">{odd.label.replace("_", " ")}</span>
+                <span className="ps-rarity-pct">{odd.pct}%</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 4 — Card preview strip */}

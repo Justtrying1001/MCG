@@ -188,6 +188,11 @@ export default function PacksPage() {
       .sort((a, b) => b.pct - a.pct);
   }, [packConfig?.slots]);
 
+  const editionOddsForDisplay = useMemo(() => {
+    if (!editionRows.length) return undefined;
+    return editionRows.map((r) => ({ label: r.label, pct: r.rate }));
+  }, [editionRows]);
+
   return (
     <SiteShell>
       {!me ? (
@@ -206,6 +211,7 @@ export default function PacksPage() {
         onOpen={() => void openPack()}
         onOpenOdds={() => setOddsOpen(true)}
         rarityOdds={rarityOddsForDisplay}
+        editionOdds={editionOddsForDisplay}
         userPoints={me?.user?.points}
       />
 
