@@ -1,14 +1,14 @@
 # MCG (Meme Card Game)
 
-MCG is a Next.js + Prisma web application focused on card collection and contest operations.
+MCG est une plateforme Next.js de collection de cartes + contests + rewards, avec un runtime opéré via un back-office admin.
 
-## Repository contents
-- App Router frontend and backend routes in one codebase
-- Prisma schema/migrations/seed scripts
-- Domain runtime modules for packs, contests, quests, rewards, admin ops
-- Tests (Vitest)
+## Documentation officielle (consolidée)
 
-## Quick start
+- **Guide User / Produit (bible complète)** : `docs/user-guide.md`
+- **Guide Technique (bible technique repo/code/runtime)** : `docs/technical.md`
+
+## Démarrage rapide
+
 ```bash
 cp .env.example .env
 npm install
@@ -16,12 +16,10 @@ npx prisma db push
 npm run dev
 ```
 
-## Main documentation
-- Technical source of truth: [`docs/technical.md`](docs/technical.md)
-- Product/user source of truth: [`docs/product-guide.md`](docs/product-guide.md)
+## Commandes utiles
 
-## Useful commands
 - `npm run dev`
 - `npm run typecheck`
 - `npm test`
 - `npm run seed:mvp:controlled-emission`
+- `npm run seed:milestone:rewards`
