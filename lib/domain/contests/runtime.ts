@@ -7,6 +7,7 @@ import {
   RewardType,
 } from "@prisma/client";
 
+import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 
@@ -78,6 +79,7 @@ async function getContestRule(tx: Prisma.TransactionClient, contestId: string) {
 }
 
 export async function listContestsMvp() {
+  await reconcileDueContestsByTime();
   return prismaSafe((tx) =>
     tx.contest.findMany({
       where: {
@@ -95,6 +97,7 @@ export async function listContestsMvp() {
 }
 
 export async function getContestDetailMvp(contestId: string, userId?: string) {
+  await reconcileContestLifecycleByTime(contestId);
   return prismaSafe(async (tx) => {
     const contest = await tx.contest.findUnique({
       where: { id: contestId },
