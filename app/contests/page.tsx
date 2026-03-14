@@ -48,7 +48,8 @@ export default function ContestsPage() {
       setError("");
       const res = await fetch("/api/contests", { cache: "no-store" });
       if (!res.ok) {
-        setError((await res.text()) || "Cannot load contests");
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(payload?.error ? "We couldn't load contests right now. Please retry in a moment." : "Cannot load contests");
         setIsLoading(false);
         return;
       }

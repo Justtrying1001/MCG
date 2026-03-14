@@ -20,9 +20,22 @@ export function getPhaseLabel(status: ContestStatus) {
 }
 
 export function getActionability(status: ContestStatus) {
-  if (status === "OPEN") return { editable: true, message: "Your lineup is editable until team lock." };
-  if (status === "LOCKED") return { editable: false, message: "Team lock is active. Lineups are frozen." };
-  if (status === "LIVE") return { editable: false, message: "Contest is live. Track scores in real-time." };
-  if (status === "SETTLED") return { editable: false, message: "Results are available." };
+  if (status === "OPEN") return { editable: true, message: "Entry is open: build or edit your lineup before lock." };
+  if (status === "LOCKED") return { editable: false, message: "Lineups are locked. You can only review your submitted team." };
+  if (status === "LIVE") return { editable: false, message: "Contest is live. Follow ranking updates until settlement." };
+  if (status === "SETTLED") {
+    return {
+      editable: false,
+      message: "Settled: view final ranking, rewards status, and reuse your cards in new contests.",
+    };
+  }
   return { editable: false, message: "Contest lifecycle is not active yet." };
+}
+
+export function getPrimaryCtaLabel(status: ContestStatus) {
+  if (status === "OPEN") return "Build / Edit lineup";
+  if (status === "LOCKED") return "Review locked lineup";
+  if (status === "LIVE") return "Track live ranking";
+  if (status === "SETTLED") return "View results & rewards";
+  return "View details";
 }
