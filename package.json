@@ -11,7 +11,7 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "vercel-build": "prisma generate && prisma migrate deploy && npm run bootstrap:mvp:cloud:deploy && next build",
+    "vercel-build": "prisma generate && npm run bootstrap:mvp:cloud:deploy && next build",
     "prisma:push:reset": "prisma db push --force-reset",
     "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs",
     "test": "vitest run",
