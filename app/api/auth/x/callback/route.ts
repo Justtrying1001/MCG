@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { createSession, getSessionCookieName, getSessionMaxAgeSeconds } from "@/lib/auth";
+import { createSession, getSessionCookieName, getSessionMaxAgeSeconds, getSessionUser } from "@/lib/auth";
 import { upsertUserFromXProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { exchangeXAccessToken, fetchXProfile } from "@/lib/x-oauth";
 
@@ -80,6 +80,16 @@ export async function GET(req: Request) {
     || !requestTokenSecret
     || !safeTokenCompare(oauthToken, expectedRequestToken)
   ) {
+    // In some browsers the callback can be replayed after a successful login.
+    // At that point OAuth request cookies are already cleared, but the session is valid.
+    // Avoid surfacing a false "state invalid" error in that case.
+    const existingUser = await getSessionUser();
+    if (existingUser) {
+      const ok = NextResponse.redirect(new URL("/", req.url));
+      clearCookies(ok);
+      return ok;
+    }
+
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_state", req.url));
     clearCookies(fail);
     return fail;
