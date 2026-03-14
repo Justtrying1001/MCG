@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, claimIdempotencyKey, getAdminArtifact, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { handleApiError } from "@/lib/api-error";
-import { ContestRuntimeError, updateContestStatusMvp } from "@/lib/domain/contests/runtime";
+import { ContestRuntimeError, getContestDetailMvp, updateContestStatusMvp } from "@/lib/domain/contests/runtime";
+import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
+import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
 export async function POST(request: NextRequest, { params }: { params: { contestId: string } }) {
@@ -57,6 +59,19 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       return NextResponse.json({ ok: false, error: "Duplicate idempotency key", code: "IDEMPOTENCY_REPLAY" }, { status: 409 });
     }
 
+    const before = await getContestDetailMvp(params.contestId);
+
+    if (before.contest.status !== status) {
+      if (status === ContestStatus.LIVE) {
+        await captureStartSnapshot(params.contestId);
+      }
+
+      if (status === ContestStatus.SETTLED) {
+        await captureEndSnapshot(params.contestId);
+        await computeContestScoresFromSnapshots(params.contestId);
+      }
+    }
+
     const contest = await updateContestStatusMvp(params.contestId, status);
 
     await safeLogAdminAction({
@@ -67,7 +82,15 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       targetType: "CONTEST",
       targetId: params.contestId,
       requestSummary: { targetPhase: status, reasonCode: body?.reasonCode ?? null, validationToken, idempotencyKey },
-      effectSummary: { contestStatus: contest.status, previousPhase: tokenPayload.currentPhase ?? null },
+      effectSummary: {
+        contestStatus: contest.status,
+        previousPhase: tokenPayload.currentPhase ?? null,
+        automation: {
+          startSnapshotTriggered: before.contest.status !== status && status === ContestStatus.LIVE,
+          endSnapshotTriggered: before.contest.status !== status && status === ContestStatus.SETTLED,
+          scoringTriggered: before.contest.status !== status && status === ContestStatus.SETTLED,
+        },
+      },
     });
 
     return NextResponse.json({ contest, actor: actor });

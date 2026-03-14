@@ -80,10 +80,11 @@ export default function AdminContestsCatalogPage() {
       <section className="admin-page-header">
         <div>
           <h1 className="admin-title">Contests</h1>
+          <p className="contest-inline-note">Start here</p>
           <p className="admin-subtitle">Pilotage complet: créer, éditer, publier, archiver et opérer le lifecycle depuis un seul module lisible.</p>
         </div>
         <div className="admin-actions-row">
-          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Nouveau contest</Link>
+          <Link href="/admin/contests/create" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create New Contest</Link>
           <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
         </div>
       </section>
