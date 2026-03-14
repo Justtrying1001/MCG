@@ -240,25 +240,43 @@
 .pack-reveal-head-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-1); margin-bottom: var(--space-1); }
 
 /* ===== Collection (phase 2) ===== */
-.collection-header-wrap { padding: var(--space-2); display: grid; gap: var(--space-2); }
-.collection-header-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.collection-toolbar {
+  padding: var(--space-2);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: var(--space-2);
+}
 
-.collection-filters-shell { padding: var(--space-2); display: grid; gap: var(--space-2); }
-.collection-filters-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.collection-desktop-filters { display: block; }
-.collection-mobile-filter-btn { display: none; }
-.collection-filter-panel { display: grid; gap: var(--space-2); }
-.collection-search-wrap { width: 100%; }
-.collection-search-input {
-  width: 100%;
-  border-radius: var(--radius-sm);
+.collection-data-block,
+.collection-sort-block {
   border: 1px solid var(--color-border-subtle);
   background: var(--color-surface-2);
-  color: var(--color-text-primary);
-  padding: 10px var(--space-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  display: grid;
+  gap: 0.6rem;
 }
-.collection-filter-row { display: grid; gap: var(--space-1); }
-.collection-chip-wrap { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+.collection-data-title {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.collection-data-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.collection-data-stats span {
+  border: 1px solid var(--color-border-subtle);
+  background: rgba(184, 196, 204, 0.08);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
 .collection-sort-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .collection-sort-row label { display: grid; gap: 6px; color: var(--color-text-secondary); font-size: 0.8rem; }
 .collection-select {
@@ -271,13 +289,18 @@
 
 .collection-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-2);
 }
 .collection-card-tile-trigger {
   border: 0;
   background: transparent;
   text-align: left;
+  width: 100%;
+}
+
+.collection-card-tile-trigger .mvp-premium-card {
+  width: 100%;
 }
 
 .missing-shelf-wrap { padding: var(--space-2); display: grid; gap: var(--space-2); }
@@ -306,8 +329,12 @@
   .pack-featured-stage { grid-template-columns: 1fr; }
   .pack-gallery-grid { grid-template-columns: 1fr; }
   .pack-odds-tables { grid-template-columns: 1fr; }
-  .collection-desktop-filters { display: none; }
-  .collection-mobile-filter-btn { display: inline-flex; }
+  .collection-toolbar { grid-template-columns: 1fr; }
+  .collection-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .collection-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ===== Contests (phase 3) ===== */
