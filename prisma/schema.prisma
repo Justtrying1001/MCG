@@ -43,6 +43,23 @@ model User {
   contestRatingChanges  ContestRatingChange[]
   seasonLeaderboards    SeasonLeaderboard[]
   seasonRewardGrants    SeasonRewardGrant[]
+  sentInvites           UserInvite[]   @relation("UserInvitesSent")
+  receivedInvite        UserInvite?    @relation("UserInviteReceived")
+}
+
+model UserInvite {
+  id         String   @id @default(cuid())
+  inviterId  String
+  inviteeId  String   @unique
+  inviteCode String
+  createdAt  DateTime @default(now())
+
+  inviter User @relation("UserInvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("UserInviteReceived", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([inviterId, inviteeId])
+  @@index([inviterId])
+  @@index([inviteCode])
 }
 
 model UserSession {
