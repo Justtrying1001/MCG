@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useSession } from "@/components/useSession";
+
+type UserQuestRow = {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  completedAt: string | null;
+  rewardPoints: number;
+  configSummary?: { milestoneType?: string };
+};
+
 
 export default function AccountPage() {
   const { me } = useSession();
@@ -12,6 +24,25 @@ export default function AccountPage() {
   const account     = v2?.accountProgression;
   const collection  = v2?.collectionProgression;
   const competitive = v2?.competitiveProgression;
+  const [userQuests, setUserQuests] = useState<UserQuestRow[]>([]);
+
+  useEffect(() => {
+    if (me?.mode !== "user") return;
+    void (async () => {
+      const response = await fetch("/api/quests", { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = (await response.json()) as { quests?: UserQuestRow[] };
+      setUserQuests(payload.quests ?? []);
+    })();
+  }, [me]);
+
+  const unlockedMilestoneBadges = useMemo(() => {
+    return userQuests
+      .filter((quest) => quest.type === "CONTEST_COUNT_MILESTONE" && quest.status === "COMPLETED")
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [userQuests]);
+
+  const accountBreakdown = account?.progressionBreakdown;
 
   return (
     <SiteShell>
@@ -125,14 +156,14 @@ export default function AccountPage() {
                   <div className="shc-icon" style={{ background: "rgba(200,155,60,0.12)", color: "var(--gold)", fontSize: "1.2rem" }}>
                     ⬡
                   </div>
-                  <span className="shc-label">Account</span>
+                  <span className="shc-label">Progression</span>
                 </div>
                 <div className="shc-value" style={{ color: "var(--gold)" }}>
                   Lv {account?.level ?? 1}
                 </div>
                 <div className="shc-sub">
                   {account
-                    ? `${account.xp} XP · next milestone at Lv ${account.nextMilestoneLevel}`
+                    ? `${account.xp} total XP · next milestone Lv ${account.nextMilestoneLevel}`
                     : "Connect to see account progression"}
                 </div>
                 {account && (
@@ -145,8 +176,7 @@ export default function AccountPage() {
                   </div>
                 )}
                 <div className="shc-sub" style={{ marginTop: "0.35rem" }}>
-                  Points balance:{" "}
-                  <strong style={{ color: "var(--text)" }}>{account?.pointsBalance ?? me.user.points}</strong>
+                  Score economy: <strong style={{ color: "var(--text)" }}>{account?.pointsBalance ?? me.user.points} PTS</strong>
                 </div>
               </div>
 
@@ -212,6 +242,42 @@ export default function AccountPage() {
               </div>
             </div>
 
+            {accountBreakdown && (
+              <div className="profile-audit-panel">
+                <div className="profile-audit-head">
+                  <h3>Progression audit · XP model v2</h3>
+                  <p>
+                    The profile now separates <strong>Points</strong> (economy) from <strong>XP</strong> (status).
+                    XP is a weighted score from account activity, collection depth, and competitive performance,
+                    with a non-linear level curve to avoid inflated high levels too early.
+                  </p>
+                </div>
+                <div className="profile-audit-grid">
+                  <div className="profile-audit-item">
+                    <span>Points contribution</span>
+                    <strong>{accountBreakdown.pointsXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Collection contribution</span>
+                    <strong>{accountBreakdown.collectionXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Competitive contribution</span>
+                    <strong>{accountBreakdown.competitiveXp} XP</strong>
+                  </div>
+                  <div className="profile-audit-item">
+                    <span>Legacy contest XP</span>
+                    <strong>{accountBreakdown.legacyXp} XP</strong>
+                  </div>
+                </div>
+                <p className="profile-audit-note">
+                  Profile purpose: make player identity readable at a glance, guide next actions
+                  (collection and contests), and expose clear progression levers instead of decorative stats.
+                </p>
+              </div>
+            )}
+
+
             {/* ── Achievement Grid ── */}
             {me.mode === "user" && (
               <div style={{
@@ -246,6 +312,34 @@ export default function AccountPage() {
                 </div>
               </div>
             )}
+
+            {me.mode === "user" ? (
+              <div style={{
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--border)",
+                background: "linear-gradient(158deg, rgba(22,24,29,0.95), rgba(11,11,13,0.99))",
+                padding: "1.2rem 1.5rem",
+              }}>
+                <div style={{
+                  fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.14em",
+                  textTransform: "uppercase", color: "var(--text-3)",
+                  marginBottom: "1rem",
+                }}>
+                  Milestone badges unlocked
+                </div>
+                <div className="achievement-grid">
+                  {unlockedMilestoneBadges.map((badge) => (
+                    <div key={badge.id} className="achievement-badge unlocked">
+                      <span className="achievement-icon">🏅</span>
+                      <span className="achievement-name">{badge.title}</span>
+                    </div>
+                  ))}
+                  {unlockedMilestoneBadges.length === 0 ? (
+                    <p className="contest-inline-note">No milestone badges unlocked yet.</p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             {/* ── Recent Contest Results ── */}
             {competitive?.recentResults?.length ? (

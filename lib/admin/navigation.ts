@@ -15,38 +15,13 @@ export type AdminNavGroup = {
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     id: "operations",
-    label: "Run Operations",
+    label: "Main",
     items: [
-      { href: "/admin", label: "Dashboard", hint: "Priority queues & incidents", critical: true },
-      { href: "/admin/contests", label: "Contests", hint: "Run lifecycle, scoring, settlement", critical: true },
-      { href: "/admin/moderation", label: "Moderation", hint: "Review queue & decisions", critical: true },
-      { href: "/admin/rewards", label: "Rewards", hint: "Compensations & grants", critical: true },
-    ],
-  },
-  {
-    id: "build",
-    label: "Setup & Catalog",
-    items: [
-      { href: "/admin/campaigns", label: "Campaigns", hint: "Campaign and quest catalog" },
-      { href: "/admin/quests", label: "Quest Library", hint: "Quest definitions and builder" },
-      { href: "/admin/users", label: "Users", hint: "User context lookup" },
-    ],
-  },
-  {
-    id: "governance",
-    label: "Audit & Governance",
-    items: [
-      { href: "/admin/activity-log", label: "Activity Log", hint: "Trace actions and failures" },
-      { href: "/admin/analytics", label: "Analytics", hint: "Baseline operational metrics" },
-    ],
-  },
-  {
-    id: "legacy",
-    label: "Legacy (Deprecated)",
-    deprecated: true,
-    items: [
-      { href: "/admin/contests/legacy", label: "Legacy contests", hint: "Old create/run screens" },
-      { href: "/admin/quests/legacy", label: "Legacy quests", hint: "Old quest management" },
+      { href: "/admin", label: "Dashboard", hint: "Simple operational overview" },
+      { href: "/admin/contests", label: "Contests", hint: "Create, run and settle contests" },
+      { href: "/admin/quests", label: "Quests", hint: "Social quests management" },
+      { href: "/admin/milestones", label: "Milestones", hint: "Milestones management" },
+      { href: "/admin/users", label: "Users", hint: "User activity and context" },
     ],
   },
 ];

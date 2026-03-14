@@ -22,6 +22,12 @@ export type AccountProgressionSummaryV2 = {
   progressPct: number;
   nextMilestoneLevel: number;
   pointsBalance: number;
+  progressionBreakdown: {
+    pointsXp: number;
+    collectionXp: number;
+    competitiveXp: number;
+    legacyXp: number;
+  };
 };
 
 export type CollectionProgressionSummaryV2 = {

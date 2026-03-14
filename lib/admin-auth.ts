@@ -2,7 +2,10 @@ import { createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypt
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
-const ADMIN_SESSION_COOKIE = "mcg_admin_session";
+// __Host- prefix forces the browser to enforce: Secure=true, Path=/, no Domain.
+// This prevents subdomain-based cookie injection attacks.
+// Modern browsers honour __Host- on localhost without HTTPS, so dev is unaffected.
+const ADMIN_SESSION_COOKIE = "__Host-mcg_admin_session";
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 type AdminSessionPayload = {
@@ -64,18 +67,24 @@ export function verifyAdminCredentials(username: string, password: string) {
   const expectedUsername = requireEnv("ADMIN_USERNAME");
   const hashConfig = parseAdminPasswordHash(requireEnv("ADMIN_PASSWORD_HASH"));
 
-  if (username !== expectedUsername) {
-    return false;
-  }
-
+  // Always derive the digest regardless of username correctness so that
+  // response time is constant — prevents username enumeration via timing.
   const actualDigest = deriveDigest(password, hashConfig);
   const expectedDigest = hashConfig.digest;
 
   const actualBuffer = Buffer.from(actualDigest, "hex");
   const expectedBuffer = Buffer.from(expectedDigest, "hex");
-  if (actualBuffer.length !== expectedBuffer.length) return false;
+  const passwordOk = actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
 
-  return timingSafeEqual(actualBuffer, expectedBuffer);
+  // Pad both to the same length before comparing so length differences
+  // don't leak timing information.
+  const maxLen = Math.max(username.length, expectedUsername.length, 1);
+  const usernameOk = timingSafeEqual(
+    Buffer.from(username.padEnd(maxLen)),
+    Buffer.from(expectedUsername.padEnd(maxLen)),
+  );
+
+  return passwordOk && usernameOk;
 }
 
 export function createAdminPasswordHash(password: string) {

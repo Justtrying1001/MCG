@@ -15,16 +15,24 @@ type Props = {
 export function CardSelectorModal({ open, options, selectedIds, onToggle, onClose, canEnter }: Props) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
+  const [sortBy, setSortBy] = useState<"name" | "rarity">("rarity");
 
   const rarityOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.rarityCode))], [options]);
 
   const filtered = useMemo(() => {
-    return options.filter((card) => {
+    const base = options.filter((card) => {
       const byQuery = card.name.toLowerCase().includes(query.toLowerCase()) || card.cardSetCode.toLowerCase().includes(query.toLowerCase());
       const byRarity = rarity === "all" || card.rarityCode === rarity;
       return byQuery && byRarity;
     });
-  }, [options, query, rarity]);
+
+    return [...base].sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      const rarityCmp = a.rarityCode.localeCompare(b.rarityCode);
+      if (rarityCmp !== 0) return rarityCmp;
+      return a.name.localeCompare(b.name);
+    });
+  }, [options, query, rarity, sortBy]);
 
   if (!open) return null;
 
@@ -42,6 +50,10 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
           <input className="filter-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name or set" />
           <select className="filter-select" value={rarity} onChange={(event) => setRarity(event.target.value)}>
             {rarityOptions.map((value) => <option value={value} key={value}>{value === "all" ? "All rarities" : value}</option>)}
+          </select>
+          <select className="filter-select" value={sortBy} onChange={(event) => setSortBy(event.target.value as "name" | "rarity")}>
+            <option value="rarity">Sort by rarity</option>
+            <option value="name">Sort by name</option>
           </select>
         </div>
         <div className="contest-modal-grid">

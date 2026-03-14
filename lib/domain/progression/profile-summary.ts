@@ -8,14 +8,50 @@ import type {
 } from "@/types/session";
 import type { CollectionProjectionV2 } from "@/lib/domain/projections/contracts";
 
-const LEVEL_XP_STEP = 100;
 const ACTIVE_CONTEST_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
 
-function buildAccountProgressionSummary(input: { points: number; level?: number; xp?: number }): AccountProgressionSummaryV2 {
-  const xp = Math.max(input.xp ?? input.points, 0);
-  const level = Math.max(input.level ?? Math.floor(xp / LEVEL_XP_STEP) + 1, 1);
-  const levelXpFloor = (level - 1) * LEVEL_XP_STEP;
-  const levelXpCeil = level * LEVEL_XP_STEP;
+const PROGRESSION_WEIGHTS = {
+  pointsToXpRatio: 0.35,
+  ownedTemplateXp: 12,
+  settledContestXp: 40,
+  wonContestXp: 120,
+  podiumBonusXp: 90,
+} as const;
+
+export function xpRequiredForLevel(level: number): number {
+  const safeLevel = Math.max(1, level);
+  const n = safeLevel - 1;
+  return (30 * n * n) + (70 * n);
+}
+
+export function levelFromXp(xp: number): number {
+  let level = 1;
+  while (xpRequiredForLevel(level + 1) <= xp) {
+    level += 1;
+  }
+  return level;
+}
+
+export function buildAccountProgressionSummary(input: {
+  points: number;
+  ownedTemplateCount: number;
+  settledEntries: number;
+  contestsWon: number;
+  bestRank: number | null;
+  legacyXp?: number;
+}): AccountProgressionSummaryV2 {
+  const pointsXp = Math.round(Math.max(input.points, 0) * PROGRESSION_WEIGHTS.pointsToXpRatio);
+  const collectionXp = Math.max(input.ownedTemplateCount, 0) * PROGRESSION_WEIGHTS.ownedTemplateXp;
+  const competitiveXp =
+    Math.max(input.settledEntries, 0) * PROGRESSION_WEIGHTS.settledContestXp
+    + Math.max(input.contestsWon, 0) * PROGRESSION_WEIGHTS.wonContestXp
+    + (input.bestRank != null && input.bestRank <= 3 ? PROGRESSION_WEIGHTS.podiumBonusXp : 0);
+  const legacyXp = Math.max(input.legacyXp ?? 0, 0);
+
+  const xp = pointsXp + collectionXp + competitiveXp + legacyXp;
+  const level = levelFromXp(xp);
+  const levelXpFloor = xpRequiredForLevel(level);
+  const levelXpCeil = xpRequiredForLevel(level + 1);
   const rawProgress = ((xp - levelXpFloor) / (levelXpCeil - levelXpFloor)) * 100;
   const progressPct = Number(Math.max(0, Math.min(rawProgress, 100)).toFixed(2));
 
@@ -27,6 +63,12 @@ function buildAccountProgressionSummary(input: { points: number; level?: number;
     progressPct,
     nextMilestoneLevel: level + 1,
     pointsBalance: input.points,
+    progressionBreakdown: {
+      pointsXp,
+      collectionXp,
+      competitiveXp,
+      legacyXp,
+    },
   };
 }
 
@@ -53,7 +95,7 @@ export async function buildProgressionSummariesV2(userId: string, points: number
   competitiveProgression: CompetitiveProgressionSummaryV2;
 }> {
   const [userProgression, competitiveProgressionRecord, contestsEntered, activeEntries, settledEntries, rankings] = await Promise.all([
-    prisma.userProgression.findUnique({ where: { userId }, select: { level: true, xp: true } }),
+    prisma.userProgression.findUnique({ where: { userId }, select: { xp: true } }),
     prisma.competitiveProgression.findUnique({ where: { userId }, select: { contestsWon: true, rating: true } }),
     prisma.contestEntry.count({ where: { userId } }),
     prisma.contestEntry.count({
@@ -81,8 +123,11 @@ export async function buildProgressionSummariesV2(userId: string, points: number
   return {
     accountProgression: buildAccountProgressionSummary({
       points,
-      level: userProgression?.level,
-      xp: userProgression?.xp,
+      ownedTemplateCount: collectionProjection.ownedTemplateCount,
+      settledEntries,
+      contestsWon: competitiveProgressionRecord?.contestsWon ?? wonFromRankings,
+      bestRank,
+      legacyXp: userProgression?.xp,
     }),
     collectionProgression: buildCollectionProgressionSummary(collectionProjection),
     competitiveProgression: {

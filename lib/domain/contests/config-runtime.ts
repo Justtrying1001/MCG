@@ -287,8 +287,12 @@ export async function deleteContestDraft(contestId: string) {
       include: { _count: { select: { entries: true, scores: true, rankings: true, settlements: true } } },
     });
     if (!contest) throw new ContestRuntimeError("Contest not found", 404);
-    if (contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0) {
-      throw new ContestRuntimeError("Cannot delete a contest that already contains operations", 409);
+
+    const hasOperations = contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0;
+    const deletableBecauseCanceled = contest.status === ContestStatus.CANCELED;
+
+    if (hasOperations && !deletableBecauseCanceled) {
+      throw new ContestRuntimeError("Cannot delete a non-canceled contest that already contains operations", 409);
     }
 
     await tx.contest.delete({ where: { id: contestId } });

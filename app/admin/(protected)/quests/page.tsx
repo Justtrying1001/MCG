@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 type LifecycleStatus = "ACTIVE" | "ARCHIVED" | "DELETED";
 
@@ -14,28 +13,24 @@ type QuestRow = {
   validationMode: string;
   rewardPoints: number;
   isActive: boolean;
-  startAt: string | null;
-  endAt: string | null;
   lifecycleStatus?: LifecycleStatus;
+  analytics?: { completedCount?: number; progressCount?: number; totalPointsDistributed?: number };
 };
 
 export default function QuestLibraryPage() {
-  const searchParams = useSearchParams();
-  const campaignFilter = searchParams.get("campaign") ?? "";
-
   const [rows, setRows] = useState<QuestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | LifecycleStatus>("ALL");
+  const [showDeleted, setShowDeleted] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [selected, setSelected] = useState<QuestRow | null>(null);
 
   const load = async () => {
     const response = await fetch("/api/internal/quests/library", { cache: "no-store" });
     if (response.ok) {
       const payload = (await response.json()) as { quests: QuestRow[] };
-      setRows(payload.quests ?? []);
+      setRows((payload.quests ?? []).filter((q) => q.type !== "CONTEST_COUNT_MILESTONE"));
     }
     setLoading(false);
   };
@@ -44,52 +39,53 @@ export default function QuestLibraryPage() {
     void load();
   }, []);
 
-  const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT") => {
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((row) => {
+      if (!showDeleted && (row.lifecycleStatus ?? "ACTIVE") === "DELETED") return false;
+      if (!q) return true;
+      return row.code.toLowerCase().includes(q) || row.title.toLowerCase().includes(q);
+    });
+  }, [rows, query, showDeleted]);
+
+  const stats = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        const lifecycle = row.lifecycleStatus ?? "ACTIVE";
+        acc.all += 1;
+        if (lifecycle === "ACTIVE") acc.active += 1;
+        if (lifecycle === "ARCHIVED") acc.archived += 1;
+        if (lifecycle === "DELETED") acc.deleted += 1;
+        return acc;
+      },
+      { all: 0, active: 0, archived: 0, deleted: 0 },
+    );
+  }, [rows]);
+
+  const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "DELETE_SOFT") => {
+    if (action === "DELETE_SOFT") {
+      const confirmed = window.confirm("Delete this quest? It will be soft deleted.");
+      if (!confirmed) return;
+    }
     setBusyId(questId);
-    setMessage("");
     const response = await fetch(`/api/internal/quests/${questId}/lifecycle`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
     const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-    if (!response.ok) {
-      setMessage(payload?.error ?? "Lifecycle update failed");
-      setBusyId(null);
-      return;
-    }
-    await load();
+    if (!response.ok) setMessage(payload?.error ?? "Lifecycle update failed");
+    else setMessage("Quest updated.");
     setBusyId(null);
-    setMessage("Quest lifecycle updated.");
+    await load();
   };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      const lifecycle = row.lifecycleStatus ?? "ACTIVE";
-      if (campaignFilter && !row.code.toLowerCase().startsWith(campaignFilter.toLowerCase())) return false;
-      if (typeFilter !== "ALL" && row.type !== typeFilter) return false;
-      if (statusFilter !== "ALL" && lifecycle !== statusFilter) return false;
-      if (!q) return true;
-      return row.code.toLowerCase().includes(q) || row.title.toLowerCase().includes(q);
-    });
-  }, [campaignFilter, rows, query, statusFilter, typeFilter]);
-
-  const types = [...new Set(rows.map((row) => row.type))];
-  const stats = useMemo(() => ({
-    all: rows.length,
-    active: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "ACTIVE").length,
-    archived: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "ARCHIVED").length,
-    deleted: rows.filter((row) => (row.lifecycleStatus ?? "ACTIVE") === "DELETED").length,
-  }), [rows]);
-
   return (
-    <div className="admin-page quest-admin-page">
-      <section className="admin-panel quest-library-hero">
+    <div className="admin-page">
+      <section className="admin-page-header">
         <div>
-          <h1 className="admin-title">Quest Library</h1>
-          <p className="admin-subtitle">Create, archive, restore and clean quests quickly with a single management panel.</p>
-          {campaignFilter ? <p className="contest-inline-note">Campaign filter: {campaignFilter}</p> : null}
+          <h1 className="admin-title">Quests</h1>
+          <p className="admin-subtitle">Stylized social quest cards. Click a card for stats and management actions.</p>
           {message ? <p className="contest-inline-note">{message}</p> : null}
           <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
             <span className="admin-badge neutral">Total {stats.all}</span>
@@ -98,65 +94,59 @@ export default function QuestLibraryPage() {
             <span className="admin-badge neutral">Deleted {stats.deleted}</span>
           </div>
         </div>
-        <div className="quest-library-hero-actions">
-          <Link href="/admin/quests/builder" className="btn btn-primary quest-primary-action">Create Quest</Link>
+        <div className="admin-actions-row">
+          <Link href="/admin/quests/builder?objectiveType=FOLLOW_X" className="btn" style={{ background: "var(--red)", color: "#fff" }}>Create Quest</Link>
+          <Link href="/admin/milestones" className="btn btn-ghost">Milestones</Link>
         </div>
       </section>
 
-      <section className="admin-toolbar quest-library-toolbar">
-        <input className="input" placeholder="Search by code or title" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: "320px" }} />
-        <select className="input" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-          <option value="ALL">All objective types</option>
-          {types.map((type) => <option key={type} value={type}>{type}</option>)}
-        </select>
-        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | LifecycleStatus)}>
-          <option value="ALL">All lifecycle states</option>
-          <option value="ACTIVE">Active</option>
-          <option value="ARCHIVED">Archived</option>
-          <option value="DELETED">Deleted</option>
-        </select>
+      <section className="admin-toolbar">
+        <input className="input" placeholder="Search quests" value={query} onChange={(event) => setQuery(event.target.value)} style={{ maxWidth: 320 }} />
+        <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} /> show deleted
+        </label>
         <span className="admin-badge neutral">{filtered.length} quests</span>
       </section>
 
-      <section className="admin-table quest-library-table">
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 2fr" }}>
-          <span>Code</span><span>Quest</span><span>Objective</span><span>Validation</span><span>Reward</span><span>Actions</span>
-        </div>
-        {loading ? <div className="admin-table-row"><p className="contest-inline-note">Loading quest library…</p></div> : null}
-        {!loading && filtered.map((row) => {
-          const lifecycle = row.lifecycleStatus ?? "ACTIVE";
-          return (
-            <div key={row.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1.6fr 1fr 0.9fr 0.9fr 2fr" }}>
-              <span className="contest-code">{row.code}</span>
+      {loading ? <section className="admin-panel"><p className="contest-inline-note">Loading quests…</p></section> : null}
+
+      <section className="admin-card-grid">
+        {filtered.map((row) => (
+          <button key={row.id} type="button" className="admin-focus-card" onClick={() => setSelected(row)}>
+            <span className="milestone-chip-icon" style={{ background: "rgba(59,130,246,0.18)", color: "#93c5fd" }}>✦</span>
+            <span className="milestone-chip-name">{row.title}</span>
+          </button>
+        ))}
+        {!loading && filtered.length === 0 ? <section className="admin-panel"><p className="contest-inline-note">No quests found.</p></section> : null}
+      </section>
+
+      {selected ? (
+        <div className="contest-modal-overlay" role="presentation" onClick={() => setSelected(null)}>
+          <div className="contest-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="contest-modal-head">
               <div>
-                <p style={{ fontWeight: 700 }}>{row.title}</p>
-                <p className="contest-inline-note">{formatDate(row.startAt)} → {formatDate(row.endAt)}</p>
-                <p className="contest-inline-note">Lifecycle: {lifecycle}</p>
+                <h4>{selected.title}</h4>
+                <p className="contest-inline-note">{selected.code}</p>
               </div>
-              <span className="admin-badge neutral">{row.type === "CONTEST_COUNT_MILESTONE" ? "MILESTONE" : "SOCIAL"}</span>
-              <span className="admin-badge neutral">{row.validationMode}</span>
-              <span>{row.rewardPoints} pts</span>
-              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Detail</Link>
-                <Link href={`/admin/quests/builder?questId=${row.id}`} className="admin-badge neutral">Edit</Link>
-                <button className="admin-badge neutral" disabled={busyId === row.id || lifecycle === "DELETED"} onClick={() => void applyLifecycle(row.id, row.isActive ? "DISABLE" : "ENABLE")}>{row.isActive ? "Disable" : "Enable"}</button>
-                {lifecycle === "ARCHIVED" || lifecycle === "DELETED" ? (
-                  <button className="admin-badge neutral" disabled={busyId === row.id} onClick={() => void applyLifecycle(row.id, "RESTORE")}>Restore</button>
-                ) : (
-                  <button className="admin-badge neutral" disabled={busyId === row.id} onClick={() => void applyLifecycle(row.id, "ARCHIVE")}>Archive</button>
-                )}
-                <button className="admin-badge neutral" disabled={busyId === row.id || lifecycle === "DELETED"} onClick={() => void applyLifecycle(row.id, "DELETE_SOFT")}>Delete</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setSelected(null)}>Close</button>
+            </div>
+            <div style={{ display: "grid", gap: "0.35rem" }}>
+              <p className="contest-inline-note">Lifecycle: {selected.lifecycleStatus ?? "ACTIVE"}</p>
+              <p className="contest-inline-note">Validation: {selected.validationMode}</p>
+              <p className="contest-inline-note">Reward: {selected.rewardPoints} pts</p>
+              <p className="contest-inline-note">Completed users: {selected.analytics?.completedCount ?? 0}</p>
+              <p className="contest-inline-note">Progress rows: {selected.analytics?.progressCount ?? 0}</p>
+              <p className="contest-inline-note">Distributed points: {selected.analytics?.totalPointsDistributed ?? 0}</p>
+              <div className="admin-actions-row">
+                <Link href={`/admin/quests/builder?questId=${selected.id}`} className="admin-badge neutral">Edit</Link>
+                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, selected.isActive ? "DISABLE" : "ENABLE")}>{selected.isActive ? "Disable" : "Enable"}</button>
+                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, "ARCHIVE")}>Archive</button>
+                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, "DELETE_SOFT")}>Delete</button>
               </div>
             </div>
-          );
-        })}
-        {!loading && filtered.length === 0 ? <div className="admin-table-row"><p className="contest-inline-note">No quests matching current filters.</p></div> : null}
-      </section>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString();
 }

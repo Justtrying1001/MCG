@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
+import { listInternalQuestsMvp } from "@/lib/domain/quests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
-import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   const auth = requireInternalAdminAccess(request);
@@ -11,33 +11,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const quests = await prisma.questDefinition.findMany({
-      select: {
-        id: true,
-        code: true,
-        title: true,
-        type: true,
-        validationMode: true,
-        rewardPoints: true,
-        isActive: true,
-        startAt: true,
-        endAt: true,
-        config: true,
-      },
-      orderBy: [{ createdAt: "desc" }],
-      take: 300,
-    });
+    const quests = await listInternalQuestsMvp();
 
     return NextResponse.json({
       ok: true,
       quests: quests.map((quest) => ({
-        ...quest,
+        id: quest.id,
+        code: quest.code,
+        title: quest.title,
+        type: quest.type,
+        validationMode: quest.validationMode,
+        rewardPoints: quest.rewardPoints,
+        isActive: quest.isActive,
         startAt: quest.startAt?.toISOString() ?? null,
         endAt: quest.endAt?.toISOString() ?? null,
         lifecycleStatus:
           quest.config && typeof quest.config === "object" && !Array.isArray(quest.config)
             ? ((quest.config as Record<string, unknown>).lifecycleStatus ?? "ACTIVE")
             : "ACTIVE",
+        analytics: quest.analytics,
+        config: quest.config,
       })),
     });
   } catch (error) {

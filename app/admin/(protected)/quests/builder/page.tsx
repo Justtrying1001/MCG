@@ -29,12 +29,13 @@ export default function QuestBuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const questId = searchParams.get("questId");
+  const initialObjectiveType = searchParams.get("objectiveType");
   const isEditMode = Boolean(questId);
 
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>("FOLLOW_X");
+  const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>(initialObjectiveType === "MILESTONE" || initialObjectiveType === "SOCIAL_ENGAGEMENT" || initialObjectiveType === "FOLLOW_X" ? initialObjectiveType : "FOLLOW_X");
   const [socialAction, setSocialAction] = useState<SocialAction>("LIKE");
   const [milestoneType, setMilestoneType] = useState<MilestoneType>("CONTESTS_JOINED");
   const [targetValue, setTargetValue] = useState("3");
