@@ -264,7 +264,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     title: "Points powerhouse",
     adminTitle: "Milestone · Reward points earned · 5000",
     category: "REWARD_POINTS_EARNED",
-    userDescription: "Earn 5,000 points from rewards.",
+    userDescription: "Earn 5000 points from rewards.",
     adminDescription: "Long-term reward accumulation marker.",
     metricKey: "REWARD_POINTS_EARNED",
     threshold: 5000,
