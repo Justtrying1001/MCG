@@ -4786,3 +4786,52 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-3);
   line-height: 1.5;
 }
+
+/* Contest UX refactor 2026-03-14 */
+.contest-grid-card.premium,
+.contest-hub-hero.premium,
+.contest-detail-hero.premium,
+.contest-team-builder.premium {
+  border: 1px solid rgba(123, 97, 255, 0.32);
+  background: linear-gradient(160deg, rgba(17,18,27,0.95), rgba(10,11,17,0.98));
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.contest-phase-pill {
+  border: 1px solid var(--border-hi);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.phase-open { color: #86efac; border-color: rgba(134,239,172,0.45); }
+.phase-locked, .phase-live { color: #fcd34d; border-color: rgba(252,211,77,0.45); }
+.phase-settled { color: #c4b5fd; border-color: rgba(196,181,253,0.5); }
+
+.contest-eligible-grid.visual,
+.contest-modal-grid.visual {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+.lineup-card-tile {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  overflow: hidden;
+  text-align: left;
+}
+.lineup-card-tile.selected { border-color: rgba(134,239,172,0.6); box-shadow: 0 0 0 1px rgba(134,239,172,0.4); }
+.lineup-card-tile.disabled { opacity: 0.55; }
+.lineup-card-art { aspect-ratio: 0.75; background: rgba(255,255,255,0.04); display: grid; place-items: center; }
+.lineup-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lineup-card-body { padding: 0.55rem; display: grid; gap: 0.18rem; }
+.lineup-card-body strong { font-size: 0.84rem; }
+.lineup-card-body span { font-size: 0.68rem; color: var(--text-2); }
+
+.lineup-slot-v2-art {
+  width: 100%;
+  max-height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-top: 0.35rem;
+}

@@ -3,14 +3,14 @@ import type { LineupOption } from "@/components/contests/types";
 
 export function EnteredLineupPanel({ selectedCards }: { selectedCards: Array<LineupOption | null> }) {
   return (
-    <Surface className="contest-entered-panel">
-      <p className="mcg-eyebrow">Entered lineup</p>
-      <h3 className="mcg-title">Your roster is locked</h3>
+    <Surface className="contest-entered-panel" variant="highlight">
+      <p className="mcg-eyebrow">Submitted lineup</p>
+      <h3 className="mcg-title">Current saved roster</h3>
       <div className="contest-entered-grid">
         {selectedCards.map((card, index) => (
           <div key={`${card?.instanceId ?? "empty"}-${index}`} className="contest-entered-item">
             <span>Slot {index + 1}</span>
-            <strong>{card?.name ?? "Unknown"}</strong>
+            <strong>{card?.name ?? "Empty"}</strong>
           </div>
         ))}
       </div>

@@ -58,6 +58,8 @@ function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOpt
         rarityCode: row.card.rarity,
         editionCode: row.card.edition,
         name: row.card.displayName,
+        imageUrl: row.card.imageUrl,
+        tokenProjectName: row.card.symbol || row.card.displayName,
       });
     }
   }
@@ -124,7 +126,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const rule = detail?.contest.rules[0];
   const maxRosterSize = rule?.maxRosterSize ?? 5;
   const isGuest = !loading && me?.mode === "guest";
-  const canManageLineup = detail?.contest.status === "OPEN" && !detail?.userEntry;
+  const canManageLineup = detail?.contest.status === "OPEN";
   const canEnter = canManageLineup && !isGuest;
 
   const filteredOptions = useMemo(() => {
@@ -146,12 +148,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const userState = useMemo(() => {
     if (isGuest) return "Guest preview (entry disabled)";
     if (!detail) return "Loading";
-    if (detail.contest.status === "SETTLED") return "Contest settled";
-    if (detail.contest.status === "LIVE") return "Tracking live standings";
-    if (detail.contest.status === "LOCKED") return detail.userEntry ? "Entry locked" : "Locked before entry";
-    if (detail.userEntry) return "Entered";
-    if (selected.length > 0) return "Building lineup";
-    return "Not entered";
+    if (detail.contest.status === "SETTLED") return "Results available";
+    if (detail.contest.status === "LIVE") return detail.userEntry ? "Lineup locked · contest live" : "Contest live";
+    if (detail.contest.status === "LOCKED") return detail.userEntry ? "Team lock active" : "Team lock active (no entry)";
+    if (detail.userEntry) return "Lineup editable until team lock";
+    if (selected.length > 0) return "Drafting lineup";
+    return "Ready to enter";
   }, [detail, isGuest, selected.length]);
 
   const toggle = (instanceId: string) => {
@@ -196,7 +198,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     const updated = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
     if (updated.ok) setDetail((await updated.json()) as ContestDetail);
-    setSubmitState("success");
+    setSubmitState("idle");
   };
 
   if (!detail) {

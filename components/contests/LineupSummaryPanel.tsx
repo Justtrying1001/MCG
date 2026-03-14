@@ -12,7 +12,7 @@ export function LineupSummaryPanel({ selectedCards, maxRosterSize }: { selectedC
       <p className="contest-inline-note">{remaining} slots remaining</p>
       <div className="contest-summary-list-v2">
         {selectedCards.map((card, index) => (
-          <p key={`${card?.instanceId ?? "empty"}-${index}`}>#{index + 1} {card ? card.name : "Empty"}</p>
+          <p key={`${card?.instanceId ?? "empty"}-${index}`}>#{index + 1} {card ? `${card.name} (${card.rarityCode})` : "Empty"}</p>
         ))}
       </div>
     </Surface>

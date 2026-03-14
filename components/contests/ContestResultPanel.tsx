@@ -2,11 +2,22 @@ import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 
 export function ContestResultPanel({ status, myRank, myScore }: { status: string; myRank: number | null; myScore: number | null }) {
-  if (status !== "SETTLED") return null;
+  if (status !== "SETTLED") {
+    if (status === "LIVE" || status === "LOCKED") {
+      return (
+        <Surface className="contest-result-panel" variant="raised">
+          <p className="mcg-eyebrow">End phase</p>
+          <h3 className="mcg-title">Scoring / result pending</h3>
+          <p className="contest-inline-note">When the contest ends, scoring computes and the result phase appears here.</p>
+        </Surface>
+      );
+    }
+    return null;
+  }
 
   return (
     <Surface className="contest-result-panel" variant="highlight">
-      <p className="mcg-eyebrow">Contest settled</p>
+      <p className="mcg-eyebrow">Result</p>
       <h3 className="mcg-title">Final results</h3>
       <div className="contest-result-grid">
         <div><span>Final rank</span><strong>{myRank ? `#${myRank}` : "Pending"}</strong></div>
