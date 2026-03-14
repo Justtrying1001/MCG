@@ -924,3 +924,75 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
     min-width: 760px;
   }
 }
+
+.contest-console-page { gap: .9rem; }
+.contest-console-cta {
+  border: 1px solid color-mix(in srgb, var(--clay) 68%, transparent);
+  background: linear-gradient(135deg, rgba(203,161,107,.26), rgba(203,161,107,.14));
+  color: var(--chalk);
+  text-decoration: none;
+  border-radius: 999px;
+  padding: .55rem .9rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.contest-console-grid { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+.contest-console-card {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: .85rem;
+  display: grid;
+  gap: .65rem;
+  background: linear-gradient(165deg, rgba(17,20,24,.9), rgba(24,28,34,.85));
+  box-shadow: 0 14px 35px rgba(0,0,0,.25);
+}
+.contest-console-card-head { display: flex; justify-content: space-between; gap: .6rem; }
+.contest-console-card-head h3,
+.contest-console-card-head h2 { font-size: 1rem; }
+.contest-console-code { font-size: .7rem; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: .08em; margin-bottom: .25rem; }
+.contest-console-card-badges { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.contest-console-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
+.contest-console-mini-metric { border: 1px solid var(--color-border-subtle); border-radius: .6rem; padding: .45rem; background: rgba(184,196,204,.05); display: grid; gap: .2rem; }
+.contest-console-mini-metric span { font-size: .65rem; text-transform: uppercase; color: var(--color-text-muted); }
+.contest-console-mini-metric strong { font-size: .95rem; }
+.contest-console-meta { display: grid; gap: .25rem; font-size: .8rem; color: var(--color-text-secondary); }
+.contest-console-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.contest-danger-chip { border-color: rgba(248,113,113,.5); color: #fecaca; }
+
+.contest-console-modal { max-width: min(1300px, 96vw); width: min(1300px, 96vw); background: #0e1115; border: 1px solid rgba(184,196,204,.22); }
+.contest-console-modal-body { padding: 1rem; max-height: 82vh; overflow: auto; display: grid; gap: .7rem; }
+.contest-console-section { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); padding: .7rem; display: grid; gap: .55rem; background: rgba(184,196,204,.04); }
+.contest-console-section h4 { font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); }
+.contest-console-meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .35rem; font-size: .82rem; }
+.contest-console-timeline { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: .35rem; }
+.contest-console-step { border: 1px solid var(--color-border-subtle); border-radius: .55rem; padding: .45rem; display: grid; gap: .2rem; background: rgba(184,196,204,.02); }
+.contest-console-step.is-active { border-color: color-mix(in srgb, var(--clay) 55%, var(--color-border-subtle)); background: rgba(203,161,107,.16); }
+.contest-console-step span { font-size: .68rem; color: var(--color-text-muted); }
+.contest-console-step p { font-size: .78rem; }
+
+.contest-console-table { display: grid; gap: .6rem; }
+.contest-console-player-row { border-top: 1px solid var(--color-border-subtle); padding-top: .55rem; display: grid; gap: .45rem; }
+.contest-console-lineup { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .45rem; }
+.contest-console-card-tile { border: 1px solid var(--color-border-subtle); border-radius: .55rem; overflow: hidden; background: rgba(16,20,26,.8); display: grid; gap: .2rem; }
+.contest-console-card-tile img { width: 100%; height: 90px; object-fit: cover; }
+.contest-console-card-tile p { font-size: .72rem; padding: 0 .4rem; }
+.contest-console-card-tile small { color: var(--color-text-muted); font-size: .66rem; padding: 0 .4rem .35rem; }
+.contest-console-card-placeholder { height: 90px; display: grid; place-items: center; font-size: .67rem; color: var(--color-text-muted); }
+
+.contest-console-snapshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+.contest-console-box { border: 1px solid var(--color-border-subtle); border-radius: .55rem; padding: .55rem; display: grid; gap: .3rem; background: rgba(8,10,14,.4); }
+.contest-console-box h5 { font-size: .75rem; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: .08em; }
+
+@media (max-width: 980px) {
+  .contest-console-kpis,
+  .contest-console-timeline,
+  .contest-console-snapshot-grid,
+  .contest-console-meta-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 680px) {
+  .contest-console-grid,
+  .contest-console-kpis,
+  .contest-console-timeline,
+  .contest-console-snapshot-grid,
+  .contest-console-meta-grid { grid-template-columns: 1fr; }
+}
