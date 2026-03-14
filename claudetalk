@@ -1,0 +1,4060 @@
+Tu es un Staff Engineer + Product Architect + Senior Product Designer.
+Tu travailles sur le repo actuel de MCG.
+Ta mission se fait en 2 temps stricts :
+
+AUDIT COMPLET de toute la partie Contest
+PLAN DE REFONTE TOTAL ET COMPLET de toute la partie Contest
+IMPORTANT :
+Tu ne dois PAS commencer par coder.
+Tu dois d’abord faire un audit exhaustif, structuré, factuel, du repo et du fonctionnement réel.
+Ensuite seulement tu dois proposer un plan de refonte complet.
+Je veux une réponse très sérieuse, structurée, exploitable, avec des chemins de fichiers, des modules, des routes, des composants, des modèles DB, et une lecture produit claire.
+CONTEXTE PRODUIT
+La partie Contest de MCG est censée fonctionner selon ce flow produit :
+
+Ouverture du tournoi
+le tournoi devient disponible
+les users peuvent participer
+ils peuvent composer leur équipe
+Création de team / modification libre
+tant que le lock n’est pas passé, le user peut modifier sa team librement
+il peut remplacer ses cartes autant qu’il veut
+Lock team / début tournoi
+les équipes sont figées
+snapshot START
+début du tournoi réel
+Fin tournoi
+snapshot END
+calcul du scoring
+calcul ranking
+Résultat & reward
+résultat visible
+rewards / settlement
+cartes à nouveau disponibles
+état final clair côté user et admin
+Le tout doit fonctionner automatiquement, avec transitions de statut cohérentes, snapshots, scoring, ranking, settlement, UX claire côté user et admin.
+PROBLÈMES MAJEURS ACTUELS
+Il y a actuellement 2 gros problèmes :
+
+PROBLÈME A — LE FONCTIONNEMENT N’EST PAS ENCORE CORRECT / COHÉRENT
+Même si beaucoup de choses ont été codées, le système ne fonctionne pas encore exactement comme on le veut.
+Il faut auditer tout ce qui touche à :
+
+lifecycle contest
+ouverture
+participation
+team builder
+team lock
+transition des phases
+snapshots START / END
+scoring
+ranking
+settlement / rewards
+unlock des cartes
+statuts backend
+statuts affichés user/admin
+transitions automatiques / manuelles
+réconciliation temporelle
+fallback legacy éventuel
+Je veux savoir précisément :
+ce qui existe vraiment
+ce qui fonctionne vraiment
+ce qui est partiel
+ce qui est encore cassé
+ce qui est incohérent
+ce qui est redondant / legacy / mal branché
+PROBLÈME B — L’UI/UX CONTEST N’A PAS DU TOUT LE NIVEAU ATTENDU
+L’UI actuelle ne ressemble pas du tout à un jeu type Sorare / fantasy premium / TCG premium.
+Pourtant, on dispose déjà de beaucoup d’infos et de datas côté backend :
+
+contests
+lineups
+cartes
+rewards
+snapshots
+scoring
+ranking
+états
+stats du tournoi
+Mais le rendu visuel et l’expérience sont mauvais pour :
+la présentation des contests
+la participation
+le team builder
+le suivi du tournoi
+les résultats
+l’admin contest
+Je veux donc un audit design / UI / UX très sérieux.
+OBJECTIF GLOBAL
+Je veux que tu fasses :
+
+PHASE 1 — AUDIT COMPLET DU REPO SUR LA PARTIE CONTEST
+Audit complet de tout ce qui touche à Contest :
+
+code
+docs
+routes
+UI user
+UI admin
+backend
+DB / Prisma
+lifecycle
+scoring
+ranking
+settlement
+rewards
+composants carte utilisés
+état legacy éventuel
+pages inutiles / confuses
+workbenches techniques
+mapping statuts backend -> user/admin
+PHASE 2 — PLAN DE REFONTE TOTAL ET COMPLET
+Ensuite, à partir de l’audit, proposer un plan de refonte global de toute la partie Contest :
+
+A. refonte du fonctionnement produit
+B. refonte de l’architecture contest
+C. refonte complète design / UI / UX
+D. refonte user contest flow
+E. refonte admin contest console
+F. cleanup legacy / simplification
+G. roadmap d’implémentation par étapes
+PHASE 1 — AUDIT COMPLET DEMANDÉ
+Je veux un audit très structuré avec les sections suivantes.
+
+AUDIT CONTEST COMPLET
+1. Executive summary
+état global de la partie contest
+ce qui fonctionne vraiment
+ce qui ne fonctionne pas comme attendu
+ce qui est trop complexe / legacy / incohérent
+niveau de maturité réel
+2. Cartographie complète du repo
+Je veux la liste précise des fichiers/dossiers/modules concernés par Contest :
+
+docs
+schema Prisma
+migrations
+backend runtime
+routes user
+routes internal/admin
+pages user
+pages admin
+composants UI
+tests
+éventuels scripts / jobs / reconcile / cron
+Pour chaque élément :
+chemin exact
+rôle
+statut (utile / partiel / legacy / douteux / redondant)
+3. Modèle de données réel
+Je veux le modèle de données réel sur :
+
+Contest
+ContestRule
+ContestEntry
+RosterLock
+ContestScore
+ContestRanking
+ContestSettlement
+ContestSettlementPlan
+ContestTokenSnapshot
+ContestTokenScore
+ContestEntryScoreBreakdown
+RewardGrant
+modèles liés aux cartes / token / coingecko / lineup
+Je veux aussi :
+ce qui est canonique
+ce qui est duplicatif
+ce qui est mal structuré
+ce qui manque encore
+4. Flow métier réel aujourd’hui
+Je veux reconstituer le flow réel actuel de bout en bout :
+
+création contest
+publication
+visibilité user
+participation
+sélection équipe
+modification équipe
+lock équipe
+début contest
+snapshot START
+fin contest
+snapshot END
+scoring
+ranking
+rewards / settlement
+post-contest / cartes libérées
+Pour chaque étape :
+où ça vit dans le code
+si c’est auto ou manuel
+ce qui est correct
+ce qui est cassé
+ce qui est ambigu
+5. Audit lifecycle / transitions / automatisation
+Point critique :
+je veux un audit détaillé des transitions de phases.
+Je veux savoir :
+
+quels sont les statuts backend réels
+comment ils sont utilisés
+comment ils sont affichés côté user/admin
+quelles transitions sont automatiques
+quelles transitions sont manuelles
+comment fonctionne la réconciliation par le temps
+s’il existe encore des risques de contest bloqué
+si snapshots/scoring sont bien déclenchés au bon moment
+6. Audit scoring / ranking / rewards
+Je veux une lecture claire de :
+
+scoring natif
+snapshots CoinGecko
+ranking
+settlement
+rewards
+fallback legacy éventuel
+visibilité user/admin des résultats
+Je veux savoir si tout ça est bien intégré au flow contest ou encore trop technique / partiel / fragile.
+7. Audit UI / UX user
+Je veux un audit très sévère de toute l’expérience user contest :
+
+page hub contests
+cartes de contest
+page détail contest
+team builder
+sélection de cartes
+timeline du tournoi
+résultat / rewards / fin de contest
+clarity / actionability / design
+Je veux que tu dises clairement :
+ce qui est mauvais
+ce qui est confus
+ce qui est trop basique
+ce qui fait “UI IA”
+ce qui empêche d’atteindre un niveau premium type Sorare/fantasy/TCG
+8. Audit UI / UX admin
+Je veux un audit très sévère de toute l’expérience admin contest :
+
+liste admin contests
+detail contest
+operator console
+actions principales
+lecture des états
+visibilité snapshot/scoring/ranking
+actions de stop/archive/delete/edit
+éventuelles pages techniques redondantes
+sous-pages / workbenches / reliquats legacy
+Je veux savoir :
+ce qui est utile
+ce qui est redondant
+ce qui est mal exposé
+ce qui doit être supprimé / fusionné / repensé
+9. Audit design system / composants
+Je veux identifier :
+
+les composants carte existants réellement premium
+ceux qui sont réutilisables
+ceux qui devraient être la base canonique de l’expérience contest
+les incohérences visuelles entre pack opening / collection / contest / admin
+10. Audit technique / dette / cleanup
+Je veux un audit des problèmes structurels :
+
+routes en doublon
+pages inutiles
+legacy
+workbenches techniques
+actions redondantes
+mappings incohérents
+backend trop dispersé
+statuts trop complexes
+dette front / dette produit / dette runtime
+11. Final diagnosis
+Je veux une conclusion claire :
+
+qu’est-ce qui doit être refondu
+qu’est-ce qui doit être conservé
+qu’est-ce qui doit être simplifié
+qu’est-ce qui doit être supprimé
+PHASE 2 — PLAN DE REFONTE TOTAL ET COMPLET
+À partir de ton audit, je veux un plan de refonte global.
+
+PLAN DE REFONTE CONTEST TOTAL
+1. Product target model
+Décrire le modèle cible idéal de la partie contest.
+Je veux un flow produit clair et simple :
+Open contest
+→ build team freely
+→ lock
+→ start
+→ live
+→ end
+→ compute
+→ result
+→ rewards
+→ release cards
+Tu dois proposer le flow cible canonique.
+
+2. Functional refactor plan
+Je veux le plan de refonte du fonctionnement :
+
+simplification lifecycle
+simplification statuts
+transitions automatiques
+snapshots/scoring/ranking/rewards
+gestion cartes / lock / unlock
+résultat final user/admin
+3. User experience refactor plan
+Je veux le plan complet de refonte user :
+
+contest hub
+featured contest
+contest cards
+contest detail
+team builder
+card selector
+lineup / bench
+tournament stats
+rewards / results
+settled contest UX
+Je veux une logique premium, card-first, tournament-first, très propre.
+4. Admin experience refactor plan
+Je veux le plan complet de refonte admin :
+
+list admin
+operator console
+detail contest
+stage visibility
+player/team visibility
+snapshots / scoring / diagnostics
+quick actions
+simplification / suppression des pages inutiles
+5. Visual / design direction
+Je veux un plan de DA / UI direction pour Contest :
+
+principes visuels
+hiérarchie
+densité
+rythme
+zones d’attention
+premium feeling
+comment atteindre un niveau type fantasy / TCG premium
+sans tomber dans une UI générique / vide / SaaS
+6. Cleanup plan
+Je veux la liste de :
+
+ce qu’il faut supprimer
+ce qu’il faut fusionner
+ce qu’il faut cacher
+ce qu’il faut conserver
+ce qu’il faut rendre canonique
+7. Roadmap d’implémentation
+Je veux une roadmap en étapes :
+
+Step 1
+Step 2
+Step 3
+etc.
+Chaque étape doit être :
+cohérente
+testable
+peu risquée
+exploitable par un agent de code ensuite
+8. Risks / dependencies
+Je veux les principaux risques :
+
+techniques
+produit
+UX
+migration
+backend
+legacy
+9. Final recommendation
+Je veux une recommandation claire :
+
+quel doit être le modèle cible
+quelle partie doit être refondue en priorité
+quel ordre suivre
+ce qu’il faut absolument éviter
+STYLE DE RÉPONSE ATTENDU
+Je veux :
+
+une réponse structurée
+très sérieuse
+factuelle
+orientée repo réel
+orientée produit
+orientée architecture
+orientée UI/UX
+pas vague
+pas superficielle
+Je veux des chemins de fichiers quand c’est pertinent.
+Je veux une vraie lecture du système.
+IMPORTANT
+Tu ne dois PAS commencer à coder.
+Tu ne dois PAS proposer juste quelques idées vagues.
+Tu dois d’abord faire l’audit total, puis le plan complet.
+Si certaines choses ne sont pas confirmables sans exécution DB, tu dois le dire clairement.
+Si certaines pages ou routes semblent legacy, tu dois le dire clairement.
+Si certaines parties sont techniquement bonnes mais produit/UX mauvaises, tu dois le dire clairement.
+Le but est d’avoir enfin :
+
+une vision claire de l’existant
+une vision claire du système cible
+une roadmap claire de refonte complète de toute la partie contest.
+Show more
+
+
+Read two contest page components to analyze structure
+Read two contest page components to analyze structure
+
+Now I have comprehensive material for the audit. Let me check a few more critical items.
+
+
+Searched for scheduler/cron implementations, read ContestHero component file
+Searched for scheduler/cron implementations, read ContestHero component file
+
+J'ai maintenant tout le matériel nécessaire. Voici l'audit complet et le plan de refonte.
+
+AUDIT CONTEST COMPLET — MCG
+1. Executive Summary
+Niveau de maturité global : 6/10 — Architecturalement correct, produit/UX insuffisant, opérationnel fragile.
+
+Ce qui fonctionne réellement
+Le modèle de données est bien conçu (14 modèles, relations claires, enums cohérents)
+Le scoring engine est solide : snapshots CoinGecko START/END → calcul de performance tokens → multiplicateurs rareté/édition → breakdown par carte
+Le settlement plan system fonctionne : generate → preview → execute, avec reward policy configurable
+Les tests sont nombreux et bien structurés (~22 fichiers)
+La réconciliation lifecycle a été récemment corrigée (bug majeur résolu : les contests restaient bloqués en OPEN)
+La card locking lors de l'entrée est correctement implémentée
+Ce qui ne fonctionne pas comme attendu
+Pas de cron/scheduler réel : la réconciliation n'est déclenchée que sur les requêtes HTTP (list/detail page). Si personne ne charge la page, les contests restent bloqués indéfiniment
+Les cartes ne sont pas libérées après settlement : après la fin d'un contest, OwnedCardInstance.lockState reste CONTEST:x:ENTRY:y — les cartes restent bloquées pour toujours
+Settlement entièrement manuel : même si le scoring est auto-déclenché, le settlement nécessite 3 actions admin manuelles (generate → preview → execute)
+ContestEntryStatus.LOCKED n'est jamais set : les entries restent SUBMITTED jusqu'à SCORED — la transition intermédiaire est manquante
+Reward preview complètement fausse : ContestRewardPreview affiche rosterSize * 40 pts — non connecté à la reward policy réelle
+Leaderboard affiche les userId tronqués (8 chars) — pas les usernames
+Ce qui est trop complexe / legacy / incohérent
+Double chemin de scoring : scoring engine auto (snapshot-based) + paste scoring workbench legacy (JSON injection)
+Double chemin de settlement : policy-driven (nouveau) + legacy manual reward injection
+Legacy admin page /admin/contests/legacy/[contestId] encore accessible et référencée comme "fallback temporaire"
+Onglet UPCOMING montre les contests DRAFT (non publiés) — incohérent produit
+ContestScore + ContestRanking : les deux stockent score + userId + contestId — redondance partielle
+2. Cartographie Complète du Repo
+Docs
+Chemin	Rôle	Statut
+docs/audits/contest-lifecycle-time-reconciliation-2026-03-14.md	Audit + fix du bug de réconciliation lifecycle	Utile / canonique
+docs/audits/contest-user-experience-refactor-2026-03-14.md	Plan UX user	À lire / partiel
+docs/audits/contest-admin-console-refactor-2026-03-14.md	Plan admin console	À lire / partiel
+docs/audits/contest-user-premium-finish-pass-2026-03-14.md	Premium finish pass	À lire / partiel
+Schema Prisma
+Modèle	Chemin	Statut
+14 modèles contest	prisma/schema.prisma (lignes 462–735)	Canonique, bien structuré
+Backend Domain Logic
+Fichier	Rôle	Statut
+lib/domain/contests/config-runtime.ts (566L)	Création/validation/publication draft	Canonique
+lib/domain/contests/runtime.ts (502L)	Entry, scoring, settlement, listing	Canonique mais concerns mixtes
+lib/domain/contests/lifecycle-reconciliation.ts (140L)	Réconciliation auto par le temps	Canonique, récemment ajouté
+lib/domain/contests/scoring-engine-runtime.ts (259L)	Calcul scores depuis snapshots	Canonique
+lib/domain/contests/settlement-plan-runtime.ts (394L)	Generate → preview → approve → execute	Canonique
+lib/domain/contests/snapshot-runtime.ts (140L)	Capture START/END snapshot CoinGecko	Canonique
+lib/domain/contests/eligibility-runtime.ts (105L)	Résolution tokens éligibles	Canonique
+lib/domain/contests/coingecko-client.ts (61L)	Client API CoinGecko (batch, retry)	Canonique
+lib/admin/contest-reward-builder.ts	Utils UI reward rules	Utile
+lib/admin/contest-workbench.ts	State machine + utils admin	Utile
+Routes API user
+Route	Méthode	Rôle	Statut
+app/api/contests/route.ts	GET	Liste contests actifs (+ réconciliation)	Canonique
+app/api/contests/[contestId]/route.ts	GET	Détail contest + userEntry (+ réconciliation)	Canonique
+app/api/contests/[contestId]/enter/route.ts	POST	Soumettre entry + lineup	Canonique
+app/api/contests/[contestId]/ranking/route.ts	GET	Rankings	Canonique
+app/api/contests/[contestId]/lineup-options/route.ts	GET	Cartes éligibles user	Canonique
+Routes API admin/internal
+Route	Méthode	Rôle	Statut
+app/api/internal/contest-configs/route.ts	GET/POST	CRUD config draft	Canonique
+app/api/internal/contest-configs/[id]/route.ts	GET/PUT	Edit draft	Canonique
+app/api/internal/contest-configs/[id]/validate/route.ts	POST	Valider draft	Canonique
+app/api/internal/contest-configs/[id]/publish/route.ts	POST	Publier → OPEN	Canonique
+app/api/internal/contests/route.ts	GET/POST	Liste + création (+ réconciliation)	Canonique
+app/api/internal/contests/reconcile-lifecycle/route.ts	POST	Batch reconcile manuel	Canonique
+app/api/internal/contests/[id]/route.ts	GET/PATCH/DELETE	Detail / archive / delete	Canonique
+app/api/internal/contests/[id]/status/route.ts	POST	Transition manuelle de phase	Canonique
+app/api/internal/contest-runs/[id]/console/route.ts	GET	Full state dump operator	Canonique
+app/api/internal/contest-runs/[id]/overview/route.ts	GET	Overview + progress + blockers	Canonique
+app/api/internal/contest-runs/[id]/snapshots/start/route.ts	POST	Capture START snapshot manuellement	Canonique
+app/api/internal/contest-runs/[id]/snapshots/end/route.ts	POST	Capture END snapshot manuellement	Canonique
+app/api/internal/contest-runs/[id]/scoring/compute/route.ts	POST	Compute scores manuellement	Canonique
+app/api/internal/contest-runs/[id]/scoring/validate/route.ts	POST	Valider batch scoring import	Legacy workbench
+app/api/internal/contest-runs/[id]/settlement-plan/generate/route.ts	POST	Générer settlement plan	Canonique
+app/api/internal/contest-runs/[id]/settlement-plan/[planId]/execute/route.ts	POST	Exécuter plan	Canonique
+app/api/internal/contest-runs/[id]/transitions/validate/route.ts	POST	Valider transition	Canonique
+Pages User
+Route UI	Fichier	Rôle	Statut
+/contests	app/contests/page.tsx	Hub contests (tabs, filtres, tiles)	Fonctionnel, UX faible
+/contests/[contestId]	app/contests/[contestId]/page.tsx	Détail + team builder	Fonctionnel, UX faible
+Pages Admin
+Route UI	Fichier	Rôle	Statut
+/admin/contests	app/admin/(protected)/contests/page.tsx	Catalog + modal operator console	Fonctionnel, dense
+/admin/contests/create	.../create/page.tsx	Création draft	Fonctionnel
+/admin/contests/[id]	.../[contestId]/page.tsx	Overview (meta + progress + actions)	Minimal, inline styles
+/admin/contests/[id]/lifecycle	.../lifecycle/page.tsx	Contrôle transitions manuelles	Fonctionnel mais très basique
+/admin/contests/[id]/scoring	.../scoring/page.tsx	Paste scoring workbench	Legacy / confusion
+/admin/contests/[id]/settlement	.../settlement/page.tsx	Policy settlement workbench	Fonctionnel
+/admin/contests/[id]/audit	.../audit/page.tsx	Audit log	Non inspecté
+/admin/contests/legacy	.../legacy/page.tsx	Page legacy listing	Douteux / à supprimer
+/admin/contests/legacy/[id]	.../legacy/[contestId]/page.tsx	Legacy detail (JSON scoring + manual settle)	Legacy / à supprimer
+Composants UI Contest (26 fichiers dans components/contests/)
+Composant	Rôle	Statut
+ContestHubHero.tsx	Hero banner hub	Très basique, texte seulement
+ContestHero.tsx	Hero détail contest	Texte + chips seulement
+ContestTile.tsx	Carte contest en grille	Minimal — code/titre/stats/CTA
+ContestHistoryCard.tsx	Résultat settled	Non lu
+ContestLifecycleTabs.tsx	Tabs UPCOMING/OPEN/LOCKED/LIVE/SETTLED	Fonctionnel
+ContestFiltersBar.tsx	Filtres + tri	Fonctionnel
+ContestStatusBadge.tsx	Badge statut	Basique
+ContestProgressTimeline.tsx	Timeline 5 étapes numérotées	Très basique
+ContestStatsGrid.tsx	Grille 8 stats	Dump d'infos, utile
+ContestActionPanel.tsx	Sidebar "what you can do" (key-value)	Très basique
+ContestResultPanel.tsx	Résultats finaux (rank + score)	Très minimal, pas de détail reward
+ContestRewardPreview.tsx	Aperçu rewards	Données fake (roster*40)
+TeamBuilder.tsx	Builder équipe (slots + actions)	Fonctionnel mais basique
+LineupSlot.tsx	Slot individuel	Minimal
+LineupCardTile.tsx	Carte dans lineup	Non lu — probablement avec image
+CardSelectorModal.tsx	Modale sélection carte	Filtre rarity/edition/search
+EligibleCardsPanel.tsx	Panel cartes éligibles	Présent en parallèle du modal
+EnteredLineupPanel.tsx	Lineup soumis (lecture seule)	Non lu
+LineupSummaryPanel.tsx	Résumé lineup sidebar	Non lu
+LeaderboardCard.tsx	Classement top 10	Affiche userId tronqués
+RulesDrawer.tsx	Drawer règles	Non lu
+ContestCountdown.tsx	Compte à rebours	Non lu
+ContestAchievements.tsx (profile)	Achievements contest sur profil	Non lu
+contestLifecycle.ts	Utils phases (toUserPhase, getActionability)	Canonique
+contestUtils.ts	Helpers (countdown, date format)	Canonique
+types.ts	Types TS frontend	Canonique
+Tests
+22 fichiers de test dans tests/ — couverture très bonne sur backend domain logic, API routes, admin utilities.
+
+3. Modèle de Données Réel
+Modèles canoniques (bien structurés)
+Contest
+  id, code, title, description
+  status: DRAFT | OPEN | LOCKED | LIVE | SETTLED | CANCELED
+  configPublishedAt, startsAt, lockAt, endsAt
+  → ContestRule (1:N)
+  → ContestEntry (1:N)
+  → ContestTokenSnapshot (1:N, phases START/END)
+  → ContestTokenScore (1:N)
+  → ContestScore (1:N)
+  → ContestRanking (1:N)
+  → ContestSettlement (1:1)
+  → ContestRewardPolicy (1:1)
+  → ContestSettlementPlan (1:N)
+
+ContestRule
+  maxRosterSize, teamSizeMode (EXACT), teamSizeValue
+  eligibilityMode: ANY | CARD_SET_ONLY
+  cardSetId (optionnel)
+  entryFeeEnabled, entryFeeCurrency, entryFeeAmount
+
+ContestEntry
+  contestId, userId
+  status: SUBMITTED | LOCKED | SCORED | SETTLED | CANCELED
+  → RosterLock (1:N)
+  → ContestEntryScoreBreakdown (1:N)
+
+ContestTokenSnapshot
+  phase: START | END
+  priceUsd, marketCapUsd, volume24hUsd, marketCapRank
+  geckoId, capturedAt, provider
+  UNIQUE(contestId, tokenProjectId, phase) ← idempotent
+
+ContestSettlementPlan
+  status: DRAFT | APPROVED | EXECUTED | CANCELED
+  source, policySnapshot (JSON), rankingSnapshotSize
+  → ContestSettlementPlanItem (1:N)
+    rewardComponents (JSON), pointsTotal, xpTotal, packsTotal
+
+Problèmes structurels
+Redondance partielle : ContestScore vs ContestRanking
+
+ContestScore: contestId, userId, score, scoredAt
+ContestRanking: contestId, userId, rank, score, rankedAt
+ContestRanking inclut déjà le score — ContestScore est une duplication partielle
+Dans le code, computeContestScoresFromSnapshots() crée les deux séparément
+Recommandation : fusionner ou réserver ContestScore pour les snapshots intermédiaires
+ContestEntry.status.LOCKED n'est jamais set
+
+Les entries sont créées en SUBMITTED et restent SUBMITTED jusqu'à SCORED
+La transition SUBMITTED → LOCKED (au moment du teamLock) n'existe pas dans le code
+La sémantique "locked" pour l'entry n'est pas exploitée
+Pas de champ de release des cartes
+
+OwnedCardInstance.lockState est mis à "CONTEST:x:ENTRY:y" lors de l'entry
+Aucun code n'efface ce lockState après settlement
+Aucun champ releasedAt ou releaseReason sur RosterLock
+Manque de métadonnées visuelles sur Contest
+
+Pas de bannerUrl, thumbnailUrl, accentColor sur Contest
+Le modèle est purement fonctionnel, sans support pour une expérience visuelle riche
+ContestSettlementPlan.policySnapshot (JSON)
+
+Bonne idée de sauvegarder un snapshot de la policy au moment de la génération
+Mais pas d'accès structuré aux composants après exécution (tout en JSON)
+4. Flow Métier Réel Aujourd'hui
+Création → Publication
+Étape	Code	Mode	État
+Créer draft	createContestDraft() → POST /api/internal/contest-configs	Manuel admin	✅ Correct
+Valider draft	validateContestDraft() → .../validate	Manuel admin	✅ Correct
+Publier	publishContest() → .../publish	Manuel admin	✅ Correct, passe à OPEN
+Participation user
+Étape	Code	Mode	État
+Voir contests	listContestsMvp() → GET /api/contests	Auto (réconciliation at fetch)	✅ Correct
+Voir détail	getContestDetailMvp() → GET /api/contests/[id]	Auto	✅ Correct
+Voir cartes éligibles	GET /api/contests/[id]/lineup-options	Manuel user	✅ Correct
+Entrer / modifier lineup	enterContestMvp() → POST /api/contests/[id]/enter	Manuel user	✅ Correct, idempotent
+Modifier lineup (OPEN)	Même endpoint (réentrance)	Manuel user	✅ Correct
+Lock → LIVE
+Étape	Code	Mode	État
+lockAt atteint → LOCKED	reconcileContestLifecycleByTime()	Pseudo-auto (request-triggered)	⚠️ Fragile (pas de vrai cron)
+Set entries à LOCKED	—	—	❌ Absent
+startsAt atteint → LIVE	reconcileContestLifecycleByTime()	Pseudo-auto	⚠️ Fragile
+Capture START snapshot	captureStartSnapshot()	Auto dans réconciliation	✅ Correct si réconciliation tourne
+LIVE → SETTLED
+Étape	Code	Mode	État
+endsAt atteint → SETTLED	reconcileContestLifecycleByTime()	Pseudo-auto	⚠️ Fragile
+Capture END snapshot	captureEndSnapshot()	Auto dans réconciliation	✅ Correct si réconciliation tourne
+Compute scores	computeContestScoresFromSnapshots()	Auto dans réconciliation	✅ Correct si réconciliation tourne
+Générer ranking	Inclus dans compute scores	Auto	✅ Correct
+Post-contest (Settlement / Rewards / Cards)
+Étape	Code	Mode	État
+Générer plan settlement	generateSettlementPlan()	Manuel admin	⚠️ Pas automatique
+Preview plan	previewSettlementPlan()	Manuel admin	✅ Utile
+Exécuter plan	executeSettlementPlan()	Manuel admin	⚠️ Pas automatique
+Créer RewardGrants	Dans executeSettlementPlan	Auto à l'exécution	✅ Correct
+Créditer points/XP user	Dans executeSettlementPlan	Auto à l'exécution	✅ Correct
+Libérer cartes (unlock)	—	—	❌ ABSENT
+ContestEntry → SETTLED	settleContestMvp()	Dans execution	✅ Correct
+Résultat visible user	/contests/[id] (status=SETTLED)	Auto via API	✅ Correct (si settlement exécuté)
+5. Audit Lifecycle / Transitions / Automatisation
+Statuts backend réels
+DRAFT  → config en cours, pas visible users
+OPEN   → visible users, team building possible
+LOCKED → lineup freeze, plus d'édition possible
+LIVE   → contest en cours (START snapshot capturé)
+SETTLED → contest terminé (END snapshot + scoring auto)
+CANCELED → terminal
+
+Affichage user vs admin
+Backend OPEN      → User: "Open" / "Build / Edit lineup"
+Backend LOCKED    → User: "Team Lock / Start" / "Lineups frozen"
+Backend LIVE      → User: "Live" / "Track live"
+Backend SETTLED   → User: "Result" / "Results available"
+
+Admin: status + stage dérivé (TEAM_BUILDING / TEAM_LOCK / CONTEST_RUNNING / CONTEST_ENDED / SCORING_COMPUTING / RESULTS_READY)
+Stage = heuristique sur _count.rankings + status — peut être incohérent
+
+Transitions automatiques vs manuelles
+Transition	Mécanisme	Déclenchement	Automation
+OPEN → LOCKED (lockAt)	reconcileContestLifecycleByTime	Request HTTP uniquement	⚠️ Pseudo-auto
+LOCKED → LIVE (startsAt)	idem	Request HTTP uniquement	⚠️ Pseudo-auto
+LIVE → SETTLED (endsAt)	idem	Request HTTP uniquement	⚠️ Pseudo-auto
+START snapshot	captureStartSnapshot avant LIVE	Dans réconciliation	✅ Auto si réconciliation
+END snapshot	captureEndSnapshot avant SETTLED	Dans réconciliation	✅ Auto si réconciliation
+Scoring compute	computeContestScoresFromSnapshots	Dans réconciliation	✅ Auto si réconciliation
+Settlement	generateSettlementPlan + executeSettlementPlan	Admin manuel	❌ Manuel
+Card unlock	—	—	❌ Absent
+Risques d'instabilité
+Pas de cron : si personne ne fait de requête vers /api/contests ou /api/contests/[id], les contests restent bloqués à l'état passé. En production, si l'activité user est nulle autour d'une date critique, le lifecycle ne progresse pas.
+
+Snapshot CoinGecko peut échouer silencieusement : si captureStartSnapshot échoue (API down, réseau), la transition vers LIVE est quand même effectuée — le contest démarre sans snapshot START, ce qui rendra le scoring impossible.
+
+Settlement manuel = risque d'oubli : après auto-scoring, il n'y a aucun alerte ou auto-trigger pour le settlement. Un admin doit penser à aller le faire manuellement.
+
+Cards jamais libérées : si settlement est oublié ou si le flow est interrompu, les cartes restent locked pour toujours (depuis la user perspective).
+
+Réconciliation séquentielle (boucle while(true)) pour catch-up : si un contest est très en retard (ex: OPEN → doit aller à SETTLED), la réconciliation enchaîne OPEN→LOCKED→LIVE→SETTLED et fait 3 appels CoinGecko en cascade dans la même requête HTTP — risque de timeout.
+
+6. Audit Scoring / Ranking / Rewards
+Scoring
+Architecture : bien conçue
+
+Formula : priceChange * w1 + marketCapChange * w2 + volumeChange * w3 + rankChange * w4 → token score
+Multiplicateurs rareté : COMMON(1.0), UNCOMMON(1.05), RARE(1.12), EPIC(1.22), LEGENDARY(1.35)
+Multiplicateurs édition : BASE(1.0), REVERSE(1.03), BRILLANTE(1.08), HOLO(1.15), FULL_ART(1.25)
+Par carte : finalScore = tokenScore × rarityMult × editionMult
+Score utilisateur : somme des finalScore de toutes ses cartes
+Problèmes :
+
+Poids de la formula hardcodés — pas configurables per contest
+Pas de scoring live/intermédiaire — le score n'existe que post-endsAt
+Leaderboard vide pendant toute la phase LIVE (mauvais pour l'engagement)
+ContestScore et ContestRanking stockent tous les deux le score — redondance
+Ranking
+Créé automatiquement lors du computeContestScoresFromSnapshots
+Trié par score décroissant, rank assigné séquentiellement
+✅ Correct fonctionnellement
+Settlement
+Architecture : bien conçue (policy-driven, génération → preview → approval → execution)
+
+Problèmes :
+
+Complètement manuel — aucune automation
+L'étape "approveSettlementPlan" n'est pas exposée dans l'UI admin (le flow UI va directement generate → execute)
+Les rewards affichés à l'utilisateur dans ContestRewardPreview sont des estimations hardcodées — pas de connexion avec la reward policy réelle
+Visibilité user des résultats
+Info	Disponible ?	Source
+Mon rang final	✅ ContestResultPanel (post SETTLED)	ContestRanking
+Mon score final	✅ ContestResultPanel	ContestRanking
+Breakdown par carte	❌ Absent	ContestEntryScoreBreakdown (en DB, pas exposé)
+Tokens qui ont performé	❌ Absent	ContestTokenScore (en DB, pas exposé)
+Rewards reçues	❌ Absent	RewardGrant (en DB, pas exposé dans context contest)
+Historique settling	❌ Absent	ContestSettlement (en DB, pas exposé)
+7. Audit UI/UX User
+7.1 Hub contests (/contests)
+Problèmes majeurs :
+
+Dual filtering confusant : tabs lifecycle (UPCOMING/OPEN/LOCKED/LIVE/SETTLED) + filter bar (ALL/statut) qui se chevauchent — deux systèmes de filtrage redondants sur la même page
+UPCOMING = DRAFT : l'onglet "UPCOMING" affiche les contests en statut DRAFT, qui ne sont pas encore publiés — incohérence produit (les users ne devraient pas voir les drafts)
+ContestHubHero est vide : quand il n'y a pas de contest, c'est juste un texte + lien "Build from collection" — pas d'expérience visuelle. Quand il y en a un, c'est SectionHeader + chips — très générique
+ContestTile est minimaliste à l'extrême : code texte, titre, 3 stats texte, countdown texte, bouton → pas d'image, pas de couleur, pas de contexte visuel
+Reward preview fake : "Reward ~200 pts" calculé en rosterSize * 40 — non connecté à la policy réelle
+Pas de différenciation visuelle entre les contests dans la grille
+"contest-card-grid-v3" — le nombre de version dans les classnames indique des itérations sans cleanup
+Résultats récents (settled) via ContestHistoryCard — non inspectable depuis cette lecture
+Ce qui fait "UI IA générique" : SiteShell → Surface card → eyebrow texte → title texte → chips texte → button. Aucune émotion visuelle, aucune hiérarchie premium.
+
+7.2 Page détail contest (/contests/[contestId])
+Problèmes majeurs :
+
+ContestHero = texte uniquement : eyebrow/title/subtitle + chips de date + state texte → pas d'image, pas de background, pas de visuels du contest. Pour un TCG/fantasy game, c'est insuffisant
+ContestProgressTimeline : 5 cercles numérotés — fonctionnel mais minimal, ne ressemble pas à une expérience de tournoi premium
+ContestStatsGrid : grille de 8 cartes texte (Phase/Entries/Roster/Reward/Starts/Lock/Ends/NextMilestone) — dump d'informations sans hiérarchie visuelle
+TeamBuilder : "Build your 5-card lineup" avec des slots "Slot 1 / Add card" et une progress bar → aucune expérience TCG premium. Pas d'art de fond, pas de design par position, pas de rarity highlight
+LineupSlot : "Slot 1" header + button "Add card" vide — extrêmement basique
+EligibleCardsPanel + CardSelectorModal : deux mécanismes de sélection en parallèle — UX dupliquée et confuse (l'un est inline en bas du builder, l'autre est une modale)
+LeaderboardCard : affiche row.userId.slice(0, 8)… — personne ne reconnaît son userId. Expérience brisée
+ContestActionPanel : sidebar "What you can do now" avec 3 key-value pairs texte — très basique, aucun call-to-action clair
+ContestRewardPreview : données hardcodées (roster * 40 pts, "Booster chance") — pas de vraie reward policy affichée
+ContestResultPanel : juste "#X Final rank" et "Y.YY Final score" — pas de breakdown, pas de rewards list, pas de visuels
+Pas de score breakdown par carte après settlement — alors que ContestEntryScoreBreakdown existe en DB avec toutes les données
+Ce qui empêche d'atteindre le niveau Sorare/TCG premium :
+
+Absence totale d'art de fond/contexte visuel dans le hero
+Pas de visuels de cartes dans les slots avant sélection
+Pas de breakdown post-contest
+Leaderboard avec des IDs plutôt que des usernames
+Rewards fake dans le preview
+Deux mécanismes de sélection parallèles créent de la confusion
+Aucune "moment" visuel — ni à l'entrée (pas de feedback premium), ni au lock (pas d'animation), ni aux résultats (pas de podium, pas de reward reveal)
+8. Audit UI/UX Admin
+8.1 Admin Catalog + Operator Console (/admin/contests)
+Points positifs :
+
+Approche liste + modal console = bonne idée d'architecture
+AdminStatStrip (4 métriques) + search + filter = fonctionnel
+Console modal montre : diagnostics, players+lineups (avec images cartes), snapshots, scoring rows, actions
+Problèmes :
+
+La console modal est très dense avec des paragraphes contest-inline-note partout — pas de structure visuelle
+Snapshots et scoring affichés en texte inline (price X · volume Y · mcap Z) — illisible pour un opérateur
+Player lineup cards affichées avec Image + p + small — minimal
+8.2 Contest Overview (/admin/contests/[contestId])
+Problèmes majeurs :
+
+Inline styles style={{ display: "grid", gap: "1rem" }} partout — pas de design system
+Navigation vers sous-pages via <Link className="contest-inline-note"> — des liens texte gris pour naviguer vers les workbenches critiques
+Lien "Open legacy detail (temporary)" encore présent — le legacy est toujours accessible
+La page est un dump de labels/valeurs sans hiérarchie opérationnelle
+8.3 Lifecycle Control Panel (/admin/contests/[contestId]/lifecycle)
+Fonctionnel : select targetPhase → validate → execute
+Bonne explication de l'automation
+Mais : plain form UI, aucun visuel de la machine d'état
+8.4 Scoring Workbench (/admin/contests/[contestId]/scoring)
+Confusion critique :
+
+Ce workbench permet d'importer des scores manuellement (paste userId,score per line)
+Mais le scoring est maintenant auto-calculé depuis les snapshots CoinGecko
+Ces deux chemins coexistent sans clarté sur lequel est canonique
+Le "Scoring Workbench" devrait être renommé "Score Override" et clairement marqué comme fallback d'urgence
+8.5 Settlement Workbench (/admin/contests/[contestId]/settlement)
+Fonctionnel et bien structuré
+Mais : le lien "Legacy fallback" vers /admin/contests/legacy/[contestId] est encore présent
+Settlement est l'unique étape manuelle critique — et elle n'est pas auto-triggée
+8.6 Legacy pages (/admin/contests/legacy/...)
+/admin/contests/legacy/[contestId]/page.tsx — score injection JSON + manual reward settlement — clairement legacy, devrait être supprimé ou masqué derrière feature flag
+Titre de la page : "Legacy Contest Detail — Temporary fallback while Phase 3 workbenches are rolled out" — cette dette est connue mais pas nettoyée
+9. Audit Design System / Composants
+Composants premiums existants
+Sur la base du code lu, les composants premium existants sont :
+
+Surface — base container avec variants (raised, highlight) — bien utilisé
+Button — primary/ghost — simple mais cohérent
+AdminUi (AdminPageHeader, AdminStatStrip, AdminStatusBadge, AdminToolbar) — design system admin cohérent
+SectionHeader — eyebrow/title/subtitle/actions — bien structuré
+Composants contest réellement premium
+Aucun composant contest actuel ne peut être qualifié de "premium" au sens TCG/fantasy game :
+
+Les composants carte (LineupCardTile, LineupSlot) utilisent probablement des images de carte mais l'expérience slot est basicque
+Le pack opening a probablement un niveau visuel supérieur au contest (non vérifié mais probable)
+Incohérences visuelles
+Les classnames de contest ont des suffixes de version (-v2, -v3, tcg-layout) indiquant des itérations non nettoyées
+Les pages admin utilisent un design system différent des pages user
+Les pages admin contest utilisent des inline styles au lieu du design system
+10. Audit Technique / Dette / Cleanup
+Problème	Sévérité	Chemin
+Pas de cron/scheduler réel	🔴 Critique	Tout le lifecycle
+Cards non libérées post-settlement	🔴 Critique	runtime.ts, OwnedCardInstance
+Legacy admin detail encore live	🟠 Majeur	app/admin/.../legacy/[contestId]
+Settlement manuel, jamais auto	🟠 Majeur	settlement-plan-runtime.ts
+Leaderboard affiche userId brut	🟠 Majeur	LeaderboardCard.tsx
+Reward preview données fake	🟠 Majeur	ContestRewardPreview.tsx
+ContestEntry.LOCKED jamais set	🟡 Moyen	runtime.ts enterContestMvp
+Scoring workbench vs auto-scoring	🟡 Moyen	scoring/page.tsx
+Double settlement path	🟡 Moyen	settlement/page.tsx + legacy
+ContestScore redondant vs ContestRanking	🟡 Moyen	schema.prisma
+Inline styles admin pages	🟡 Moyen	Toutes pages admin contest
+UPCOMING = DRAFT (non publiés visibles)	🟡 Moyen	contests/page.tsx
+EligibleCardsPanel + CardSelectorModal en parallèle	🟡 Moyen	[contestId]/page.tsx
+Pas de score breakdown visible user	🟡 Moyen	ContestResultPanel.tsx
+Pas de score live pendant LIVE	🟡 Moyen	Pas de intermediate scoring
+Modèle Contest sans champs visuels	🟡 Moyen	schema.prisma
+classnames versionnés non nettoyés	🟢 Mineur	CSS contest
+11. Final Diagnosis
+À refondre en priorité
+Cron/scheduler — le lifecycle pseudo-auto est la faille opérationnelle la plus critique
+Card unlock post-settlement — feature manquante bloquante pour les utilisateurs
+Leaderboard + Result UI — l'expérience post-contest est brisée (userId, pas de breakdown)
+Reward preview — fausse data = UX mensongère
+UI complète user — team builder, hub, résultats — trop basique pour le produit cible
+À conserver tel quel
+Backend scoring engine (scoring-engine-runtime.ts) — solide
+Settlement plan system (settlement-plan-runtime.ts) — bien conçu
+Snapshot system (snapshot-runtime.ts) — correct
+Lifecycle reconciliation (lifecycle-reconciliation.ts) — correct (sauf manque de cron)
+API routes internes — bien structurées
+Test suite — excellente
+À simplifier
+Double scoring path → garder uniquement auto-snapshot, renommer l'autre "emergency override"
+Double settlement path → supprimer legacy
+ContestScore + ContestRanking → fusionner ou clarifier les rôles
+À supprimer
+/admin/contests/legacy/ et /admin/contests/legacy/[contestId]/ — legacy pages
+Dual EligibleCardsPanel (remplacer par CardSelectorModal seul)
+Onglet UPCOMING (ou le reconfigurer pour montrer des contests publiés à venir)
+PLAN DE REFONTE CONTEST TOTAL
+1. Product Target Model
+Flow canonique cible
+DRAFT (admin configure)
+  ↓ publish()
+OPEN  ←─────────────────────────────────────────────────
+  │  User: build team freely, modify anytime             │
+  │  Admin: monitor entries                              │
+  ↓ [auto: lockAt reached via cron]                      │
+LOCKED                                                   │
+  │  User: "Your team is locked. Contest starting soon." │
+  │  Lineup READ-ONLY. Cards locked.                     │
+  ↓ [auto: startsAt reached via cron]                    │
+LIVE                                                     │
+  │  START snapshot captured (CoinGecko)                 │
+  │  User: live leaderboard (score 0 until END)          │
+  │  Admin: monitor live                                 │
+  ↓ [auto: endsAt reached via cron]                      │
+END_COMPUTING (nouveau statut intermédiaire suggéré)      │
+  │  END snapshot captured                               │
+  │  Scores computed                                     │
+  │  Rankings built                                      │
+  │  Settlement auto-triggered (if policy published)     │
+  ↓ [auto: after compute + settlement]
+SETTLED
+  │  Cards released automatically                        │
+  │  User: final rank, score breakdown, rewards revealed │
+  │  "Play again" CTA                                    │
+  ↓ (optional)
+ARCHIVED / read-only
+
+Nouveautés dans le flow cible :
+
+END_COMPUTING comme phase intermédiaire visible (évite l'état SETTLED "vide" actuel)
+Auto-settlement si policy est published (supprimer le besoin d'action admin manuelle pour les cas normaux)
+Card unlock automatique après settlement
+Score breakdown visible dès SETTLED
+2. Functional Refactor Plan
+A. Cron/Scheduler réel
+Problème : la réconciliation est request-triggered.
+
+Solution :
+
+Créer un endpoint POST /api/internal/cron/contest-lifecycle protégé par un secret header
+Le connecter à un service cron externe (Vercel Cron, Upstash, GitHub Actions schedule)
+Fréquence : toutes les minutes (ou 30 secondes)
+Ce cron appelle reconcileDueContestsByTime() en batch
+Fallback : garder la réconciliation request-triggered en complément (defence in depth)
+Fichiers touchés :
+
+app/api/internal/cron/contest-lifecycle/route.ts (nouveau)
+vercel.json ou config cron équivalente (à créer)
+B. Card Unlock automatique
+Problème : OwnedCardInstance.lockState jamais effacé post-settlement.
+
+Solution :
+Dans executeSettlementPlan() (ou dans un hook post-settlement) :
+
+// Après settlement exécuté :
+// Trouver toutes les entries SETTLED du contest
+// Trouver tous les RosterLocks associés
+// Pour chaque OwnedCardInstance dans ces RosterLocks :
+//   mettre lockState = null
+
+Fichiers touchés :
+
+lib/domain/contests/settlement-plan-runtime.ts — ajouter card release
+Ou créer lib/domain/contests/card-release-runtime.ts — séparation des concerns
+C. Simplification lifecycle statuts
+Proposition : ajouter END_COMPUTING entre LIVE et SETTLED
+
+enum ContestStatus {
+  DRAFT
+  OPEN
+  LOCKED
+  LIVE
+  END_COMPUTING  // nouveau : scoring en cours
+  SETTLED
+  CANCELED
+}
+
+Avantage : l'UI peut montrer "Scoring in progress…" au lieu d'un SETTLED vide.
+Risque : migration schema + mise à jour de tous les endroits qui utilisent l'enum.
+
+Alternative moins risquée : garder les 6 statuts mais utiliser les compteurs _count.scores/_count.rankings pour inférer l'état (déjà fait partiellement dans l'admin stage mapping).
+
+D. Auto-settlement
+Solution :
+Dans reconcileContestLifecycleByTime() après la transition vers SETTLED :
+
+Si une reward policy est PUBLISHED pour ce contest
+Appeler generateSettlementPlan() + executeSettlementPlan() automatiquement
+Logger le résultat
+En cas d'erreur : ne pas bloquer le statut SETTLED, juste alerter
+Cette logique doit être optionnelle et configurable par contest.
+
+E. Correction ContestEntry.LOCKED
+Dans reconcileContestLifecycleByTime() lors de la transition vers LOCKED :
+
+Mettre à jour ContestEntry.status = LOCKED pour toutes les entries SUBMITTED du contest
+F. Supprimer la redondance ContestScore
+ContestScore peut être supprimé si ContestRanking inclut le score (ce qui est le cas)
+Ou ContestScore devient le modèle pour les snapshots intermédiaires (live scoring futur)
+Decision : garder ContestScore pour un futur live scoring, mais ne plus le créer en doublon avec ContestRanking — séparer les paths
+3. User Experience Refactor Plan
+3.1 Contest Hub (/contests)
+Refonte cible :
+
+┌─────────────────────────────────────────────────────────┐
+│  FEATURED CONTEST HERO (plein écran partiel)            │
+│  [Art/background] + titre + statut live + countdown     │
+│  [CTA primary : "Enter now" / "Track live"]             │
+└─────────────────────────────────────────────────────────┘
+
+LIFECYCLE NAV : [Live (2)] [Open (3)] [Locked (1)] [Results (4)]
+(supprimer UPCOMING/DRAFT, supprimer filter bar redondant)
+
+CONTEST GRID (3 colonnes)
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│  CARD   │ │  CARD   │ │  CARD   │
+│  art    │ │  art    │ │  art    │
+│  titre  │ │  titre  │ │  titre  │
+│  status │ │  status │ │  status │
+│  ⏱ -2h │ │  ⏱ -5h │ │  ⏱ +1d │
+│  [CTA]  │ │  [CTA]  │ │  [CTA]  │
+└─────────┘ └─────────┘ └─────────┘
+
+RECENT RESULTS RAIL (horizontal scroll)
+[card settled] [card settled] [card settled]
+
+Actions :
+
+Supprimer l'onglet UPCOMING (ou le remplacer par "Coming Soon" = OPEN avec startsAt dans le futur)
+Fusionner tabs et filter bar en une seule navigation lifecycle
+Ajouter bannerUrl / thumbnailUrl au modèle Contest (migration Prisma)
+ContestTile : design card-first avec image, gradient overlay, status pill
+ContestHubHero : background visuel (image du contest ou dégradé premium)
+Reward affiché = pull depuis la reward policy réelle (au moins "Prizes for top X%")
+3.2 Contest Detail (/contests/[contestId])
+Nouveau layout cible :
+
+CONTEST HERO BANNER
+[Background art/image] full-width
+Title + code + phase pill + countdown grand format
+"X entries competing" | "Team locked" | "Live now"
+
+PHASE TIMELINE (visual, horizontal)
+[ OPEN → LOCKED → LIVE → COMPUTING → RESULT ]
+Active step highlighted, passed steps grayed
+
+─────────────────────────────────────────────
+MAIN CONTENT (2 colonnes)
+
+LEFT COLUMN (70%)                RIGHT SIDEBAR (30%)
+┌───────────────────────────┐   ┌──────────────────┐
+│  TEAM BUILDER (OPEN)      │   │  ACTION PANEL    │
+│  ou                       │   │  Countdown       │
+│  LOCKED LINEUP (LOCKED)   │   │  Status + CTA    │
+│  ou                       │   ├──────────────────┤
+│  LIVE TRACKING (LIVE)     │   │  REAL REWARDS    │
+│  ou                       │   │  (from policy)   │
+│  RESULTS (SETTLED)        │   ├──────────────────┤
+└───────────────────────────┘   │  LEADERBOARD     │
+                                │  (top 10 + me)   │
+                                │  avec usernames  │
+                                └──────────────────┘
+
+Team Builder refonte :
+
+Slots avec art de fond de la carte (même vide, avoir un design "slot empty premium")
+Chaque slot montre : numéro, image carte (si remplie), nom/rarity/edition
+Pas de EligibleCardsPanel inline — ouvrir uniquement via CardSelectorModal
+CardSelectorModal : filtres par rarity, edition, search + card grid avec visuels
+Live Tracking (phase LIVE) :
+
+Afficher les cartes de la lineup avec leur token associé
+Afficher "score en attente — résultats disponibles après clôture"
+Ou afficher delta prix intermédiaire si disponible (nice-to-have)
+Results panel (phase SETTLED) :
+
+Podium visual (top 3)
+Mon rang + score total
+Breakdown par carte : card art + token + score contribution + multiplicateurs
+Rewards reçues : liste des rewards avec badge (pts, pack, XP)
+CTA : "Play next contest" + "Share result"
+Leaderboard :
+
+Afficher user.xUsername ou user.displayName — pas userId
+Top 10 + ma position (même si > 10) avec highlight
+Reward Preview :
+
+Pull depuis ContestRewardPolicy réelle
+Montrer : "Top 1: X pts + Y packs | Top 3: Z pts | Top 10: W pts"
+4. Admin Experience Refactor Plan
+4.1 Admin Catalog (/admin/contests)
+Garder : l'approche liste + modal console
+Améliorer :
+
+Modal console : utiliser des tables et sections visuellement séparées
+Snapshots : afficher en table (token | START price | END price | delta)
+Scoring : afficher en table (user | rank | score | #cartes)
+Actions dans la console : boutons primaires, pas des "link chips"
+Statut pipeline visible : Snapshot START ✅ | Snapshot END ✅ | Scoring ✅ | Settlement ⚠️
+4.2 Contest Overview (/admin/contests/[contestId])
+Refonte :
+
+Supprimer le lien legacy
+Utiliser le design system admin (AdminPanel, AdminStatStrip, pas d'inline styles)
+Section "Pipeline state" : 5 indicateurs visuels (snapshotStart, snapshotEnd, scoring, ranking, settlement) avec état check/pending/error
+Actions primaires bien visibles (boutons, pas des link-texts gris)
+4.3 Lifecycle Control Panel
+Garder le pattern validate → execute
+Améliorer : visualiser la machine d'état (quel statut, quelles transitions possibles, effets automatiques de chaque transition)
+
+4.4 Scoring
+Renommer "Scoring Workbench" en "Manual Score Override (Emergency)"
+Ajouter une section "Auto-Scoring Status" qui montre si le scoring auto a tourné
+Clarifier : le chemin canonique est le scoring auto — ce workbench n'est que pour les cas de debug
+
+4.5 Settlement
+Ajouter un bouton "Auto-settle (1-click)" pour les contests avec reward policy publiée
+Garder le flow generate → preview → execute pour le contrôle manuel
+Supprimer le lien legacy
+
+4.6 Cleanup
+Supprimer :
+
+/admin/contests/legacy/ (listing)
+/admin/contests/legacy/[contestId]/ (detail)
+Fusionner : les workbenches scoring + settlement + lifecycle dans une seule page "Contest Control" avec tabs
+
+5. Visual / Design Direction
+Principes visuels
+Card-first, tournament-first, data-rich.
+
+Background & context : chaque contest doit avoir un visuel de fond (soit configuré par admin, soit généré depuis le token le plus representé). Ne jamais avoir de hero texte sur fond blanc.
+
+Status as color language :
+
+OPEN → bleu/électrique (opportunité, action possible)
+LOCKED → orange/ambre (tension, urgence)
+LIVE → rouge/pulse (live, activité)
+SETTLED → or/émeraude (victoire, résultat)
+CANCELED → gris (neutre, inactif)
+Card art as primary visual element : les cartes doivent être le premier élément visuel. Dans les slots, dans la leaderboard, dans les résultats — toujours montrer l'art de la carte.
+
+Information density premium : comme Sorare, afficher beaucoup d'info mais avec une hiérarchie claire. Pas de pages vides avec du texte gris.
+
+Moments visuels :
+
+Entrée confirmée → animation de confirmation (subtle)
+Team lock → visual "votre équipe est figée"
+Résultat → reveal progressif, podium visuel pour le top 3
+Reward reveal → animation d'attribution
+Countdown comme élément dramatique : le temps restant doit être un élément visuel fort, pas un texte inline gris.
+
+Leaderboard live : table avec rang/avatar/username/score/cartes — pas un dump texte avec des userIds.
+
+Hiérarchie typographique
+Titre contest : grand, bold, premium
+Phase/status : pill colorée, toujours visible
+Countdown : grand format, dynamique
+Stats : compact, dense, lisible
+Anti-patterns à éviter
+Classes CSS versionnées (-v2, -v3) laissées en production
+Inline styles dans les composants
+Texte gris contest-inline-note comme navigation
+Fake data dans les previews
+userId.slice(0, 8) comme identifiant user
+6. Cleanup Plan
+À supprimer
+Element	Chemin	Raison
+Legacy admin page	app/admin/(protected)/contests/legacy/page.tsx	Obsolète
+Legacy admin detail	app/admin/(protected)/contests/legacy/[contestId]/page.tsx	Obsolète
+EligibleCardsPanel (inline)	components/contests/EligibleCardsPanel.tsx	Remplacé par CardSelectorModal seul
+Onglet "UPCOMING" (DRAFT)	contests/page.tsx	Incohérent produit
+Fake reward data	ContestRewardPreview.tsx	Remplacer par policy réelle
+À fusionner
+Elements	Action
+ContestScore + ContestRanking	Clarifier les rôles — supprimer ContestScore ou le réserver pour live scoring futur
+Tabs + FilterBar (hub)	Fusionner en un seul système de navigation
+Lifecycle + Scoring + Settlement pages (admin)	Une page "Contest Control" avec 3 tabs
+À conserver
+Element	Raison
+scoring-engine-runtime.ts	Solide, bien testé
+settlement-plan-runtime.ts	Bien conçu
+lifecycle-reconciliation.ts	Correct (à brancher sur vrai cron)
+snapshot-runtime.ts	Correct
+Tous les tests domain	Excellente couverture
+coingecko-client.ts	Fonctionnel
+À rendre canonique
+lib/domain/contests/ comme source unique de vérité pour toute la logique métier
+components/contests/contestLifecycle.ts comme source unique pour les mappings UI
+CardSelectorModal comme seul mécanisme de sélection de cartes
+7. Roadmap d'Implémentation
+Step 1 — Fix critique : Cards Unlock + Cron (1-2 jours)
+Objectif : stopper les deux problèmes bloquants en production.
+
+Ajouter card release dans executeSettlementPlan : clear OwnedCardInstance.lockState pour toutes les cartes des entries SETTLED
+Créer app/api/internal/cron/contest-lifecycle/route.ts (protégé par secret header)
+Connecter à un scheduler (Vercel Cron ou équivalent)
+Test : vérifier qu'un contest passe OPEN → LOCKED → LIVE → SETTLED sans action manuelle sur une timeline test
+Testable : contest qui finit auto, cartes libérées pour le user
+Step 2 — Fix UX critique : Leaderboard + Reward preview (1 jour)
+Objectif : corriger les expériences brisées.
+
+LeaderboardCard : fetcher/inclure user.xUsername ou user.displayName dans les rankings
+ContestRewardPreview : remplacer la fake data par un fetch de la reward policy (/api/contests/[id] retourne déjà les règles)
+Ajouter les reward tiers dans le payload API contest detail
+Testable : leaderboard montre des noms, reward preview montre les vrais prizes
+Step 3 — Fix post-contest UX : Result + Breakdown (1-2 jours)
+Objectif : expérience post-contest digne.
+
+Exposer ContestEntryScoreBreakdown dans l'API detail (quand status = SETTLED et userEntry existe)
+Exposer les RewardGrant associés à l'user pour ce contest
+Refondre ContestResultPanel : rank + score + breakdown par carte + rewards reçues
+Testable : après settlement d'un contest test, l'user voit son breakdown
+Step 4 — Cleanup Legacy Admin (0.5 jour)
+Objectif : supprimer la dette visible.
+
+Supprimer /admin/contests/legacy/ et /admin/contests/legacy/[contestId]/
+Supprimer les liens vers legacy dans overview et settlement pages
+Renommer "Scoring Workbench" → "Manual Score Override"
+Testable : navigation admin propre, plus de lien legacy
+Step 5 — Auto-settlement (1 jour)
+Objectif : rendre la fin de contest entièrement automatique.
+
+Dans reconcileContestLifecycleByTime, après SETTLED : si policy PUBLISHED → appeler generateSettlementPlan + executeSettlementPlan (si pas déjà exécuté)
+Guard idempotent : vérifier ContestSettlement n'existe pas déjà
+Logging + error handling propre (ne pas bloquer si settlement échoue — alerter)
+Testable : contest test → settlement auto → user voit rewards
+Step 6 — Refonte UI Hub + Contest Tile (2-3 jours)
+Objectif : niveau visuel premium sur le hub.
+
+Ajouter thumbnailUrl / bannerUrl sur Contest (migration Prisma)
+Refondre ContestHubHero : background visuel, countdown grand format
+Refondre ContestTile : card-first avec image, status en couleur, vraies rewards
+Fusionner tabs + filter bar en navigation lifecycle unifiée
+Testable : hub visuellement premium, responsive
+Step 7 — Refonte Team Builder (3-4 jours)
+Objectif : expérience TCG/fantasy game premium.
+
+Refondre LineupSlot : art de fond premium même vide, card art visible quand rempli
+Supprimer EligibleCardsPanel inline — CardSelectorModal only
+Refondre CardSelectorModal : grid de cartes avec art, filtres inline, sélection visuelle
+Progress bar et submit CTA premium
+Testable : team builder utilisable, visuellement premium
+Step 8 — Refonte Admin Contest Control (2-3 jours)
+Objectif : console admin efficace et claire.
+
+Fusionner lifecycle + scoring + settlement en une page "Contest Control" avec tabs
+Pipeline status bar (5 états visuels) sur la page overview
+Supprimer inline styles → design system
+Améliorer console modal : tables pour snapshots/scoring
+Testable : admin peut opérer un contest complet sans confusion
+Step 9 — Polish : Score Breakdown + Reward Reveal (2-3 jours)
+Objectif : moments visuels premium post-contest.
+
+Podium visuel top 3 dans ContestResultPanel
+Breakdown animé par carte avec visuels
+Reward reveal (animation d'attribution)
+ContestHistoryCard enrichi avec résultat + ranking
+Testable : settled contest = expérience visuelle premium
+Step 10 — ContestEntry.LOCKED + schéma cleanup (1 jour)
+Objectif : cohérence du modèle.
+
+Set ContestEntry.status = LOCKED lors de la transition vers LOCKED
+Décision sur ContestScore vs ContestRanking (migration si fusion)
+Ajouter releasedAt sur RosterLock (traçabilité)
+Testable : entries ont les bons statuts à chaque phase
+8. Risks / Dependencies
+Risques techniques
+Risque	Sévérité	Mitigation
+Cron externe non disponible (Vercel plan)	🔴	Fallback : cron GitHub Actions + endpoint secret
+Snapshot CoinGecko fail silencieux → contest sans scoring	🔴	Ajouter retry + alerting + statut visible admin
+Settlement auto sur grand nombre d'users → timeout	🟠	Rendre le settlement async (queue job)
+Migration Prisma pour thumbnailUrl + END_COMPUTING	🟠	Migrations atomiques, backwards compatible
+Suppression legacy breaking des liens existants en DB	🟡	Vérifier qu'aucun lien externe n'existe avant suppression
+Risques produit
+Risque	Sévérité	Mitigation
+Auto-settlement trop rapide → admin pas le temps de review	🟠	Option configurable par contest (autoSettle: true/false)
+Card unlock prématuré si scoring incorrect	🟡	Unlock uniquement après settlement exécuté avec succès
+Risques UX
+Risque	Sévérité	Mitigation
+Refonte team builder casse l'UX existante	🟡	Déployer en parallèle (feature flag)
+Animations trop lentes → perception dégradée	🟡	Animations < 300ms, respectful of prefers-reduced-motion
+Migration / Legacy
+Risque	Sévérité	Mitigation
+Contests existants avec cartes lockées (jamais libérées)	🔴	Script de migration : release cards pour tous les contests SETTLED existants
+Données legacy settlement format incompatible	🟡	Legacy pages supprimées seulement après validation que tous les contests actifs utilisent le nouveau flow
+9. Final Recommendation
+Modèle cible
+Un système contest entièrement automatisé du lock au settlement, avec une expérience user de niveau fantasy/TCG premium et une console admin opérationnelle sans legacy.
+
+OPEN → [cron] LOCKED → [cron] LIVE → [cron] SETTLED
+                                     ↑
+              START snapshot + scoring + settlement auto + card unlock
+
+Priorité absolue (avant toute refonte UI)
+Step 1 + 2 + 3 = fix les problèmes cassés en production :
+
+Card unlock (cartes bloquées pour toujours = expérience brisée)
+Vrai cron lifecycle (contests qui ne progressent pas = système mort)
+Leaderboard usernames + reward preview réels (UX menteuse)
+Ordre à suivre
+1. Cards unlock + cron → système fonctionnel
+2. Result UX + breakdown → post-contest correct
+3. Legacy cleanup → dette supprimée
+4. Auto-settlement → opérations simplifiées
+5. Hub + tiles UI → premier niveau visuel
+6. Team builder → deuxième niveau visuel
+7. Admin refonte → opérations premium
+8. Polish results → expérience TCG-grade
+
+Ce qu'il faut absolument éviter
+Commencer par la refonte visuelle avant d'avoir fixé les bugs fonctionnels (cards unlocked, leaderboard usernames, reward data)
+Construire un nouveau flow contest en parallèle — refactorer l'existant
+Supprimer les legacy pages avant d'avoir migré tous les contests actifs
+Introduire un statut END_COMPUTING sans migration complète de tous les consumers de l'enum
+Ce qui fait la différence entre "acceptable" et "premium"
+Le niveau Sorare/TCG premium ne viendra pas d'un redesign de composants — il viendra de :
+
+Données réelles partout (rewards réels, usernames réels, score breakdown réel)
+Moments visuels (team lock, results reveal, reward attribution)
+Cards as heroes (l'art de la carte est le centre de gravité visuel)
+Automatisation complète (l'utilisateur ne doit jamais voir un état bloqué ou une info manquante)
+Ce plan est intégralement ancré dans le code réel audité. Chaque step est testable isolément. Le backend est architecturalement solide — le travail est à 40% fonctionnel (cron, unlock, settlement auto) et à 60% produit/UX (visuels, données réelles, moments premium).
+
+Tu es un Staff Engineer + Product Architect + Senior Product Designer.
+Tu travailles sur le repo actuel de MCG.
+Contexte :
+Un premier audit complet de la partie Contest a déjà été réalisé.
+Cet audit est globalement bon, mais il manque encore plusieurs points critiques d’architecture, d’idempotence, de lifecycle, de post-contest UX et de modèle produit long terme.
+Je veux maintenant une seconde passe d’audit beaucoup plus exigeante, suivie d’un plan de refonte complet, robuste et priorisé.
+IMPORTANT :
+Tu ne dois PAS coder.
+Tu dois d’abord :
+
+relire / réévaluer tout l’existant dans le repo,
+vérifier les points critiques listés ci-dessous,
+challenger le premier audit si nécessaire,
+produire un diagnostic plus profond,
+proposer un plan de refonte complet et priorisé.
+Je veux une réponse :
+très structurée
+très technique
+très produit
+très concrète
+ancrée dans le code réel du repo
+avec chemins de fichiers quand c’est pertinent
+avec sections claires
+avec recommandations franches
+CONTEXTE PRODUIT CIBLE
+Le système Contest de MCG doit fonctionner comme un vrai système fantasy / TCG premium.
+Flow cible attendu :
+
+Create / publish contest
+Open contest
+Users build team freely
+Team lock
+Contest starts
+START snapshot
+Contest runs
+Contest ends
+END snapshot
+Scoring compute
+Ranking
+Settlement / rewards
+Cards released
+Results / rewards / cards available again
+Contest archived / read-only
+Le tout doit être :
+cohérent
+automatique
+idempotent
+lisible côté user
+pilotable côté admin
+scalable pour plusieurs contests
+prêt pour un vrai produit premium
+CE QUE TU DOIS RÉÉVALUER ABSOLUMENT
+Le premier audit a bien avancé, mais je veux que tu vérifies explicitement les points suivants, car ils sont potentiellement sous-estimés ou pas assez traités.
+A. PROBLÈMES D’ARCHITECTURE À VÉRIFIER
+1. Lock des cartes au mauvais niveau
+Vérifie si le lock des cartes repose actuellement sur :
+OwnedCardInstance.lockState = "CONTEST:x:ENTRY:y"
+Si oui, challenge sérieusement ce design.
+Je veux que tu analyses si ce modèle pose problème pour :
+
+multi contests simultanés
+historique des locks
+traçabilité
+audit
+release propre
+extensibilité future
+Je veux que tu dises clairement si :
+le lock doit vivre dans RosterLock
+OwnedCardInstance.lockState doit disparaître
+ou s’il existe une meilleure stratégie canonique
+2. Idempotence réelle du pipeline contest
+Je veux que tu audites l’idempotence réelle de tout le pipeline :
+
+transition vers LOCKED
+START snapshot
+transition vers LIVE
+END snapshot
+scoring
+ranking
+settlement
+release cards
+Je veux savoir si chaque étape est réellement safe en cas de :
+replay
+cron double
+appel manuel doublé
+request concurrente
+retry après erreur
+Je veux une analyse précise des protections existantes et des trous éventuels.
+3. Lifecycle auto réel
+Le premier audit a bien identifié le manque de vrai cron/scheduler.
+Je veux que tu ailles plus loin.
+Je veux que tu analyses le bon modèle d’orchestration :
+
+cron
+fallback request-triggered
+action admin manuelle
+backfill / reconcile endpoint
+Je veux savoir :
+quelle combinaison est canonique
+quels risques restent
+quelle architecture minimale robuste il faut mettre en place
+4. Post-contest card release
+Je veux que tu vérifies précisément le flow de release des cartes.
+Si les cartes restent bloquées après settlement, c’est critique.
+Je veux :
+
+où cela devrait vivre
+quand cela devrait être déclenché
+quelles garanties il faut
+quelle stratégie de backfill pour les contests existants
+5. Statuts / phases trop pauvres ou mal alignés
+Je veux que tu challenge le modèle de statuts actuel :
+
+DRAFT
+OPEN
+LOCKED
+LIVE
+SETTLED
+CANCELED
+Je veux savoir si ce modèle suffit vraiment pour une bonne expérience produit et une bonne observabilité.
+Question clé :
+faut-il un statut intermédiaire type :
+END_COMPUTING
+RESULTS_READY
+REWARDS_PENDING
+ou faut-il garder les statuts actuels et dériver les sous-phases par des indicateurs ?
+Je veux une réponse argumentée.
+B. PROBLÈMES PRODUIT / UX À RÉÉVALUER
+6. Leaderboard et identité utilisateur
+Je veux que tu audites le leaderboard en profondeur.
+Il faut vérifier si le système expose bien :
+
+username
+displayName
+avatar
+position réelle
+score
+lineup
+Je veux une recommandation claire sur ce qu’un leaderboard premium doit contenir.
+7. Contest result UX
+Je veux un audit spécifique de l’expérience post-contest côté user.
+Aujourd’hui je veux savoir si le user peut clairement voir :
+
+son rank
+son score
+son breakdown par carte
+ses rewards
+l’état de ses cartes (libérées ou non)
+ce qu’il peut faire après le tournoi
+Je veux que tu dises si l’expérience actuelle est acceptable ou non, et ce qu’il faut rendre visible.
+8. Team builder architecture produit
+Je veux que tu challeng(es) aussi le modèle de lineup actuel.
+Aujourd’hui on semble avoir :
+
+EXACT team size
+5 cartes fixes
+Je veux que tu me dises si ce modèle est trop rigide pour l’avenir.
+Je veux que tu analyses si le bon modèle à terme devrait être :
+slots typés
+bench
+captain
+flex
+compositions évolutives
+structure JSON plutôt que teamSizeValue simple
+Pas pour tout recoder maintenant, mais pour savoir si le design actuel bloque déjà l’évolution produit.
+9. Contest storytelling / visual identity
+Je veux aussi que tu challeng(es) le modèle Contest sur le plan produit/visuel.
+Aujourd’hui est-ce que le modèle supporte suffisamment :
+
+season
+theme
+category
+league
+division
+banner
+thumbnail
+accentColor
+visual identity
+Si non, je veux une recommandation structurée sur les champs à ajouter plus tard.
+C. AUDIT TECHNIQUE DE SECOND NIVEAU
+Je veux que tu refasses l’audit du repo sur toute la partie Contest mais avec ce niveau d’exigence supplémentaire.
+À couvrir :
+
+docs
+schema Prisma
+migrations
+routes user
+routes admin/internal
+UI user
+UI admin
+domain runtimes
+reconcile / cron / automation
+scoring engine
+settlement engine
+cards / lineup / locks
+rewards
+legacy pages
+workbenches
+tests
+Je veux que tu identifies :
+ce qui est canonique
+ce qui est fragile
+ce qui est legacy
+ce qui est duplicatif
+ce qui doit être supprimé
+ce qui doit être simplifié
+ce qui doit devenir source de vérité
+PHASE 1 — AUDIT CRITIQUE DE SECOND NIVEAU
+Je veux un document structuré :
+
+Contest Audit — Critical Second Pass
+avec les sections suivantes :
+
+1. Executive Summary
+état global réel
+niveau de maturité
+forces
+faiblesses
+principaux risques
+2. First Audit Review
+Je veux que tu relises le premier audit implicite/existant et que tu dises :
+
+ce qu’il avait bien vu
+ce qu’il sous-estimait
+ce qu’il manquait
+ce qui doit être corrigé dans ce diagnostic
+3. Repo Cartography
+modules
+routes
+pages
+docs
+tests
+statut de chaque élément
+4. Data Model Review
+modèles
+sources de vérité
+duplications
+verrouillage cartes
+snapshots
+scoring
+ranking
+settlement
+rewards
+5. Lifecycle & Automation Review
+transitions
+cron/reconcile
+request fallback
+admin triggers
+statuts
+idempotence
+6. Locking / Unlocking Review
+design actuel
+faiblesses
+modèle canonique recommandé
+7. Scoring / Ranking / Settlement Review
+scoring natif
+ranking
+settlement
+auto vs manual
+points fragiles
+8. User Experience Review
+hub
+contest detail
+team builder
+live
+post contest
+rewards
+leaderboard
+9. Admin Experience Review
+catalog
+operator console
+legacy pages
+workbenches
+actions
+diagnostics
+10. Product Evolution Constraints
+ce que le modèle actuel bloque pour l’avenir
+contests simultanés
+richer lineup model
+seasons/divisions/leagues
+visual identity
+live scoring futur
+11. Critical Problems List
+Je veux une liste priorisée :
+
+Critique
+Majeur
+Moyen
+Faible
+12. Final Diagnosis
+ce qu’il faut refondre
+ce qu’il faut garder
+ce qu’il faut simplifier
+ce qu’il faut supprimer
+PHASE 2 — PLAN DE REFONTE TOTAL ET ROBUSTE
+À partir de cet audit, je veux un plan global de refonte.
+
+Contest Refactor Master Plan
+Sections obligatoires :
+
+1. Target Product Model
+Quel est le modèle produit cible idéal de Contest ?
+Je veux un flow canonique clair et propre.
+
+2. Canonical Architecture
+Je veux la proposition de source de vérité canonique pour :
+
+contest lifecycle
+card lock
+snapshot
+scoring
+ranking
+settlement
+rewards
+card release
+3. Functional Refactor Plan
+Je veux le plan de refonte du fonctionnement :
+
+lifecycle
+auto transitions
+idempotence
+card release
+settlement
+result availability
+4. Data Model Refactor Plan
+Je veux les changements de modèle recommandés :
+
+ce qu’il faut ajouter
+ce qu’il faut déplacer
+ce qu’il faut déprécier
+ce qu’il faut garder
+Notamment :
+lock model
+contest metadata
+richer lineup model si pertinent
+phase/status model
+5. User Experience Refactor Plan
+Je veux le plan complet pour :
+
+contests hub
+featured contest
+tiles
+contest detail
+team builder
+card selector
+live state
+settled state
+result breakdown
+rewards display
+6. Admin Experience Refactor Plan
+Je veux le plan complet pour :
+
+contest admin catalog
+operator console
+actions
+diagnostics
+snapshots visibility
+scoring visibility
+settlement visibility
+cleanup legacy
+7. Cleanup / Deletion Plan
+Je veux la liste de :
+
+ce qu’il faut supprimer
+ce qu’il faut fusionner
+ce qu’il faut masquer
+ce qu’il faut garder
+ce qui doit devenir canonique
+8. Prioritized Roadmap
+Je veux une roadmap en étapes, très claire.
+Je veux que tu corriges l’ordre du premier audit si nécessaire.
+Je veux des steps testables et peu risqués.
+
+9. Risks & Migration Notes
+risques techniques
+risques produit
+migration des contests existants
+migration des cartes bloquées
+migration des legacy pages
+10. Final Recommendation
+Je veux une recommandation finale claire :
+
+ce qu’il faut faire d’abord
+ce qu’il faut éviter
+quel est le vrai chemin vers une expérience premium type fantasy / TCG
+STYLE ATTENDU
+Je veux une réponse :
+
+honnête
+sévère
+structurée
+repo-based
+produit + architecture + UX
+pas vague
+pas superficielle
+Tu dois dire clairement si tu penses qu’un point du premier audit est faux ou sous-estimé.
+IMPORTANT
+Tu ne codes pas.
+Tu ne proposes pas des idées vagues.
+Tu fais un audit critique de second niveau + un plan maître de refonte.
+Si certaines validations sont impossibles sans DB/runtime réel, tu le dis clairement.
+
+Show more
+
+
+Read config-runtime.ts file for contest configuration
+Read config-runtime.ts file for contest configuration
+
+Now let me check the Prisma schema for OwnedCardInstance and a few more critical models.
+
+
+Located contest-related enum definitions in Prisma schema
+Located contest-related enum definitions in Prisma schema
+
+J'ai maintenant tous les éléments pour un audit de second niveau très précis. Voici le document complet.
+
+Contest Audit — Critical Second Pass
+1. Executive Summary
+Niveau de maturité réel : 5.5/10 — Solide en structure, mais truffé de bugs silencieux, d'incohérences architecturales et de décisions qui semblent correctes de loin mais sont fragiles à l'examen du code.
+
+Forces réelles (confirmées au code)
+Modèle de données richement structuré (14 modèles, UniqueConstraints bien posés)
+Pipeline scoring fonctionnel (CoinGecko → token delta → multiplieurs → breakdown par carte), bien testé
+Settlement plan system bien conçu (generate → preview → execute, avec Serializable isolation)
+Lifecycle reconciliation : le pattern updateMany({ where: { id, status: current } }) est une bonne approche optimistic concurrency
+ContestTokenSnapshot upserts : idempotence correcte sur les snapshots
+API routes bien structurées et séparées (user vs internal)
+Faiblesses réelles (nouvelles, non identifiées dans le premier audit)
+Bug critique de nommage temporel : startsAt a une sémantique contradictoire entre la validation et le lifecycle
+OwnedCardInstance.lockState est un cache dérivé incohérent — pas la source de vérité, jamais nettoyé
+CoinGecko failure swallowed : les snapshots capturent null silencieusement, le scoring default à 50 pour tous les tokens manquants
+Double scoring path sans guard de protection croisée
+XP rewards non auditables : pas de RewardGrant créé pour XP
+Onglet UPCOMING toujours vide (DRAFT jamais retourné aux users)
+Settlement plan status APPROVED mort — jamais utilisé dans le flow réel
+archiveContest sans guard — peut annuler un contest LIVE avec cartes locked
+Pagination absente sur listContestsMvp (take: 50 statique)
+createContestMvp legacy crée des contests sans reward policy
+Principaux risques opérationnels
+Un contest en LIVE avec CoinGecko down → scores neutres (50) pour tout le monde sans alerte
+Cards locked à vie pour les premiers users si le bug unlock n'est pas corrigé
+startsAt / lockAt ordering bug peut silencieusement créer des contests où la phase LOCKED ne se produit jamais
+2. First Audit Review
+Ce que le premier audit avait bien vu
+Absence de vrai cron/scheduler (pseudo-auto, request-triggered) ✅
+Cards jamais libérées post-settlement ✅
+Settlement entièrement manuel ✅
+Leaderboard affiche raw userId ✅
+ContestRewardPreview données fake ✅
+Legacy pages encore actives ✅
+Dual scoring path (workbench vs auto) ✅
+ContestEntry.LOCKED jamais set ✅
+ContestScore vs ContestRanking redondance ✅
+Ce que le premier audit sous-estimait
+A. OwnedCardInstance.lockState — Le premier audit le traitait comme une feature à corriger (unlock post-settlement). En réalité, c'est un design fondamentalement mauvais : lockState est un cache dérivé du RosterLock qui n'est pas la source de vérité pour la détection de conflits, n'est jamais synchronized de manière fiable, et crée une double-source dangereuse.
+
+B. La validation temporelle — Le premier audit n'a pas détecté que la validation dans normalizeContestInput est sémantiquement inversée par rapport au lifecycle, et que startsAt a une sémantique ambiguë dans tout le codebase.
+
+C. CoinGecko failure mode — Le premier audit mentionnait le risque de CoinGecko down mais ne détaillait pas que la failure est swallowed silencieusement avec console.warn, les snapshots sont quand même créés avec null, et le scoring default à 50/100 pour ces tokens — biaisant les scores sans aucune alerte.
+
+D. XP non auditable — Non détecté. La executeSettlementPlan crée des RewardGrant pour POINTS et PACK, mais pas pour XP.
+
+E. Sequential batch reconciliation — La boucle reconcileDueContestsByTime est séquentielle, synchrone, et fait des appels CoinGecko en cascade. Avec 10+ contests arrivant à SETTLED simultanément, c'est une bombe de latence.
+
+Ce que le premier audit manquait complètement
+Bug timing validation (startsAt/lockAt semantics inverted)
+UPCOMING tab = toujours vide (DRAFT jamais retourné à l'API user)
+Settlement plan status APPROVED est dead code
+archiveContest() sans guards
+createContestMvp() legacy path crée des contests cassés (sans policy)
+Scoring neutral default (50) pour tokens sans CoinGecko data — manipulable
+maxRosterSize et teamSizeValue : même valeur, deux champs — confusion
+take: 50 sans pagination sur listContestsMvp
+RewardGrant pour XP manquant
+3. Repo Cartography
+Modules core
+Module	Chemin	Statut
+Config lifecycle	lib/domain/contests/config-runtime.ts	Canonique — mais contient un bug de validation temporelle
+Contest runtime	lib/domain/contests/runtime.ts	Canonique — mélange concerns (entrée, legacy scoring, legacy settlement)
+Lifecycle reconciliation	lib/domain/contests/lifecycle-reconciliation.ts	Canonique — mais séquentiel, pseudo-auto
+Scoring engine	lib/domain/contests/scoring-engine-runtime.ts	Canonique — solide, bien testé
+Settlement plan	lib/domain/contests/settlement-plan-runtime.ts	Canonique — XP non auditable
+Snapshots	lib/domain/contests/snapshot-runtime.ts	Canonique — failure silencieuse CoinGecko
+Eligibility	lib/domain/contests/eligibility-runtime.ts	Canonique
+CoinGecko	lib/domain/contests/coingecko-client.ts	Canonique
+Routes API
+Route	Statut
+/api/contests/* (5 routes user)	Canonique
+/api/internal/contest-configs/*	Canonique
+/api/internal/contests/*	Canonique + legacy path cohabite
+/api/internal/contest-runs/*/console	Canonique
+/api/internal/contest-runs/*/scoring/validate	Legacy workbench
+/api/internal/contest-runs/*/scoring/preview/*	Legacy workbench
+/api/internal/cron/*	Absent — à créer
+Pages UI
+Page	Statut
+/contests	Fonctionnel, bugs (UPCOMING vide, reward fake, dual filter)
+/contests/[id]	Fonctionnel, UX pauvre
+/admin/contests	Fonctionnel, dense
+/admin/contests/create	Fonctionnel
+/admin/contests/[id]	Inline styles, lien legacy
+/admin/contests/[id]/lifecycle	Fonctionnel
+/admin/contests/[id]/scoring	Legacy workbench, confusion avec auto-scoring
+/admin/contests/[id]/settlement	Fonctionnel + lien legacy
+/admin/contests/[id]/audit	Non inspecté
+/admin/contests/legacy/[id]	Legacy à supprimer
+/admin/contests/legacy/	Legacy à supprimer
+Tests
+Couverture domain logic excellente. Tests admin UI smoke présents. Pas de tests E2E du pipeline complet (publish → settle → card release).
+
+4. Data Model Review
+Modèles canoniques bien structurés
+Contest — solide, 6 statuts, timestamps clairs
+ContestRule — bien, mais maxRosterSize et teamSizeValue toujours identiques (doublon)
+ContestEntry — bien, mais LOCKED status jamais set
+ContestTokenSnapshot — excellent (upsert idempotent, phase enum)
+ContestEntryScoreBreakdown — excellent (données riches, par carte)
+ContestSettlementPlan / ContestSettlementPlanItem — bien conçu
+ContestRewardPolicy / ContestRewardBundle / ContestRewardDistributionRule — bien structuré
+Problèmes structurels identifiés au code
+1. OwnedCardInstance.lockState — double source de vérité dangereuse
+
+// runtime.ts ligne 199-223 : conflict detection
+const activeLocks = await tx.rosterLock.findMany({
+  where: {
+    ownedCardInstanceId: { in: lineupInstanceIds },
+    contestEntry: {
+      contest: { status: { in: ACTIVE_LOCK_STATUSES } },
+      // ...
+    },
+  },
+});
+
+La source de vérité pour détecter si une carte est locked = RosterLock, PAS lockState.
+
+// runtime.ts ligne 292-295 : lockState mis à jour comme cache dérivé
+await tx.ownedCardInstance.updateMany({
+  where: { id: { in: lineupInstanceIds } },
+  data: { lockState: `CONTEST:${params.contestId}:ENTRY:${entry.id}` },
+});
+
+lockState est un cache dérivé de RosterLock, écrit en dehors d'une même transaction cohérente. Si cette update échoue (ou si une transaction intermédiaire crash), lockState devient out-of-sync avec RosterLock. Il n'existe aucun mécanisme de reconciliation de ces deux états. Post-settlement, lockState n'est jamais effacé — c'est le bug critique — mais même pendant le lifecycle normal, c'est une architecture fragile.
+
+Recommandation ferme : OwnedCardInstance.lockState doit être supprimé. Le lock canonique = RosterLock seul. La lisibilité "carte locked?" pour l'UI = query sur RosterLock joint à ContestEntry joint à Contest.status IN (OPEN, LOCKED, LIVE).
+
+2. ContestRule : maxRosterSize et teamSizeValue identiques
+
+// config-runtime.ts ligne 94-96
+maxRosterSize: normalized.teamSizeValue,
+teamSizeMode: normalized.teamSizeMode,
+teamSizeValue: normalized.teamSizeValue,
+
+Ces deux colonnes reçoivent toujours la même valeur. Le fallback dans runtime.ts :
+
+const maxRosterSize = rule?.teamSizeValue ?? rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
+
+Confirme que teamSizeValue est la source et maxRosterSize est un alias legacy. À unifier : maxRosterSize à déprécier, teamSizeValue → canonique.
+
+3. ContestScore vs ContestRanking — redondance confirmée
+
+computeContestScoresFromSnapshots crée les deux :
+
+ContestScore.upsert (contestId, userId, score)
+ContestRanking.createMany (contestId, userId, rank, score)
+ContestRanking inclut déjà le score. ContestScore est un artifact du scoring intermédiaire (recordContestScoresMvp qui est le path legacy). La coexistence crée de la confusion.
+
+4. Settlement plan status APPROVED = dead code
+
+ContestSettlementPlanStatus enum a : DRAFT, APPROVED, EXECUTED, CANCELED.
+Dans executeSettlementPlan :
+
+if (plan.status !== SETTLEMENT_PLAN_STATUS.DRAFT && plan.status !== SETTLEMENT_PLAN_STATUS.APPROVED) {
+  throw new ContestRuntimeError("Only DRAFT or APPROVED plans can be executed", 409);
+}
+
+Il accepte APPROVED mais aucun code ne set jamais un plan à APPROVED. La fonction approveSettlementPlan existe dans settlement-plan-runtime.ts mais n'est pas exposée dans l'UI. APPROVED est un statut orphelin.
+
+5. XP reward : aucun RewardGrant
+
+// settlement-plan-runtime.ts ligne 274-280
+if (component.type === "XP") {
+  await tx.userProgression.upsert({
+    where: { userId: item.userId },
+    create: { userId: item.userId, xp: component.amount, level: 1 },
+    update: { xp: { increment: component.amount } },
+  });
+  rewardCount += 1;
+  // ← PAS de rewardGrant.create() ici
+}
+
+Les rewards XP ne sont pas tracées dans RewardGrant. Pas d'audit trail. Pas de visibilité admin. Pas de "mes rewards reçues" côté user pour les XP.
+
+6. Contest sans champs visuels
+
+Modèle Contest actuel : entièrement fonctionnel, zéro champ visuel. Pas de bannerUrl, thumbnailUrl, accentColor, season, themeTag, divisionCode. Le produit cible nécessite ces champs.
+
+5. Lifecycle & Automation Review
+Bug critique confirmé : startsAt / lockAt sémantique inversée
+Le flow lifecycle réel (lu dans lifecycle-reconciliation.ts) :
+
+OPEN → (lockAt reached) → LOCKED → (startsAt reached) → LIVE → (endsAt reached) → SETTLED
+
+Soit : lockAt < startsAt < endsAt.
+
+La validation dans normalizeContestInput (lu dans config-runtime.ts ligne 458) :
+
+if (startsAt && lockAt && startsAt >= lockAt) {
+  throw new ContestRuntimeError("lockAt must be after startsAt", 400);
+}
+
+Cette validation rejette l'ordre startsAt > lockAt, c'est-à-dire qu'elle rejette le seul ordre valide pour le lifecycle.
+
+Elle impose startsAt < lockAt — ce qui, dans le lifecycle, fait que startsAt est atteint en premier (en phase OPEN), déclenchant la transition OPEN→LOCKED→LIVE en cascade sans que la phase LOCKED soit jamais "vraiment vécue" en tant que période stable.
+
+Conséquence concrète : si un admin crée un contest via l'UI avec les bonnes dates (lockAt avant startsAt), la validation rejette la création. S'il contourne (dates inversées), la phase LOCKED est bypassed immédiatement.
+
+La même inversion existe dans validateContestDraftEntity (ligne 316) :
+
+if (contest.startsAt >= contest.lockAt) {
+  issues.push({ message: "lockAt must be after entryOpensAt" });
+}
+
+Même bug, même condition inversée.
+
+Recommandation : le champ startsAt est sémantiquement mal nommé. Dans le flow produit, startsAt = "quand le LIVE commence" (= snapshot START, tokens trackés), PAS "quand les entrées ouvrent". La validation doit être corrigée pour exiger lockAt < startsAt. Et idéalement, le champ devrait être renommé liveAt pour éviter toute ambiguïté.
+
+Lifecycle automation : analyse d'idempotence précise
+OPEN → LOCKED transition (sur lockAt)
+
+// lifecycle-reconciliation.ts ligne 91-104
+const updated = await prisma.contest.updateMany({
+  where: { id: contestId, status: current.status }, // optimistic concurrency
+  data: { status: next },
+});
+if (updated.count === 0) {
+  // Re-read and continue
+}
+
+Pattern optimistic concurrency correct — si deux crons tournent en parallèle, un seul gagne la mise à jour.
+
+MAIS : runAutomationBeforeTransition s'exécute avant le updateMany. Si deux crons concurrents lisent le même statut OPEN et déclenchent tous les deux captureStartSnapshot, deux transactions CoinGecko sont faites. Grâce à l'upsert dans captureSnapshot, le résultat en DB est le même, mais CoinGecko est appelé deux fois. Si les deux transactions Prisma en Serializable s'exécutent quasi-simultanément sur le même snapshot row, une peut être rollback par le moteur (deadlock). Pas de retry dans ce cas.
+
+LIVE → SETTLED + scoring (sur endsAt)
+
+// lifecycle-reconciliation.ts ligne 58-67
+async function runAutomationBeforeTransition(contestId: string, target: ContestStatus) {
+  if (target === ContestStatus.SETTLED) {
+    await captureEndSnapshot(contestId);
+    await computeContestScoresFromSnapshots(contestId);
+  }
+}
+
+Puis :
+
+const updated = await prisma.contest.updateMany({
+  where: { id: contestId, status: current.status },
+  data: { status: next },
+});
+
+Problème : computeContestScoresFromSnapshots vérifie en début de transaction :
+
+if (contest.status !== ContestStatus.LOCKED && contest.status !== ContestStatus.LIVE) {
+  throw new ContestRuntimeError("Contest must be LOCKED or LIVE to compute scores", 409);
+}
+
+Le statut est encore LIVE quand scoring tourne (avant le updateMany). Correct.
+
+Mais : que se passe-t-il si computeContestScoresFromSnapshots réussit, puis updateMany échoue ? Le contest reste en LIVE avec scores calculés. La prochaine réconciliation va ré-exécuter computeContestScoresFromSnapshots (qui fait deleteMany + recréation) — idempotent en résultat. Mais si scoring prend 10 secondes et CoinGecko est appelé à chaque retry, c'est du gaspillage potentiel.
+
+Settlement idempotence
+
+// settlement-plan-runtime.ts ligne 222-231
+if (plan.status === SETTLEMENT_PLAN_STATUS.EXECUTED) {
+  return { executed: false, ... }; // early return
+}
+if (plan.contest.settlements.length > 0) {
+  throw new ContestRuntimeError("Contest already has a settlement execution", 409);
+}
+
+Bonne idempotence sur executeSettlementPlan. En cas de double appel avec le même planId : le premier retourne executed: true, le second retourne executed: false.
+
+Mais : deux planIds différents pour le même contest peuvent chacun réussir la première guard (car ils lisent leur propre plan.status), et potentiellement deux plans tentent de créer un ContestSettlement. La guard contest.settlements.length > 0 est lue dans la même Serializable transaction — l'un des deux va fail sur cette vérification ou sur la contrainte unique @@unique([contestId]) du ContestSettlement. Safe grâce à l'isolation, mais produira une erreur 500 pour le second appel (pas un 409 clair).
+
+Card release idempotence : N/A — n'existe pas.
+
+Reconciliation batch : problème de séquentialité
+
+// lifecycle-reconciliation.ts ligne 134-139
+for (const contest of dueContests) {
+  const result = await reconcileContestLifecycleByTime(contest.id, now);
+}
+
+Séquentiel, synchrone. 10 contests en fin simultanée = 10 appels CoinGecko en série (START + END snapshot chacun). À 2 secondes par appel CoinGecko (avec retry) : 20-40 secondes. Un endpoint cron qui timeout à 30s va échouer partway, laissant certains contests non transitionnés.
+
+6. Locking / Unlocking Review
+Design actuel — analyse précise
+La source de vérité réelle pour le lock = RosterLock (pas lockState)
+
+Le code dans runtime.ts :
+
+Détecte les conflits via tx.rosterLock.findMany joint à ContestEntry.status et Contest.status
+Écrit un cache sur OwnedCardInstance.lockState = "CONTEST:x:ENTRY:y"
+Lit jamais lockState pour prendre des décisions de conflit
+lockState sert uniquement à :
+
+Afficher dans l'UI collection "cette carte est utilisée dans un contest" (probablement)
+Potentiellement dans la query des cartes éligibles lineup-options
+Problèmes du lockState cache :
+
+Désynchronisation possible : si la transaction qui écrit lockState est rollback après avoir modifié les RosterLocks, lockState peut être inconsistant
+Jamais nettoyé : après settlement, les RosterLocks restent (avec leurs entries en SETTLED) mais lockState = "CONTEST:x:ENTRY:y" reste sur les cartes — les cartes apparaissent locked à vie
+Non idempotent : si on entre puis re-enter dans un contest (lineup update), les anciens lockState sont cleared manuellement, mais cela crée une fenêtre de temps où les deux copies coexistent
+Extensibilité nulle : si une carte peut être dans deux situations différentes (à terme — collection + lending + contest), le champ string unique ne supporte pas ça
+Pas d'index sur lockState : les queries de "toutes mes cartes non lockées" nécessiteront un scan si non indexé
+Le bon modèle
+
+Supprimer lockState de OwnedCardInstance. La seule source de vérité = RosterLock.
+
+Pour l'UI "cette carte est locked" :
+
+SELECT oci.id, rl.id IS NOT NULL as isLocked
+FROM OwnedCardInstance oci
+LEFT JOIN RosterLock rl ON rl.ownedCardInstanceId = oci.id
+LEFT JOIN ContestEntry ce ON ce.id = rl.contestEntryId
+LEFT JOIN Contest c ON c.id = ce.contestId
+WHERE c.status IN ('OPEN', 'LOCKED', 'LIVE')
+  AND ce.status IN ('SUBMITTED', 'LOCKED', 'SCORED')
+
+Cette query est légèrement plus coûteuse que lire un champ, mais elle est toujours correcte. Avec un index composite sur RosterLock(ownedCardInstanceId) (qui existe déjà dans le schema), la query est rapide.
+
+Pour la release post-settlement : il suffit de ne rien faire. Si Contest.status = SETTLED, la query ci-dessus ne retourne pas ces locks. Les cartes sont "logiquement libérées" sans manipulation de donnée. La seule action nécessaire = retirer OwnedCardInstance.lockState.
+
+Stratégie de backfill pour les lockStates existants
+Pour les contests existants déjà SETTLED avec des cartes encore lockées :
+
+Migration Prisma pour supprimer la colonne lockState
+Script one-shot : UPDATE OwnedCardInstance SET lockState = NULL (ou directement drop column)
+Pas d'impact sur le comportement si lockState n'est pas la source de vérité de conflict detection
+7. Scoring / Ranking / Settlement Review
+Scoring
+Deux paths qui écrivent aux mêmes tables sans guard croisé
+
+Path	Écrit sur
+computeContestScoresFromSnapshots (auto)	ContestTokenScore, ContestEntryScoreBreakdown, ContestScore, ContestRanking, ContestEntry.status
+recordContestScoresMvp (legacy/manual)	ContestScore, ContestRanking, ContestEntry.status
+Il n'existe aucune guard qui empêche de lancer l'auto-scoring sur un contest qui a déjà eu un scoring manuel (ou vice versa). Le second scoring va deleteMany les rankings et les recréer. Les breakdowns (ContestEntryScoreBreakdown) du premier run restent mais les rankings/scores sont remplacés.
+
+CoinGecko failure — score neutre invisible
+
+Si CoinGecko est down lors de la capture snapshot :
+
+// snapshot-runtime.ts ligne 41-45
+try {
+  markets = await fetchCoinsMarkets(geckoIds);
+} catch (error) {
+  console.warn(`[contest-snapshot] CoinGecko fetch failed...`);
+  markets = [];
+}
+
+Failure swallowed. Les snapshots sont créés avec priceUsd = null, marketCapUsd = null, etc.
+
+Puis dans computeContestScoresFromSnapshots :
+
+const priceChange = relativeChange(start.priceUsd, end.priceUsd); // null
+
+Et boundedScore(null, _) = 50. So computeTokenScore avec tous nulls = 50.0/100 pour chaque token.
+
+Résultat : toutes les cartes d'un token sans données CoinGecko scorent 50 au lieu de 0. Si un token n'est jamais sur CoinGecko, tous les holders de cartes de ce token ont un avantage neutre garanti. Non configurable, non alerté.
+
+Scoring formula non configurable per contest
+
+Les poids (0.45 * price + 0.25 * volume + 0.20 * marketcap + 0.10 * rank) et les multiplicateurs (rarity, edition) sont hardcodés dans scoring-engine-runtime.ts. Impossible de créer deux contests avec des formules différentes sans modifier le code.
+
+Ranking
+computeContestScoresFromSnapshots fait deleteMany + createMany pour les rankings :
+
+await tx.contestRanking.deleteMany({ where: { contestId } });
+await tx.contestRanking.createMany({ data: ranked.map(...) });
+
+Idempotent en résultat, mais les anciennes ContestRanking.id changent à chaque recalcul (car createMany génère de nouveaux IDs). Si quoi que ce soit référence un ContestRanking.id (ce n'est pas le cas actuellement), cela casserait. OK pour l'instant.
+
+Settlement
+Problème : RewardGrant manquant pour XP
+Voir section Data Model. Les XP rewards ne créent pas de RewardGrant. Pas d'audit trail.
+
+Problème : points crédités deux fois si les deux paths sont utilisés
+
+Legacy path settleContestMvp fait :
+
+await tx.rewardGrant.create({ ... });
+if (reward.type === RewardType.POINTS) {
+  await tx.user.update({ points: { increment: reward.amount } });
+}
+
+New path executeSettlementPlan fait la même chose :
+
+await tx.rewardGrant.create({ ... });
+await tx.user.update({ points: { increment: component.amount } });
+
+Guard : les deux vérifient ContestSettlement (unique par contestId). Si l'un a déjà tourné, l'autre est bloqué. Cross-path protection présente mais via guards différentes (l'une sur contest.status, l'autre sur settlements.length > 0).
+
+8. User Experience Review
+Hub contests
+Bug UPCOMING toujours vide
+
+// contests/page.tsx ligne 65
+UPCOMING: contests.filter((c) => c.status === "DRAFT").length,
+
+Mais listContestsMvp ne retourne jamais DRAFT :
+
+// runtime.ts ligne 86-88
+status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
+
+L'onglet UPCOMING affiche toujours 0. Code mort, UX confuse.
+
+Dual filtering redondant
+ContestLifecycleTabs (par statut lifecycle) + ContestFiltersBar (statusFilter + search + sort) se chevauchent. Un user qui clique sur "OPEN" dans les tabs voit aussi un dropdown de statut dans la filter bar. Les deux filtres s'appliquent ensemble (via useMemo) ce qui peut produire des résultats vides confus.
+
+Reward sort hardcodé
+
+// contests/page.tsx ligne 87-89
+if (sort === "reward") {
+  const aReward = (a.rules[0]?.maxRosterSize ?? 5) * 40;
+  return bReward - aReward;
+}
+
+maxRosterSize * 40 = complètement inventé. Pas de rapport avec la reward policy réelle.
+
+Pagination absente
+listContestsMvp retourne max 50 contests. Pas de pagination, pas de cursor, pas d'infinite scroll. Si une plateforme a 60 contests (SETTLED + actifs), les 10 derniers sont invisibles.
+
+Contest detail
+LeaderboardCard : userId tronqués
+
+// LeaderboardCard.tsx ligne 26
+<span>{isMe ? "You" : `${row.userId.slice(0, 8)}…`}</span>
+
+Confirmé dans le code. Personne ne peut identifier un autre joueur dans le leaderboard.
+
+ContestRewardPreview : données fake
+Non lu directement mais confirmé par la logique hub (rosterSize * 40).
+
+ContestResultPanel : strictement minimal
+
+// ContestResultPanel.tsx - tout le composant
+<div><span>Final rank</span><strong>{myRank ? `#${myRank}` : "Pending"}</strong></div>
+<div><span>Final score</span><strong>{typeof myScore === "number" ? myScore.toFixed(2) : "Pending"}</strong></div>
+
+Aucun breakdown par carte, aucune reward affichée, aucun context visuel.
+
+ContestEntryScoreBreakdown en DB, invisible à l'user
+Toutes les données de breakdown (baseScore, rarityMultiplier, editionMultiplier, finalScore par carte) sont calculées et stockées. Elles ne sont pas exposées dans l'API user (getContestDetailMvp ne les inclut pas dans le payload userEntry).
+
+Team Builder
+Architecture rigide
+
+Uniquement teamSizeMode: EXACT supporté
+Valeurs autorisées : 3, 5, ou 7 cartes (hardcodé dans normalizeContestInput et validateContestDraftEntity)
+Pas de slots typés, pas de captain, pas de bench, pas de flex
+Structure flat : juste une liste d'instanceId
+Cette rigidité n'est pas un bug pour le court terme, mais bloque l'évolution produit (voir section 10).
+
+9. Admin Experience Review
+Admin catalog
+Heuristique de stage fragile
+
+// admin/contests/page.tsx ligne 463-469
+function getContestStage(contest: AdminContest): ContestStage {
+  if (contest._count.rankings > 0) return "RESULTS_READY";
+  if (contest.status === "SETTLED" && contest._count.scores > 0) return "SCORING_COMPUTING";
+  if (contest.status === "SETTLED") return "CONTEST_ENDED";
+  // ...
+}
+
+Un contest SETTLED avec des rankings = RESULTS_READY. Mais si settlement a été exécuté mais CoinGecko a échoué → scores = 0, rankings = 0, stage = CONTEST_ENDED (incorrect — le contest est SETTLED mais sans scores, ce qui est un état cassé non visible).
+
+Admin overview page
+Lien legacy encore présent (ligne 139)
+
+<Link href={`/admin/contests/legacy/${params.contestId}`} className="contest-inline-note">
+  Open legacy detail (temporary)
+</Link>
+
+Un lien texte gris vers une page legacy, toujours live, accessible. La mention "(temporary)" n'a pas été retirée.
+
+Navigation vers workbenches via link-texts gris
+
+<Link href="...lifecycle" className="contest-inline-note">Lifecycle control panel</Link>
+<Link href="...scoring" className="contest-inline-note">Scoring workbench</Link>
+<Link href="...settlement" className="contest-inline-note">Settlement workbench</Link>
+
+Les actions les plus critiques du contest admin sont des liens texte gris de taille body — sans hiérarchie visuelle, sans distinction entre "action normale" et "action dangereuse".
+
+Operator console modal
+Scoring section dans le modal : contenu partiel
+La section "Scoring visibility" montre les 12 premiers token scores et 12 premiers breakdown rows. Pas de table tabulée, juste des <p> avec des données inline. Pour un opérateur, c'est illisible avec 50+ tokens.
+
+Settlement workbench
+APPROVED status exposé nulle part
+Le flow UI fait directement generatePlan → loadPreview → executePlan. Pas d'étape "approuver" exposée. L'enum APPROVED est dans la DB mais mort côté product.
+
+10. Product Evolution Constraints
+Ce que le modèle actuel bloque pour l'avenir
+A. Contests simultanés pour le même user
+
+Actuellement possible via RosterLock (le conflict check interdit la même carte dans deux contests actifs). Mais l'UI assume un seul contest actif par user (pas de gestion multi-contest dans le team builder ou la page hub).
+
+B. Richer lineup model
+
+ContestRule.teamSizeMode = EXACT + teamSizeValue ∈ {3, 5, 7} = très rigide.
+
+Pour évoluer vers :
+
+Slots typés (Captain, Midfielder, etc.)
+Bench
+Flex slots (n'importe quelle position)
+Compositions par rareté (1 LEGENDARY obligatoire)
+Il faudrait un modèle JSON pour le roster schema plutôt qu'un simple entier. La migration serait non-triviale.
+
+// Modèle actuel (extensibilité nulle)
+teamSizeValue: 5
+
+// Modèle cible (extensibilité complète)
+rosterConfig: {
+  slots: [
+    { position: "CAPTAIN", count: 1, rarityMin: "EPIC", multiplier: 1.5 },
+    { position: "FLEX", count: 4, rarityMin: "COMMON", multiplier: 1.0 }
+  ]
+}
+
+C. Seasons / Leagues / Divisions
+
+Aucun champ sur Contest pour organiser les tournois en circuits. Pour un produit fantasy mature, il faut :
+
+season (saison de la compétition)
+league (ligue — amateur, pro, elite)
+division (sous-groupe)
+category (type de contest — daily, weekly, championship)
+Sans ces champs, impossible de créer une navigation par saison, un historique organisé, ou un classement global.
+
+D. Visual identity par contest
+
+Pas de bannerUrl, thumbnailUrl, accentColor, theme. Chaque contest est visuellement identique. Impossible d'avoir des éditions spéciales (contest Bitcoin Championship avec un visuel dédié) sans toucher au code.
+
+E. Live scoring futur
+
+ContestScore est actuellement une table de scores finaux. Pour du live scoring (snapshot toutes les heures), il faudrait :
+
+Un modèle ContestScoreSnapshot avec timestamp
+Ou une extension de ContestTokenSnapshot pour des phases intermédiaires
+Le modèle actuel n'est pas prévu pour ça.
+
+F. Scoring formula per contest
+
+Les poids (0.45/0.25/0.20/0.10) sont hardcodés. Pour des contests thématiques (un contest "Volume Champion" où le volume compte plus), il faudrait :
+
+Un champ scoringFormula sur Contest (ou ContestRule)
+Des poids configurables
+11. Critical Problems List
+🔴 Critique (bloque l'usage réel en production)
+#	Problème	Chemin	Impact
+C1	Cards jamais libérées post-settlement	runtime.ts, settlement-plan-runtime.ts	Cartes bloquées à vie pour les users
+C2	startsAt/lockAt validation inversée	config-runtime.ts ligne 458	Phase LOCKED jamais atteinte avec les bonnes dates
+C3	Pas de vrai cron/scheduler	—	Contests qui ne progressent pas si trafic nul
+C4	CoinGecko failure swallowed → score neutre invisible	snapshot-runtime.ts ligne 41-45	Scoring biaisé sans alerte, résultats incorrects
+🟠 Majeur (impact fonctionnel ou UX significatif)
+#	Problème	Chemin	Impact
+M1	OwnedCardInstance.lockState cache dérivé jamais sync	runtime.ts lignes 282-295	Double source de vérité, confusion UI, lockState stale
+M2	Settlement entièrement manuel, jamais auto	settlement-plan-runtime.ts	Risque d'oubli admin post-contest
+M3	Leaderboard affiche userId brut	LeaderboardCard.tsx ligne 26	UX brisée, impossible d'identifier les autres joueurs
+M4	ContestRewardPreview données fake	ContestRewardPreview.tsx	UX mensongère, confiance utilisateur dégradée
+M5	XP rewards sans RewardGrant	settlement-plan-runtime.ts ligne 274	Pas d'audit trail, rewards XP invisibles
+M6	Legacy admin page encore accessible	app/admin/.../legacy/[contestId]	Confusion admin, dette visible
+M7	Double scoring path sans guard croisée	runtime.ts + scoring-engine-runtime.ts	Scoring peut être overwritten silencieusement
+M8	ContestEntryScoreBreakdown non exposé à l'user	runtime.ts getContestDetailMvp	Post-contest UX minimale, pas de breakdown visible
+🟡 Moyen (dette technique ou UX dégradée)
+#	Problème	Chemin	Impact
+Med1	UPCOMING tab toujours vide	contests/page.tsx ligne 65	Code mort, UX confuse
+Med2	Reward sort hardcodé (rosterSize * 40)	contests/page.tsx ligne 87	Tri par reward incorrect
+Med3	Pagination absente sur listContests	runtime.ts take: 50	Max 50 contests, non scalable
+Med4	ContestEntry.LOCKED jamais set	runtime.ts enterContestMvp	Incohérence statut entries
+Med5	Settlement plan APPROVED dead code	settlement-plan-runtime.ts	Confusion sur le flow approval
+Med6	maxRosterSize == teamSizeValue (doublon)	config-runtime.ts lignes 94-96	Confusion schema
+Med7	archiveContest() sans guard	config-runtime.ts ligne 274	Peut archiver un contest LIVE
+Med8	Scoring formula hardcodée	scoring-engine-runtime.ts	Pas de personnalisation per contest
+Med9	Réconciliation batch séquentielle	lifecycle-reconciliation.ts ligne 134	Lenteur avec N contests
+Med10	createContestMvp legacy sans policy	runtime.ts ligne 432	Contests créés sans reward policy
+🟢 Faible (polish, lisibilité)
+#	Problème	Impact
+L1	Classnames versionnés (-v2, -v3, tcg-layout)	CSS non maintenable
+L2	Inline styles admin pages	Design system non respecté
+L3	Dual filter bar + tabs redondants	UX légèrement confuse
+L4	startsAt champ mal nommé (liveAt serait correct)	Confusion future
+L5	ContestScore redondant avec ContestRanking	Modèle à simplifier
+12. Final Diagnosis
+Refondre
+Architecture de lock (supprimer lockState, canoniser RosterLock)
+Validation temporelle (startsAt < lockAt → corriger en lockAt < liveAt)
+Renommer startsAt → liveAt dans le schema (migration)
+Card release post-settlement (hook dans executeSettlementPlan)
+Auto-settlement (si policy PUBLISHED, auto-execute après scoring)
+UI user complète (hub, team builder, résultats, leaderboard avec usernames)
+Garder tel quel
+scoring-engine-runtime.ts (solide, bien testé)
+settlement-plan-runtime.ts (bien conçu — ajouter XP RewardGrant + auto-trigger)
+snapshot-runtime.ts (correct — améliorer failure handling)
+lifecycle-reconciliation.ts (pattern correct — ajouter cron + parallélisme)
+Test suite (bonne base)
+Simplifier
+ContestRule : supprimer maxRosterSize, garder teamSizeValue
+ContestScore : rôle à clarifier (sink legacy ou tableau pour live scoring futur)
+Settlement : supprimer statut APPROVED ou l'implémenter vraiment
+Double scoring path : documenter auto = canonique, manual = emergency override
+Supprimer
+OwnedCardInstance.lockState (migration + backfill)
+Legacy admin pages (/admin/contests/legacy/*)
+Scoring workbench UI (renommer en "Emergency Override" ou supprimer)
+Onglet UPCOMING (ou reconfigurer pour OPEN avec startsAt dans le futur)
+Contest Refactor Master Plan
+1. Target Product Model
+Flow canonique cible
+[ADMIN] Create draft → configure timings + rules + reward policy → validate → publish
+    ↓
+OPEN  [startsAt = publication date or configured date]
+    │  Users: browse, enter, modify lineup freely
+    │  Admin: monitor entries
+    ↓ [AUTO: lockAt reached — via cron every 60s]
+LOCKED
+    │  Users: "Your team is locked. Contest starting soon."
+    │  Lineups are frozen. Cards are reserved.
+    │  Admin: see all lineups
+    ↓ [AUTO: liveAt reached — via cron]
+LIVE
+    │  AUTO: START snapshot captured (CoinGecko)
+    │  If CoinGecko fails → contest stays LOCKED + admin alert
+    │  Users: "Contest is live. Results coming soon."
+    │  Admin: monitor START snapshot
+    ↓ [AUTO: endsAt reached — via cron]
+COMPUTING  ← nouveau statut intermédiaire visible
+    │  AUTO: END snapshot captured
+    │  AUTO: scores computed from snapshots
+    │  AUTO: rankings built
+    │  AUTO: settlement plan generated + executed (if policy PUBLISHED)
+    │  AUTO: cards released (OwnedCardInstance.lockState suppressed)
+    │  Admin: can see scoring / settlement progress
+    ↓ [AUTO: after compute + settlement]
+SETTLED
+    │  Users: rank, score breakdown per card, rewards received, cards available
+    │  Admin: read-only view, full diagnostic
+    ↓ [MANUAL: admin action]
+ARCHIVED  ← nouveau statut terminal optionnel
+    │  Contest hidden from active list
+    │  Data preserved
+
+Nouveau statut COMPUTING
+Justification : entre endsAt et la fin du scoring + settlement, il y a un délai non négligeable (appel CoinGecko, calcul, settlement). Actuellement ce délai est invisible (le contest passe directement de LIVE à SETTLED même si settlement n'a pas tourné). Avec COMPUTING, l'UX user est claire : "Results are being computed."
+
+Alternative : garder 6 statuts et dériver l'état de COMPUTING via _count.rankings === 0 && status === SETTLED. Moins propre mais sans migration enum.
+
+Recommandation : ajouter COMPUTING et ARCHIVED à l'enum. Migration nécessaire mais propre long terme.
+
+2. Canonical Architecture
+Sources de vérité canoniques
+Domaine	Source canonique	Notes
+Contest lifecycle	Contest.status + timestamps	Transitions via reconcileContestLifecycleByTime
+Card lock	RosterLock (join ContestEntry + Contest.status)	Supprimer OwnedCardInstance.lockState
+Token market data	ContestTokenSnapshot (phase: START/END)	Upsert, idempotent
+Token performance	ContestTokenScore	Computed from snapshots
+Card performance	ContestEntryScoreBreakdown	Computed from token scores + multipliers
+User score	ContestRanking (inclut score + rank)	Supprimer ContestScore ou réserver pour live scoring
+Settlement	ContestSettlement (unique per contest)	Marker d'exécution
+Rewards	RewardGrant (per reward action)	Inclure XP
+Reward config	ContestRewardPolicy + bundles + rules	PUBLISHED avant settlement
+3. Functional Refactor Plan
+A. Corriger le bug de validation temporelle (Step 0 — urgent)
+Dans config-runtime.ts et validateContestDraftEntity :
+
+Corriger if (startsAt >= lockAt) → if (lockAt >= liveAt) (une fois le champ renommé)
+La sémantique correcte : lockAt < liveAt < endsAt
+Migration Prisma : renommer Contest.startsAt → Contest.liveAt
+Mettre à jour tous les consumers (lifecycle-reconciliation, runtime, API routes, composants UI)
+C'est un breaking change sur la DB mais essentiel pour la cohérence.
+
+B. Supprimer OwnedCardInstance.lockState
+Migration Prisma : supprimer la colonne lockState
+Backfill : UPDATE OwnedCardInstance SET lockState = NULL (migration data)
+Retirer les await tx.ownedCardInstance.updateMany({ data: { lockState: ... } }) dans runtime.ts
+Adapter les queries UI "cartes éligibles" pour se baser sur RosterLock uniquement
+Avantage : la card release devient automatique — les cartes "se libèrent" automatiquement quand le Contest.status passe à SETTLED (la query de conflit ne les inclura plus)
+Note critique : avec cette suppression, le card unlock devient AUTOMATIQUE sans code supplémentaire. Les cartes d'un contest SETTLED ne matchent plus la guard Contest.status IN (OPEN, LOCKED, LIVE). Zero code ajouté pour la feature, juste une suppression.
+
+C. Vrai cron/scheduler
+Créer app/api/internal/cron/contest-lifecycle/route.ts
+Protéger avec Authorization: Bearer {CRON_SECRET} (env variable)
+Exécuter reconcileDueContestsByTime() en batch
+Connecter à Vercel Cron (vercel.json — nécessite plan Pro) ou GitHub Actions schedule
+Fréquence cible : 60 secondes
+Garder le request-triggered fallback dans listContestsMvp et getContestDetailMvp (defense in depth)
+Monitorer le temps d'exécution du cron — si > 30s, paralléliser la boucle de reconciliation (Promise.allSettled par batch de 5)
+D. CoinGecko failure handling amélioré
+Dans snapshot-runtime.ts :
+
+Si fetchCoinsMarkets retourne un array vide après les retries, ne pas créer les snapshots avec null
+Option A : throw une erreur — le contest reste dans son statut précédent, admin est alerté
+Option B : créer les snapshots null ET flag un champ snapshotQuality: PARTIAL | COMPLETE | FAILED sur ContestTokenSnapshot
+Recommandation : Option A pour START (sans snapshot START valide, ne pas transition to LIVE). Option B pour END (s'il y a au moins un snapshot START valide, on peut essayer de computer avec les données partielles, mais alerter).
+E. Auto-settlement
+Dans reconcileContestLifecycleByTime, après la transition vers SETTLED (ou COMPUTING si nouveau statut) :
+
+if (contest.rewardPolicy?.status === 'PUBLISHED') {
+  const plan = await generateSettlementPlan(contestId)
+  await executeSettlementPlan(plan.planId)
+  // card release = automatique après suppression de lockState
+}
+
+Avec guard : if (contest.settlements.length > 0) skip (idempotent).
+
+F. XP RewardGrant
+Dans executeSettlementPlan, pour les components XP :
+
+await tx.rewardGrant.create({
+  data: {
+    userId: item.userId,
+    type: RewardType.XP, // Ajouter XP à l'enum RewardType si absent
+    amount: component.amount,
+    sourceContestSettlementId: settlement.id,
+  },
+});
+await tx.userProgression.upsert({ ... });
+
+G. ContestEntry.LOCKED
+Dans reconcileContestLifecycleByTime, lors de la transition OPEN → LOCKED :
+
+await prisma.contestEntry.updateMany({
+  where: { contestId, status: ContestEntryStatus.SUBMITTED },
+  data: { status: ContestEntryStatus.LOCKED },
+});
+
+H. Guard sur archiveContest
+if (['OPEN', 'LOCKED', 'LIVE'].includes(contest.status)) {
+  throw new ContestRuntimeError("Cannot archive an active contest", 409);
+}
+
+4. Data Model Refactor Plan
+Modifications Prisma recommandées
+model Contest {
+  // RENAME startsAt → liveAt
+  liveAt     DateTime?  // was startsAt
+  
+  // ADD visual fields
+  thumbnailUrl  String?
+  bannerUrl     String?
+  accentColor   String?  // hex
+  season        String?
+  category      String?  // DAILY | WEEKLY | MONTHLY | CHAMPIONSHIP
+  
+  // ADD new statuses (optional — alternative: keep 6)
+  status ContestStatus @default(DRAFT)
+}
+
+enum ContestStatus {
+  DRAFT
+  OPEN
+  LOCKED
+  LIVE
+  COMPUTING  // nouveau
+  SETTLED
+  ARCHIVED   // nouveau, optionnel
+  CANCELED
+}
+
+model ContestRule {
+  // DEPRECATE maxRosterSize → garder uniquement teamSizeValue
+  // maxRosterSize: remove after migration
+  
+  // FUTUR: scoring formula configurable
+  scoringFormula Json?  // { priceWeight, volumeWeight, mcapWeight, rankWeight }
+}
+
+model OwnedCardInstance {
+  // REMOVE lockState  ← suppression de la colonne
+}
+
+// ContestScore : keep mais marquer comme LEGACY / future live-scoring table
+// ou supprimer si ContestRanking suffit pour le flow actuel
+
+Migrations nécessaires (dans l'ordre)
+Ajouter Contest.liveAt avec valeur default = startsAt (migration data preserving)
+Mettre à jour les consumers de startsAt → liveAt
+Supprimer Contest.startsAt (une fois tous les consumers migrés)
+Ajouter Contest.thumbnailUrl, bannerUrl, accentColor, season, category
+Supprimer OwnedCardInstance.lockState (après backfill null)
+Optionnel : ajouter enum values COMPUTING, ARCHIVED
+5. User Experience Refactor Plan
+Contest hub (/contests)
+Actions structurelles :
+
+Supprimer l'onglet UPCOMING (ou le rebinder sur status=OPEN && liveAt > now())
+Fusionner ContestLifecycleTabs + ContestFiltersBar en un seul ContestNav : tabs lifecycle + search inline, sort dropdown compact
+Supprimer statusFilter en doublon avec les tabs
+Contest tile redesign :
+
+Ajouter contest.thumbnailUrl → image de fond
+Status = pill colorée (LIVE en rouge, OPEN en bleu, LOCKED en orange, SETTLED en or)
+Countdown = élément visuel fort, pas texte inline
+Reward preview = pull depuis la reward policy (résumé "Top 1: X pts | Top 10%: Y pts")
+Supprimer le rosterSize * 40 fake
+Contest Hub Hero redesign :
+
+Background = contest.bannerUrl ou gradient par défaut
+Headline = titre contest + countdown grand format
+CTA contextuel = "Enter now" / "View lineup" / "See results"
+Contest detail (/contests/[contestId])
+Layout 2 colonnes :
+
+LEFT (65%)                          RIGHT (35%)
+┌──────────────────────────┐        ┌──────────────┐
+│ TEAM BUILDER             │        │ ACTION PANEL │
+│ (OPEN: éditable)         │        │ countdown    │
+│ ou                       │        │ status pill  │
+│ LOCKED LINEUP (read)     │        │ CTA          │
+│ ou                       │        ├──────────────┤
+│ LIVE STATE               │        │ REAL REWARDS │
+│ ou                       │        │ (from policy)│
+│ RESULTS + BREAKDOWN      │        ├──────────────┤
+│ (SETTLED)                │        │ LEADERBOARD  │
+└──────────────────────────┘        │ (usernames)  │
+                                    └──────────────┘
+
+Team Builder refonte :
+
+Un seul mécanisme de sélection : CardSelectorModal (supprimer EligibleCardsPanel inline)
+Slots avec art de carte visible, pas juste "Slot 1 / Add card"
+Progress bar + submit CTA clear
+Results panel (SETTLED) :
+
+Exposer ContestEntryScoreBreakdown dans l'API (getContestDetailMvp)
+Afficher par carte : image + token + baseScore + rarityMultiplier + editionMultiplier + finalScore
+Section "Rewards received" : pulls depuis RewardGrant lié au contest
+Podium visuel pour top 3 (si user est dans le top 3)
+CTA "Play next contest"
+Leaderboard :
+
+Fetcher user.xUsername ou user.displayName dans getContestRankingMvp
+Top 10 + ma position (même si > 10) avec highlight
+Afficher l'avatar si disponible
+Reward preview :
+
+API : inclure le résumé de ContestRewardPolicy dans le payload /api/contests/[id]
+Frontend : afficher les vraies tiers ("Rank #1: X pts + Y packs | Top 10%: Z pts")
+6. Admin Experience Refactor Plan
+Catalog + Console
+Garder le pattern liste + modal console (bon pattern)
+
+Améliorer la console :
+
+Pipeline status bar : [START snap ✅] [END snap ✅] [Scoring ✅] [Settlement ⚠️]
+Snapshots : table (Token | START price | END price | Δ%)
+Scoring : table (Rank | User | Score | Cards)
+Actions : boutons primaires, pas des link chips gris
+Ajouter un bouton "Auto-settle" si policy published et ranking généré
+Contest overview
+Supprimer lien legacy
+Pipeline status visuel (5 indicateurs : snapshot START / END / scoring / ranking / settlement)
+Navigation workbenches via vrais boutons
+Inline styles → design system
+Fusionner les workbenches
+Créer /admin/contests/[id]/control = une page avec 3 tabs :
+
+Lifecycle (transitions, timeline de phases)
+Scoring & Snapshots (status auto-scoring, manuel override si nécessaire)
+Settlement (generate → preview → execute)
+Legacy cleanup
+Supprimer /admin/contests/legacy/ et /admin/contests/legacy/[id]/
+Renommer scoring workbench en "Score Override (Emergency)" avec warning clair
+Vérifier que aucune route ne pointe encore vers les routes legacy
+7. Cleanup / Deletion Plan
+À supprimer
+Element	Raison
+OwnedCardInstance.lockState (colonne)	Double source de vérité, jamais nettoyé, remplacé par RosterLock
+app/admin/(protected)/contests/legacy/	Legacy, encore accessible
+app/admin/(protected)/contests/legacy/[contestId]/	Legacy, encore accessible
+ContestRule.maxRosterSize (remplacer par teamSizeValue)	Doublon, source de confusion
+Onglet UPCOMING (dead code)	Toujours 0, DRAFT jamais retourné
+EligibleCardsPanel inline (duplique CardSelectorModal)	UX dupliquée
+createContestMvp (legacy path runtime.ts)	Crée des contests sans reward policy
+Reward sort rosterSize * 40	Fake data
+À fusionner
+Elements	Action
+lifecycle + scoring + settlement pages admin	Un onglet "Contest Control" avec 3 tabs
+ContestLifecycleTabs + ContestFiltersBar	Un composant ContestNav unifié
+ContestScore + ContestRanking	Conserver ContestRanking comme source principale, ContestScore = archive ou live-scoring future
+À garder + rendre canonique
+Element	Note
+scoring-engine-runtime.ts	Source canonique de scoring
+settlement-plan-runtime.ts	Source canonique (+ fix XP RewardGrant)
+lifecycle-reconciliation.ts	Source canonique (+ cron)
+snapshot-runtime.ts	Source canonique (+ failure handling)
+contestLifecycle.ts (composant)	Source canonique pour mappings UI
+8. Prioritized Roadmap
+Step 0 — Fix du bug timing (< 1 jour) — URGENT
+Ce que le premier audit n'a pas priorisé : le bug startsAt/lockAt est un bug de validation qui empêche potentiellement de créer des contests correctement configurés.
+
+Corriger normalizeContestInput : if (startsAt >= lockAt) → if (lockAt >= startsAt) (la condition inverse)
+Corriger validateContestDraftEntity : même inversion
+Ne pas encore renommer le champ (trop risqué sans migration) — juste corriger la validation
+Ajouter un test explicite pour ce cas
+Testable : créer un contest avec lockAt=T1, startsAt=T2 (T2 > T1). Doit passer la validation.
+
+Step 1 — Suppression OwnedCardInstance.lockState + Card Release automatique (1 jour)
+Migration Prisma : UPDATE OwnedCardInstance SET lockState = NULL puis supprimer la colonne
+Retirer les updateMany({ data: { lockState: ... } }) dans runtime.ts
+Adapter lineup-options API pour baser le "locked?" check sur RosterLock + Contest.status
+Card release devient automatique : plus besoin de code supplémentaire
+Testable : après settlement d'un contest, les cartes de l'user réapparaissent dans sa collection sans aucune action.
+
+Step 2 — Cron endpoint + scheduler (0.5 jour)
+Créer app/api/internal/cron/contest-lifecycle/route.ts avec secret header guard
+Connecter à Vercel Cron (ou GitHub Actions si Vercel plan Basic)
+Fréquence : 60s
+Log les résultats (combien de transitions, erreurs éventuelles)
+Testable : un contest configuré avec des timestamps passés transition automatiquement sans action user.
+
+Step 3 — CoinGecko failure handling (0.5 jour)
+Si fetchCoinsMarkets retourne array vide pour un snapshot START : throw error, ne pas créer les snapshots null, ne pas transitionner vers LIVE
+Admin voit dans le console : "START snapshot failed — contest stuck in LOCKED"
+Pour END snapshot : créer avec null + flag snapshotQuality: PARTIAL sur un nouveau champ
+Ajouter logging amélioré (au minimum un console.error distinct de console.warn)
+Testable : simuler CoinGecko down en test → contest reste LOCKED + log d'erreur visible.
+
+Step 4 — Fix XP RewardGrant + Auto-settlement (1 jour)
+Ajouter RewardGrant.create pour les rewards XP dans executeSettlementPlan
+Dans reconcileContestLifecycleByTime, déclencher auto generateSettlementPlan + executeSettlementPlan après SETTLED si policy PUBLISHED et pas de settlement existant
+Guard idempotent : contest.settlements.length > 0 → skip
+Ajouter ContestEntry.LOCKED set lors de la transition OPEN→LOCKED
+Testable : contest passe SETTLED → settlement s'exécute automatiquement → rewards crédités → XP visibles dans audit.
+
+Step 5 — Legacy cleanup (0.5 jour)
+Supprimer /admin/contests/legacy/*
+Retirer le lien legacy de l'overview page
+Supprimer createContestMvp du runtime.ts (ou marquer comme DEPRECATED avec warning)
+Renommer scoring workbench page en "Score Override (Emergency)"
+Testable : navigation admin ne montre plus de lien legacy, 404 sur les routes legacy.
+
+Step 6 — Fix UX critique : Leaderboard + Rewards preview + Results breakdown (1-2 jours)
+getContestRankingMvp : inclure user { xUsername, displayName } dans les rankings
+getContestDetailMvp : inclure ContestEntryScoreBreakdown dans userEntry pour les contests SETTLED
+getContestDetailMvp : inclure résumé reward policy (pour ContestRewardPreview)
+Exposer les RewardGrant liés au contest dans le payload user
+Refondre ContestResultPanel : rank + score + breakdown par carte + rewards
+Refondre LeaderboardCard : usernames, pas userId
+Testable : après settlement, user voit son rang, score, détail par carte, et rewards reçues.
+
+Step 7 — Refonte UI Hub + Tiles (2-3 jours)
+Ajouter thumbnailUrl, bannerUrl, accentColor, season, category au model Contest (migration Prisma)
+Interface admin de configuration des champs visuels
+Refondre ContestTile : image, status pill colorée, vraie reward preview
+Refondre ContestHubHero : background visuel, countdown grand format
+Fusionner tabs + filter bar
+Testable : hub visuellement différencié par contest, rewards réelles affichées.
+
+Step 8 — Refonte Team Builder (3-4 jours)
+Supprimer EligibleCardsPanel inline
+Refondre LineupSlot : art de carte visible, premium empty state
+Refondre CardSelectorModal : grid cards avec art, filtres inline
+Refondre TeamBuilder : layout premium, pas juste des slots avec texte
+Testable : team builder utilisable et visuellement premium.
+
+Step 9 — Refonte Admin Control (2-3 jours)
+Fusionner lifecycle + scoring + settlement → /admin/contests/[id]/control avec 3 tabs
+Pipeline status bar visuel
+Console modal : tables pour snapshots et scoring
+Bouton "Auto-settle" dans la console
+Testable : admin peut opérer un contest complet depuis une seule page.
+
+Step 10 — Polish scoring formula configurable + richer lineup model (research + 3-5 jours)
+Ajouter ContestRule.scoringFormula: Json? pour des poids custom
+Mettre à jour computeContestScoresFromSnapshots pour lire les poids du rule si présents
+Décider du modèle de lineup étendu (slots typés, captain, flex) — RFC technique avec l'équipe
+Implémenter si validé
+Testable : deux contests avec des formules différentes produisent des classements différents.
+
+9. Risks & Migration Notes
+Risques techniques
+Risque	Sévérité	Mitigation
+Migration liveAt (rename startsAt) — breaking change	🔴	Migration Prisma en 2 steps : ADD liveAt = startsAt, supprimer startsAt après
+Suppression lockState — impact sur l'UI collection	🟠	Adapter toutes les queries "locked?" avant de supprimer la colonne
+Auto-settlement concurrent (deux crons)	🟠	Idempotence via ContestSettlement unique constraint — safe
+Cron CoinGecko rate limit (N contests en simultané)	🟠	Parallélisme limité (5 contests max concurrents dans la boucle)
+Serializable isolation level sur scoring — deadlock risk	🟡	Monitoring, retry logic si deadlock
+Risques produit
+Risque	Sévérité	Mitigation
+CoinGecko token absent → score 50 (neutre) non alerté	🔴	Fix CoinGecko failure handling (Step 3) avant déploiement de vrais contests
+Auto-settlement incorrect (bug dans policy) → mauvaises rewards	🟠	Garder la preview admin visible, log + notification
+startsAt/lockAt bug en production (contests mal configurés)	🔴	Fix Step 0 immédiatement avant tout nouveau contest
+Migration des contests existants (backfill)
+Cartes locked actuellement :
+Si des contests sont déjà SETTLED et des cartes ont encore lockState non null :
+
+Exécuter UPDATE OwnedCardInstance SET lockState = NULL WHERE lockState IS NOT NULL avant la migration de suppression du champ
+Vérifier que les RosterLocks associés sont bien dans des contests SETTLED (donc non conflictuels)
+Script de validation : SELECT COUNT(*) FROM OwnedCardInstance WHERE lockState IS NOT NULL → doit être 0 avant de supprimer le champ
+Legacy admin pages :
+Supprimer les pages legacy seulement après validation qu'aucun contest actif n'est en cours d'opération manuelle via ces pages.
+
+10. Final Recommendation
+Ce qu'il faut faire en premier (dans cet ordre exact)
+Step 0 — Corriger le bug validation startsAt/lockAt (30 minutes, zéro risque, bloquant pour créer des contests corrects)
+Step 1 — Supprimer lockState (card release automatique en bonus, 1 jour)
+Step 2 — Cron scheduler (lifecycle automatique réel)
+Step 3 — CoinGecko failure handling (avant tout contest en production)
+Step 4 — Auto-settlement + XP RewardGrant
+Step 5 — Legacy cleanup
+Ces 6 steps = le système fonctionne correctement de bout en bout, de manière automatique et fiable.
+
+Ensuite : refonte UX (Steps 6-10) pour atteindre le niveau premium.
+
+Ce qu'il faut absolument éviter
+Commencer par la refonte visuelle avant d'avoir fixé les bugs fonctionnels (le bug startsAt, les cartes locked, le CoinGecko failure)
+Garder deux scoring paths actifs sans documentation claire — risque de double-overwrite
+Renommer startsAt → liveAt en une seule migration sans étape intermédiaire (risque de casser tous les consumers en une fois)
+Auto-settlement sans monitoring — si quelque chose tourne mal, il faut un log clair
+Supprimer les legacy pages avant de s'assurer qu'aucun contest actif ne dépend de ces flows
+Ce qui fait la différence entre "fonctionnel" et "premium"
+Après les steps 0-5 (système correct), le chemin vers le premium passe par :
+
+Données réelles partout : rewards policy réelle, usernames dans le leaderboard, score breakdown par carte — ces données existent déjà en DB, juste pas exposées
+Automatisation complète : un admin ne doit jamais avoir à "penser à" exécuter une étape manuellement (scoring, settlement, card release)
+Cards as heroes : l'art de la carte doit être omniprésent — dans les slots, dans le leaderboard, dans les résultats. C'est un TCG, les cartes sont l'identité visuelle
+Moments émotionnels : la fin d'un contest doit avoir une "cinématique" — breakdown animé, reward reveal, podium. Ces moments existent dans Sorare et sont ce qui crée l'addiction
+Observabilité admin : un admin doit voir en une seconde l'état exact d'un contest — pipeline visuel, alertes, pas de cryptic counters
+Le vrai saut qualitatif vient moins du design CSS que de l'architecture de données bien exposée et d'une automatisation robuste. Un leaderboard avec de vrais usernames et un score breakdown par carte — même en design basique — vaut infiniment plus qu'un design premium avec des userId tronqués et des rewards inventées.
+
+Avant de continuer sur la refonte Contest, je veux vérifier que tu as une compréhension réelle et complète du repo.
+Je ne veux pas de résumé vague.
+Je veux que tu démontres que tu maîtrises réellement le code.
+Ta réponse doit être factuelle, précise et basée sur le repo existant.
+Si certaines choses ne sont pas certaines sans exécution runtime ou DB, tu dois le dire explicitement.
+OBJECTIF
+Confirmer que tu as une connaissance précise du système Contest actuel.
+Tu dois prouver que tu comprends :
+
+l’architecture
+le flow métier
+le lifecycle
+le modèle de données
+le runtime backend
+les routes API
+l’UI user
+l’UI admin
+les automatisations
+les points fragiles
+REPO OVERVIEW
+Décris précisément :
+
+les dossiers principaux du repo
+où se trouvent les parties Contest
+les modules backend principaux
+les pages UI user
+les pages UI admin
+les routes API
+les tests liés au système contest
+Je veux les chemins de fichiers réels.
+DOMAIN CONTEST ARCHITECTURE
+Explique comment le système contest est organisé dans le code.
+Je veux que tu décrives les modules principaux :
+
+runtime contest
+scoring engine
+snapshot runtime
+settlement plan runtime
+lifecycle reconciliation
+eligibility runtime
+coingecko client
+Explique le rôle exact de chacun.
+DATA MODEL
+Liste et explique les modèles principaux liés aux contests :
+
+Contest
+ContestRule
+ContestEntry
+RosterLock
+ContestTokenSnapshot
+ContestTokenScore
+ContestScore
+ContestRanking
+ContestSettlement
+ContestRewardPolicy
+ContestSettlementPlan
+ContestSettlementPlanItem
+ContestEntryScoreBreakdown
+RewardGrant
+Explique comment ils interagissent.
+CONTEST LIFECYCLE
+Explique le lifecycle réel implémenté aujourd’hui :
+DRAFT
+OPEN
+LOCKED
+LIVE
+SETTLED
+CANCELED
+Je veux savoir :
+
+où ces transitions sont implémentées
+comment elles sont déclenchées
+quelles étapes sont automatiques
+quelles étapes sont manuelles
+USER FLOW
+Décris le flow complet côté utilisateur :
+
+voir les contests
+voir le détail d’un contest
+voir ses cartes éligibles
+construire sa lineup
+soumettre sa team
+modification possible
+lock
+contest live
+contest settled
+résultats
+Je veux les routes API et composants UI utilisés.
+ADMIN FLOW
+Décris le flow complet côté admin :
+
+création contest
+validation draft
+publication
+monitoring contest
+scoring
+settlement
+récompenses
+Je veux les routes API et pages admin correspondantes.
+SCORING SYSTEM
+Explique précisément :
+
+comment les snapshots CoinGecko sont capturés
+comment les token scores sont calculés
+comment les multiplicateurs rareté/édition sont appliqués
+comment le score final utilisateur est calculé
+comment le ranking est généré
+SETTLEMENT SYSTEM
+Explique :
+
+comment un settlement plan est généré
+comment il est preview
+comment il est exécuté
+comment les RewardGrant sont créés
+CARD LOCK SYSTEM
+Explique :
+
+comment les cartes sont lock lors d’une entry
+comment ce lock est stocké
+comment il est censé être libéré
+CONTEST AUTOMATION
+Explique comment fonctionne actuellement :
+
+la réconciliation lifecycle
+les transitions automatiques
+le scoring auto
+les snapshots auto
+Je veux savoir exactement ce qui est réellement automatisé et ce qui ne l’est pas.
+MAJOR TECHNICAL RISKS
+Liste les principaux risques techniques actuels du système :
+
+lifecycle
+snapshots
+scoring
+settlement
+card locking
+UX data exposure
+SELF-ASSESSMENT
+À la fin, réponds honnêtement :
+
+As-tu une vision complète du système contest ?
+Y a-t-il des parties du repo que tu n’as pas pu analyser ?
+Quelles zones nécessiteraient encore une inspection pour être certain ?
+IMPORTANT
+Ta réponse doit montrer que tu maîtrises réellement le code du repo.
+Si ta réponse est vague, cela signifie que tu n’as pas encore une compréhension suffisante du système.
+
+Show more
+
+
+Voici la démonstration factuelle. Je distingue explicitement ce que j'ai lu directement dans le code vs. ce que je sais par les explorations d'agents.
+
+Vérification de connaissance — Système Contest MCG
+Légende : ✅ lu directement dans le code | 🔍 connu via exploration d'agent | ⚠️ incertain sans runtime/DB
+
+1. Repo Overview
+Structure principale
+/home/user/MCG/
+├── app/                          # Next.js app router
+│   ├── api/                      # API routes
+│   │   ├── contests/             # Routes user publiques
+│   │   └── internal/             # Routes admin/internes
+│   ├── contests/                 # Pages user
+│   └── admin/(protected)/contests/ # Pages admin
+├── components/contests/          # 26 composants React
+├── lib/domain/contests/          # 8 modules backend
+├── lib/admin/                    # Utils admin
+├── prisma/schema.prisma          # Schéma DB (836 lignes)
+└── tests/                        # 22 fichiers de tests
+
+Modules backend contest ✅
+lib/domain/contests/
+├── config-runtime.ts          (566L) — création/validation/publication draft
+├── runtime.ts                 (503L) — entrée user, scoring legacy, settlement legacy
+├── lifecycle-reconciliation.ts (141L) — réconciliation auto par le temps
+├── scoring-engine-runtime.ts  (260L) — calcul scores depuis snapshots
+├── settlement-plan-runtime.ts (395L) — generate/preview/execute plan
+├── snapshot-runtime.ts        (141L) — capture CoinGecko START/END
+├── eligibility-runtime.ts     (105L) — résolution tokens éligibles
+└── coingecko-client.ts         (61L) — client API CoinGecko (chunks 200 IDs, retry)
+
+Pages UI user ✅
+app/contests/page.tsx                    # Hub contests (tabs, filtres, grille)
+app/contests/[contestId]/page.tsx        # Détail + team builder
+
+Pages UI admin ✅
+app/admin/(protected)/contests/page.tsx                      # Catalog + modal operator console
+app/admin/(protected)/contests/create/page.tsx               # Création draft
+app/admin/(protected)/contests/[contestId]/page.tsx          # Overview (méta + lien legacy)
+app/admin/(protected)/contests/[contestId]/lifecycle/page.tsx  # Contrôle transitions
+app/admin/(protected)/contests/[contestId]/scoring/page.tsx    # Workbench scoring legacy
+app/admin/(protected)/contests/[contestId]/settlement/page.tsx # Settlement workbench
+app/admin/(protected)/contests/[contestId]/audit/page.tsx      # Audit log (🔍 non lu directement)
+app/admin/(protected)/contests/legacy/page.tsx                 # 🔍 Legacy listing
+app/admin/(protected)/contests/legacy/[contestId]/page.tsx     # Legacy détail (JSON scoring, manual settle)
+
+Routes API ✅
+# User public
+GET  /api/contests                                              → listContestsMvp()
+GET  /api/contests/[id]                                         → getContestDetailMvp()
+POST /api/contests/[id]/enter                                   → enterContestMvp()
+GET  /api/contests/[id]/ranking                                 → getContestRankingMvp()
+GET  /api/contests/[id]/lineup-options                          → cards éligibles user
+
+# Internal admin config
+POST/GET  /api/internal/contest-configs                         → createContestDraft/list
+GET/PUT   /api/internal/contest-configs/[id]                   → getContestDraft/updateContestDraft
+POST      /api/internal/contest-configs/[id]/validate          → validateContestDraft()
+POST      /api/internal/contest-configs/[id]/publish           → publishContest()
+
+# Internal admin lifecycle
+GET/POST  /api/internal/contests                               → list + reconcile
+POST      /api/internal/contests/reconcile-lifecycle           → reconcileDueContestsByTime()
+GET/PATCH/DELETE /api/internal/contests/[id]                   → detail/archive/delete
+POST      /api/internal/contests/[id]/status                   → updateContestStatusMvp()
+
+# Internal admin runs
+GET  /api/internal/contest-runs/[id]/console                   → full state dump
+GET  /api/internal/contest-runs/[id]/overview                  → progress + blockers
+POST /api/internal/contest-runs/[id]/snapshots/start           → captureStartSnapshot()
+POST /api/internal/contest-runs/[id]/snapshots/end             → captureEndSnapshot()
+POST /api/internal/contest-runs/[id]/scoring/compute           → computeContestScoresFromSnapshots()
+POST /api/internal/contest-runs/[id]/scoring/validate          → legacy workbench
+GET  /api/internal/contest-runs/[id]/scoring/preview/[importId] → legacy workbench
+POST /api/internal/contest-runs/[id]/settlement-plan/generate  → generateSettlementPlan()
+GET  /api/internal/contest-runs/[id]/settlement-plan/[planId]  → getSettlementPlan()
+GET  /api/internal/contest-runs/[id]/settlement-plan/[planId]/preview → previewSettlementPlan()
+POST /api/internal/contest-runs/[id]/settlement-plan/[planId]/execute → executeSettlementPlan()
+POST /api/internal/contest-runs/[id]/transitions/validate      → validation token
+
+Tests ✅
+tests/
+├── contest-lifecycle-reconciliation.test.ts
+├── contest-config-runtime.test.ts
+├── contest-runtime-stateful-flow.test.ts       (12,590 bytes)
+├── contest-scoring-engine-runtime.test.ts
+├── contest-scoring-engine-edgecases.test.ts
+├── contest-scoring-engine-real-smoke.test.ts
+├── contest-snapshot-runtime.test.ts
+├── contest-snapshot-runtime-edgecases.test.ts
+├── contest-eligibility-runtime.test.ts
+├── contest-entry-fee-runtime.test.ts
+├── contest-user-lifecycle-mapping.test.ts
+├── contest-reward-builder.test.ts
+├── api-internal-contest-configs-routes.test.ts
+├── api-internal-contest-overview-route.test.ts
+├── api-internal-contest-scoring-compute-route.test.ts
+├── api-internal-contest-score-hardening.test.ts
+├── api-internal-contest-settlement-plan-routes.test.ts
+├── api-internal-contest-status-auto-trigger.test.ts
+├── admin-contest-catalog-filter.test.ts
+├── admin-contests-catalog-ui-smoke.test.ts
+├── admin-contest-workbench.test.ts
+└── admin-contest-main-flow-contract.test.ts
+
+2. Domain Contest Architecture
+config-runtime.ts ✅
+Gère le lifecycle de configuration du contest côté admin. Fonctions principales :
+
+generateUniqueContestCode(seed?) — génère un code unique avec suffix date YYMMDD, 30 tentatives max
+createContestDraft(input) — crée Contest + ContestRule + ContestRewardPolicy dans une transaction Serializable. La policy est en statut DRAFT
+updateContestDraft(contestId, input) — fonctionne uniquement si configPublishedAt === null. Utilise replaceRewardPolicyTx qui fait deleteMany + recréation des bundles/components/rules
+validateContestDraft(contestId) — appelle validateContestDraftEntity() qui retourne un array de DraftIssue {code, severity, field, message}. Blocking si au moins un severity="ERROR"
+publishContest(contestId) — vérifie validation, set configPublishedAt = now() + status = OPEN + rewardPolicy.status = PUBLISHED
+archiveContest(contestId) — update status = CANCELED. Aucune guard, aucune vérification de l'état actuel ou des entries actives ✅ confirmé ligne 274-280
+Bug de validation confirmé ✅ (lignes 458-460) :
+
+if (startsAt && lockAt && startsAt >= lockAt) {
+  throw new ContestRuntimeError("lockAt must be after startsAt", 400);
+}
+
+Cette condition rejette startsAt > lockAt alors que le lifecycle exige exactement lockAt < startsAt (lockAt se produit avant startsAt dans le flow OPEN→LOCKED→LIVE). La validation est sémantiquement inversée.
+
+Même bug dans validateContestDraftEntity ligne 316-318 :
+
+if (contest.startsAt >= contest.lockAt) {
+  issues.push({ message: "lockAt must be after entryOpensAt" });
+}
+
+runtime.ts ✅
+Module mixte : gère l'entrée user, la listing, et contient deux fonctions legacy (recordContestScoresMvp, settleContestMvp).
+
+enterContestMvp (lignes 130-302) — la fonction la plus critique :
+
+// 1. Normalise et déduplique les instanceIds
+// 2. Vérifie contest.status === OPEN (ligne 143)
+// 3. Vérifie lockAt non passé (ligne 147)
+// 4. Fetch existing entry (pour upsert ou create)
+// 5. Valide ownership via OwnedCardInstance (userId match)
+// 6. Valide éligibilité cardSet si CARD_SET_ONLY
+// 7. Conflict check via RosterLock (source de vérité réelle) :
+const activeLocks = await tx.rosterLock.findMany({
+  where: {
+    ownedCardInstanceId: { in: lineupInstanceIds },
+    contestEntry: {
+      contest: { status: { in: [OPEN, LOCKED, LIVE] } },
+      status: { in: [SUBMITTED, LOCKED, SCORED] },
+    },
+  },
+});
+const conflictingLocks = activeLocks.filter(l => l.contestEntry.contestId !== params.contestId);
+// 8. Upsert entry (deleteMany rosterLocks + createMany si update)
+// 9. Entry fee debit si premier entry et fee enabled
+//    idempotencyKey: `contest-entry-fee:${contestId}:${userId}`
+// 10. Clear old lockState, set new lockState (CACHE DÉRIVÉ)
+// 11. Quest progression si premier entry
+// Isolation: Serializable
+
+recordContestScoresMvp (ligne 305) — path legacy : accepte LOCKED ou LIVE, upsert ContestScore, delete + createMany ContestRanking, updateMany entries→SCORED. Pas de ContestEntryScoreBreakdown créé.
+
+settleContestMvp (ligne 369) — path legacy : vérifie contest.status !== SETTLED (pas de ContestSettlement existant en guard secondaire), crée ContestSettlement, crée RewardGrants, increment user.points, set contest→SETTLED et entries→SETTLED.
+
+listContestsMvp (ligne 81) — appelle reconcileDueContestsByTime() en head, puis findMany avec status: { in: [OPEN, LOCKED, LIVE, SETTLED] }, take: 50, orderBy: [{ startsAt: "asc" }].
+
+lifecycle-reconciliation.ts ✅
+deriveTargetStatus — détermine la cible finale (SETTLED, LIVE ou LOCKED) selon les timestamps :
+
+// Ordre de priorité :
+// 1. Si endsAt <= now → SETTLED (quelle que soit la phase actuelle)
+// 2. Si (OPEN ou LOCKED) et startsAt <= now → LIVE
+// 3. Si OPEN et lockAt <= now → LOCKED
+// DRAFT, CANCELED, SETTLED → null (pas de transition)
+
+nextStatus — avance d'UN seul pas dans [OPEN, LOCKED, LIVE, SETTLED] vers la cible. Jamais de saut multi-steps en un seul updateMany.
+
+Pattern optimistic concurrency :
+
+const updated = await prisma.contest.updateMany({
+  where: { id: contestId, status: current.status }, // guard sur le statut actuel
+  data: { status: next },
+});
+if (updated.count === 0) {
+  // Quelqu'un d'autre a déjà changé le statut → re-read
+  const latest = await prisma.contest.findUnique(...);
+  current = latest;
+  continue; // loop again
+}
+
+runAutomationBeforeTransition — exécuté avant le updateMany. Si une automation échoue, le statut ne change pas :
+
+Vers LIVE → captureStartSnapshot(contestId)
+Vers SETTLED → captureEndSnapshot(contestId) puis computeContestScoresFromSnapshots(contestId)
+reconcileDueContestsByTime — query les contests "due" :
+
+WHERE
+  (status=OPEN AND lockAt <= now)
+  OR ((status=OPEN OR status=LOCKED) AND startsAt <= now)
+  OR ((status=OPEN OR status=LOCKED OR status=LIVE) AND endsAt <= now)
+TAKE 200, ORDER BY updatedAt ASC
+
+Puis boucle for...of séquentielle sur chaque contest.
+
+scoring-engine-runtime.ts ✅
+computeContestScoresFromSnapshots (transaction Serializable) :
+
+// Guard : status doit être LOCKED ou LIVE
+// Fetch START rows et END rows
+// Si l'un est vide → throw 409
+
+// Pour chaque token dans START (qui a aussi un END) :
+function relativeChange(start, end) { return (end - start) / Math.max(start, 1e-9); }
+function rankRelativeChange(start, end) { return (start - end) / Math.max(start, 1); }
+// Note: rank améliore si le nombre baisse (rang 5 → rang 2 = positif)
+
+function boundedScore(change, denominator) {
+  if (change === null) return 50; // DEFAULT NEUTRE pour données manquantes
+  return 50 + 50 * clamp(change / denominator, -1, 1);
+}
+
+function computeTokenScore({ priceChange, marketCapChange, volumeChange, rankChange }) {
+  baseTokenScore = 0.45*priceScore + 0.25*volumeScore + 0.20*mcapScore + 0.10*rankScore
+  rankMultiplier = 1 + 0.10 * clamp(rankChange/0.3, 0, 1) // bonus pour amélioration rank
+  return Math.min(100, baseTokenScore * rankMultiplier) // cap à 100
+}
+
+Multiplicateurs rareté / édition :
+
+RARITY:  COMMON=1.00, UNCOMMON=1.05, RARE=1.12, EPIC=1.22, LEGENDARY=1.35
+EDITION: BASE=1.00, REVERSE=1.03, BRILLANTE=1.08, HOLO=1.15, FULL_ART=1.25
+
+Par carte : finalScore = tokenScore × rarityMultiplier × editionMultiplier
+
+Score user = somme de tous les finalScore de ses cartes.
+
+Puis :
+
+deleteMany ContestEntryScoreBreakdown + create par carte (pas upsert — IDs recréés)
+upsert ContestTokenScore
+upsert ContestScore
+deleteMany ContestRanking + createMany (tri desc score, tie-break userId.localeCompare)
+updateMany ContestEntry → SCORED
+snapshot-runtime.ts ✅
+async function captureSnapshot(contestId, phase) {
+  // START → resolveEligibleTokensForContest (tous tokens du contest ou du cardSet)
+  // END   → resolveCanonicalTokensFromStart (tokens déjà dans START snapshot)
+  //         ^ garantit même set de tokens pour comparaison
+
+  const geckoIds = tokens.map(t => t.coingeckoId).filter(Boolean);
+
+  try {
+    markets = await fetchCoinsMarkets(geckoIds);
+  } catch (error) {
+    console.warn(`[contest-snapshot] CoinGecko fetch failed...`);
+    markets = []; // ← FAILURE SWALLOWED SILENTLY
+  }
+
+  // Upsert par token (idempotent) :
+  await tx.contestTokenSnapshot.upsert({
+    where: { contestId_tokenProjectId_phase: { contestId, tokenProjectId, phase } },
+    create: { priceUsd, marketCapUsd, volume24hUsd, marketCapRank, ... },
+    update: { priceUsd, marketCapUsd, ... capturedAt: new Date() },
+  });
+  // Si CoinGecko failed → snapshot créé avec priceUsd=null, marketCapUsd=null, etc.
+}
+
+settlement-plan-runtime.ts ✅
+generateSettlementPlan :
+
+Vérifie contest.settlements.length === 0 (pas encore settled)
+Vérifie contest.rankings.length > 0 (ranking requis)
+Vérifie policy.status === 'PUBLISHED'
+Détecte les overlaps de règles (max 5 signalés)
+Pour chaque ranking, cherche une règle matchante (FIXED_RANKS, TOP_N, TOP_PERCENT)
+Cancel les plans DRAFT existants → crée un nouveau plan DRAFT
+Snapshot de la policy en JSON (policySnapshot field)
+executeSettlementPlan (Serializable) :
+
+// Idempotence check :
+if (plan.status === 'EXECUTED') return { executed: false, ... }
+if (contest.settlements.length > 0) throw 409
+
+// Pour chaque item du plan :
+if (type === 'POINTS') {
+  rewardGrant.create + user.update({ points: increment })
+}
+if (type === 'PACK') {
+  rewardGrant.create  // ← PACK octroyé mais jamais "ouvert" automatiquement
+}
+if (type === 'XP') {
+  userProgression.upsert({ xp: increment })
+  // ← PAS de rewardGrant.create pour XP (bug confirmé)
+}
+
+// Après :
+contest.update({ status: SETTLED })
+contestEntry.updateMany({ status: SETTLED })
+settlementPlan.update({ status: EXECUTED, executedAt: now })
+
+3. Data Model
+Contest ✅
+model Contest {
+  id                String        @id @default(cuid())
+  code              String        @unique
+  title             String
+  description       String?
+  status            ContestStatus @default(DRAFT)
+  configPublishedAt DateTime?     // null = DRAFT non publié
+  startsAt          DateTime?     // → LIVE quand atteint (mal nommé, devrait être liveAt)
+  lockAt            DateTime?     // → LOCKED quand atteint
+  endsAt            DateTime?     // → SETTLED quand atteint
+  createdAt/updatedAt
+
+  rules             ContestRule[]          // 1:N mais en pratique 1:1
+  entries           ContestEntry[]
+  scores            ContestScore[]
+  rankings          ContestRanking[]
+  settlements       ContestSettlement[]    // unique par contestId en pratique
+  rewardPolicy      ContestRewardPolicy?   // 1:1
+  settlementPlans   ContestSettlementPlan[]
+  tokenSnapshots    ContestTokenSnapshot[]
+  tokenScores       ContestTokenScore[]
+}
+
+ContestRule ✅
+model ContestRule {
+  contestId       String
+  cardSetId       String?           // null = ANY mode
+  maxRosterSize   Int?              // TOUJOURS = teamSizeValue (doublon)
+  teamSizeMode    ContestTeamSizeMode @default(EXACT)
+  teamSizeValue   Int?              // source réelle (3, 5, ou 7 uniquement)
+  eligibilityMode ContestEligibilityMode @default(ANY)
+  entryFeeEnabled Boolean @default(false)
+  entryFeeCurrency String @default("POINTS")
+  entryFeeAmount  Int?
+  config          Json?             // jamais utilisé en pratique
+}
+
+ContestEntry ✅
+model ContestEntry {
+  contestId   String
+  userId      String
+  status      ContestEntryStatus @default(SUBMITTED)
+  // SUBMITTED → (devrait être LOCKED sur lockAt) → SCORED → SETTLED
+  // LOCKED n'est JAMAIS set automatiquement (bug confirmé)
+  submittedAt DateTime @default(now())
+
+  @@unique([contestId, userId])  // un user = une entry par contest
+}
+
+RosterLock ✅
+model RosterLock {
+  contestEntryId      String
+  ownedCardInstanceId String
+  lockedAt            DateTime @default(now())
+
+  @@unique([contestEntryId, ownedCardInstanceId])
+  @@index([ownedCardInstanceId])   // index pour conflict detection
+}
+
+C'est la source de vérité pour les conflits de lock. La détection utilise un join sur ContestEntry.status IN [SUBMITTED, LOCKED, SCORED] et Contest.status IN [OPEN, LOCKED, LIVE].
+
+OwnedCardInstance ✅
+model OwnedCardInstance {
+  id                       String
+  userId                   String
+  cardTemplateId           String
+  sourcePackOpeningEventId String?
+  acquiredAt               DateTime
+  lockState                String?  // CACHE DÉRIVÉ — "CONTEST:x:ENTRY:y" ou null
+  metadata                 Json?
+
+  @@index([userId])
+  @@index([cardTemplateId])
+  // PAS d'index sur lockState
+}
+
+lockState est écrit dans enterContestMvp comme cache, mais n'est jamais lu pour les décisions de conflit. Il est nettoyé sur update de lineup, mais jamais nettoyé post-settlement. Cartes bloquées à vie.
+
+ContestTokenSnapshot ✅
+model ContestTokenSnapshot {
+  contestId       String
+  tokenProjectId  String
+  geckoId         String
+  phase           ContestSnapshotPhase   // START | END
+  priceUsd        Decimal?   @db.Decimal(20, 8)
+  marketCapUsd    Decimal?   @db.Decimal(30, 8)
+  volume24hUsd    Decimal?   @db.Decimal(30, 8)
+  marketCapRank   Int?
+  marketDataUpdatedAt DateTime?
+  capturedAt      DateTime
+  provider        String @default("COINGECKO")
+
+  @@unique([contestId, tokenProjectId, phase])  // idempotence garantie
+}
+
+ContestTokenScore ✅
+model ContestTokenScore {
+  contestId      String
+  tokenProjectId String
+  score          Float
+  priceChange    Float?
+  marketCapChange Float?
+  volumeChange   Float?
+  rankChange     Float?
+
+  @@unique([contestId, tokenProjectId])
+}
+
+ContestScore vs ContestRanking ✅
+ContestScore    : contestId, userId, score         ← score agrégé, sans rang
+ContestRanking  : contestId, userId, rank, score   ← inclut déjà le score
+
+Les deux sont créés par computeContestScoresFromSnapshots.
+ContestRanking est la source finale (inclut le rang).
+ContestScore est redondant avec ContestRanking — artifact du path legacy.
+
+ContestSettlement ✅
+model ContestSettlement {
+  contestId String
+  settledAt DateTime @default(now())
+
+  @@unique([contestId])  // un seul settlement par contest
+}
+
+Marqueur minimal. La vraie donnée de settlement est dans ContestSettlementPlan + ContestSettlementPlanItem.
+
+ContestRewardPolicy / Bundles / Rules ✅
+Arbre : ContestRewardPolicy → ContestRewardBundle[] → ContestRewardComponent[]
+Plus : ContestRewardDistributionRule[] (référence un bundle via bundleId, définit qui reçoit quoi par rang)
+
+ContestRewardPolicyStatus : DRAFT → PUBLISHED (set par publishContest())
+
+ContestSettlementPlan + ContestSettlementPlanItem ✅
+ContestSettlementPlan.status : DRAFT | APPROVED | EXECUTED | CANCELED
+                                             ^ APPROVED = dead code (jamais set)
+ContestSettlementPlan.source : "AUTO_POLICY_V1"
+ContestSettlementPlan.policySnapshot : JSON (snapshot de la policy au moment de génération)
+ContestSettlementPlanItem.rewardComponents : JSON (composants résolus par item)
+ContestSettlementPlanItem.pointsTotal / xpTotal / packsTotal
+
+ContestEntryScoreBreakdown ✅
+model ContestEntryScoreBreakdown {
+  entryId          String
+  tokenProjectId   String
+  cardInstanceId   String
+  rosterLockId     String
+  baseScore        Float       // = tokenScore
+  rarityMultiplier Float
+  editionMultiplier Float
+  finalScore       Float       // baseScore * rarityMultiplier * editionMultiplier
+
+  @@unique([entryId, cardInstanceId])
+}
+
+Données riches disponibles en DB, mais non exposées dans getContestDetailMvp ni dans aucune API user.
+
+RewardGrant ✅ (partiel)
+Créé par executeSettlementPlan pour POINTS et PACK. Pas créé pour XP (bug confirmé). Lié à ContestSettlement via sourceContestSettlementId.
+
+4. Contest Lifecycle
+Statuts et transitions ✅
+DRAFT  → OPEN    : publishContest() — manuel admin via /api/internal/contest-configs/[id]/publish
+OPEN   → LOCKED  : reconcileContestLifecycleByTime() quand lockAt <= now
+LOCKED → LIVE    : reconcileContestLifecycleByTime() quand startsAt <= now
+LIVE   → SETTLED : reconcileContestLifecycleByTime() quand endsAt <= now
+*      → CANCELED: archiveContest() — manuel admin, aucune guard
+
+Implémentation des transitions ✅
+Fichier : lib/domain/contests/lifecycle-reconciliation.ts
+
+Pattern de transition (exemple OPEN → LOCKED) :
+
+deriveTargetStatus retourne { target: LOCKED, reason: "LOCK_AT_REACHED" }
+nextStatus(OPEN, LOCKED) = LOCKED (un pas)
+runAutomationBeforeTransition(contestId, LOCKED) → rien (automation seulement pour LIVE et SETTLED)
+prisma.contest.updateMany({ where: { id, status: "OPEN" }, data: { status: "LOCKED" } })
+Si count=0 → re-read + continue (race condition handled)
+Automations réelles ✅
+Transition	Automation	Déclencheur
+→ LIVE	captureStartSnapshot()	Dans runAutomationBeforeTransition, avant updateMany
+→ SETTLED	captureEndSnapshot() puis computeContestScoresFromSnapshots()	Dans runAutomationBeforeTransition, avant updateMany
+→ LOCKED	rien	—
+Settlement plan	—	Manuel admin uniquement
+Card release	—	N'existe pas
+Déclenchement de la réconciliation ✅
+Déclenché sur requête HTTP uniquement :
+
+GET /api/contests → listContestsMvp() → reconcileDueContestsByTime()
+GET /api/contests/[id] → getContestDetailMvp() → reconcileContestLifecycleByTime(contestId)
+GET /api/internal/contests → idem
+POST /api/internal/contests/reconcile-lifecycle → appel manuel admin
+Pas de vrai cron/scheduler. Si aucun user ni admin ne charge les pages, les contests ne progressent jamais.
+
+5. User Flow
+1. Voir les contests
+GET /api/contests → listContestsMvp() → retourne max 50 contests avec status IN [OPEN, LOCKED, LIVE, SETTLED] + reconciliation en head.
+
+Page : app/contests/page.tsx — tabs lifecycle + filter bar + grille de ContestTile. L'onglet UPCOMING compte les DRAFT mais la query n'en retourne jamais → toujours 0.
+
+2. Voir le détail
+GET /api/contests/[id] → getContestDetailMvp(contestId, userId?) → retourne { contest, userEntry }. userEntry inclut rosterLocks (instanceIds des cartes) mais pas ContestEntryScoreBreakdown.
+
+Page : app/contests/[contestId]/page.tsx (🔍 non lu directement mais connu par architecture)
+
+3. Voir les cartes éligibles
+GET /api/contests/[id]/lineup-options → retourne les OwnedCardInstance de l'user éligibles. La logique d'éligibilité utilise probablement lockState === null ou équivalent RosterLock check (⚠️ non confirmé directement — route non lue).
+
+4-5. Construire et soumettre la team
+POST /api/contests/[id]/enter body: { lineupInstanceIds: string[] } → enterContestMvp().
+
+Idempotent : si entry existe déjà, update (deleteMany rosterLocks + createMany nouveaux)
+Validation : exactly maxRosterSize cartes, ownership, eligibility, conflicts
+Lock : écrit lockState = "CONTEST:x:ENTRY:y" sur chaque OwnedCardInstance
+Composants : TeamBuilder.tsx (slots + progress bar), LineupSlot.tsx, CardSelectorModal.tsx (modale), EligibleCardsPanel.tsx (panel inline — duplique CardSelectorModal)
+
+6. Modification possible
+Tant que contest.status === OPEN et lockAt non atteint, enterContestMvp accepte de réécrire la lineup. L'entry existante est mise à jour.
+
+7. Lock
+Automatique via réconciliation quand lockAt est atteint. L'UI user montre le composant ContestActionPanel avec message "Team lock is active" (confirmation dans TeamBuilder.tsx ligne 68 : <p className="contest-inline-note">Team lock is active. Lineup editing is disabled.</p>). canManageLineup = false.
+
+8. Contest live
+Reconciliation passe à LIVE + capture START snapshot. L'UI user montre le leaderboard (LeaderboardCard.tsx) — mais il est vide car rankings n'existent qu'après computeContestScoresFromSnapshots (post-SETTLED).
+
+9. Contest settled
+Reconciliation passe à SETTLED + END snapshot + computeContestScoresFromSnapshots. Leaderboard peuplé. Mais settlement plan non exécuté automatiquement → rewards non créées encore.
+
+10. Résultats
+ContestResultPanel.tsx — affiche uniquement :
+
+<strong>{myRank ? `#${myRank}` : "Pending"}</strong>
+<strong>{typeof myScore === "number" ? myScore.toFixed(2) : "Pending"}</strong>
+
+Aucun breakdown, aucune reward affichée. ContestEntryScoreBreakdown non exposé.
+
+LeaderboardCard.tsx ligne 26 :
+
+<span>{isMe ? "You" : `${row.userId.slice(0, 8)}…`}</span>
+
+Confirmed.
+
+6. Admin Flow
+Création contest
+Page : app/admin/(protected)/contests/create/page.tsx (🔍 non lu directement)
+Route : POST /api/internal/contest-configs → createContestDraft(input)
+
+Input : ContestConfigInput (code, title, startsAt, lockAt, endsAt, teamSizeMode, teamSizeValue, eligibilityMode, cardSetId, entryFeeEnabled, rewardBundles, distributionRules)
+
+Validation + Publication
+Route : POST /api/internal/contest-configs/[id]/validate → validateContestDraft()
+Route : POST /api/internal/contest-configs/[id]/publish → publishContest()
+
+Publication = configPublishedAt = now() + status = OPEN + policy.status = PUBLISHED
+
+Monitoring contest
+Page principale : app/admin/(protected)/contests/page.tsx — liste + modal operator console
+
+Console fetche /api/internal/contest-runs/[id]/console
+Affiche : diagnostics (hasStartSnapshot, hasEndSnapshot, scoringCalculated, rankingGenerated, settlementDone), players + lineups avec images, snapshots (text inline), scoring rows (text inline, 12 premières)
+Page overview : app/admin/(protected)/contests/[contestId]/page.tsx
+
+Fetche /api/internal/contest-runs/[id]/overview pour progress + blockers + allowedTransitions
+Contient un lien vers /admin/contests/legacy/[id] (confirmé ligne 139)
+Scoring
+Auto-path : déclenché par réconciliation (→ SETTLED). Route manuelle : POST /api/internal/contest-runs/[id]/scoring/compute → computeContestScoresFromSnapshots().
+
+Legacy workbench : app/admin/(protected)/contests/[contestId]/scoring/page.tsx + app/admin/(protected)/contests/legacy/[contestId]/page.tsx. Injection JSON de scores manuels via recordContestScoresMvp().
+
+Settlement
+Page : app/admin/(protected)/contests/[contestId]/settlement/page.tsx
+Flow : bouton "Generate plan" → POST .../settlement-plan/generate → bouton "Reload preview" → GET .../settlement-plan/[planId]/preview → bouton "Execute plan" → POST .../settlement-plan/[planId]/execute
+
+Entièrement manuel. Aucune trigger automatique post-scoring.
+
+7. Scoring System
+Snapshots CoinGecko ✅
+Dans captureSnapshot(contestId, phase) :
+
+Résoudre les tokens éligibles (START = resolveEligibleTokensForContest, END = resolveCanonicalTokensFromStart pour comparer les mêmes tokens)
+Extraire geckoIds, chunker par 200 (🔍 coingecko-client.ts)
+fetchCoinsMarkets(geckoIds) retourne {id, current_price, market_cap, total_volume, market_cap_rank, last_updated}
+Si API fail → markets = [] (swallowed silently via console.warn)
+Upsert ContestTokenSnapshot par token (idempotent via @@unique([contestId, tokenProjectId, phase]))
+Snapshot créé avec priceUsd = null si token absent de la réponse CoinGecko
+Calcul token scores ✅
+priceChange  = (endPrice - startPrice) / max(startPrice, 1e-9)
+mcapChange   = (endMcap - startMcap) / max(startMcap, 1e-9)
+volumeChange = (endVolume - startVolume) / max(startVolume, 1e-9)
+rankChange   = (startRank - endRank) / max(startRank, 1)  // positif si rang s'améliore
+
+priceScore  = 50 + 50*clamp(priceChange/0.5, -1, 1)   — dénominateur 0.5
+volumeScore = 50 + 50*clamp(volumeChange/1.0, -1, 1)   — dénominateur 1.0
+mcapScore   = 50 + 50*clamp(mcapChange/0.5, -1, 1)    — dénominateur 0.5
+rankScore   = 50 + 50*clamp(rankChange/0.3, -1, 1)    — dénominateur 0.3
+
+baseTokenScore = 0.45*priceScore + 0.25*volumeScore + 0.20*mcapScore + 0.10*rankScore
+rankMultiplier = 1 + 0.10 * clamp(rankChange/0.3, 0, 1)  // bonus max +10%
+tokenScore     = min(100, baseTokenScore * rankMultiplier)
+
+// SI change=null (données manquantes) → boundedScore = 50
+// Donc token sans données = score 50 (neutre, pas 0)
+
+Multiplicateurs rareté/édition ✅
+RARITY:  COMMON=1.00, UNCOMMON=1.05, RARE=1.12, EPIC=1.22, LEGENDARY=1.35
+EDITION: BASE=1.00, REVERSE=1.03, BRILLANTE=1.08, HOLO=1.15, FULL_ART=1.25
+
+finalCardScore = tokenScore × rarityMultiplier × editionMultiplier
+
+Score user et ranking ✅
+userScore = sum(finalCardScore for all cards in lineup)
+// Tri: desc score, tie-break: userId.localeCompare() (déterministe)
+// Ranking: index + 1 (rank #1, #2, ...)
+
+8. Settlement System
+Génération du plan ✅
+generateSettlementPlan(contestId) dans transaction Serializable :
+
+Vérifier contest.settlements.length === 0 (pas encore settled)
+Vérifier rankings.length > 0
+Vérifier policy.status === 'PUBLISHED'
+Pour chaque ranking, trouver la règle matchante :
+FIXED_RANKS : rank >= rankFrom && rank <= rankTo
+TOP_N : rank <= topN
+TOP_PERCENT : rank <= ceil(rankingSize * topPercent / 100) (minimum 1 winner)
+Résoudre les composants du bundle (POINTS, XP, PACK)
+Calculer pointsTotal, xpTotal, packsTotal par item
+Annuler les plans DRAFT existants → créer nouveau plan DRAFT
+Sauvegarder policySnapshot en JSON
+Preview ✅
+previewSettlementPlan(planId) — lit le plan + items + user info (displayName, xUsername) et retourne les rows formatées avec totaux.
+
+Exécution ✅
+executeSettlementPlan(planId) dans Serializable :
+
+Si plan déjà EXECUTED → { executed: false } (idempotent)
+Si contest.settlements.length > 0 → 409
+Crée ContestSettlement
+Pour chaque item :
+POINTS → rewardGrant.create + user.points += amount
+PACK → rewardGrant.create (octroyé mais non "ouvert")
+XP → userProgression.upsert({ xp: increment }) sans rewardGrant
+Contest → SETTLED, entries → SETTLED, plan → EXECUTED
+RewardGrants ✅
+Créés pour POINTS et PACK. Pas créés pour XP (bug confirmé dans le code ligne 274-280 de settlement-plan-runtime.ts). XP non auditable, non visible dans les grants.
+
+9. Card Lock System
+Lock lors d'une entry ✅
+Dans enterContestMvp :
+
+Conflict detection via RosterLock (JOIN ContestEntry + Contest.status) — source de vérité
+Si update d'une entry existante → clear les anciens lockState :
+await tx.ownedCardInstance.updateMany({
+  where: { id: { in: previousLocks.map(l => l.ownedCardInstanceId) } },
+  data: { lockState: null },
+});
+
+Set les nouveaux lockState :
+await tx.ownedCardInstance.updateMany({
+  where: { id: { in: lineupInstanceIds } },
+  data: { lockState: `CONTEST:${contestId}:ENTRY:${entry.id}` },
+});
+
+lockState est donc un string descriptif de la forme "CONTEST:cuid:ENTRY:cuid", écrit comme cache dérivé, jamais lu pour les décisions de conflit.
+
+Stockage ✅
+Double stockage :
+
+RosterLock table (relation DB, source de vérité)
+OwnedCardInstance.lockState (string nullable, cache dérivé)
+Pas d'index sur lockState. Pas de mécanisme de reconciliation entre les deux.
+
+Libération ✅
+N'existe pas.
+
+Après settlement (executeSettlementPlan), les RosterLocks sont maintenus en DB (non supprimés), et OwnedCardInstance.lockState reste "CONTEST:x:ENTRY:y" pour toujours. Les cartes sont bloquées à vie pour l'utilisateur post-contest.
+
+⚠️ Je ne peux pas confirmer sans runtime si l'UI collection exploite lockState directement ou via une query RosterLock — cela dépend du composant lineup-options que je n'ai pas lu directement.
+
+10. Contest Automation
+Ce qui est réellement automatique ✅
+Action	Déclencheur réel	Automatique ?
+OPEN → LOCKED	reconcileContestLifecycleByTime	⚠️ pseudo-auto (si quelqu'un load une page)
+LOCKED → LIVE	idem	⚠️ pseudo-auto
+LIVE → SETTLED	idem	⚠️ pseudo-auto
+START snapshot	captureStartSnapshot() dans reconcile avant LIVE	⚠️ conditionnel à la réconciliation
+END snapshot	captureEndSnapshot() dans reconcile avant SETTLED	⚠️ conditionnel
+Scoring compute	computeContestScoresFromSnapshots() dans reconcile avant SETTLED	⚠️ conditionnel
+ContestEntry → SCORED	dans computeContestScoresFromSnapshots	✅ auto si scoring tourne
+Settlement plan generate	generateSettlementPlan()	❌ Manuel admin
+Settlement plan execute	executeSettlementPlan()	❌ Manuel admin
+Card release	—	❌ N'existe pas
+Mécanisme de réconciliation ✅
+Pas de cron/scheduler en place. La réconciliation est déclenchée par :
+
+Chaque appel à GET /api/contests (via reconcileDueContestsByTime())
+Chaque appel à GET /api/contests/[id] (via reconcileContestLifecycleByTime(contestId))
+GET /api/internal/contests (idem)
+Appel manuel admin à POST /api/internal/contests/reconcile-lifecycle
+La boucle batch (reconcileDueContestsByTime) traite 200 contests max, séquentiellement (pas de parallelisme). Chaque contest peut faire 2 appels CoinGecko si dans la transition LIVE → SETTLED.
+
+11. Major Technical Risks
+Risque	Sévérité	Preuve dans le code
+Cards bloquées à vie — lockState jamais cleared post-settlement	🔴	runtime.ts lignes 282-295 + absence de code de release
+Contests qui ne progressent pas — pas de cron	🔴	Aucun scheduler dans le repo
+Validation temporelle inversée — startsAt/lockAt bug	🔴	config-runtime.ts ligne 458 : if (startsAt >= lockAt) throw
+Scoring neutre invisible — CoinGecko fail → score 50 par défaut	🔴	snapshot-runtime.ts ligne 44 + boundedScore(null)=50
+Double scoring sans guard — auto + legacy peuvent overwrite	🟠	Deux fonctions écrivant aux mêmes tables sans cross-guard
+Settlement entièrement manuel — oubli admin = rewards jamais distribuées	🟠	executeSettlementPlan non appelé depuis lifecycle
+XP non auditable — pas de RewardGrant	🟠	settlement-plan-runtime.ts ligne 274
+Leaderboard userId brut	🟠	LeaderboardCard.tsx ligne 26
+Reconciliation séquentielle — N CoinGecko en série	🟡	lifecycle-reconciliation.ts ligne 134
+archiveContest sans guard — LIVE cancellable	🟡	config-runtime.ts ligne 274
+Pagination absente — take:50 statique	🟡	runtime.ts ligne 93
+12. Self-Assessment
+Vision complète du système contest ?
+Oui, sur les modules backend et les pages principales. J'ai lu intégralement et directement :
+
+Les 8 modules domain (config-runtime.ts, runtime.ts, lifecycle-reconciliation.ts, scoring-engine-runtime.ts, settlement-plan-runtime.ts, snapshot-runtime.ts)
+Le schema Prisma (section contest complète, lignes 462-735)
+Les 2 pages user contest
+4 pages admin contest importantes + la page legacy
+3 composants contest critiques (TeamBuilder, LeaderboardCard, ContestResultPanel)
+Les types contest (types.ts)
+Parties non lues directement
+Ces fichiers sont connus via exploration d'agent mais non lus ligne par ligne :
+
+app/contests/[contestId]/page.tsx — détail contest user (architecture connue, code exact non vérifié)
+app/admin/(protected)/contests/create/page.tsx — formulaire création
+app/admin/(protected)/contests/[contestId]/lifecycle/page.tsx — contrôle transitions
+app/admin/(protected)/contests/[contestId]/scoring/page.tsx — workbench scoring
+app/admin/(protected)/contests/[contestId]/audit/page.tsx — audit log
+lib/domain/contests/eligibility-runtime.ts — résolution tokens (comportement connu par description)
+lib/domain/contests/coingecko-client.ts — client API (chunks 200, retry, connu par description)
+La plupart des routes API internes (routes connues, implémentation non lue)
+La grande majorité des composants contest (26 fichiers — environ 18 non lus directement)
+lib/admin/contest-reward-builder.ts et contest-workbench.ts
+Ce qui nécessiterait inspection supplémentaire pour certitude absolue
+app/api/contests/[contestId]/lineup-options/route.ts — comment exactement "carte éligible" est définie : utilise-t-il lockState ou une query RosterLock ? C'est critique pour valider que la suppression de lockState n'impacte pas cette route.
+
+app/contests/[contestId]/page.tsx — architecture exacte du team builder : comment ContestActionPanel détermine canManageLineup, comment le contest detail est fetché avec/sans userId.
+
+Migrations Prisma — je ne les ai pas inspectées. L'état réel de la DB (vs le schema actuel) n'est pas certifiable sans les migrations ou une connexion DB.
+
+lib/domain/contests/eligibility-runtime.ts — comportement précis en mode ANY (tous les tokens actifs ?) vs CARD_SET_ONLY (tokens du cardSet du contest ?). Le comportement "ANY = tous les tokens" est plausible mais non confirmé ligne par ligne.
+
+Tests — la couverture est connue par les noms de fichiers, mais le contenu exact (notamment les cas de test pour le bug startsAt/lockAt) n'a pas été lu. Je ne peux pas certifier que les tests passent avec la validation inversée (peut-être qu'ils créent des contests avec des dates "incorrectes" selon ma lecture).
+
+État réel en DB — il m'est impossible de savoir combien de OwnedCardInstance ont un lockState non null aujourd'hui, ni combien de contests sont actuellement bloqués dans un état stale. Cette information nécessite une connexion DB.
+
+Nous avons vérifié que tu connais bien le repo et le code.
+Maintenant je veux vérifier autre chose :
+je veux être sûr que tu comprends exactement le produit que nous voulons construire avec le système Contest.
+Je ne veux pas que tu te bases uniquement sur le code actuel.
+Je veux que tu comprennes la vision produit cible.
+Ta tâche est de reformuler précisément le système Contest que nous voulons construire, pour vérifier que tu es parfaitement aligné avant toute modification du code.
+Ta réponse doit être structurée et très claire.
+OBJECTIF
+Le système Contest doit fonctionner comme un fantasy / TCG tournament system premium, comparable à des produits comme Sorare.
+Le système doit être :
+
+clair pour l'utilisateur
+automatique côté backend
+robuste techniquement
+transparent sur les résultats
+agréable visuellement
+scalable pour plusieurs contests
+CONTEST LIFECYCLE CIBLE
+Explique le lifecycle produit attendu pour un contest.
+Le flow doit être le suivant :
+Contest créé (admin)
+Contest publié
+Contest OPEN (les utilisateurs peuvent créer et modifier leurs équipes)
+Team Lock (les équipes deviennent verrouillées)
+Contest LIVE (le tournoi commence)
+Snapshot START (données token capturées)
+Contest RUNNING
+Contest END (fin du tournoi)
+Snapshot END
+Scoring calculé
+Ranking généré
+Rewards attribuées
+Cartes libérées
+Résultats visibles
+Contest archivé
+Explique chaque étape.
+USER EXPERIENCE ATTENDUE
+Décris l’expérience utilisateur idéale.
+Un utilisateur doit pouvoir :
+Voir les contests disponibles
+Voir les contests à venir
+Voir les contests en cours
+Voir les contests terminés
+Dans un contest :
+voir les règles
+voir les cartes éligibles
+construire son équipe
+modifier son équipe avant le lock
+voir que son équipe est verrouillée
+suivre le contest
+voir les résultats
+voir ses rewards
+récupérer automatiquement ses cartes
+Explique le flow complet.
+TEAM BUILDER UX
+Le team builder doit fonctionner comme un vrai système fantasy.
+Je veux que tu expliques comment il doit fonctionner :
+sélection de cartes
+visualisation claire des cartes
+filtres
+tri
+sélection rapide
+remplacement d’une carte
+visualisation de l’équipe complète
+état locked ou modifiable
+Le builder doit être :
+ergonomique
+rapide
+visuel
+basé sur les vraies cartes du jeu
+CONTEST HUB
+Explique ce que doit être la page principale des contests.
+Elle doit afficher :
+un contest Featured
+les contests OPEN
+les contests LIVE
+les contests SETTLED
+Chaque contest doit afficher :
+nom
+description
+statut
+nombre de joueurs
+reward pool
+dates importantes
+CONTEST DETAIL PAGE
+Explique ce que doit afficher la page détail d’un contest.
+Elle doit montrer :
+informations du tournoi
+règles
+slots d’équipe
+cartes éligibles
+statut du contest
+timeline du contest
+leaderboard
+résultats
+Tout doit être clair et lisible.
+RESULTS UX
+Après un contest, l’utilisateur doit pouvoir voir :
+sa position
+son score
+le classement global
+les détails de scoring
+les rewards gagnées
+Explique comment ces informations doivent être présentées.
+ADMIN EXPERIENCE
+Explique ce que doit être l’expérience admin pour gérer les contests.
+L’admin doit pouvoir :
+créer un contest
+modifier un contest
+publier un contest
+voir les stats d’un contest
+arrêter un contest
+supprimer un contest
+voir les snapshots
+voir le scoring
+voir les rewards
+L’admin doit avoir une console claire.
+AUTOMATISATION ATTENDUE
+Le système doit être automatique.
+Explique quelles transitions doivent être automatiques :
+OPEN → LOCKED
+LOCKED → LIVE
+LIVE → END
+snapshots
+scoring
+ranking
+settlement
+release des cartes
+Explique comment cela doit fonctionner.
+ROBUSTESSE TECHNIQUE
+Explique ce que le système doit garantir :
+idempotence
+absence de double scoring
+absence de cartes bloquées
+absence de contest bloqué
+cohérence des résultats
+ALIGNEMENT FINAL
+À la fin, réponds clairement :
+Est-ce que tu comprends exactement le produit que nous voulons construire ?
+Y a-t-il des ambiguïtés dans les objectifs ?
+Y a-t-il des décisions produit qui doivent être clarifiées avant de modifier le code ?
+IMPORTANT
+Ne propose pas encore de modifications du code.
+Ton objectif est uniquement de prouver que tu comprends exactement le produit que nous voulons construire.
+
+Show more
+
+
+Vision Produit Contest — Reformulation et Alignement
+1. Contest Lifecycle Cible
+Le lifecycle d'un contest est une séquence linéaire d'états. Chaque état a une signification produit claire pour l'utilisateur et une responsabilité technique précise côté backend.
+
+Étape 1 — Contest créé (admin)
+L'admin configure le contest en draft : titre, description, dates (lockAt, liveAt, endsAt), taille de la team, éligibilité des cartes (ANY ou CARD_SET_ONLY), frais d'entrée optionnel, politique de récompenses. Le contest n'est pas visible par les users. L'admin peut valider la config avant publication.
+
+Étape 2 — Contest publié → OPEN
+L'admin publie. Le contest devient visible aux utilisateurs. Les users peuvent immédiatement commencer à construire leur équipe. Cette phase peut durer de quelques heures à plusieurs jours selon la configuration. La reward policy est figée à la publication.
+
+Étape 3 — Contest OPEN : phase de team building
+Les users voient le contest dans le hub. Ils peuvent entrer, construire leur équipe, la modifier autant de fois qu'ils veulent. Aucune restriction tant que lockAt n'est pas atteint. Un user peut remplacer n'importe quelle carte de sa lineup à tout moment. Les cartes sélectionnées sont réservées (ne peuvent pas être utilisées dans un autre contest actif) mais restent visible dans la collection de l'user avec un indicateur "En tournoi".
+
+Étape 4 — Team Lock → LOCKED
+Quand lockAt est atteint, automatiquement (via cron) : toutes les lineups sont figées. Plus aucune modification possible. L'user voit clairement "Votre équipe est verrouillée" avec la liste de ses cartes. Les users qui n'ont pas soumis d'équipe ne peuvent plus participer. Phase de transition courte entre OPEN et LIVE.
+
+Étape 5 — Contest LIVE + Snapshot START
+Quand liveAt est atteint, automatiquement : le contest passe en LIVE. Simultanément, le snapshot START est capturé — prix, market cap, volume 24h, rang CoinGecko de chaque token représenté dans les lineups. Ce snapshot est la baseline de référence pour le scoring. C'est le "coup de pistolet de départ". Si le snapshot START échoue (CoinGecko indisponible), le contest ne passe pas en LIVE — il reste en LOCKED et l'admin est alerté. Un contest LIVE sans snapshot START valide ne peut pas scorer correctement.
+
+Étape 6 — Contest RUNNING
+Le tournoi est en cours. Les tokens des cartes sélectionnées évoluent sur les marchés crypto. L'user voit son équipe en mode "tracking". Idéalement, il peut voir l'évolution relative de ses tokens (delta depuis le START snapshot). Le leaderboard peut être provisoire ou vide selon la décision produit (le scoring final n'est calculé qu'à la fin).
+
+Étape 7 — Contest END + Snapshot END
+Quand endsAt est atteint, automatiquement : snapshot END capturé avec les mêmes tokens qu'au START (mêmes geckoIds, pas de tokens nouveaux). Ce snapshot marque la fin de la compétition. Si le snapshot END échoue, le contest reste en LIVE et l'admin est alerté. Les données START et END doivent être cohérentes — le scoring compare les mêmes tokens sur la même liste.
+
+Étape 8 — Scoring calculé
+Automatiquement après le snapshot END : calcul des performances de chaque token (delta prix, volume, market cap, rang), application des multiplicateurs rareté et édition sur chaque carte de chaque lineup, calcul du score total par user. Résultat stocké : ContestTokenScore par token, ContestEntryScoreBreakdown par carte par user, ContestScore et ContestRanking par user.
+
+Étape 9 — Ranking généré
+Automatiquement dans la même transaction que le scoring : classement des users par score décroissant. En cas d'égalité : tie-break déterministe. Le ranking final est immuable une fois généré.
+
+Étape 10 — Rewards attribuées
+Automatiquement si la reward policy est publiée : génération du settlement plan (correspondance ranking → règles de distribution → bundles → composants), exécution du plan (création des RewardGrant, crédit des points/XP/packs). Pas d'étape manuelle requise dans le flow normal. L'admin peut superviser et intervenir si nécessaire.
+
+Étape 11 — Cartes libérées
+Automatiquement après l'exécution du settlement : les cartes de toutes les lineups sont libérées. Elles redeviennent disponibles dans la collection de l'user, utilisables dans d'autres contests. Aucune action user ou admin nécessaire. C'est un invariant du système : un contest terminé ne bloque jamais de cartes.
+
+Étape 12 — Résultats visibles
+Le contest est en statut SETTLED. L'user voit : son rang final, son score total, le détail par carte (quelle carte a contribué combien), les rewards reçues, le classement global. Cet état est permanent et lisible — les données ne disparaissent pas.
+
+Étape 13 — Contest archivé
+L'admin peut archiver le contest pour le retirer de la liste active. Les données sont conservées. L'user peut toujours consulter ses résultats historiques.
+
+2. User Experience Attendue
+Hub contests — ce que l'user voit en arrivant
+La page principale des contests est le point d'entrée de toute l'expérience. Elle doit être visuellement riche et immédiatement actionnable.
+
+Featured contest : le contest le plus pertinent (LIVE en priorité, sinon OPEN avec le lockAt le plus proche) affiché en grand format, avec son visuel, son statut en temps réel, le countdown jusqu'au prochain événement clé, et le CTA principal ("Entrer" ou "Voir mon équipe").
+
+Navigation par état : tabs clairs — OPEN (participation possible), LOCKED (en attente du démarrage), LIVE (en cours), SETTLED (terminés, résultats disponibles). Pas de DRAFT visible. Pas de filtre redondant avec les tabs.
+
+Chaque contest card affiche : nom, visuel (si disponible), statut avec couleur (OPEN=bleu, LOCKED=orange, LIVE=rouge pulsant, SETTLED=or), nombre de participants, aperçu de la reward pool réelle (pas hardcodée), countdown jusqu'au prochain événement (lockAt si OPEN, liveAt si LOCKED, endsAt si LIVE).
+
+Dans un contest — flow complet
+Vue règles : taille de l'équipe, éligibilité (toutes les cartes ou uniquement un card set spécifique), frais d'entrée si applicable, distribution des récompenses (qui gagne quoi, selon quel rang).
+
+Vue cartes éligibles + team builder : voir ci-dessous (section 3).
+
+Vue état de l'équipe :
+
+Phase OPEN : lineup modifiable, CTA "Sauvegarder l'équipe" visible
+Phase LOCKED : lineup en lecture seule, message "Votre équipe est verrouillée — le tournoi commence bientôt"
+Phase LIVE : lineup affichée avec delta token en temps réel (si disponible) ou message "Tournoi en cours — résultats disponibles après la fin"
+Phase SETTLED : résultats complets (voir section 6)
+Leaderboard : visible dès que des données existent. Pendant LIVE : vide ou provisoire. Après SETTLED : top 10 + position de l'user (même si > 10). Chaque ligne affiche : rang, username (pas userId), score. L'user est highlighté dans la liste.
+
+Timeline du contest : visualisation des 5 phases (OPEN → LOCKED → LIVE → END → SETTLED) avec les dates et l'état actuel mis en évidence.
+
+Reward preview : dans la page détail et dans la card hub, les récompenses réelles sont affichées (pulls depuis la reward policy réelle) : "Rank #1 : 500 pts + 1 pack | Top 10% : 100 pts".
+
+Post-contest : les cartes sont automatiquement disponibles dans la collection. L'user n'a aucune action à faire pour récupérer ses cartes.
+
+3. Team Builder UX
+Le team builder est le coeur de l'expérience contest. C'est là que l'user prend ses décisions et s'engage émotionnellement. Il doit avoir le niveau d'un outil fantasy/TCG premium.
+
+Principe général
+L'interface est construite autour des cartes — leur art, leur identité visuelle, leur token associé. Ce n'est pas un formulaire de saisie, c'est une expérience de jeu.
+
+Slots d'équipe
+N slots (3, 5 ou 7 selon le contest) affichés en grille premium. Chaque slot vide a un design "placeholder premium" (pas juste un texte "Slot 1 / Add card"). Quand une carte est sélectionnée, l'art de la carte remplit le slot avec ses métadonnées (nom, rareté, édition, token associé). Le slot plein montre un bouton de remplacement au hover.
+
+Sélection de carte
+Un seul mécanisme : la CardSelectorModal. Quand l'user clique sur un slot vide ou sur "Remplacer", la modale s'ouvre. Elle affiche :
+
+Grille visuelle de toutes les cartes éligibles de l'user
+Filtres : rareté (COMMON → LEGENDARY), édition (BASE → FULL_ART), token/projet
+Recherche textuelle par nom de carte ou token
+Tri : par rareté (premium en premier), par multiplicateur de score potentiel, par token
+Cartes déjà dans la lineup : grayed out (non sélectionnables une deuxième fois)
+Cartes locked dans un autre contest actif : grayed out avec indicateur
+Sélection d'une carte : ferme la modale et place la carte dans le slot
+Remplacement
+Cliquer sur une carte déjà dans le slot ouvre la modale avec la même expérience. La carte remplacée redevient disponible dans la sélection.
+
+État de l'équipe complète
+Progress indicator : "X/N slots remplis" avec barre visuelle. Bouton "Sauvegarder l'équipe" activé seulement quand tous les slots sont remplis. Message de confirmation après sauvegarde. L'équipe peut être sauvegardée et modifiée autant de fois que voulu avant le lock.
+
+État locked
+Le builder passe en lecture seule. Plus de boutons de remplacement. Visual clair "Équipe verrouillée". Les cartes sont affichées telles quelles.
+
+4. Contest Hub
+La page /contests est la vitrine du système de tournaments.
+
+Structure
+FEATURED CONTEST (hero plein écran)
+  ← fond visuel du contest (bannerUrl ou gradient)
+  ← titre + statut pill coloré + countdown grand format
+  ← CTA principal contextuel
+
+NAVIGATION : [OPEN (N)] [LOCKED (N)] [LIVE (N)] [SETTLED (N)]
+
+GRILLE CONTESTS (3 colonnes)
+  ← chaque tile : image, nom, statut, participants, reward pool, countdown, CTA
+
+RAIL "RÉSULTATS RÉCENTS" (scroll horizontal)
+  ← contests settled avec ma position si j'ai participé
+
+Chaque contest card affiche
+Visuel (thumbnail ou gradient par défaut)
+Nom + code
+Badge de statut avec couleur sémantique
+Nombre de participants ("127 joueurs")
+Aperçu de la reward pool réelle ("Jusqu'à 500 pts + 2 packs")
+Countdown jusqu'au prochain événement clé (lockAt, liveAt, endsAt selon le statut)
+CTA contextuel : "Entrer" (OPEN sans entry), "Modifier" (OPEN avec entry), "Voir mon équipe" (LOCKED/LIVE), "Résultats" (SETTLED)
+Ce que la page ne fait pas
+Elle n'affiche pas les contests DRAFT (non publiés)
+Elle ne mélange pas les statuts dans le même onglet
+Elle n'a pas deux systèmes de filtrage redondants
+5. Contest Detail Page
+La page /contests/[contestId] est l'espace de jeu de l'utilisateur pour un contest donné.
+
+Layout
+Deux colonnes sur desktop, une sur mobile.
+
+Colonne principale (65-70%) : le contenu actif selon la phase.
+
+OPEN → Team Builder complet (slots + sélection)
+LOCKED → Lineup en lecture seule
+LIVE → Lineup + delta token en temps réel (si données disponibles)
+SETTLED → Résultats détaillés (voir section 6)
+Sidebar (30-35%) :
+
+Panel d'action contextuel (CTA + countdown + statut)
+Reward pool réelle (depuis la policy)
+Leaderboard (top 10 + ma position)
+En haut de page :
+
+Hero banner (visuel du contest ou gradient avec accentColor)
+Titre + statut pill
+Timeline visuelle : 5 étapes avec dates, l'étape courante mise en évidence
+Section règles (accessible via drawer ou section) :
+
+Taille d'équipe
+Éligibilité des cartes
+Frais d'entrée
+Distribution des rewards (tableau : rang → récompense)
+Informations toujours visibles
+Statut actuel du contest
+Countdown jusqu'au prochain événement
+Nombre de participants
+Ma situation (participé / pas encore / résultats)
+6. Results UX
+L'expérience post-contest doit être satisfaisante et informative. C'est le moment de vérité — l'user doit comprendre ce qu'il a gagné, pourquoi, et vouloir rejouer.
+
+Ce que l'user voit
+Ma position : rang final en grand, score total, percentile ("Top 12%").
+
+Mes rewards : liste des récompenses reçues avec leur valeur (pts, pack, XP). Message clair si pas de reward ("Vous n'étiez pas dans les positions récompensées pour ce contest").
+
+Mon équipe + breakdown : chaque carte affichée avec :
+
+Art de la carte
+Token associé + performance (prix +X%, volume +Y%)
+Score de base (token score)
+Multiplicateur rareté appliqué (×1.22 pour EPIC)
+Multiplicateur édition appliqué (×1.15 pour HOLO)
+Score final de cette carte
+Contribution au total (%)
+Classement global : top 10 avec usernames + ma position (si > 10, affichée en contexte — quelques rangs au-dessus et en-dessous de moi).
+
+Cartes libérées : notification claire "Vos cartes sont à nouveau disponibles dans votre collection".
+
+CTA de relance : "Rejoindre le prochain contest" ou "Explorer les contests".
+
+Présentation
+Pas un dump de données — une vraie page résultat avec hiérarchie :
+
+Rang et score en grand
+Rewards en évidence
+Breakdown déplié (accordéon ou scroll)
+Classement global
+Prochaine étape
+7. Admin Experience
+Console principale (/admin/contests)
+Vue d'ensemble de tous les contests. Pour chaque contest : statut, participants, pipeline status (snapshot START ✓/✗, snapshot END ✓/✗, scoring ✓/✗, settlement ✓/✗). Actions rapides directement depuis la liste.
+
+Un modal "Operator Console" par contest affiche l'état complet : diagnostics, lineups des joueurs avec images de cartes, snapshots en table (token | prix START | prix END | Δ%), scoring en table (user | rank | score | détail cartes).
+
+Création et configuration
+Formulaire guidé : timings → règles → reward policy. Validation avant publication. Possibilité de modifier tant que non publié.
+
+Monitoring
+Page de détail par contest avec pipeline visuel en 5 étapes. Indicateurs clairs : qu'est-ce qui a tourné, qu'est-ce qui est pending, qu'est-ce qui a failed. Accès direct aux données (snapshots, scores, rankings) lisibles en table, pas en texte inline.
+
+Actions disponibles par statut
+Statut	Actions possibles
+DRAFT	Modifier, Valider, Publier, Supprimer
+OPEN	Voir, Stopper (→ CANCELED)
+LOCKED	Voir, Forcer snapshot START, Stopper
+LIVE	Voir, Forcer snapshot END, Stopper
+SETTLED	Voir résultats, Archiver
+CANCELED	Supprimer
+Diagnostics de scoring
+Après le scoring : table des token scores (token, score, Δprix, Δvolume, Δmcap, Δrang). Table des breakdowns par user (user, carte, baseScore, rarityMult, editionMult, finalScore). Export possible pour audit.
+
+Settlement
+Normalement automatique. Si l'admin doit intervenir : génération du plan → preview (tableau rang → user → rewards) → exécution en un clic. Pas d'étape manuelle d'approbation dans le flow normal.
+
+Pas de pages legacy
+Un seul chemin d'opération, clair et propre. Pas de "fallback temporaire", pas de workbench JSON, pas de double path.
+
+8. Automatisation Attendue
+Le système doit fonctionner sans intervention humaine dans le flow normal. Un contest doit pouvoir naître, vivre, scorer, settler et archiver ses cartes sans qu'un admin touche quoi que ce soit après la publication.
+
+Transitions automatiques (via cron, toutes les 60 secondes)
+Transition	Déclencheur	Ce qui se passe
+OPEN → LOCKED	lockAt atteint	Lineups figées, entries LOCKED
+LOCKED → LIVE	liveAt atteint	Snapshot START capturé d'abord. Si OK → LIVE. Si fail → reste LOCKED + alerte admin
+LIVE → SETTLED	endsAt atteint	Snapshot END capturé. Scoring calculé. Ranking généré. Settlement plan généré + exécuté (si policy PUBLISHED). Cartes libérées
+Garanties de non-régression
+Le cron peut tourner plusieurs fois sur le même contest sans effet de bord : chaque étape est idempotente (upserts, guards sur statuts, contraintes d'unicité DB). Un double-trigger ne produit pas de double scoring, pas de double settlement, pas de double reward.
+
+Fallback admin
+Si une étape automatique échoue (CoinGecko down, erreur DB, timeout) : le contest reste dans son état précédent. L'admin voit dans la console : "Snapshot START failed — contest bloqué en LOCKED". L'admin peut déclencher manuellement le snapshot puis la transition. Le fallback manuel est une sécurité, pas le chemin principal.
+
+Ce qui reste manuel (et intentionnellement)
+Création et publication du contest (décision éditoriale)
+Arrêt forcé (CANCELED) — action destructrice, toujours consciente
+Archivage post-settlement
+9. Robustesse Technique
+Idempotence
+Chaque opération du pipeline peut être rejouée sans effet de bord :
+
+Snapshots : upsert sur (contestId, tokenProjectId, phase) — rejouer = overwrite propre
+Scoring : delete + recreate dans une transaction Serializable — rejouer = même résultat
+Settlement : guard sur ContestSettlement (unique par contestId) + check plan.status = EXECUTED — rejouer = no-op
+Absence de double scoring
+Un seul path de scoring est canonique : computeContestScoresFromSnapshots() depuis les snapshots CoinGecko. Le path legacy de scoring manuel est une urgence uniquement (ex: CoinGecko données corrompues, override nécessaire). Un guard empêche que les deux paths s'appliquent sur le même contest sans action explicite.
+
+Absence de cartes bloquées
+Invariant du système : aucune carte ne peut rester bloquée après qu'un contest est SETTLED. La libération est automatique et ne dépend d'aucune action admin. Techniquement : le lock d'une carte est dérivé de l'existence d'un RosterLock dans un contest dont le statut est dans [OPEN, LOCKED, LIVE]. Quand le contest devient SETTLED, les cartes sont logiquement libres sans manipulation supplémentaire.
+
+Absence de contest bloqué
+Un contest ne peut pas rester indéfiniment dans un état intermédiaire. Si une transition automatique échoue, le contest reste dans son état précédent (pas dans un état cassé intermédiaire). L'admin peut toujours forcer une transition manuelle ou stopper le contest. Il n'existe pas d'état "zombie" non récupérable.
+
+Cohérence des résultats
+Le scoring est calculé une seule fois sur des snapshots immuables. Les snapshots END utilisent exactement les mêmes tokens que les snapshots START. Un token absent de CoinGecko au moment du snapshot produit un score neutre documenté et visible, pas un score silencieusement biaisé. Les rankings sont déterministes : même input → même output.
+
+10. Alignement Final
+1. Est-ce que je comprends exactement le produit ?
+Oui, avec une réserve sur un point spécifique.
+
+Je comprends le produit cible : un tournament system fantasy/TCG où l'utilisateur sélectionne des cartes crypto, participe à un contest limité dans le temps, est scoré sur la performance réelle des tokens sous-jacents, et reçoit des récompenses automatiquement. Le tout avec une UX premium, card-first, visuellement riche, et une automatisation complète côté backend.
+
+La vision est claire sur :
+
+Le flow lifecycle (les 15 étapes)
+Le rôle de chaque statut
+Ce qui doit être automatique vs manuel
+L'expérience user attendue à chaque phase
+L'expérience admin attendue
+Les garanties de robustesse
+2. Y a-t-il des ambiguïtés ?
+Oui, trois points méritent clarification explicite avant de coder :
+
+Ambiguïté A — Le scoring pendant le LIVE (leaderboard intermédiaire)
+
+Pendant la phase LIVE, le leaderboard est-il :
+
+Option 1 : vide ("résultats disponibles après la fin") — plus simple techniquement
+Option 2 : provisoire avec les dernières données de marché disponibles, mis à jour régulièrement
+Option 3 : statique sur la performance desde le START snapshot, mis à jour en temps réel
+Le code actuel implémente l'Option 1. Si le produit cible veut l'Option 2 ou 3, cela implique un nouveau modèle de snapshot intermédiaire (ou une query live vers CoinGecko) et un composant de "live tracking" plus complexe.
+
+Ambiguïté B — Le statut COMPUTING
+
+Est-ce qu'on veut un statut intermédiaire visible entre LIVE et SETTLED pendant que le scoring/settlement tourne ? Ce statut résoudrait la confusion "le contest est SETTLED mais les rewards ne sont pas encore là". Ou préfère-t-on garder 6 statuts et gérer cet état via des indicateurs (_count.rankings === 0 dans un contest SETTLED) ?
+
+Ambiguïté C — Le snapshot START : avant ou après la transition vers LIVE
+
+Dans la vision produit, l'étape 5 (LIVE) et l'étape 6 (Snapshot START) sont listées séparément. Dans l'implémentation proposée, le snapshot START est capturé avant la transition LIVE (dans runAutomationBeforeTransition). Si CoinGecko est down, le contest ne passe pas LIVE.
+
+Alternative : passer LIVE d'abord (visible pour l'user), puis capturer le snapshot. L'user voit "LIVE" immédiatement mais le snapshot peut être retardé de quelques secondes. La décision affecte la tolérance aux erreurs et l'expérience user perçue.
+
+3. Y a-t-il des décisions produit à clarifier avant de coder ?
+Trois décisions à valider explicitement :
+
+Décision 1 — Leaderboard LIVE
+Leaderboard vide pendant la phase LIVE, ou provisoire avec données intermédiaires ? La réponse impacte l'architecture (modèle de snapshot intermédiaire ou non) et plusieurs composants UI.
+
+Décision 2 — Statut COMPUTING
+Ajouter COMPUTING à l'enum ContestStatus (migration Prisma, impact partout) ou gérer cet état implicitement via des compteurs ? Les deux sont valides techniquement. Le premier est plus propre côté UX, le second est moins risqué à implémenter.
+
+Décision 3 — Comportement si CoinGecko est down au moment critique
+
+Option A (stricte) : le contest ne passe pas LIVE si snapshot START échoue. L'admin doit intervenir.
+Option B (permissive) : le contest passe LIVE avec un snapshot partiel (nulls), le scoring default à 50 pour les tokens manquants, avec alerte visible.
+L'Option A est plus sûre pour les utilisateurs (scores corrects ou pas de contest). L'Option B est plus "disponible" mais peut produire des résultats dégradés sans que les users le sachent. Je recommande l'Option A, mais c'est une décision produit.
+
+Hors ces trois points, je suis parfaitement aligné sur la vision produit. Je peux commencer la refonte dès que ces décisions sont clarifiées.
