@@ -12,41 +12,66 @@ type Props = {
   canEnter: boolean;
 };
 
+type SortMode = "rarity" | "name";
+
 export function CardSelectorModal({ open, options, selectedIds, onToggle, onClose, canEnter }: Props) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
+  const [edition, setEdition] = useState("all");
+  const [sortMode, setSortMode] = useState<SortMode>("rarity");
 
   const rarityOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.rarityCode))], [options]);
+  const editionOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.editionCode))], [options]);
+  const rarityOrder = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
-  const filtered = useMemo(
-    () =>
-      options.filter((card) => {
-        const byQuery = card.name.toLowerCase().includes(query.toLowerCase()) || card.cardSetCode.toLowerCase().includes(query.toLowerCase());
-        const byRarity = rarity === "all" || card.rarityCode === rarity;
-        return byQuery && byRarity;
-      }),
-    [options, query, rarity],
-  );
+  const filtered = useMemo(() => {
+    const rows = options.filter((card) => {
+      const byQuery = card.name.toLowerCase().includes(query.toLowerCase()) || card.cardSetCode.toLowerCase().includes(query.toLowerCase());
+      const byRarity = rarity === "all" || card.rarityCode === rarity;
+      const byEdition = edition === "all" || card.editionCode === edition;
+      return byQuery && byRarity && byEdition;
+    });
+
+    rows.sort((a, b) => {
+      if (sortMode === "name") return a.name.localeCompare(b.name);
+      const ai = rarityOrder.indexOf(a.rarityCode.toUpperCase());
+      const bi = rarityOrder.indexOf(b.rarityCode.toUpperCase());
+      const rarityDelta = (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      if (rarityDelta !== 0) return rarityDelta;
+      return a.name.localeCompare(b.name);
+    });
+
+    return rows;
+  }, [options, query, rarity, edition, sortMode]);
 
   if (!open) return null;
 
   return (
     <div className="contest-modal-overlay" role="presentation" onClick={onClose}>
-      <div className="contest-modal" role="dialog" aria-modal="true" aria-label="Select cards" onClick={(event) => event.stopPropagation()}>
+      <div className="contest-modal team-builder-modal" role="dialog" aria-modal="true" aria-label="Select cards" onClick={(event) => event.stopPropagation()}>
         <div className="contest-modal-head">
           <div>
-            <h4>Eligible cards</h4>
-            <p className="contest-inline-note">{selectedIds.length} selected · {filtered.length} shown</p>
+            <h4>Choose lineup card</h4>
+            <p className="contest-inline-note">{selectedIds.length} selected · {filtered.length} available</p>
           </div>
           <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
         </div>
 
-        <div className="contest-modal-filters">
-          <input className="collection-search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search card or set" />
+        <div className="contest-modal-filters team-builder-filters">
+          <input className="collection-search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name / set" />
           <select className="collection-select" value={rarity} onChange={(event) => setRarity(event.target.value)}>
             {rarityOptions.map((value) => (
               <option value={value} key={value}>{value === "all" ? "All rarities" : value}</option>
             ))}
+          </select>
+          <select className="collection-select" value={edition} onChange={(event) => setEdition(event.target.value)}>
+            {editionOptions.map((value) => (
+              <option value={value} key={value}>{value === "all" ? "All editions" : value}</option>
+            ))}
+          </select>
+          <select className="collection-select" value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
+            <option value="rarity">Sort: Rarity</option>
+            <option value="name">Sort: Name</option>
           </select>
         </div>
 

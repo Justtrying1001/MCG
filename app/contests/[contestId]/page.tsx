@@ -8,6 +8,8 @@ import { Surface } from "@/components/ui/Surface";
 import { ContestHero } from "@/components/contests/ContestHero";
 import { ContestProgressTimeline } from "@/components/contests/ContestProgressTimeline";
 import { TeamBuilder } from "@/components/contests/TeamBuilder";
+import { ContestStatsGrid } from "@/components/contests/ContestStatsGrid";
+import { ContestActionPanel } from "@/components/contests/ContestActionPanel";
 import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
 import { LineupSummaryPanel } from "@/components/contests/LineupSummaryPanel";
 import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
@@ -125,6 +127,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const rule = detail?.contest.rules[0];
   const maxRosterSize = rule?.maxRosterSize ?? 5;
+  const rewardPoints = Math.max(100, maxRosterSize * 40);
   const isGuest = !loading && me?.mode === "guest";
   const canManageLineup = detail?.contest.status === "OPEN";
   const canEnter = canManageLineup && !isGuest;
@@ -230,6 +233,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       <ContestProgressTimeline status={detail.contest.status} />
 
+      <ContestStatsGrid
+        status={detail.contest.status}
+        startsAt={detail.contest.startsAt}
+        lockAt={detail.contest.lockAt}
+        endsAt={detail.contest.endsAt}
+        rosterSize={maxRosterSize}
+        entries={detail.contest._count.entries}
+        rewardPoints={rewardPoints}
+        nowTs={nowTs}
+      />
+
       <section className="contest-main-layout-v3">
         <div className="contest-main-left">
           <TeamBuilder
@@ -248,20 +262,29 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             onToggle={toggle}
             onSubmit={() => void submitEntry()}
           />
+
+          {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
+          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
         </div>
 
-        <div className="contest-main-right">
+        <aside className="contest-main-right">
+          <ContestActionPanel
+            status={detail.contest.status}
+            lockAt={detail.contest.lockAt}
+            endsAt={detail.contest.endsAt}
+            nowTs={nowTs}
+            isGuest={Boolean(isGuest)}
+            lineupFilled={selected.filter(Boolean).length}
+            rosterSize={maxRosterSize}
+          />
           <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
-          <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
           <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} />
+          <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
           <Surface className="contest-sidebar-panel">
             <Button variant="ghost" onClick={() => setRulesOpen(true)}>View detailed rules</Button>
           </Surface>
-        </div>
+        </aside>
       </section>
-
-      {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
-      <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
 
       <CardSelectorModal
         open={modalOpen}

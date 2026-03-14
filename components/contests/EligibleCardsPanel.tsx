@@ -15,11 +15,11 @@ export function EligibleCardsPanel({
   return (
     <section className="contest-eligible-panel">
       <div className="contest-eligible-head">
-        <p className="mcg-eyebrow">Card gallery</p>
-        <strong>{options.length} eligible cards</strong>
+        <p className="mcg-eyebrow">Bench / available cards</p>
+        <strong>{options.length} cards</strong>
       </div>
       <div className="contest-eligible-grid visual">
-        {options.slice(0, 16).map((item) => {
+        {options.slice(0, 10).map((item) => {
           const isSelected = selectedIds.includes(item.instanceId);
           const isLocked = Boolean(item.lockState) && !isSelected;
           return (

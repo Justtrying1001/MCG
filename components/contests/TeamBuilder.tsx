@@ -34,13 +34,16 @@ export function TeamBuilder({
   return (
     <section className="contest-team-builder premium">
       <div className="contest-builder-head">
-        <p className="mcg-eyebrow">Team builder</p>
+        <div>
+          <p className="mcg-eyebrow">Tournament team builder</p>
+          <strong className="contest-builder-title">Build your 5-card lineup</strong>
+        </div>
         <strong>{filled}/{maxRosterSize} slots filled</strong>
       </div>
 
       <div className="contest-lineup-progress-track"><span style={{ width: `${pct}%` }} /></div>
 
-      <div className="contest-lineup-grid-v2">
+      <div className="contest-lineup-grid-v2 tcg-layout">
         {Array.from({ length: maxRosterSize }).map((_, index) => (
           <LineupSlot
             key={index}
@@ -56,7 +59,7 @@ export function TeamBuilder({
       <div className="contest-builder-actions">
         {canManageLineup ? (
           <>
-            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Browse full gallery</Button>
+            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Open card selector</Button>
             <Button onClick={onSubmit} disabled={!canEnter || selectedIds.length !== maxRosterSize || submitState === "saving"}>
               {submitState === "saving" ? "Saving lineup…" : "Save lineup"}
             </Button>
