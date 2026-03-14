@@ -153,7 +153,7 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
         </span>
       </footer>
 
-      {typeof quantity === "number" && quantity > 1 && <div className="mvp-qty-chip">x{quantity}</div>}
+      {typeof quantity === "number" && quantity > 1 && <div className="mvp-qty-chip">x{quantity} copies</div>}
     </article>
   );
 }
