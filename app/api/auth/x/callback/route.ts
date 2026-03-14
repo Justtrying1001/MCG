@@ -1,12 +1,18 @@
 export const dynamic = "force-dynamic";
 
+import { timingSafeEqual } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { createSession, getSessionCookieName, getSessionMaxAgeSeconds } from "@/lib/auth";
+import { createSession, getSessionCookieName, getSessionMaxAgeSeconds, getSessionUser } from "@/lib/auth";
 import { upsertUserFromXProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { exchangeXAccessToken, fetchXProfile } from "@/lib/x-oauth";
+
+function safeTokenCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 const X_REQUEST_TOKEN_COOKIE = "mcg_x_request_token";
 const X_REQUEST_TOKEN_SECRET_COOKIE = "mcg_x_request_token_secret";
@@ -72,8 +78,18 @@ export async function GET(req: Request) {
     || !oauthVerifier
     || !expectedRequestToken
     || !requestTokenSecret
-    || oauthToken !== expectedRequestToken
+    || !safeTokenCompare(oauthToken, expectedRequestToken)
   ) {
+    // In some browsers the callback can be replayed after a successful login.
+    // At that point OAuth request cookies are already cleared, but the session is valid.
+    // Avoid surfacing a false "state invalid" error in that case.
+    const existingUser = await getSessionUser();
+    if (existingUser) {
+      const ok = NextResponse.redirect(new URL("/", req.url));
+      clearCookies(ok);
+      return ok;
+    }
+
     const fail = NextResponse.redirect(new URL("/?auth_error=x_oauth_state", req.url));
     clearCookies(fail);
     return fail;

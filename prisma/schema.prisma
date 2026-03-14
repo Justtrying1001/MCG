@@ -198,12 +198,21 @@ enum ContestEntryStatus {
 model TokenProject {
   id          String   @id @default(cuid())
   slug        String   @unique
+  coingeckoId String?  @unique
   displayName String
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  cardTemplates CardTemplate[]
+  cardTemplates          CardTemplate[]
+  contestTokenSnapshots  ContestTokenSnapshot[]
+  contestTokenScores     ContestTokenScore[]
+  contestEntryBreakdowns ContestEntryScoreBreakdown[]
+}
+
+enum ContestSnapshotPhase {
+  START
+  END
 }
 
 model CardSet {
@@ -282,6 +291,7 @@ model OwnedCardInstance {
   cardTemplate           CardTemplate      @relation(fields: [cardTemplateId], references: [id], onDelete: Restrict)
   sourcePackOpeningEvent PackOpeningEvent? @relation(fields: [sourcePackOpeningEventId], references: [id], onDelete: SetNull)
   contestRosterLocks     RosterLock[]
+  contestScoreBreakdowns ContestEntryScoreBreakdown[]
 
   @@index([userId])
   @@index([cardTemplateId])
@@ -469,6 +479,8 @@ model Contest {
   settlements ContestSettlement[]
   rewardPolicy ContestRewardPolicy?
   settlementPlans ContestSettlementPlan[]
+  tokenSnapshots ContestTokenSnapshot[]
+  tokenScores ContestTokenScore[]
 }
 
 model ContestRule {
@@ -558,7 +570,8 @@ model ContestEntry {
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  rosterLocks RosterLock[]
+  rosterLocks      RosterLock[]
+  scoreBreakdowns ContestEntryScoreBreakdown[]
 
   @@unique([contestId, userId])
   @@index([contestId])
@@ -573,9 +586,72 @@ model RosterLock {
 
   contestEntry      ContestEntry      @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
   ownedCardInstance OwnedCardInstance @relation(fields: [ownedCardInstanceId], references: [id], onDelete: Restrict)
+  scoreBreakdowns ContestEntryScoreBreakdown[]
 
   @@unique([contestEntryId, ownedCardInstanceId])
   @@index([ownedCardInstanceId])
+}
+
+model ContestTokenSnapshot {
+  id            String              @id @default(cuid())
+  contestId     String
+  tokenProjectId String
+  geckoId       String
+  phase         ContestSnapshotPhase
+  priceUsd      Decimal?            @db.Decimal(20, 8)
+  marketCapUsd  Decimal?            @db.Decimal(30, 8)
+  volume24hUsd  Decimal?            @db.Decimal(30, 8)
+  marketCapRank Int?
+  marketDataUpdatedAt DateTime?
+  capturedAt    DateTime            @default(now())
+  provider      String              @default("COINGECKO")
+
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
+
+  @@unique([contestId, tokenProjectId, phase])
+  @@index([contestId, phase])
+  @@index([geckoId])
+}
+
+model ContestTokenScore {
+  id              String   @id @default(cuid())
+  contestId       String
+  tokenProjectId  String
+  score           Float
+  priceChange     Float?
+  marketCapChange Float?
+  volumeChange    Float?
+  rankChange      Float?
+  computedAt      DateTime @default(now())
+
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
+
+  @@unique([contestId, tokenProjectId])
+  @@index([contestId, score])
+}
+
+model ContestEntryScoreBreakdown {
+  id               String   @id @default(cuid())
+  entryId          String
+  tokenProjectId   String
+  cardInstanceId   String
+  rosterLockId     String
+  baseScore        Float
+  rarityMultiplier Float
+  editionMultiplier Float
+  finalScore       Float
+  computedAt       DateTime @default(now())
+
+  entry         ContestEntry       @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tokenProject  TokenProject       @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
+  cardInstance  OwnedCardInstance  @relation(fields: [cardInstanceId], references: [id], onDelete: Restrict)
+  rosterLock    RosterLock         @relation(fields: [rosterLockId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, cardInstanceId])
+  @@index([entryId])
+  @@index([tokenProjectId])
 }
 
 model ContestScore {

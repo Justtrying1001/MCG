@@ -100,6 +100,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
         <h1 className="page-title">Lifecycle Control Panel</h1>
         <p className="contest-inline-note">Current phase: <strong>{currentPhase ?? "loading…"}</strong></p>
         <p className="contest-inline-note">Allowed next transitions: {currentPhase ? (getAllowedContestTransitions(currentPhase).join(", ") || "none") : "—"}</p>
+        <p className="contest-inline-note">Automation: transition to <strong>LIVE</strong> auto-captures START snapshot. Transition to <strong>SETTLED</strong> auto-captures END snapshot and auto-runs native scoring compute (ranking rebuild included).</p>
 
         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
           <label className="contest-inline-note">Target phase</label>

@@ -132,8 +132,8 @@ async function run() {
   for (const token of mvpTokens) {
     const tokenProject = await prisma.tokenProject.upsert({
       where: { slug: token.slug },
-      update: { displayName: token.displayName, isActive: true },
-      create: { slug: token.slug, displayName: token.displayName, isActive: true },
+      update: { displayName: token.displayName, isActive: true, coingeckoId: token.coingeckoId ?? null },
+      create: { slug: token.slug, displayName: token.displayName, isActive: true, coingeckoId: token.coingeckoId ?? null },
     });
 
     for (const rarity of RARITY_SEED) {
@@ -205,6 +205,28 @@ async function run() {
           },
         });
       }
+    }
+  }
+
+  const tokenProjectsWithoutGecko = await prisma.tokenProject.findMany({
+    where: { coingeckoId: null },
+    select: {
+      id: true,
+      cardTemplates: {
+        select: { metadata: true },
+        take: 1,
+      },
+    },
+  });
+
+  for (const project of tokenProjectsWithoutGecko) {
+    const metadata = project.cardTemplates[0]?.metadata;
+    const value = metadata?.tokenIdentity?.coingeckoId;
+    if (typeof value === "string" && value.trim().length > 0) {
+      await prisma.tokenProject.update({
+        where: { id: project.id },
+        data: { coingeckoId: value.trim().toLowerCase() },
+      });
     }
   }
 

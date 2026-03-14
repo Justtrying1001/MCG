@@ -74,6 +74,8 @@ export default function AccountPage() {
     [userQuests],
   );
 
+  const accountBreakdown = account?.progressionBreakdown;
+
   return (
     <SiteShell>
       {!me ? (
