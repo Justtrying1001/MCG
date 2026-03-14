@@ -8,6 +8,7 @@ export function TeamBuilder({
   selectedCards,
   selectedIds,
   filteredOptions,
+  activeSlot,
   canManageLineup,
   canEnter,
   submitState,
@@ -20,6 +21,7 @@ export function TeamBuilder({
   selectedCards: Array<LineupOption | null>;
   selectedIds: string[];
   filteredOptions: LineupOption[];
+  activeSlot: number | null;
   canManageLineup: boolean;
   canEnter: boolean;
   submitState: "idle" | "saving" | "success";
@@ -36,7 +38,7 @@ export function TeamBuilder({
       <div className="contest-builder-head">
         <div>
           <p className="mcg-eyebrow">Tournament team builder</p>
-          <strong className="contest-builder-title">Build your 5-card lineup</strong>
+          <strong className="contest-builder-title">Build your {maxRosterSize}-card lineup</strong>
         </div>
         <strong>{filled}/{maxRosterSize} slots filled</strong>
       </div>
@@ -50,6 +52,7 @@ export function TeamBuilder({
             index={index}
             card={selectedCards[index]}
             canEdit={canManageLineup}
+            isActive={activeSlot === index}
             onRemove={() => onRemoveSlot(index)}
             onOpenPicker={() => onOpenPicker(index)}
           />
@@ -59,9 +62,9 @@ export function TeamBuilder({
       <div className="contest-builder-actions">
         {canManageLineup ? (
           <>
-            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Open card selector</Button>
+            <Button variant="ghost" onClick={() => onOpenPicker(null)}>Clear active slot</Button>
             <Button onClick={onSubmit} disabled={!canEnter || selectedIds.length !== maxRosterSize || submitState === "saving"}>
-              {submitState === "saving" ? "Saving lineup…" : "Save lineup"}
+              {submitState === "saving" ? "Saving lineup…" : "Save team"}
             </Button>
           </>
         ) : (
@@ -69,7 +72,13 @@ export function TeamBuilder({
         )}
       </div>
 
-      <EligibleCardsPanel options={filteredOptions} selectedIds={selectedIds} canManage={canManageLineup} onToggle={onToggle} />
+      <EligibleCardsPanel
+        options={filteredOptions}
+        selectedIds={selectedIds}
+        activeSlot={activeSlot}
+        canManage={canManageLineup}
+        onAssign={onToggle}
+      />
     </section>
   );
 }

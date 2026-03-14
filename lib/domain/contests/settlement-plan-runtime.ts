@@ -284,6 +284,17 @@ export async function executeSettlementPlan(planId: string) {
 
     await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
+    await tx.ownedCardInstance.updateMany({
+      where: {
+        contestRosterLocks: {
+          some: {
+            contestEntry: { contestId: plan.contestId },
+          },
+        },
+      },
+      data: { lockState: null },
+    });
+    await tx.rosterLock.deleteMany({ where: { contestEntry: { contestId: plan.contestId } } });
     await tx.contestSettlementPlan.update({
       where: { id: plan.id },
       data: { status: SETTLEMENT_PLAN_STATUS.EXECUTED, executedAt: new Date() },
@@ -297,6 +308,29 @@ export async function executeSettlementPlan(planId: string) {
       rewardCount,
     };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
+
+export async function executeAutoSettlementForContest(contestId: string) {
+  const existingSettlement = await prisma.contestSettlement.findUnique({ where: { contestId }, select: { id: true } });
+  if (existingSettlement) {
+    return {
+      executed: false,
+      contestId,
+      settlementId: existingSettlement.id,
+      reason: "ALREADY_SETTLED",
+    };
+  }
+
+  const plan = await generateSettlementPlan(contestId);
+  const execution = await executeSettlementPlan(plan.planId);
+
+  return {
+    executed: execution.executed,
+    contestId,
+    planId: plan.planId,
+    settlementId: execution.settlementId,
+    rewardCount: execution.rewardCount,
+  };
 }
 
 function resolveBundleComponents(

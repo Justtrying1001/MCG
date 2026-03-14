@@ -6,6 +6,7 @@ const {
   captureStartSnapshotMock,
   captureEndSnapshotMock,
   computeContestScoresFromSnapshotsMock,
+  executeAutoSettlementForContestMock,
 } = vi.hoisted(() => ({
   prismaMock: {
     contest: {
@@ -17,6 +18,7 @@ const {
   captureStartSnapshotMock: vi.fn(),
   captureEndSnapshotMock: vi.fn(),
   computeContestScoresFromSnapshotsMock: vi.fn(),
+  executeAutoSettlementForContestMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
@@ -27,6 +29,9 @@ vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({
 vi.mock("@/lib/domain/contests/scoring-engine-runtime", () => ({
   computeContestScoresFromSnapshots: computeContestScoresFromSnapshotsMock,
 }));
+vi.mock("@/lib/domain/contests/settlement-plan-runtime", () => ({
+  executeAutoSettlementForContest: executeAutoSettlementForContestMock,
+}));
 
 import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 
@@ -36,6 +41,7 @@ describe("contest lifecycle reconciliation", () => {
     captureStartSnapshotMock.mockResolvedValue({});
     captureEndSnapshotMock.mockResolvedValue({});
     computeContestScoresFromSnapshotsMock.mockResolvedValue({});
+    executeAutoSettlementForContestMock.mockResolvedValue({ executed: true });
     prismaMock.contest.updateMany.mockResolvedValue({ count: 1 });
   });
 
@@ -88,6 +94,7 @@ describe("contest lifecycle reconciliation", () => {
     expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.SETTLED]);
     expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
     expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledWith("c1");
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
   });
 
   it("catches up OPEN directly to SETTLED step-by-step", async () => {
@@ -109,6 +116,7 @@ describe("contest lifecycle reconciliation", () => {
     expect(captureStartSnapshotMock).toHaveBeenCalledTimes(1);
     expect(captureEndSnapshotMock).toHaveBeenCalledTimes(1);
     expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledTimes(1);
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledTimes(1);
   });
 
   it("reconciles due contests in batch", async () => {

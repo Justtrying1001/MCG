@@ -16,12 +16,15 @@ export type ContestListItem = {
   endsAt: string | null;
   rules: ContestRule[];
   _count: { entries: number };
+  seasonName?: string | null;
+  leagueTierRequired?: "BRONZE" | "SILVER" | "GOLD" | "DIAMOND" | "LEGEND" | null;
 };
 
 export type LineupOption = {
   instanceId: string;
   cardTemplateId: string;
   lockState: string | null;
+  isLockedByActiveContest: boolean;
   cardSetId: string;
   cardSetCode: string;
   cardSetName: string;

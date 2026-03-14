@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock, warnSpy } = vi.hoisted(() => ({
+const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock } = vi.hoisted(() => ({
   prismaMock: { $transaction: vi.fn() },
   resolveEligibleTokensForContestMock: vi.fn(),
   fetchCoinsMarketsMock: vi.fn(),
-  warnSpy: vi.spyOn(console, "warn").mockImplementation(() => undefined),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
@@ -58,7 +57,7 @@ describe("snapshot runtime edge cases", () => {
     expect(new Set(upsertCalls.map((r) => `${r.contestId}:${r.tokenProjectId}:${r.phase}`)).size).toBe(2);
   });
 
-  it("does not crash on CoinGecko failure and stores null metrics", async () => {
+  it("fails fast on CoinGecko failure to block lifecycle transition", async () => {
     const upserts: any[] = [];
     const tx: any = {
       contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
@@ -77,12 +76,7 @@ describe("snapshot runtime edge cases", () => {
     ]);
     fetchCoinsMarketsMock.mockRejectedValue(new Error("429 rate limit"));
 
-    const result = await captureStartSnapshot("c1");
-
-    expect(result.capturedCount).toBe(2);
-    expect(result.missingGeckoIds).toBe(1);
-    expect(upserts[0].create.priceUsd).toBeNull();
-    expect(upserts[0].create.marketDataUpdatedAt).toBeNull();
-    expect(warnSpy).toHaveBeenCalled();
+    await expect(captureStartSnapshot("c1")).rejects.toThrow(/CoinGecko snapshot fetch failed/i);
+    expect(upserts).toHaveLength(0);
   });
 });

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { ensureContestLifecycleSchedulerStarted } from "@/lib/domain/contests/lifecycle-scheduler";
 import "./globals.css";
 import "./design-system.css";
 import "../styles/tokens.css";
@@ -21,6 +22,8 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  ensureContestLifecycleSchedulerStarted();
+
   return (
     <html lang="en">
       <head>

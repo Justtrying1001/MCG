@@ -13,6 +13,7 @@ const navItems = [
   { href: "/packs", label: "Packs" },
   { href: "/collection", label: "Collection" },
   { href: "/contests", label: "Contests" },
+  { href: "/seasons", label: "Seasons" },
   { href: "/rewards", label: "Rewards" },
   { href: "/compte", label: "Profile" },
 ];

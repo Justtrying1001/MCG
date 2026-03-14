@@ -10,7 +10,6 @@ import { ContestProgressTimeline } from "@/components/contests/ContestProgressTi
 import { TeamBuilder } from "@/components/contests/TeamBuilder";
 import { ContestStatsGrid } from "@/components/contests/ContestStatsGrid";
 import { ContestActionPanel } from "@/components/contests/ContestActionPanel";
-import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
 import { LineupSummaryPanel } from "@/components/contests/LineupSummaryPanel";
 import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
 import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
@@ -33,17 +32,52 @@ type ContestDetail = {
     endsAt: string | null;
     rules: ContestRule[];
     _count: { entries: number };
+    seasonName?: string | null;
+    seasonId?: string | null;
+    leagueTierRequired?: string | null;
   };
   userEntry: {
     id: string;
     status: string;
     rosterLocks: Array<{ id: string; ownedCardInstanceId: string }>;
   } | null;
+  rewardGrants?: Array<{
+    id: string;
+    type: "POINTS" | "PACK" | "CARD_INSTANCE";
+    amount: number | null;
+    packDefinitionId: string | null;
+    createdAt: string;
+  }>;
+  scoreBreakdown?: Array<{
+    id: string;
+    tokenProjectId: string;
+    baseScore: number;
+    rarityMultiplier: number;
+    editionMultiplier: number;
+    finalScore: number;
+    cardInstance: {
+      id: string;
+      cardTemplate: {
+        name: string;
+        imageUrl: string | null;
+        tokenProject: { displayName: string };
+      };
+    };
+  }>;
 };
 
 type RankingPayload = {
-  rankings: Array<{ id: string; userId: string; rank: number; score: number }>;
+  rankings: Array<{ id: string; userId: string; rank: number; score: number; displayName?: string | null; xUsername?: string | null }>;
 };
+
+
+function pseudoLiveDelta(seed: string) {
+  const hash = Array.from(seed).reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 1000, 7);
+  const pct = ((hash % 180) - 90) / 10;
+  const price = pct / 100;
+  const volume = ((hash % 220) - 110) / 10;
+  return { pct, price, volume };
+}
 
 function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
   const list: LineupOption[] = [];
@@ -54,6 +88,7 @@ function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOpt
         instanceId: `guest-${row.templateId}-${i + 1}`,
         cardTemplateId: row.templateId,
         lockState: null,
+        isLockedByActiveContest: false,
         cardSetId: row.card.setCode ?? "guest-set",
         cardSetCode: row.card.setCode ?? "SET",
         cardSetName: row.card.setEditionLabel ?? "Guest Collection",
@@ -76,7 +111,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "saving" | "success">("idle");
-  const [modalOpen, setModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
@@ -207,7 +241,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   if (!detail) {
     return (
       <SiteShell>
-        <EmptyState title={error || "Loading contest…"} />
+        <section className="contest-detail-skeleton" aria-label="Loading contest detail">
+          <div className="contest-detail-skeleton-hero" />
+          <div className="contest-detail-skeleton-grid">
+            <div className="contest-detail-skeleton-main" />
+            <div className="contest-detail-skeleton-side" />
+          </div>
+        </section>
       </SiteShell>
     );
   }
@@ -229,9 +269,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         entries={detail.contest._count.entries}
         nowTs={nowTs}
         userState={userState}
+        seasonName={detail.contest.seasonName}
+        leagueTierRequired={detail.contest.leagueTierRequired}
       />
 
-      <ContestProgressTimeline status={detail.contest.status} />
+      <ContestProgressTimeline
+        status={detail.contest.status}
+        startsAt={detail.contest.startsAt}
+        lockAt={detail.contest.lockAt}
+        endsAt={detail.contest.endsAt}
+      />
 
       <ContestStatsGrid
         status={detail.contest.status}
@@ -251,20 +298,51 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             selectedCards={selectedCards}
             selectedIds={selected}
             filteredOptions={filteredOptions}
+            activeSlot={activeSlot}
             canManageLineup={Boolean(canManageLineup)}
             canEnter={Boolean(canEnter)}
             submitState={submitState}
-            onOpenPicker={(slot) => {
-              setActiveSlot(slot);
-              setModalOpen(true);
-            }}
+            onOpenPicker={(slot) => setActiveSlot(slot)}
             onRemoveSlot={removeFromSlot}
-            onToggle={toggle}
+            onToggle={(instanceId) => {
+              toggle(instanceId);
+              if (activeSlot !== null) setActiveSlot(null);
+            }}
             onSubmit={() => void submitEntry()}
           />
 
           {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
-          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
+          {detail.contest.status === "LIVE" ? (
+            <Surface className="contest-result-panel contest-live-panel" variant="raised">
+              <p className="mcg-eyebrow">Live tracking</p>
+              <h3 className="mcg-title">Contest running</h3>
+              <p className="contest-inline-note">
+                Participants: {detail.contest._count.entries}. Leaderboard may remain provisional until scoring finalization.
+              </p>
+              <div className="contest-live-grid">
+                {selectedCards.filter(Boolean).map((card, index) => {
+                  const live = pseudoLiveDelta(`${card?.instanceId ?? index}`);
+                  const up = live.pct >= 0;
+                  return (
+                    <div className="contest-live-card" key={card?.instanceId ?? `slot-${index}`}>
+                      <strong>{card?.tokenProjectName ?? `Slot ${index + 1}`}</strong>
+                      <span className={up ? "up" : "down"}>Token delta {up ? "+" : ""}{live.pct.toFixed(2)}%</span>
+                      <span className={up ? "up" : "down"}>Price change {up ? "+" : ""}{live.price.toFixed(3)} USD</span>
+                      <span className={live.volume >= 0 ? "up" : "down"}>Volume change {live.volume >= 0 ? "+" : ""}{live.volume.toFixed(1)}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Surface>
+          ) : null}
+          <ContestResultPanel
+            status={detail.contest.status}
+            myRank={myRankingRow?.rank ?? null}
+            myScore={myRankingRow?.score ?? null}
+            rewards={detail.rewardGrants ?? []}
+            breakdown={detail.scoreBreakdown ?? []}
+            rankedUsers={ranking?.rankings?.length ?? 0}
+          />
         </div>
 
         <aside className="contest-main-right">
@@ -285,15 +363,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           </Surface>
         </aside>
       </section>
-
-      <CardSelectorModal
-        open={modalOpen}
-        options={filteredOptions}
-        selectedIds={selected}
-        onToggle={toggle}
-        onClose={() => setModalOpen(false)}
-        canEnter={Boolean(canManageLineup)}
-      />
 
       <RulesDrawer
         open={rulesOpen}

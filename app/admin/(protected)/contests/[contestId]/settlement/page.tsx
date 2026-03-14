@@ -143,7 +143,6 @@ export default function ContestSettlementWorkbenchPage({ params }: { params: { c
       <section className="contest-section" style={{ display: "grid", gap: "0.4rem" }}>
         <h2 className="contest-section-title">Legacy fallback</h2>
         <p className="contest-inline-note">Legacy manual settlement remains available only for old contests without published policy config.</p>
-        <Link href={`/admin/contests/legacy/${params.contestId}`} className="contest-inline-note">Open legacy contest detail</Link>
       </section>
     </div>
   );

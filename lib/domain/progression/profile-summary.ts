@@ -94,7 +94,7 @@ export async function buildProgressionSummariesV2(userId: string, points: number
   collectionProgression: CollectionProgressionSummaryV2;
   competitiveProgression: CompetitiveProgressionSummaryV2;
 }> {
-  const [userProgression, competitiveProgressionRecord, contestsEntered, activeEntries, settledEntries, rankings] = await Promise.all([
+  const [userProgression, competitiveProgressionRecord, contestsEntered, activeEntries, settledEntries, rankings, userLeague, activeSeason] = await Promise.all([
     prisma.userProgression.findUnique({ where: { userId }, select: { xp: true } }),
     prisma.competitiveProgression.findUnique({ where: { userId }, select: { contestsWon: true, rating: true } }),
     prisma.contestEntry.count({ where: { userId } }),
@@ -111,6 +111,8 @@ export async function buildProgressionSummariesV2(userId: string, points: number
       orderBy: { rankedAt: "desc" },
       take: 5,
     }),
+    prisma.user.findUnique({ where: { id: userId }, select: { league: { select: { tier: true } } } }),
+    prisma.season.findFirst({ where: { status: "ACTIVE" }, select: { id: true } }),
   ]);
 
   const bestRank = rankings.length > 0 ? Math.min(...rankings.map((row) => row.rank)) : null;
@@ -119,6 +121,13 @@ export async function buildProgressionSummariesV2(userId: string, points: number
       ? Number((rankings.reduce((acc, row) => acc + row.rank, 0) / rankings.length).toFixed(2))
       : null;
   const wonFromRankings = rankings.filter((row) => row.rank === 1).length;
+
+  const seasonStanding = activeSeason
+    ? await prisma.seasonLeaderboard.findUnique({
+        where: { seasonId_userId: { seasonId: activeSeason.id, userId } },
+        select: { rank: true, points: true },
+      })
+    : null;
 
   return {
     accountProgression: buildAccountProgressionSummary({
@@ -138,6 +147,9 @@ export async function buildProgressionSummariesV2(userId: string, points: number
       bestRank,
       averageRank,
       rating: competitiveProgressionRecord?.rating ?? null,
+      leagueTier: userLeague?.league?.tier ?? null,
+      seasonRank: seasonStanding?.rank ?? null,
+      seasonPoints: seasonStanding?.points ?? null,
       recentResults: rankings.map((row) => ({
         contestId: row.contest.id,
         contestTitle: row.contest.title,

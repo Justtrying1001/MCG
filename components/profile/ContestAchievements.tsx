@@ -5,15 +5,21 @@ export function ContestAchievements({
   contestsEntered,
   bestRank,
   rating,
+  leagueTier,
+  seasonRank,
 }: {
   contestsEntered: number;
   bestRank: number | null;
   rating: number | null;
+  leagueTier?: string | null;
+  seasonRank?: number | null;
 }) {
   const badges = [
     { label: "Entered", value: String(contestsEntered), icon: "⚔️" },
     { label: "Best rank", value: bestRank ? `#${bestRank}` : "—", icon: "🥇" },
     { label: "Rating", value: rating ? String(rating) : "—", icon: "📈" },
+    { label: "League", value: leagueTier ?? "Unranked", icon: "🛡️" },
+    { label: "Season rank", value: seasonRank ? `#${seasonRank}` : "—", icon: "🏁" },
   ];
 
   return (

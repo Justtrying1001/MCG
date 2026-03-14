@@ -12,6 +12,8 @@ import { ContestHistoryCard } from "@/components/contests/ContestHistoryCard";
 import type { ContestListItem } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
 
+type RankResponse = { rankings: Array<{ userId: string; rank: number }> };
+
 function rankForStatus(status: ContestListItem["status"]) {
   if (status === "OPEN") return 0;
   if (status === "LOCKED") return 1;
@@ -23,6 +25,7 @@ function rankForStatus(status: ContestListItem["status"]) {
 export default function ContestsPage() {
   const { me, loading } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
+  const [recentMyRanks, setRecentMyRanks] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<ContestLifecycleTab>("OPEN");
@@ -48,8 +51,8 @@ export default function ContestsPage() {
       setError("");
       const res = await fetch("/api/contests", { cache: "no-store" });
       if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error ? "We couldn't load contests right now. Please retry in a moment." : "Cannot load contests");
+        await res.json().catch(() => null);
+        setError("We couldn't load contests right now. Please retry in a moment.");
         setIsLoading(false);
         return;
       }
@@ -63,7 +66,6 @@ export default function ContestsPage() {
 
   const counts = useMemo(() => {
     const byTab: Partial<Record<ContestLifecycleTab, number>> = {
-      UPCOMING: contests.filter((c) => c.status === "DRAFT").length,
       OPEN: contests.filter((c) => c.status === "OPEN").length,
       LOCKED: contests.filter((c) => c.status === "LOCKED").length,
       LIVE: contests.filter((c) => c.status === "LIVE").length,
@@ -72,13 +74,17 @@ export default function ContestsPage() {
     return byTab;
   }, [contests]);
 
-  const featured = useMemo(() => contests.find((c) => c.status === "LIVE") ?? contests.find((c) => c.status === "OPEN") ?? null, [contests]);
+  const featured = useMemo(() => {
+    const live = contests.find((c) => c.status === "LIVE");
+    if (live) return live;
+    const open = contests
+      .filter((c) => c.status === "OPEN")
+      .sort((a, b) => new Date(a.lockAt ?? 0).getTime() - new Date(b.lockAt ?? 0).getTime());
+    return open[0] ?? null;
+  }, [contests]);
 
   const visible = useMemo(() => {
-    const lifecycleFiltered = contests.filter((contest) => {
-      if (tab === "UPCOMING") return contest.status === "DRAFT";
-      return contest.status === tab;
-    });
+    const lifecycleFiltered = contests.filter((contest) => contest.status === tab);
 
     const withSearch = lifecycleFiltered.filter((contest) => `${contest.code} ${contest.title}`.toLowerCase().includes(query.toLowerCase()));
     const withStatus = statusFilter === "ALL" ? withSearch : withSearch.filter((contest) => contest.status === statusFilter);
@@ -101,6 +107,25 @@ export default function ContestsPage() {
 
   const recentSettled = useMemo(() => contests.filter((contest) => contest.status === "SETTLED").slice(0, 8), [contests]);
 
+  useEffect(() => {
+    if (!me?.user?.id || me.mode === "guest" || recentSettled.length === 0) {
+      setRecentMyRanks({});
+      return;
+    }
+    void (async () => {
+      const pairs = await Promise.all(
+        recentSettled.map(async (contest) => {
+          const res = await fetch(`/api/contests/${contest.id}/ranking`, { cache: "no-store" });
+          if (!res.ok) return [contest.id, null] as const;
+          const payload = (await res.json()) as RankResponse;
+          const mine = payload.rankings.find((row) => row.userId === me.user.id);
+          return [contest.id, mine?.rank ?? null] as const;
+        }),
+      );
+      setRecentMyRanks(Object.fromEntries(pairs.filter(([, rank]) => typeof rank === "number") as Array<[string, number]>));
+    })();
+  }, [me, recentSettled]);
+
   return (
     <SiteShell>
       <ContestHubHero contest={featured} nowTs={nowTs} />
@@ -121,9 +146,13 @@ export default function ContestsPage() {
           />
 
           {isLoading ? (
-            <EmptyState title="Loading contests…" />
+            <section className="contest-skeleton-grid" aria-label="Loading contests">
+              {Array.from({ length: 4 }).map((_, index) => <div key={index} className="contest-skeleton-card" />)}
+            </section>
           ) : error ? (
             <EmptyState title="Unable to load contests" description={error} />
+          ) : contests.length === 0 ? (
+            <EmptyState title="No contests available" description="Check back soon for new tournaments." />
           ) : visible.length === 0 ? (
             <EmptyState title="No contests in this lifecycle" description="Adjust filters or check another status tab." />
           ) : (
@@ -147,7 +176,9 @@ export default function ContestsPage() {
             />
             {recentSettled.length > 0 ? (
               <div className="contest-results-rail">
-                {recentSettled.map((contest) => <ContestHistoryCard key={contest.id} contest={contest} />)}
+                {recentSettled.map((contest) => (
+                  <ContestHistoryCard key={contest.id} contest={contest} userRank={recentMyRanks[contest.id]} />
+                ))}
               </div>
             ) : (
               <EmptyState title="No settled contests yet" />

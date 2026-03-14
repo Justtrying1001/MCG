@@ -33,9 +33,9 @@ export function getActionability(status: ContestStatus) {
 }
 
 export function getPrimaryCtaLabel(status: ContestStatus) {
-  if (status === "OPEN") return "Build / Edit lineup";
-  if (status === "LOCKED") return "Review locked lineup";
-  if (status === "LIVE") return "Track live ranking";
-  if (status === "SETTLED") return "View results & rewards";
+  if (status === "OPEN") return "Enter contest";
+  if (status === "LOCKED") return "View team";
+  if (status === "LIVE") return "Track contest";
+  if (status === "SETTLED") return "View results";
   return "View details";
 }

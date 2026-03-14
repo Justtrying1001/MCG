@@ -11,7 +11,7 @@ function tone(status: ContestListItem["status"]) {
   return "settled" as const;
 }
 
-export function ContestHistoryCard({ contest }: { contest: ContestListItem }) {
+export function ContestHistoryCard({ contest, userRank }: { contest: ContestListItem; userRank?: number | null }) {
   const settledHint = contest.status === "SETTLED"
     ? "Results available · rewards processed during settlement · cards are available again"
     : "Contest summary";
@@ -21,6 +21,7 @@ export function ContestHistoryCard({ contest }: { contest: ContestListItem }) {
       <p className="mcg-eyebrow">{contest.code}</p>
       <strong>{contest.title}</strong>
       <p className="contest-inline-note">{contest._count.entries} entries</p>
+      {typeof userRank === "number" ? <p className="contest-inline-note">Your rank: #{userRank}</p> : null}
       <p className="contest-inline-note">{settledHint}</p>
       <StatusBadge tone={tone(contest.status)} label={contest.status} />
       <Link href={`/contests/${contest.id}`} className="mcg-btn ghost">{getPrimaryCtaLabel(contest.status)} →</Link>

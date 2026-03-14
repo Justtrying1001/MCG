@@ -17,8 +17,8 @@ describe("contest user lifecycle mapping", () => {
   });
 
   it("maps status to coherent CTA labels", () => {
-    expect(getPrimaryCtaLabel("OPEN")).toBe("Build / Edit lineup");
-    expect(getPrimaryCtaLabel("LIVE")).toBe("Track live ranking");
-    expect(getPrimaryCtaLabel("SETTLED")).toBe("View results & rewards");
+    expect(getPrimaryCtaLabel("OPEN")).toBe("Enter contest");
+    expect(getPrimaryCtaLabel("LIVE")).toBe("Track contest");
+    expect(getPrimaryCtaLabel("SETTLED")).toBe("View results");
   });
 });

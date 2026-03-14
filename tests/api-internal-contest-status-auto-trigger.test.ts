@@ -12,6 +12,7 @@ const {
   captureStartSnapshotMock,
   captureEndSnapshotMock,
   computeContestScoresFromSnapshotsMock,
+  executeAutoSettlementForContestMock,
 } = vi.hoisted(() => ({
   requireInternalAdminAccessMock: vi.fn(),
   requireAdminRoleMock: vi.fn(),
@@ -23,6 +24,7 @@ const {
   captureStartSnapshotMock: vi.fn(),
   captureEndSnapshotMock: vi.fn(),
   computeContestScoresFromSnapshotsMock: vi.fn(),
+  executeAutoSettlementForContestMock: vi.fn(),
 }));
 
 vi.mock("@/lib/internal-auth", () => ({ requireInternalAdminAccess: requireInternalAdminAccessMock }));
@@ -51,6 +53,9 @@ vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({
 vi.mock("@/lib/domain/contests/scoring-engine-runtime", () => ({
   computeContestScoresFromSnapshots: computeContestScoresFromSnapshotsMock,
 }));
+vi.mock("@/lib/domain/contests/settlement-plan-runtime", () => ({
+  executeAutoSettlementForContest: executeAutoSettlementForContestMock,
+}));
 
 import { POST } from "@/app/api/internal/contests/[contestId]/status/route";
 
@@ -74,6 +79,7 @@ describe("contest status route automation", () => {
     captureStartSnapshotMock.mockResolvedValue({});
     captureEndSnapshotMock.mockResolvedValue({});
     computeContestScoresFromSnapshotsMock.mockResolvedValue({});
+    executeAutoSettlementForContestMock.mockResolvedValue({ executed: true });
   });
 
   it("auto-triggers START snapshot when transitioning to LIVE", async () => {
@@ -115,6 +121,7 @@ describe("contest status route automation", () => {
     expect(captureStartSnapshotMock).not.toHaveBeenCalled();
     expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
     expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledWith("c1");
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
     expect(updateContestStatusMvpMock).toHaveBeenCalledWith("c1", ContestStatus.SETTLED);
   });
 
