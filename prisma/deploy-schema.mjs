@@ -2,6 +2,11 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
+const LOCK_TIMEOUT_CODE = "P1002";
+const LOCK_TIMEOUT_MARKER = "pg_advisory_lock";
+const MAX_DEPLOY_ATTEMPTS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRIES ?? "3", 10);
+const RETRY_DELAY_MS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRY_DELAY_MS ?? "5000", 10);
+
 function runPrisma(args) {
   const command = process.platform === "win32" ? "npx.cmd" : "npx";
   const result = spawnSync(command, ["prisma", ...args], {
@@ -36,8 +41,37 @@ function markApplied(migrationName) {
   }
 }
 
-function main() {
-  const migrate = runPrisma(["migrate", "deploy"]);
+function sleep(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+function isAdvisoryLockTimeout(output) {
+  return output.includes(LOCK_TIMEOUT_CODE) && output.includes(LOCK_TIMEOUT_MARKER);
+}
+
+async function deployWithLockRetry() {
+  const attempts = Math.max(1, MAX_DEPLOY_ATTEMPTS);
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const migrate = runPrisma(["migrate", "deploy"]);
+    if (migrate.ok || !isAdvisoryLockTimeout(migrate.output) || attempt === attempts) {
+      return migrate;
+    }
+
+    const backoffMs = RETRY_DELAY_MS * attempt;
+    console.warn(
+      `Prisma migrate deploy timed out while waiting for advisory lock. Retrying in ${backoffMs}ms (${attempt}/${attempts}).`
+    );
+    await sleep(backoffMs);
+  }
+
+  return { ok: false, output: "Unexpected retry failure.", status: 1 };
+}
+
+async function main() {
+  const migrate = await deployWithLockRetry();
   if (migrate.ok) {
     console.log("Prisma migrate deploy succeeded.");
     return;
@@ -63,7 +97,7 @@ function main() {
     markApplied(migrationName);
   }
 
-  const redeploy = runPrisma(["migrate", "deploy"]);
+  const redeploy = await deployWithLockRetry();
   if (!redeploy.ok) {
     process.stderr.write(redeploy.output);
     process.exit(redeploy.status);
