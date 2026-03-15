@@ -51,7 +51,7 @@ export type ContestConfigInput = {
   endsAt?: string | null;
   status?: ContestStatus;
   teamSizeMode?: "EXACT";
-  teamSizeValue?: number;
+  maxRosterSize?: number;
   eligibilityMode?: "ANY" | "CARD_SET_ONLY";
   cardSetId?: string | null;
   entryFeeEnabled?: boolean;
@@ -92,8 +92,7 @@ export async function createContestDraft(input: ContestConfigInput) {
         rules: {
           create: {
             teamSizeMode: normalized.teamSizeMode,
-            teamSizeValue: normalized.teamSizeValue,
-            maxRosterSize: normalized.teamSizeValue,
+            maxRosterSize: normalized.maxRosterSize,
             eligibilityMode: normalized.eligibilityMode,
             cardSetId: normalized.cardSetId,
             entryFeeEnabled: normalized.entryFeeEnabled,
@@ -145,7 +144,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     endsAt: input.endsAt ?? existing.endsAt?.toISOString() ?? null,
     status: input.status ?? existing.status,
     teamSizeMode: input.teamSizeMode ?? existingRule?.teamSizeMode ?? TEAM_SIZE_MODE_EXACT,
-    teamSizeValue: input.teamSizeValue ?? existingRule?.teamSizeValue ?? existingRule?.maxRosterSize ?? 5,
+    maxRosterSize: input.maxRosterSize ?? existingRule?.maxRosterSize ?? 5,
     eligibilityMode: input.eligibilityMode ?? existingRule?.eligibilityMode ?? (existingRule?.cardSetId ? ELIGIBILITY_MODE_CARD_SET_ONLY : ELIGIBILITY_MODE_ANY),
     cardSetId: input.cardSetId ?? existingRule?.cardSetId ?? null,
     entryFeeEnabled: input.entryFeeEnabled ?? existingRule?.entryFeeEnabled ?? false,
@@ -190,8 +189,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     const rule = await tx.contestRule.findFirst({ where: { contestId }, orderBy: { id: "asc" }, select: { id: true } });
     const ruleData = {
       teamSizeMode: normalized.teamSizeMode,
-      teamSizeValue: normalized.teamSizeValue,
-      maxRosterSize: normalized.teamSizeValue,
+      maxRosterSize: normalized.maxRosterSize,
       eligibilityMode: normalized.eligibilityMode,
       cardSetId: normalized.cardSetId,
       entryFeeEnabled: normalized.entryFeeEnabled,
@@ -376,8 +374,8 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
     if (rule.teamSizeMode !== TEAM_SIZE_MODE_EXACT) {
       issues.push({ code: "TEAM_MODE_UNSUPPORTED", severity: "ERROR", field: "teamSizeMode", message: "Only EXACT team size mode is supported" });
     }
-    if (![3, 5, 7].includes(rule.teamSizeValue ?? 0)) {
-      issues.push({ code: "TEAM_SIZE_INVALID", severity: "ERROR", field: "teamSizeValue", message: "teamSizeValue must be one of 3, 5, 7" });
+    if (![3, 5, 7].includes(rule.maxRosterSize ?? 0)) {
+      issues.push({ code: "TEAM_SIZE_INVALID", severity: "ERROR", field: "maxRosterSize", message: "maxRosterSize must be one of 3, 5, 7" });
     }
     if (rule.entryFeeEnabled) {
       if (rule.entryFeeCurrency !== "POINTS") {
@@ -477,7 +475,7 @@ function normalizeContestInput(input: ContestConfigInput) {
   }
 
   const teamSizeMode = input.teamSizeMode ?? TEAM_SIZE_MODE_EXACT;
-  const teamSizeValue = input.teamSizeValue ?? 5;
+  const maxRosterSize = input.maxRosterSize ?? 5;
   const eligibilityMode = input.eligibilityMode ?? (input.cardSetId ? ELIGIBILITY_MODE_CARD_SET_ONLY : ELIGIBILITY_MODE_ANY);
   const entryFeeEnabled = input.entryFeeEnabled ?? false;
   const entryFeeAmount = entryFeeEnabled ? (input.entryFeeAmount ?? null) : null;
@@ -486,8 +484,8 @@ function normalizeContestInput(input: ContestConfigInput) {
     throw new ContestRuntimeError("Only EXACT team size mode is supported", 400);
   }
 
-  if (![3, 5, 7].includes(teamSizeValue)) {
-    throw new ContestRuntimeError("teamSizeValue must be one of 3, 5, 7", 400);
+  if (![3, 5, 7].includes(maxRosterSize)) {
+    throw new ContestRuntimeError("maxRosterSize must be one of 3, 5, 7", 400);
   }
 
   if (entryFeeEnabled && (!Number.isInteger(entryFeeAmount) || (entryFeeAmount ?? 0) <= 0)) {
@@ -518,7 +516,7 @@ function normalizeContestInput(input: ContestConfigInput) {
     lockAt,
     endsAt,
     teamSizeMode,
-    teamSizeValue,
+    maxRosterSize,
     eligibilityMode,
     cardSetId: input.cardSetId?.trim() || null,
     entryFeeEnabled,

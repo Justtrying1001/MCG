@@ -22,7 +22,7 @@ const createSchema = z.object({
   entryFeeCurrency: z.literal("POINTS").optional(),
   entryFeeAmount: z.number().int().nullable().optional(),
   teamSizeMode: z.literal("EXACT").optional(),
-  teamSizeValue: z.number().int().optional(),
+  maxRosterSize: z.number().int().optional(),
   eligibilityMode: z.enum(["ANY", "CARD_SET_ONLY"]).optional(),
   cardSetId: z.string().nullable().optional(),
   rewardBundles: z.array(z.object({

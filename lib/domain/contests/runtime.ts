@@ -154,7 +154,7 @@ export async function enterContestMvp(params: {
 
     const rule = await getContestRule(tx, params.contestId);
     const teamSizeMode = rule?.teamSizeMode ?? TEAM_SIZE_MODE_EXACT;
-    const maxRosterSize = rule?.teamSizeValue ?? rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
+    const maxRosterSize = rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
 
     if (teamSizeMode !== TEAM_SIZE_MODE_EXACT) {
       throw new ContestRuntimeError("Only EXACT team size mode is currently supported", 400);

@@ -487,7 +487,6 @@ model ContestRule {
   cardSetId     String?
   maxRosterSize Int?
   teamSizeMode  ContestTeamSizeMode @default(EXACT)
-  teamSizeValue Int?
   eligibilityMode ContestEligibilityMode @default(ANY)
   entryFeeEnabled Boolean @default(false)
   entryFeeCurrency String @default("POINTS")

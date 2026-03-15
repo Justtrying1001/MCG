@@ -10,7 +10,7 @@ function baseContest() {
     rules: [
       {
         teamSizeMode: "EXACT",
-        teamSizeValue: 5,
+        maxRosterSize: 5,
         entryFeeEnabled: false,
         entryFeeCurrency: "POINTS",
         entryFeeAmount: null,
@@ -49,7 +49,7 @@ describe("contest config runtime validation", () => {
 
   it("rejects invalid team size and missing distribution", () => {
     const contest = baseContest();
-    contest.rules[0].teamSizeValue = 4;
+    contest.rules[0].maxRosterSize = 4;
     contest.rewardPolicy.distributionRules = [];
 
     const issues = validateContestDraftEntity(contest);
