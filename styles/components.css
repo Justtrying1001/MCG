@@ -2180,6 +2180,15 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
   gap: var(--space-1);
 }
 
+.rewards-inline-warning-v3 {
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--fog));
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+  font-size: 0.92rem;
+}
+
 .rewards-quest-group-v3 {
   padding: var(--space-2);
   display: grid;
