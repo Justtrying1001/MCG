@@ -65,7 +65,6 @@ export default function ContestsPage() {
       }
 
       if (!res.ok) {
-        await res.json().catch(() => null);
         setError("We couldn't load contests right now. Please retry in a moment.");
         setContests([]);
         setIsLoading(false);
