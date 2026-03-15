@@ -145,7 +145,6 @@ enum ContestRewardDistributionRuleType {
 
 enum ContestSettlementPlanStatus {
   DRAFT
-  APPROVED
   EXECUTED
   CANCELED
 }

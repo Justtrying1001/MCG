@@ -11,7 +11,6 @@ const DISTRIBUTION_RULE_TYPES = {
 
 const SETTLEMENT_PLAN_STATUS = {
   DRAFT: "DRAFT",
-  APPROVED: "APPROVED",
   EXECUTED: "EXECUTED",
   CANCELED: "CANCELED",
 } as const;
@@ -234,8 +233,8 @@ export async function executeSettlementPlan(planId: string) {
       throw new ContestRuntimeError("Contest already has a settlement execution", 409);
     }
 
-    if (plan.status !== SETTLEMENT_PLAN_STATUS.DRAFT && plan.status !== SETTLEMENT_PLAN_STATUS.APPROVED) {
-      throw new ContestRuntimeError("Only DRAFT or APPROVED plans can be executed", 409);
+    if (plan.status !== SETTLEMENT_PLAN_STATUS.DRAFT) {
+      throw new ContestRuntimeError("Only DRAFT plans can be executed", 409);
     }
 
     const settlement = await tx.contestSettlement.create({ data: { contestId: plan.contestId } });
