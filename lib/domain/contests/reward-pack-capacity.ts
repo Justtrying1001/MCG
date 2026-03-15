@@ -36,6 +36,8 @@ type ContestDraftForCapacity = {
   } | null;
 };
 
+type ContestRewardDistributionRuleForCapacity = NonNullable<ContestDraftForCapacity["rewardPolicy"]>["distributionRules"][number];
+
 export type ContestRewardPackCapacityIssue = {
   verdict: Exclude<ContestRewardPackCapacityVerdict, "OK">;
   message: string;
@@ -63,7 +65,7 @@ export type ContestRewardPackCapacityResult = {
   issues: ContestRewardPackCapacityIssue[];
 };
 
-function ruleWinnerCount(rule: ContestDraftForCapacity["rewardPolicy"]["distributionRules"][number]) {
+function ruleWinnerCount(rule: ContestRewardDistributionRuleForCapacity) {
   if (rule.ruleType === ContestRewardDistributionRuleType.FIXED_RANKS) {
     if (!Number.isInteger(rule.rankFrom) || !Number.isInteger(rule.rankTo) || (rule.rankFrom ?? 0) <= 0 || (rule.rankTo ?? 0) <= 0 || (rule.rankTo ?? 0) < (rule.rankFrom ?? 0)) {
       return null;
