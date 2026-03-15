@@ -10,6 +10,7 @@ const patchSchema = z.object({
   code: z.string().trim().min(1).optional(),
   title: z.string().trim().min(1).optional(),
   description: z.string().nullable().optional(),
+  openAt: z.string().nullable().optional(),
   liveAt: z.string().nullable().optional(),
   lockAt: z.string().nullable().optional(),
   endsAt: z.string().nullable().optional(),

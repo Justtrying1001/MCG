@@ -32,6 +32,7 @@ export default function AdminContestCreatePage() {
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [openAt, setOpenAt] = useState("");
   const [liveAt, setStartsAt] = useState("");
   const [lockAt, setLockAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
@@ -62,6 +63,7 @@ export default function AdminContestCreatePage() {
       setCode(contest.code ?? "");
       setTitle(contest.title ?? "");
       setDescription(contest.description ?? "");
+      setOpenAt(toInputDate(contest.openAt));
       setStartsAt(toInputDate(contest.liveAt));
       setLockAt(toInputDate(contest.lockAt));
       setEndsAt(toInputDate(contest.endsAt));
@@ -85,6 +87,7 @@ export default function AdminContestCreatePage() {
       title: title.trim(),
       description: description.trim() || null,
       status: "DRAFT",
+      openAt: toIso(openAt),
       liveAt: toIso(liveAt),
       lockAt: toIso(lockAt),
       endsAt: toIso(endsAt),
@@ -98,7 +101,7 @@ export default function AdminContestCreatePage() {
       rewardBundles: rewardPayload.rewardBundles,
       distributionRules: rewardPayload.distributionRules,
     };
-  }, [autoCode, cardSetId, code, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, lockAt, rules, liveAt, maxRosterSize, title]);
+  }, [autoCode, cardSetId, code, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, lockAt, rules, liveAt, maxRosterSize, openAt, title]);
 
   const issues = useMemo(() => {
     const arr: string[] = [];
@@ -172,7 +175,7 @@ export default function AdminContestCreatePage() {
 
             {step === 1 && <div className="admin-section-stack"><div className="admin-actions-row"><label><input type="checkbox" checked={autoCode} onChange={(e) => setAutoCode(e.target.checked)} /> Générer automatiquement le code</label></div><input className="input" disabled={autoCode} placeholder="CONTEST-MAR25" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} /><input className="input" placeholder="Contest title" value={title} onChange={(e) => setTitle(e.target.value)} /><textarea className="input" placeholder="Description (optionnel)" value={description} onChange={(e) => setDescription(e.target.value)} /></div>}
 
-            {step === 2 && <div className="admin-field-grid"><div><label className="contest-inline-note">openAt</label><input className="input" type="datetime-local" value={liveAt} onChange={(e) => setStartsAt(e.target.value)} /></div><div><label className="contest-inline-note">lockAt</label><input className="input" type="datetime-local" value={lockAt} onChange={(e) => setLockAt(e.target.value)} /></div><div><label className="contest-inline-note">endAt</label><input className="input" type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></div></div>}
+            {step === 2 && <div className="admin-field-grid"><div><label className="contest-inline-note">openAt</label><input className="input" type="datetime-local" value={openAt} onChange={(e) => setOpenAt(e.target.value)} /></div><div><label className="contest-inline-note">liveAt</label><input className="input" type="datetime-local" value={liveAt} onChange={(e) => setStartsAt(e.target.value)} /></div><div><label className="contest-inline-note">lockAt</label><input className="input" type="datetime-local" value={lockAt} onChange={(e) => setLockAt(e.target.value)} /></div><div><label className="contest-inline-note">endAt</label><input className="input" type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></div></div>}
 
             {step === 3 && <div className="admin-field-grid"><label><input type="checkbox" checked={entryFeeEnabled} onChange={(e) => setEntryFeeEnabled(e.target.checked)} /> Entry fee enabled</label><input className="input" type="number" min={1} disabled={!entryFeeEnabled} value={entryFeeAmount} onChange={(e) => setEntryFeeAmount(e.target.value)} /></div>}
 

@@ -464,9 +464,13 @@ model Contest {
   description String?
   status    ContestStatus @default(DRAFT)
   configPublishedAt DateTime?
+  openAt    DateTime?
   liveAt    DateTime?
   lockAt    DateTime?
   endsAt    DateTime?
+  qstashOpenJobId   String?
+  qstashLiveJobId   String?
+  qstashSettleJobId String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 

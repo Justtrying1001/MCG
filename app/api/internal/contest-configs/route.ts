@@ -15,6 +15,7 @@ const createSchema = z.object({
   autoGenerateCode: z.boolean().optional(),
   title: z.string().trim().min(1),
   description: z.string().optional().nullable(),
+  openAt: z.string().nullable().optional(),
   liveAt: z.string().nullable().optional(),
   lockAt: z.string().nullable().optional(),
   endsAt: z.string().nullable().optional(),
