@@ -474,6 +474,7 @@ export async function getContestRankingMvp(contestId: string) {
     const rankings = await tx.contestRanking.findMany({
       where: { contestId },
       orderBy: [{ rank: "asc" }],
+      include: { user: { select: { id: true, displayName: true, xUsername: true } } },
     });
 
     return { contest, rankings };

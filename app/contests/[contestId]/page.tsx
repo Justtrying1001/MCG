@@ -42,7 +42,7 @@ type ContestDetail = {
 };
 
 type RankingPayload = {
-  rankings: Array<{ id: string; userId: string; rank: number; score: number }>;
+  rankings: Array<{ id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } }>;
 };
 
 function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
