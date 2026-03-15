@@ -47,44 +47,8 @@ export async function seedMilestoneQuests(prisma: PrismaLike) {
     created.push(milestone.code);
   }
 
-  const inviteQuestCode = "quest_invite_friend_1";
-  const inviteQuest = await prisma.questDefinition.findUnique({ where: { code: inviteQuestCode } });
-  if (inviteQuest) {
-    existing.push(inviteQuestCode);
-  } else {
-    await prisma.questDefinition.create({
-      data: {
-        code: inviteQuestCode,
-        type: QuestType.CONTEST_COUNT_MILESTONE,
-        title: "Invite 1 friend",
-        description: "Invite 1 friend and unlock 1000 points.",
-        rewardPoints: 1000,
-        validationMode: QuestValidationMode.AUTO,
-        oneTime: true,
-        isActive: true,
-        config: {
-          seedKey: "INVITE_QUEST_V1_INVITE_1_FRIEND",
-          slug: "invite-1-friend",
-          adminTitle: "Quest · Invite 1 friend",
-          category: "INVITED_FRIENDS",
-          adminDescription: "Entry referral quest rewarding first successful invite.",
-          metricKey: "INVITED_FRIENDS",
-          milestoneType: "INVITED_FRIENDS",
-          targetValue: 1,
-          threshold: 1,
-          sortOrder: 155,
-          unique: true,
-          repeatable: false,
-          lifecycleStatus: "ACTIVE",
-          source: "invite_program_seed_v1",
-        },
-      },
-    });
-    created.push(inviteQuestCode);
-  }
-
   return {
-    expectedCount: MILESTONE_SEED_DEFINITIONS.length + 1,
+    expectedCount: MILESTONE_SEED_DEFINITIONS.length,
     createdCount: created.length,
     existingCount: existing.length,
     created,

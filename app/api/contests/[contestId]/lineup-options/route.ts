@@ -1,13 +1,11 @@
-import { NextResponse } from "next/server";
 import { ContestStatus } from "@prisma/client";
-
-export const dynamic = "force-dynamic";
-
-import { ContestEntryStatus, ContestStatus } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 const ACTIVE_LOCK_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
 
@@ -30,17 +28,6 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
             tokenProject: true,
           },
         },
-        contestRosterLocks: {
-          where: {
-            contestEntry: {
-              contestId: { not: params.contestId },
-              contest: { status: { in: ACTIVE_LOCK_STATUSES } },
-              status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.SCORED] },
-            },
-          },
-          select: { id: true },
-          take: 1,
-        },
       },
       orderBy: { acquiredAt: "desc" },
       take: 150,
@@ -50,7 +37,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       where: {
         ownedCardInstanceId: { in: instances.map((instance) => instance.id) },
         contestEntry: {
-          contest: { status: { in: ACTIVE_CONTEST_STATUSES } },
+          contest: { status: { in: ACTIVE_LOCK_STATUSES } },
         },
       },
       select: {
@@ -66,10 +53,12 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
 
     const options = instances
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)
-      .map((instance) => ({
+      .map((instance) => {
+        const lockedInContestId = activeLockByInstance.get(instance.id);
+        return {
           instanceId: instance.id,
           cardTemplateId: instance.cardTemplateId,
-          isLockedInOtherContest: instance.contestRosterLocks.length > 0,
+          isLockedByActiveContest: lockedInContestId !== undefined && lockedInContestId !== params.contestId,
           cardSetId: instance.cardTemplate.cardSetId,
           cardSetCode: instance.cardTemplate.cardSet.code,
           cardSetName: instance.cardTemplate.cardSet.displayName,
@@ -79,7 +68,8 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           imageUrl: instance.cardTemplate.imageUrl,
           tokenProjectName: instance.cardTemplate.tokenProject?.displayName ?? "Unknown project",
           tokenProjectId: instance.cardTemplate.tokenProject?.id ?? null,
-      }));
+        };
+      });
 
     return NextResponse.json({ options });
   } catch (error) {

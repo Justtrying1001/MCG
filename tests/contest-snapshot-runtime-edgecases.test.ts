@@ -7,6 +7,7 @@ const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock, 
   },
   resolveEligibleTokensForContestMock: vi.fn(),
   fetchCoinsMarketsMock: vi.fn(),
+  warnSpy: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
@@ -19,6 +20,7 @@ describe("snapshot runtime edge cases", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
+    vi.spyOn(console, "warn").mockImplementation(warnSpy);
   });
 
   it("rejects END snapshot when START canonical rows are missing", async () => {

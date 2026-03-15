@@ -1,7 +1,7 @@
 import { ContestStatus } from "@prisma/client";
 
 import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
-import { generateSettlementPlan, executeSettlementPlan } from "@/lib/domain/contests/settlement-plan-runtime";
+import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
 import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { prisma } from "@/lib/prisma";
 
@@ -77,25 +77,7 @@ async function runAutomationBeforeTransition(contestId: string, target: ContestS
 
 async function tryAutoSettle(contestId: string) {
   try {
-    const contest = await prisma.contest.findUnique({
-      where: { id: contestId },
-      include: {
-        rewardPolicy: { select: { status: true } },
-        settlements: { select: { id: true } },
-        rankings: { select: { userId: true } },
-      },
-    });
-
-    if (!contest) return;
-    if (contest.settlements.length > 0) return;
-    if (contest.rankings.length === 0) return;
-    if (contest.rewardPolicy?.status !== "PUBLISHED") {
-      console.warn(`[auto-settle] Contest ${contestId} has no published reward policy — skipping auto-settlement`);
-      return;
-    }
-
-    const { planId } = await generateSettlementPlan(contestId);
-    await executeSettlementPlan(planId);
+    await executeAutoSettlementForContest(contestId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[auto-settle] Failed for contest ${contestId}: ${message}`);

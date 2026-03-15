@@ -285,7 +285,6 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
     rewardPointsEarned,
     rosterSubmissions,
     contestsSettled,
-    invitedFriends,
     user,
   ] = await Promise.all([
     tx.contestEntry.count({ where: { userId } }),
@@ -301,7 +300,6 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
     tx.rewardLedgerEntry.aggregate({ where: { userId, entryType: RewardLedgerEntryType.CREDIT }, _sum: { amount: true } }),
     tx.rosterLock.count({ where: { contestEntry: { userId } } }),
     tx.contestEntry.count({ where: { userId, status: "SETTLED" } }),
-    tx.userInvite.count({ where: { inviterId: userId } }),
     tx.user.findUnique({ where: { id: userId }, select: { points: true } }),
   ]);
 
@@ -320,7 +318,7 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
     ROSTER_SUBMISSIONS_COUNT: rosterSubmissions,
     CONTESTS_SETTLED_COUNT: contestsSettled,
     POINTS_BALANCE_REACHED: user?.points ?? 0,
-    INVITED_FRIENDS: invitedFriends,
+    INVITED_FRIENDS: 0,
   } as const;
 }
 
