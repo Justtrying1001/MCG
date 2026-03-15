@@ -10,6 +10,7 @@ datasource db {
 model User {
   id           String        @id @default(cuid())
   xUserId      String        @unique
+  inviteCode   String        @unique
   xUsername    String
   displayName  String
   avatarUrl    String?
@@ -36,6 +37,29 @@ model User {
   userProgression        UserProgression?
   collectionProgressions CollectionProgression[]
   competitiveProgression CompetitiveProgression?
+  leagueId              String?
+  league                League?                @relation(fields: [leagueId], references: [id], onDelete: SetNull)
+  seasonRatings         UserContestRating[]
+  contestRatingChanges  ContestRatingChange[]
+  seasonLeaderboards    SeasonLeaderboard[]
+  seasonRewardGrants    SeasonRewardGrant[]
+  sentInvites           UserInvite[]   @relation("UserInvitesSent")
+  receivedInvite        UserInvite?    @relation("UserInviteReceived")
+}
+
+model UserInvite {
+  id         String   @id @default(cuid())
+  inviterId  String
+  inviteeId  String   @unique
+  inviteCode String
+  createdAt  DateTime @default(now())
+
+  inviter User @relation("UserInvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("UserInviteReceived", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([inviterId, inviteeId])
+  @@index([inviterId])
+  @@index([inviteCode])
 }
 
 model UserSession {
@@ -194,6 +218,21 @@ enum ContestEntryStatus {
   CANCELED
 }
 
+
+enum SeasonStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+}
+
+enum LeagueTier {
+  BRONZE
+  SILVER
+  GOLD
+  DIAMOND
+  LEGEND
+}
+
 model TokenProject {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -317,6 +356,14 @@ model PackDefinition {
   @@index([cardSetId])
 }
 
+model RewardPackSupply {
+  id            String   @id
+  totalSupply   Int
+  distributed   Int      @default(0)
+  lastUpdatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
 model DropTable {
   id               String   @id @default(cuid())
   packDefinitionId String
@@ -370,6 +417,7 @@ model RewardGrant {
   packDefinitionId          String?
   sourcePackOpeningEventId  String?
   sourceContestSettlementId String?
+  claimedAt                 DateTime?
   createdAt                 DateTime   @default(now())
 
   user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -379,6 +427,7 @@ model RewardGrant {
 
   @@index([userId])
   @@index([type])
+  @@index([claimedAt])
 }
 
 model RewardLedgerEntry {
@@ -457,6 +506,39 @@ model QuestSubmission {
   @@index([status])
 }
 
+
+model Season {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  startsAt  DateTime
+  endsAt    DateTime
+  status    SeasonStatus @default(UPCOMING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  contests          Contest[]
+  userRatings       UserContestRating[]
+  leaderboardRows   SeasonLeaderboard[]
+  ratingChanges     ContestRatingChange[]
+  rewardGrants      SeasonRewardGrant[]
+
+  @@index([status, startsAt])
+}
+
+model League {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  tier       LeagueTier @unique
+  minRating  Int
+  maxRating  Int
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  users User[]
+
+  @@index([minRating, maxRating])
+}
+
 model Contest {
   id        String        @id @default(cuid())
   code      String        @unique
@@ -473,7 +555,10 @@ model Contest {
   qstashSettleJobId String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  seasonId  String?
+  leagueTierRequired LeagueTier?
 
+  season      Season?        @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   rules       ContestRule[]
   entries     ContestEntry[]
   scores      ContestScore[]
@@ -483,6 +568,7 @@ model Contest {
   settlementPlans ContestSettlementPlan[]
   tokenSnapshots ContestTokenSnapshot[]
   tokenScores ContestTokenScore[]
+  ratingChanges ContestRatingChange[]
 }
 
 model ContestRule {
@@ -736,6 +822,71 @@ model ContestSettlementPlanItem {
 
   @@unique([planId, userId])
   @@index([planId, rank])
+}
+
+
+model UserContestRating {
+  id            String   @id @default(cuid())
+  userId        String
+  seasonId      String
+  rating        Int      @default(1200)
+  lastUpdatedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
+  @@index([seasonId, rating])
+}
+
+model ContestRatingChange {
+  id          String   @id @default(cuid())
+  contestId   String
+  seasonId    String
+  userId      String
+  rank        Int
+  percentile  Float
+  ratingDelta Int
+  pointsDelta Int
+  createdAt   DateTime @default(now())
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  season  Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([seasonId, createdAt])
+}
+
+model SeasonLeaderboard {
+  id        String   @id @default(cuid())
+  seasonId  String
+  userId    String
+  points    Int      @default(0)
+  rank      Int?
+  updatedAt DateTime @updatedAt
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, userId])
+  @@index([seasonId, points])
+}
+
+model SeasonRewardGrant {
+  id        String   @id @default(cuid())
+  seasonId  String
+  userId    String
+  rank      Int
+  rewardType ContestRewardType
+  amount    Int
+  createdAt DateTime @default(now())
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([seasonId, rank])
+  @@index([userId, createdAt])
 }
 
 model UserProgression {

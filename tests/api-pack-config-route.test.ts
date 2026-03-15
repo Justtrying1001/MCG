@@ -22,7 +22,7 @@ describe("GET /api/pack/config", () => {
         code: "mvp_sale_pack",
         displayName: "MCG MVP Sale Pack",
         cardsPerPack: 5,
-        plannedPackCount: 11000,
+        plannedPackCount: 10000,
         openedPackCount: 100,
         remainingPackCount: 10900,
         isActive: true,

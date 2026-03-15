@@ -1,35 +1,86 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { ContestHubHero } from "@/components/contests/ContestHubHero";
-import { ContestLifecycleTabs, type ContestLifecycleTab } from "@/components/contests/ContestLifecycleTabs";
-import { ContestFiltersBar, type ContestSort } from "@/components/contests/ContestFiltersBar";
-import { ContestTile } from "@/components/contests/ContestTile";
-import { ContestHistoryCard } from "@/components/contests/ContestHistoryCard";
+import { ContestHubHeader } from "@/components/contests/ContestHubHeader";
+import { ContestPremiumCard } from "@/components/contests/ContestPremiumCard";
+import { ContestStatusSegmented, type ContestHubTab } from "@/components/contests/ContestStatusSegmented";
 import type { ContestListItem } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
 
-function rankForStatus(status: ContestListItem["status"]) {
-  if (status === "OPEN") return 0;
-  if (status === "LOCKED") return 1;
-  if (status === "LIVE") return 2;
-  if (status === "SETTLED") return 3;
-  return 4;
+type ContestPayload = { contests?: ContestListItem[] };
+
+function belongsToTab(contest: ContestListItem, tab: ContestHubTab) {
+  if (tab === "OPEN") return contest.status === "OPEN";
+  if (tab === "IN_PROGRESS") return contest.status === "LOCKED" || contest.status === "LIVE";
+  return contest.status === "SETTLED";
+}
+
+function getEmptyByTab(tab: ContestHubTab) {
+  if (tab === "OPEN") {
+    return {
+      title: "No open contests right now",
+      description: "Check back soon — new competitions are prepared regularly.",
+    };
+  }
+  if (tab === "IN_PROGRESS") {
+    return {
+      title: "No contests in this lifecycle",
+      description: "Adjust filters or check another status tab.",
+    };
+  }
+  return {
+    title: "No finished contests yet",
+    description: "Completed contests and results history will be listed here.",
+  };
 }
 
 export default function ContestsPage() {
-  const { me, loading } = useSession();
+  const { me, loading, refresh } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<ContestLifecycleTab>("OPEN");
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [sort, setSort] = useState<ContestSort>("urgency");
+  const [tab, setTab] = useState<ContestHubTab>("OPEN");
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [retryCount, setRetryCount] = useState(0);
+
+  const guestBlocked = !loading && me?.mode === "guest";
+
+  const loadContests = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/contests", { cache: "no-store" });
+
+      if (res.status === 401) {
+        const hasSession = await refresh();
+        if (!hasSession) {
+          setError("Your session expired. Please reconnect to load contests.");
+          setContests([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!res.ok) {
+        setError("We couldn't load contests right now. Please retry in a moment.");
+        setContests([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const payload = (await res.json()) as ContestPayload;
+      const rows = Array.isArray(payload.contests) ? payload.contests : [];
+      setContests(rows);
+    } catch {
+      setError("Network issue while loading contests. Please check your connection and retry.");
+      setContests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refresh]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTs(Date.now()), 1000);
@@ -39,121 +90,88 @@ export default function ContestsPage() {
   useEffect(() => {
     if (loading) return;
     if (!me || me.mode === "guest") {
+      setContests([]);
+      setError("");
       setIsLoading(false);
       return;
     }
-
-    void (async () => {
-      setIsLoading(true);
-      setError("");
-      const res = await fetch("/api/contests", { cache: "no-store" });
-      if (!res.ok) {
-        setError((await res.text()) || "Cannot load contests");
-        setIsLoading(false);
-        return;
-      }
-      const payload = (await res.json()) as { contests: ContestListItem[] };
-      setContests(payload.contests ?? []);
-      setIsLoading(false);
-    })();
-  }, [loading, me]);
-
-  const guestBlocked = !loading && me?.mode === "guest";
+    void loadContests();
+  }, [loading, me, retryCount, loadContests]);
 
   const counts = useMemo(() => {
-    const byTab: Partial<Record<ContestLifecycleTab, number>> = {
-      UPCOMING: contests.filter((c) => c.status === "DRAFT").length,
-      OPEN: contests.filter((c) => c.status === "OPEN").length,
-      LOCKED: contests.filter((c) => c.status === "LOCKED").length,
-      LIVE: contests.filter((c) => c.status === "LIVE").length,
-      SETTLED: contests.filter((c) => c.status === "SETTLED").length,
+    const open = contests.filter((contest) => contest.status === "OPEN").length;
+    const inProgress = contests.filter((contest) => contest.status === "LOCKED" || contest.status === "LIVE").length;
+    const finished = contests.filter((contest) => contest.status === "SETTLED").length;
+
+    return {
+      open,
+      inProgress,
+      finished,
+      total: contests.length,
+      segmented: {
+        OPEN: open,
+        IN_PROGRESS: inProgress,
+        FINISHED: finished,
+      } as Record<ContestHubTab, number>,
     };
-    return byTab;
   }, [contests]);
 
-  const featured = useMemo(() => contests.find((c) => c.status === "LIVE") ?? contests.find((c) => c.status === "OPEN") ?? null, [contests]);
-
   const visible = useMemo(() => {
-    const lifecycleFiltered = contests.filter((contest) => {
-      if (tab === "UPCOMING") return contest.status === "DRAFT";
-      return contest.status === tab;
+    const filtered = contests.filter((contest) => belongsToTab(contest, tab));
+    return filtered.sort((a, b) => {
+      const aDate = new Date(a.lockAt ?? a.endsAt ?? a.startsAt ?? 0).getTime();
+      const bDate = new Date(b.lockAt ?? b.endsAt ?? b.startsAt ?? 0).getTime();
+      return aDate - bDate;
     });
+  }, [contests, tab]);
 
-    const withSearch = lifecycleFiltered.filter((contest) => `${contest.code} ${contest.title}`.toLowerCase().includes(query.toLowerCase()));
-    const withStatus = statusFilter === "ALL" ? withSearch : withSearch.filter((contest) => contest.status === statusFilter);
-
-    const sorted = [...withStatus];
-    sorted.sort((a, b) => {
-      if (sort === "reward") {
-        const aReward = (a.rules[0]?.maxRosterSize ?? 5) * 40;
-        const bReward = (b.rules[0]?.maxRosterSize ?? 5) * 40;
-        return bReward - aReward;
-      }
-      if (sort === "date") {
-        return new Date(b.lockAt ?? b.endsAt ?? 0).getTime() - new Date(a.lockAt ?? a.endsAt ?? 0).getTime();
-      }
-      return rankForStatus(a.status) - rankForStatus(b.status);
-    });
-
-    return sorted;
-  }, [contests, tab, query, statusFilter, sort]);
-
-  const recentSettled = useMemo(() => contests.filter((contest) => contest.status === "SETTLED").slice(0, 8), [contests]);
+  const emptyByTab = getEmptyByTab(tab);
 
   return (
     <SiteShell>
-      <ContestHubHero contest={featured} nowTs={nowTs} />
+      <div className="contest-hub-layout-v4">
+        <ContestHubHeader
+          counts={{
+            open: counts.open,
+            inProgress: counts.inProgress,
+            finished: counts.finished,
+            total: counts.total,
+          }}
+        />
 
-      {guestBlocked ? <EmptyState title="Contests require an authenticated account" description="Guest mode can preview pages but cannot submit entries." /> : null}
+        {guestBlocked ? (
+          <EmptyState title="Contests require an authenticated account" description="Guest mode can preview pages but cannot submit entries." />
+        ) : (
+          <>
+            <ContestStatusSegmented active={tab} onChange={setTab} counts={counts.segmented} />
 
-      {!guestBlocked ? (
-        <>
-          <ContestLifecycleTabs active={tab} onChange={setTab} counts={counts} />
-
-          <ContestFiltersBar
-            query={query}
-            onQuery={setQuery}
-            status={statusFilter}
-            onStatus={setStatusFilter}
-            sort={sort}
-            onSort={setSort}
-          />
-
-          {isLoading ? (
-            <EmptyState title="Loading contests…" />
-          ) : error ? (
-            <EmptyState title="Unable to load contests" description={error} />
-          ) : visible.length === 0 ? (
-            <EmptyState title="No contests in this lifecycle" description="Adjust filters or check another status tab." />
-          ) : (
-            <section>
-              <SectionHeader
-                eyebrow="Contest grid"
-                title="Choose your competition"
-                subtitle="Each contest card shows urgency, lineup size, and reward teaser."
-              />
-              <div className="contest-card-grid-v3">
-                {visible.map((contest) => <ContestTile key={contest.id} contest={contest} nowTs={nowTs} />)}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <SectionHeader
-              eyebrow="Recent results"
-              title="Settled contests"
-              subtitle="Review recent finishes and jump back into competition."
-            />
-            {recentSettled.length > 0 ? (
-              <div className="contest-results-rail">
-                {recentSettled.map((contest) => <ContestHistoryCard key={contest.id} contest={contest} />)}
-              </div>
+            {isLoading ? (
+              <section className="contest-premium-grid" aria-label="Loading contests">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="contest-premium-skeleton-card" />
+                ))}
+              </section>
+            ) : error ? (
+              <section className="contest-hub-error-state" role="alert">
+                <EmptyState title="Unable to load contests" description={error} />
+                <button type="button" className="mcg-btn" onClick={() => setRetryCount((current) => current + 1)}>
+                  Retry
+                </button>
+              </section>
+            ) : contests.length === 0 ? (
+              <EmptyState title="No contests available" description="Check back soon for new tournaments." />
+            ) : visible.length === 0 ? (
+              <EmptyState title={emptyByTab.title} description={emptyByTab.description} />
             ) : (
-              <EmptyState title="No settled contests yet" />
+              <section className="contest-premium-grid" aria-live="polite">
+                {visible.map((contest) => (
+                  <ContestPremiumCard key={contest.id} contest={contest} nowTs={nowTs} />
+                ))}
+              </section>
             )}
-          </section>
-        </>
-      ) : null}
+          </>
+        )}
+      </div>
     </SiteShell>
   );
 }

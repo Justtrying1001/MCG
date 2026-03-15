@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 import {
   ContestEntryStatus,
   ContestStatus,
@@ -125,7 +126,51 @@ export async function getContestDetailMvp(contestId: string, userId?: string) {
         })
       : null;
 
-    return { contest, userEntry };
+    const rewardGrants = userId
+      ? await tx.rewardGrant.findMany({
+          where: {
+            userId,
+            sourceContestSettlement: { contestId },
+          },
+          orderBy: [{ createdAt: "desc" }],
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            packDefinitionId: true,
+            createdAt: true,
+          },
+        })
+      : [];
+
+    const scoreBreakdown = userEntry
+      ? await tx.contestEntryScoreBreakdown.findMany({
+          where: { entryId: userEntry.id },
+          orderBy: [{ finalScore: "desc" }],
+          select: {
+            id: true,
+            tokenProjectId: true,
+            baseScore: true,
+            rarityMultiplier: true,
+            editionMultiplier: true,
+            finalScore: true,
+            cardInstance: {
+              select: {
+                id: true,
+                cardTemplate: {
+                  select: {
+                    name: true,
+                    imageUrl: true,
+                    tokenProject: { select: { displayName: true } },
+                  },
+                },
+              },
+            },
+          },
+        })
+      : [];
+
+    return { contest, userEntry, rewardGrants, scoreBreakdown };
   });
 }
 
@@ -383,6 +428,21 @@ export async function settleContestMvp(params: { contestId: string; rewards: Rew
         throw new ContestRuntimeError("POINTS rewards require amount", 400);
       }
 
+      if (reward.type === RewardType.PACK) {
+        if (!reward.packDefinitionId) {
+          throw new ContestRuntimeError("PACK rewards require packDefinitionId", 400);
+        }
+        const quantity = Math.max(1, reward.amount ?? 1);
+        for (let i = 0; i < quantity; i += 1) {
+          await grantRewardPackByDefinitionTx(tx, {
+            userId: reward.userId,
+            packDefinitionId: reward.packDefinitionId,
+            sourceContestSettlementId: settlement.id,
+          });
+        }
+        continue;
+      }
+
       await tx.rewardGrant.create({
         data: {
           userId: reward.userId,
@@ -474,11 +534,22 @@ export async function getContestRankingMvp(contestId: string) {
     });
     if (!contest) throw new ContestRuntimeError("Contest not found", 404);
 
-    const rankings = await tx.contestRanking.findMany({
+    const rankingsRaw = await tx.contestRanking.findMany({
       where: { contestId },
       orderBy: [{ rank: "asc" }],
       include: { user: { select: { id: true, displayName: true, xUsername: true } } },
     });
+
+    const rankings = rankingsRaw.map((row) => ({
+      id: row.id,
+      contestId: row.contestId,
+      userId: row.userId,
+      rank: row.rank,
+      score: row.score,
+      rankedAt: row.rankedAt,
+      displayName: row.user.displayName,
+      xUsername: row.user.xUsername,
+    }));
 
     return { contest, rankings };
   });

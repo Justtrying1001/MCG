@@ -55,6 +55,9 @@ export type CompetitiveProgressionSummaryV2 = {
   bestRank: number | null;
   averageRank: number | null;
   rating: number | null;
+  leagueTier?: string | null;
+  seasonRank?: number | null;
+  seasonPoints?: number | null;
   recentResults: CompetitiveProgressionRecentResultV2[];
 };
 
@@ -79,6 +82,8 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
     displayName: string;
     avatarUrl: string | null;
     authProvider: string;
+    inviteCode: string;
+    invitedFriendsCount: number;
     points: number;
     packsOpened: number;
   };

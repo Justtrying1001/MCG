@@ -5,6 +5,7 @@ import { ADMIN_ROLES, claimIdempotencyKey, getAdminArtifact, requireAdminRole, s
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp, updateContestStatusMvp } from "@/lib/domain/contests/runtime";
 import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
+import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
 import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       if (status === ContestStatus.SETTLED) {
         await captureEndSnapshot(params.contestId);
         await computeContestScoresFromSnapshots(params.contestId);
+        await executeAutoSettlementForContest(params.contestId);
       }
     }
 

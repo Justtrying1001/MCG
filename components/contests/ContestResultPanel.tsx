@@ -36,6 +36,7 @@ export function ContestResultPanel({
       <div className="contest-result-grid">
         <div><span>Final rank</span><strong>{myRank ? `#${myRank}` : "Pending"}</strong></div>
         <div><span>Final score</span><strong>{typeof myScore === "number" ? myScore.toFixed(2) : "Pending"}</strong></div>
+        <div><span>Top %</span><strong>{myRank && rankedUsers > 0 ? `${Math.max(1, Math.round((myRank / rankedUsers) * 100))}%` : "—"}</strong></div>
       </div>
       {hasRewards ? (
         <div className="contest-rewards-earned">

@@ -16,6 +16,8 @@ export type ContestListItem = {
   endsAt: string | null;
   rules: ContestRule[];
   _count: { entries: number };
+  seasonName?: string | null;
+  leagueTierRequired?: "BRONZE" | "SILVER" | "GOLD" | "DIAMOND" | "LEGEND" | null;
 };
 
 export type LineupOption = {

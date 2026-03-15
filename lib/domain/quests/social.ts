@@ -1,5 +1,5 @@
 export type BuilderObjectiveType = "FOLLOW_X" | "SOCIAL_ENGAGEMENT" | "MILESTONE";
-export type SocialAction = "LIKE" | "RETWEET" | "COMMENT";
+export type SocialAction = "LIKE" | "RETWEET" | "COMMENT" | "CUSTOM";
 export type SocialUrlKind = "PROFILE" | "TWEET" | "UNKNOWN";
 export type MilestoneType =
   | "PACK_OPEN_COUNT"
@@ -15,7 +15,8 @@ export type MilestoneType =
   | "REWARD_POINTS_EARNED"
   | "ROSTER_SUBMISSIONS_COUNT"
   | "CONTESTS_SETTLED_COUNT"
-  | "POINTS_BALANCE_REACHED";
+  | "POINTS_BALANCE_REACHED"
+  | "INVITED_FRIENDS";
 
 export type SocialValidationIssue = {
   field: "targetUrl";
@@ -102,6 +103,8 @@ export function resolveSocialCtaLabel(input: {
       return "Open Tweet";
     case "COMMENT":
       return "Reply on X";
+    case "CUSTOM":
+      return "Open task";
     default:
       return "Open on X";
   }
@@ -151,6 +154,8 @@ export function getMilestoneObjectiveText(milestoneType: MilestoneType | null | 
       return `Settle ${target} contest entries`;
     case "POINTS_BALANCE_REACHED":
       return `Reach ${target} points balance`;
+    case "INVITED_FRIENDS":
+      return `Invite ${target} friends`;
     default:
       return `Reach milestone ${target}`;
   }
@@ -171,6 +176,8 @@ export function getQuestObjectiveText(input: {
         return "RT this tweet";
       case "COMMENT":
         return "Comment this tweet";
+      case "CUSTOM":
+        return "Complete this social task";
       default:
         return "Complete this tweet action";
     }

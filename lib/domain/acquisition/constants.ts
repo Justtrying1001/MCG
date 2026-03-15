@@ -5,6 +5,8 @@ export const MVP_CARD_SET_CODE = "MVP_SET_V1";
 
 export const MVP_SALE_PACK_DEFAULTS = {
   displayName: "MCG MVP Sale Pack",
-  plannedPackCount: 11_000,
+  plannedPackCount: 10_000,
   cardsPerPack: 5,
 } as const;
+
+export const MVP_REWARD_PACK_TOTAL_SUPPLY = 6_000;

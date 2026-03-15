@@ -7,7 +7,6 @@ const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock, 
   },
   resolveEligibleTokensForContestMock: vi.fn(),
   fetchCoinsMarketsMock: vi.fn(),
-  warnSpy: vi.spyOn(console, "warn").mockImplementation(() => undefined),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));

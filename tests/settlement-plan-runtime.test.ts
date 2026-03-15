@@ -176,4 +176,63 @@ describe("settlement plan runtime", () => {
     expect(result.executed).toBe(false);
     expect(result.settlementId).toBe("s1");
   });
+
+  it("execute clears card lockState for contest lineup cards", async () => {
+    const tx: any = {
+      contestSettlementPlan: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "sp1",
+          contestId: "c1",
+          status: "DRAFT",
+          items: [
+            {
+              userId: "u1",
+              rewardComponents: [{ type: "POINTS", amount: 10 }],
+            },
+          ],
+          contest: { settlements: [] },
+        }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      contestSettlement: {
+        create: vi.fn().mockResolvedValue({ id: "s1" }),
+      },
+      rewardGrant: {
+        create: vi.fn().mockResolvedValue({}),
+      },
+      user: {
+        update: vi.fn().mockResolvedValue({}),
+      },
+      contest: {
+        update: vi.fn().mockResolvedValue({}),
+      },
+      contestEntry: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      rosterLock: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
+      },
+      ownedCardInstance: {
+        updateMany: vi.fn().mockResolvedValue({ count: 5 }),
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    await executeSettlementPlan("sp1");
+
+    expect(tx.ownedCardInstance.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { lockState: null },
+        where: {
+          contestRosterLocks: {
+            some: {
+              contestEntry: { contestId: "c1" },
+            },
+          },
+        },
+      })
+    );
+    expect(tx.rosterLock.deleteMany).toHaveBeenCalledWith({ where: { contestEntry: { contestId: "c1" } } });
+  });
 });

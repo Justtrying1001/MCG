@@ -10,6 +10,21 @@ import { createRewardRuleDraft, describeRewardRule, rewardRuleReducer, toContest
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
 
+type RewardCapacityRow = {
+  packDefinitionId: string;
+  packCode: string | null;
+  required: number;
+  available: number;
+  shortfall: number;
+  verdict: "OK" | "INSUFFICIENT_SUPPLY" | "INVALID_REWARD_CONFIG" | "UNKNOWN_PACK" | "REWARD_POOL_MISSING";
+};
+
+type RewardCapacityCheck = {
+  verdict: "OK" | "INSUFFICIENT_SUPPLY" | "INVALID_REWARD_CONFIG" | "UNKNOWN_PACK" | "REWARD_POOL_MISSING";
+  isPublishable: boolean;
+  rows: RewardCapacityRow[];
+};
+
 const STEPS: Array<{ id: Step; label: string; hint: string }> = [
   { id: 1, label: "Infos contest", hint: "Code, titre, description" },
   { id: 2, label: "Schedule", hint: "Open / lock / end" },
@@ -27,6 +42,7 @@ export default function AdminContestCreatePage() {
   const [contestId, setContestId] = useState(params.get("contestId") ?? "");
   const [message, setMessage] = useState("");
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
+  const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
 
   const [autoCode, setAutoCode] = useState(true);
   const [code, setCode] = useState("");
@@ -146,6 +162,29 @@ export default function AdminContestCreatePage() {
     return body?.contest?.id ?? contestId;
   };
 
+  const runBackendValidation = async (effectiveContestId: string) => {
+    const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/validate`, { method: "POST" });
+    const body = (await response.json().catch(() => null)) as any;
+    if (!response.ok) {
+      setMessage(formatApiError(body, "Échec validation backend"));
+      return { ok: false as const, blocking: true };
+    }
+
+    const capacity = body?.rewardPackCapacity as RewardCapacityCheck | undefined;
+    setRewardCapacityCheck(capacity ?? null);
+
+    if (body?.blocking) {
+      const blockingIssues = Array.isArray(body?.issues)
+        ? body.issues.filter((issue: { severity?: string }) => issue?.severity === "ERROR")
+        : [];
+      const detail = blockingIssues.map((issue: { message?: string }) => issue.message).filter(Boolean).join("; ");
+      setMessage(detail ? `Validation bloquante: ${detail}` : "Validation bloquante");
+      return { ok: false as const, blocking: true };
+    }
+
+    return { ok: true as const, blocking: false };
+  };
+
   const launch = async () => {
     let effectiveContestId = contestId;
     if (!effectiveContestId) {
@@ -153,6 +192,10 @@ export default function AdminContestCreatePage() {
       if (!createdId) return;
       effectiveContestId = createdId;
     }
+
+    const validation = await runBackendValidation(effectiveContestId);
+    if (!validation.ok) return;
+
     const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/publish`, { method: "POST" });
     const body = (await response.json().catch(() => null)) as any;
     if (!response.ok) return setMessage(formatApiError(body, "Échec publish"));

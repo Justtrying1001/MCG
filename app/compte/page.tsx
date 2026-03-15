@@ -98,6 +98,8 @@ export default function AccountPage() {
             contestsEntered={competitive?.contestsEntered ?? 0}
             bestRank={competitive?.bestRank ?? null}
             rating={competitive?.rating ?? null}
+            leagueTier={competitive?.leagueTier ?? null}
+            seasonRank={competitive?.seasonRank ?? null}
           />
 
           {unlockedMilestoneCount > 0 ? (

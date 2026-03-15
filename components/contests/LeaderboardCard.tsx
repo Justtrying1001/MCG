@@ -19,6 +19,7 @@ export function LeaderboardCard({ rankings, currentUserId }: { rankings: Ranking
       <div className="contest-leaderboard-list-v2">
         {rankings.slice(0, 10).map((row) => {
           const isMe = row.userId === currentUserId;
+          const label = row.displayName?.trim() || (row.xUsername ? `@${row.xUsername}` : `Player #${row.rank}`);
           return (
             <div key={row.id} className={`contest-leaderboard-row-v2${isMe ? " is-me" : ""}`}>
               <span>#{row.rank}</span>

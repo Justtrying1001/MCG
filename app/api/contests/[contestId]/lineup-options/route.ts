@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ContestStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,24 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       orderBy: { acquiredAt: "desc" },
       take: 150,
     });
+
+    const activeLocks = await prisma.rosterLock.findMany({
+      where: {
+        ownedCardInstanceId: { in: instances.map((instance) => instance.id) },
+        contestEntry: {
+          contest: { status: { in: ACTIVE_CONTEST_STATUSES } },
+        },
+      },
+      select: {
+        ownedCardInstanceId: true,
+        contestEntry: { select: { contestId: true } },
+      },
+    });
+
+    const activeLockByInstance = new Map<string, string>();
+    for (const row of activeLocks) {
+      activeLockByInstance.set(row.ownedCardInstanceId, row.contestEntry.contestId);
+    }
 
     const options = instances
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)

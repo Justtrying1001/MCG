@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
+import { evaluateContestRewardPackCapacity } from "@/lib/domain/contests/reward-pack-capacity";
 import { prisma } from "@/lib/prisma";
 import { qstash } from "@/lib/qstash";
 
@@ -229,10 +230,64 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
 export async function validateContestDraft(contestId: string) {
   const { contest } = await getContestDraft(contestId);
   const issues = validateContestDraftEntity(contest as ContestWithConfig);
+  const capacity = await evaluateContestRewardPackCapacity({
+    contest: contest as ContestWithConfig,
+  });
+
+  for (const row of capacity.rows) {
+    if (row.verdict === "OK") continue;
+    if (row.verdict === "INSUFFICIENT_SUPPLY") {
+      issues.push({
+        code: "REWARD_PACK_CAPACITY_INSUFFICIENT",
+        severity: "ERROR",
+        field: `rewardPacks.${row.packCode ?? row.packDefinitionId}`,
+        message: `Reward pack capacity insufficient for ${row.packCode ?? row.packDefinitionId}: required ${row.required}, available ${row.available}, missing ${row.shortfall}`,
+      });
+      continue;
+    }
+
+    if (row.verdict === "REWARD_POOL_MISSING") {
+      issues.push({
+        code: "REWARD_PACK_POOL_MISSING",
+        severity: "ERROR",
+        field: `rewardPacks.${row.packCode ?? row.packDefinitionId}`,
+        message: `Reward pool missing for ${row.packCode ?? row.packDefinitionId}`,
+      });
+      continue;
+    }
+
+    if (row.verdict === "UNKNOWN_PACK") {
+      issues.push({
+        code: "REWARD_PACK_UNKNOWN",
+        severity: "ERROR",
+        field: `rewardPacks.${row.packDefinitionId}`,
+        message: `Reward packDefinitionId is unknown: ${row.packDefinitionId}`,
+      });
+      continue;
+    }
+
+    issues.push({
+      code: "REWARD_PACK_CONFIG_INVALID",
+      severity: "ERROR",
+      field: `rewardPacks.${row.packCode ?? row.packDefinitionId}`,
+      message: `Reward pack config invalid for ${row.packCode ?? row.packDefinitionId}`,
+    });
+  }
+
+  for (const capacityIssue of capacity.issues) {
+    issues.push({
+      code: `REWARD_CAPACITY_${capacityIssue.verdict}`,
+      severity: "ERROR",
+      field: capacityIssue.field ?? "rewardPacks",
+      message: capacityIssue.message,
+    });
+  }
+
   return {
     contestId,
     blocking: issues.some((issue) => issue.severity === "ERROR"),
     issues,
+    rewardPackCapacity: capacity,
   };
 }
 
@@ -381,7 +436,10 @@ export async function deleteContestDraft(contestId: string) {
     const deletableBecauseCanceled = contest.status === ContestStatus.CANCELED;
 
     if (hasOperations && !deletableBecauseCanceled) {
-      throw new ContestRuntimeError("Cannot delete a non-canceled contest that already contains operations", 409);
+      throw new ContestRuntimeError(
+        "Delete is blocked: this contest already has entries/scores/rankings/settlements. Cancel it first, then delete if you still need a full purge.",
+        409,
+      );
     }
 
     await tx.contest.delete({ where: { id: contestId } });
