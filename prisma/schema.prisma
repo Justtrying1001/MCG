@@ -189,7 +189,6 @@ enum ContestStatus {
 
 enum ContestEntryStatus {
   SUBMITTED
-  LOCKED
   SCORED
   SETTLED
   CANCELED

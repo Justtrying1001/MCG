@@ -200,7 +200,7 @@ export async function enterContestMvp(params: {
         ownedCardInstanceId: { in: lineupInstanceIds },
         contestEntry: {
           contest: { status: { in: ACTIVE_LOCK_STATUSES } },
-          status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.LOCKED, ContestEntryStatus.SCORED] },
+          status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.SCORED] },
         },
       },
       select: {
