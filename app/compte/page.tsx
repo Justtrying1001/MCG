@@ -84,7 +84,6 @@ export default function AccountPage() {
         <>
           <CollectorShowcase
             displayName={me.user.displayName}
-            mode={me.mode}
             points={me.user.points}
             level={account?.level ?? 1}
             completionPct={collection?.completionPct ?? null}

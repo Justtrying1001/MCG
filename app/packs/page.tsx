@@ -37,7 +37,7 @@ type PackConfigPayload = {
 };
 
 export default function PacksPage() {
-  const { me, refresh, updateGuestState } = useSession();
+  const { me, refresh } = useSession();
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
@@ -73,20 +73,9 @@ export default function PacksPage() {
     setResultMvp([]);
     setRevealed([]);
 
-    const guestState =
-      me.mode === "guest"
-        ? {
-            points: me.user.points,
-            packsOpened: me.user.packsOpened,
-            mvpCollection: me.mvpCollection,
-            openingsCount: me.openingsCount,
-          }
-        : undefined;
-
-    const res = await fetch(me.mode === "guest" ? "/api/guest/pack/open" : "/api/pack/open", {
+    const res = await fetch("/api/pack/open", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: guestState ? JSON.stringify({ state: guestState }) : undefined,
     });
 
     if (!res.ok) {
@@ -103,8 +92,7 @@ export default function PacksPage() {
       alert("Pack opened but MVP reveal payload is missing. Please refresh and retry.");
       setIsOpening(false);
       setOpeningPhase("idle");
-      if (me.mode === "guest") updateGuestState(payload.state);
-      else await refresh();
+      await refresh();
       return;
     }
 
@@ -115,8 +103,7 @@ export default function PacksPage() {
       setIsOpening(false);
     }, 900);
 
-    if (me.mode === "guest") updateGuestState(payload.state);
-    else await refresh();
+    await refresh();
   };
 
   const handleReveal = (index: number) => {
@@ -196,7 +183,7 @@ export default function PacksPage() {
   return (
     <SiteShell>
       {!me ? (
-        <EmptyState title="Connect to open packs" description="Sign in with X or start a guest session to reveal cards." />
+        <EmptyState title="Connect to open packs" description="Sign in with X to reveal cards." />
       ) : null}
 
       <FeaturedPackStage

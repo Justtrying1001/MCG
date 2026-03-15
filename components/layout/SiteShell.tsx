@@ -19,7 +19,7 @@ const navItems = [
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, loading, refresh, setMe, startGuest, clearGuest } = useSession();
+  const { me, loading, refresh, setMe } = useSession();
   const [openMobile, setOpenMobile] = useState(false);
 
   const loginWithX = () => {
@@ -30,12 +30,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    if (me?.mode === "guest") {
-      clearGuest();
-      return;
-    }
     await fetch("/api/auth/logout", { method: "POST" });
-    clearGuest();
     setMe(null);
     await refresh();
   };
@@ -73,13 +68,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <span>{me.user.points} pts</span>
                 </span>
                 <Button variant="ghost" className="btn-sm" onClick={() => void logout()}>
-                  {me.mode === "guest" ? "Exit guest" : "Logout"}
+                  Logout
                 </Button>
               </>
             ) : (
               <>
                 <Button variant="ghost" className="btn-sm" onClick={loginWithX}>Connect with X</Button>
-                <Button className="btn-sm" onClick={startGuest}>Guest</Button>
               </>
             )}
 

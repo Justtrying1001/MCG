@@ -91,20 +91,4 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
   openingsCount: number;
 };
 
-export type GuestSessionPayload = {
-  mode: "guest";
-  user: {
-    id: "guest";
-    xUserId: null;
-    username: "Guest";
-    displayName: "Guest";
-    avatarUrl: null;
-    authProvider: "guest";
-    points: number;
-    packsOpened: number;
-  };
-  mvpCollection: MvpCollectionItem[];
-  openingsCount: number;
-};
-
-export type SessionState = UserSessionPayload | GuestSessionPayload;
+export type SessionState = UserSessionPayload;

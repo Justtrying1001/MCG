@@ -8,7 +8,6 @@ export function ContestActionPanel({
   lockAt,
   endsAt,
   nowTs,
-  isGuest,
   lineupFilled,
   rosterSize,
   hasEntry,
@@ -17,7 +16,6 @@ export function ContestActionPanel({
   lockAt: string | null;
   endsAt: string | null;
   nowTs: number;
-  isGuest: boolean;
   lineupFilled: number;
   rosterSize: number;
   hasEntry?: boolean;
@@ -51,7 +49,7 @@ export function ContestActionPanel({
           </div>
           <div>
             <span>Entry mode</span>
-            <strong>{isGuest ? "Preview only" : actionability.editable ? "Editable" : "Locked"}</strong>
+            <strong>{actionability.editable ? "Editable" : "Locked"}</strong>
           </div>
         </div>
       </Surface>

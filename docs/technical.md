@@ -102,7 +102,7 @@ Ce document doit permettre à une équipe tech (dev, lead, SRE, QA, ops) de :
 
 ---
 
-## 5) API publique (user/guest)
+## 5) API publique
 
 ### 5.1 Auth/session
 - `GET /api/auth/x/start`
@@ -113,7 +113,6 @@ Ce document doit permettre à une équipe tech (dev, lead, SRE, QA, ops) de :
 ### 5.2 Packs
 - `GET /api/pack/config`
 - `POST /api/pack/open`
-- `POST /api/guest/pack/open`
 
 ### 5.3 Contests
 - `GET /api/contests`
@@ -129,7 +128,6 @@ Ce document doit permettre à une équipe tech (dev, lead, SRE, QA, ops) de :
 
 ### 5.5 Legacy PvE
 - `app/api/pve/*`
-- `app/api/guest/pve/*`
 
 Statut : surfaces maintenues pour compatibilité, mais hors boucle produit prioritaire.
 

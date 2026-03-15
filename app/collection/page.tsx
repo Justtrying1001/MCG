@@ -25,14 +25,10 @@ export default function CollectionPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [zoomedCard, setZoomedCard] = useState<{ card: MvpCardView | null; quantity?: number }>({ card: null });
 
-  const isAuthUser = me?.mode === "user";
   const mvpCollection = me?.mvpCollection;
-  const useMvpCollection = isAuthUser && Array.isArray(mvpCollection);
+  const useMvpCollection = Array.isArray(mvpCollection);
 
-  const sourceCollection = useMemo(() => {
-    if (!me) return [];
-    return isAuthUser ? mvpCollection ?? [] : me.mvpCollection;
-  }, [isAuthUser, me, mvpCollection]);
+  const sourceCollection = useMemo(() => (mvpCollection ?? []), [mvpCollection]);
 
   const visibleCards = useMemo(() => {
     const sorted = [...sourceCollection].sort((a, b) => {
@@ -47,8 +43,8 @@ export default function CollectionPage() {
 
   const totalCards = sourceCollection.reduce((acc, x) => acc + x.instanceCount, 0);
   const uniqueCards = sourceCollection.length;
-  const collectionProg = me?.mode === "user" ? me.coexistence?.v2?.collectionProgression : undefined;
-  const projectionPct = me?.mode === "user" ? me.coexistence?.v2?.collectionProjection?.completionPct : undefined;
+  const collectionProg = me?.coexistence?.v2?.collectionProgression;
+  const projectionPct = me?.coexistence?.v2?.collectionProjection?.completionPct;
   const completionPct = collectionProg?.completionPct ?? projectionPct ?? null;
 
   return (
@@ -91,8 +87,8 @@ export default function CollectionPage() {
       </Surface>
 
       {!me ? (
-        <EmptyState title="Connect to view your collection" description="Sign in with X for persistent ownership, or use guest mode to preview." />
-      ) : isAuthUser && !useMvpCollection ? (
+        <EmptyState title="Connect to view your collection" description="Sign in with X for persistent ownership." />
+      ) : !useMvpCollection ? (
         <EmptyState title="Collection data unavailable" description="Refresh your session and verify collection payload." />
       ) : visibleCards.length > 0 ? (
         <CardGrid
