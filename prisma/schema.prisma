@@ -419,6 +419,7 @@ model RewardGrant {
   packDefinitionId          String?
   sourcePackOpeningEventId  String?
   sourceContestSettlementId String?
+  claimedAt                 DateTime?
   createdAt                 DateTime   @default(now())
 
   user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -428,6 +429,7 @@ model RewardGrant {
 
   @@index([userId])
   @@index([type])
+  @@index([claimedAt])
 }
 
 model RewardLedgerEntry {

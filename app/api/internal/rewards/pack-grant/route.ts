@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
         openingEventId: row.sourcePackOpeningEvent?.id ?? null,
         openedAt: row.sourcePackOpeningEvent?.openedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
+        claimedAt: row.claimedAt?.toISOString() ?? null,
+        status: row.claimedAt || row.sourcePackOpeningEvent?.id ? "CLAIMED" : "ATTRIBUTED",
       })),
     });
   } catch (error) {

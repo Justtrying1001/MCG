@@ -24,21 +24,41 @@ describe("/api/admin/packs/supply", () => {
     expect(response.status).toBe(403);
   });
 
-  it("returns supply summary for authorized admin", async () => {
+  it("returns canonical supply summary for authorized admin", async () => {
     requireInternalAdminAccessMock.mockReturnValue({ ok: true });
     getPackSupplySummaryMock.mockResolvedValue({
-      sale: { total: 10000, distributed: 10, remaining: 9990 },
-      reward: { total: 6000, distributed: 8, remaining: 5992 },
-      total: { total: 16000, distributed: 18, remaining: 15982 },
-      last_updated_at: new Date("2026-01-01T00:00:00.000Z").toISOString(),
+      sale: {
+        totalSupply: 10000,
+        opened: 120,
+        remaining: 9880,
+        pools: [{ packDefinitionId: "s1", packCode: "sale_pack", displayName: "Sale", totalSupply: 10000, opened: 120, remaining: 9880, isActive: true }],
+      },
+      reward: {
+        totalSupply: 6000,
+        attributed: 800,
+        claimed: 700,
+        reserved: 100,
+        remaining: 5200,
+        pools: [{ packDefinitionId: "r1", packCode: "reward_pack", displayName: "Reward", totalSupply: 6000, attributed: 800, claimed: 700, reserved: 100, remaining: 5200, isActive: true, poolStatus: "TRACKED" }],
+      },
+      global: {
+        totalSupply: 16000,
+        saleOpened: 120,
+        rewardAttributed: 800,
+        rewardClaimed: 700,
+        rewardReserved: 100,
+        remaining: 15080,
+      },
+      lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z").toISOString(),
     });
 
     const response = await GET(new Request("http://localhost/api/admin/packs/supply") as any);
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.sale.total).toBe(10000);
-    expect(payload.reward.total).toBe(6000);
-    expect(payload.total.total).toBe(16000);
+    expect(payload.sale.totalSupply).toBe(10000);
+    expect(payload.reward.attributed).toBe(800);
+    expect(payload.global.totalSupply).toBe(16000);
+    expect(payload.reward.pools[0].poolStatus).toBe("TRACKED");
   });
 });

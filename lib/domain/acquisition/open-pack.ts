@@ -143,12 +143,14 @@ async function assertMvpPackReadiness(tx: Prisma.TransactionClient, pack: Runtim
 }
 
 async function reserveRewardPackSupply(tx: Prisma.TransactionClient, pack: RuntimePackDefinition) {
+  const totalSupply = pack.code === MVP_REWARD_PACK_CODE ? MVP_REWARD_PACK_TOTAL_SUPPLY : Math.max(pack.plannedPackCount, 0);
+
   await tx.rewardPackSupply.upsert({
     where: { id: pack.code },
-    update: { totalSupply: MVP_REWARD_PACK_TOTAL_SUPPLY },
+    update: { totalSupply },
     create: {
       id: pack.code,
-      totalSupply: MVP_REWARD_PACK_TOTAL_SUPPLY,
+      totalSupply,
       distributed: Math.min(
         await tx.rewardGrant.count({
           where: {
@@ -156,7 +158,7 @@ async function reserveRewardPackSupply(tx: Prisma.TransactionClient, pack: Runti
             packDefinitionId: pack.id,
           },
         }),
-        MVP_REWARD_PACK_TOTAL_SUPPLY,
+        totalSupply,
       ),
     },
   });
@@ -164,7 +166,7 @@ async function reserveRewardPackSupply(tx: Prisma.TransactionClient, pack: Runti
   const reserve = await tx.rewardPackSupply.updateMany({
     where: {
       id: pack.code,
-      distributed: { lt: MVP_REWARD_PACK_TOTAL_SUPPLY },
+      distributed: { lt: totalSupply },
     },
     data: { distributed: { increment: 1 } },
   });
@@ -362,6 +364,7 @@ async function openPackByCodeDbNative(params: {
           type: RewardType.PACK,
           packDefinitionId: pack.id,
           sourcePackOpeningEventId: openingEvent.id,
+          claimedAt: new Date(),
         },
       });
       rewardGrantId = grant.id;
@@ -414,6 +417,72 @@ export async function grantRewardPackByDefinitionTx(tx: Prisma.TransactionClient
   });
 
   return { rewardGrantId: rewardGrant.id, packCode: pack.code };
+}
+
+export async function claimRewardPackGrantDbNative(params: {
+  userId: string;
+  rewardGrantId: string;
+}): Promise<{ packCode: string; pulledCardsMvp: MvpCardView[]; openingEventId: string; rewardGrantId: string }> {
+  return prisma.$transaction(async (tx) => {
+    const grant = await tx.rewardGrant.findUnique({
+      where: { id: params.rewardGrantId },
+      include: { packDefinition: true },
+    });
+
+    if (!grant || grant.userId !== params.userId || grant.type !== RewardType.PACK) {
+      throw new PackOpenRuntimeError("Reward pack grant not found", 404);
+    }
+
+    if (grant.sourcePackOpeningEventId || grant.claimedAt) {
+      throw new PackOpenRuntimeError("Reward pack grant already claimed", 409);
+    }
+
+    const pack = grant.packDefinition;
+    if (!pack || pack.source !== PackSource.REWARD) {
+      throw new PackOpenRuntimeError("Reward pack definition not found", 404);
+    }
+
+    if (!pack.isActive) {
+      throw new PackOpenRuntimeError(`Pack ${pack.code} is not available: inactive pack definition`, 503);
+    }
+
+    await assertMvpPackReadiness(tx, pack);
+
+    await tx.user.update({
+      where: { id: params.userId },
+      data: { packsOpened: { increment: 1 } },
+    });
+
+    const openingEvent = await tx.packOpeningEvent.create({
+      data: {
+        userId: params.userId,
+        packDefinitionId: pack.id,
+      },
+    });
+
+    const pulledCardsMvp = await allocatePackCards(tx, {
+      userId: params.userId,
+      pack,
+      openingEventId: openingEvent.id,
+    });
+
+    await tx.rewardGrant.update({
+      where: { id: grant.id },
+      data: {
+        sourcePackOpeningEventId: openingEvent.id,
+        claimedAt: new Date(),
+      },
+    });
+
+    await applyContestEntryQuestProgressionTx(tx, params.userId);
+
+    return {
+      packCode: pack.code,
+      pulledCardsMvp,
+      openingEventId: openingEvent.id,
+      rewardGrantId: grant.id,
+    };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 export async function grantRewardPackMvpDbNative(params: {
