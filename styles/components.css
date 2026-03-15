@@ -2455,6 +2455,27 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
   display: grid;
   gap: .35rem;
 }
+
+
+.contest-builder-v2-reward-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.contest-builder-v2-reward-tier-chip {
+  border: 1px solid color-mix(in srgb, var(--clay) 55%, var(--color-border-subtle));
+  border-radius: 999px;
+  padding: .28rem .62rem;
+  font-size: .72rem;
+  font-weight: 700;
+  background: rgba(203,161,107,.13);
+  color: var(--chalk);
+}
+
+.admin-callout.success {
+  border-color: rgba(74, 222, 128, .42);
+  background: rgba(74, 222, 128, .08);
+}
 .contest-builder-v2-reward-target {
   margin: 0;
   font-size: .83rem;

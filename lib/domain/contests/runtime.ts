@@ -103,6 +103,8 @@ export async function listContestsMvp() {
             id: true,
             cardSetId: true,
             maxRosterSize: true,
+            entryFeeEnabled: true,
+            entryFeeAmount: true,
           },
         },
         _count: { select: { entries: true } },

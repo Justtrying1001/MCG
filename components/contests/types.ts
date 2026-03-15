@@ -4,6 +4,8 @@ export type ContestRule = {
   id: string;
   cardSetId: string | null;
   maxRosterSize: number | null;
+  entryFeeEnabled?: boolean;
+  entryFeeAmount?: number | null;
 };
 
 export type ContestListItem = {
@@ -16,6 +18,10 @@ export type ContestListItem = {
   endsAt: string | null;
   rules: ContestRule[];
   _count: { entries: number };
+  rewardPreview?: {
+    label: string;
+    amount: number | null;
+  } | null;
   seasonName?: string | null;
   leagueTierRequired?: "BRONZE" | "SILVER" | "GOLD" | "DIAMOND" | "LEGEND" | null;
 };

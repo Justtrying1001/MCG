@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import {
   AdminEmptyState,
@@ -38,6 +39,7 @@ type AdminContest = {
 const STATUS_OPTIONS: Array<ContestStatus | "ALL"> = ["ALL", "DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
 
 export default function AdminContestsLibraryPage() {
+  const params = useSearchParams();
   const [contests, setContests] = useState<AdminContest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -122,6 +124,14 @@ export default function AdminContestsLibraryPage() {
         }
       />
 
+      {params.get("published") === "1" ? (
+        <AdminPanel>
+          <div className="admin-callout success">
+            <p className="contest-inline-note"><strong>Contest published successfully.</strong> It is visible in contest library and ready for user-facing surfaces.</p>
+          </div>
+        </AdminPanel>
+      ) : null}
+
       <AdminToolbar>
         <input className="input" placeholder="Search title, code or description" value={query} onChange={(event) => setQuery(event.target.value)} />
         <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL") }>
@@ -161,6 +171,8 @@ export default function AdminContestsLibraryPage() {
                 </div>
 
                 <p className="contest-inline-note">{buildRewardTeaser(contest)}</p>
+
+                <p className="contest-inline-note"><strong>Publish state:</strong> {contest.configPublishedAt ? `Published ${fmt(contest.configPublishedAt)}` : "Not published"} · <strong>Entries:</strong> {contest._count.entries}</p>
 
                 <div className="contest-console-actions">
                   <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit builder</Link>

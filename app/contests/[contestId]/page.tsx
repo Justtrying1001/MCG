@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Surface } from "@/components/ui/Surface";
@@ -9,6 +8,8 @@ import { ContestStatusBadge } from "@/components/contests/ContestStatusBadge";
 import { EnteredLineupPanel } from "@/components/contests/EnteredLineupPanel";
 import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
 import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
+import { EligibleCardsPanel } from "@/components/contests/EligibleCardsPanel";
+import { LineupSlot } from "@/components/contests/LineupSlot";
 import { loadContestCache } from "@/components/contests/contestUtils";
 import { useSession } from "@/components/useSession";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
@@ -44,8 +45,6 @@ type RewardTier = { label: string; bundleName: string; pointsAmount: number; xpA
 type RewardPreviewPayload = { hasPolicyData: boolean; tiers: RewardTier[] };
 
 type DetailTab = "overview" | "entry" | "leaderboard" | "rewards" | "rules";
-
-type CtaConfig = { label: string; href?: string; tab?: DetailTab };
 
 function formatDateLabel(value: string | null) {
   if (!value) return "TBD";
@@ -84,15 +83,6 @@ function getUserStatus(status: ContestStatus, hasEntry: boolean, selectedCount: 
   return "No team selected";
 }
 
-function getPrimaryCta(args: { status: ContestStatus; hasEntry: boolean; isGuest: boolean; contestId: string }): CtaConfig {
-  if (args.isGuest) return { label: "Connect with X to enter" };
-  if (args.status === "SETTLED") return { label: "View results", tab: "leaderboard" };
-  if (args.status === "LIVE") return { label: "Track contest", tab: "leaderboard" };
-  if (args.status === "LOCKED") return { label: "View my team", tab: "entry" };
-  if (args.hasEntry) return { label: "Edit lineup", href: `/contests/${args.contestId}/lineup` };
-  return { label: "Build lineup", href: `/contests/${args.contestId}/lineup` };
-}
-
 export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
@@ -100,8 +90,59 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [rewardTiers, setRewardTiers] = useState<RewardTier[] | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [submitState, setSubmitState] = useState<"idle" | "saving">("idle");
   const [error, setError] = useState("");
+  const [builderMessage, setBuilderMessage] = useState("");
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+
+  const loadAll = useCallback(async () => {
+    const [detailRes, rankingRes, optionsRes, rewardPreviewRes] = await Promise.all([
+      fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
+    ]);
+
+    if (!detailRes.ok) {
+      const cached = loadContestCache().find((contest) => contest.id === params.contestId);
+      if (cached) {
+        setDetail({ contest: cached, userEntry: null });
+        setRanking({ rankings: [] });
+        setError("Showing cached contest data. Connect with X for live updates and rankings.");
+      } else {
+        setError((await detailRes.text()) || "Cannot load contest detail");
+      }
+    } else {
+      const detailPayload = (await detailRes.json()) as ContestDetail;
+      setDetail(detailPayload);
+      if (detailPayload.userEntry) {
+        setSelected(detailPayload.userEntry.rosterLocks.map((row) => row.ownedCardInstanceId));
+      }
+    }
+
+    if (rankingRes.ok) {
+      const rankingPayload = (await rankingRes.json()) as RankingPayload;
+      setRanking(rankingPayload);
+    } else {
+      setRanking({ rankings: [] });
+    }
+
+    if (rewardPreviewRes.ok) {
+      const preview = (await rewardPreviewRes.json()) as RewardPreviewPayload;
+      setRewardTiers(preview.tiers ?? []);
+    } else {
+      setRewardTiers([]);
+    }
+
+    if (optionsRes.ok) {
+      const optionsPayload = (await optionsRes.json()) as { options: LineupOption[] };
+      setOptions(optionsPayload.options ?? []);
+    } else if (me?.mode === "guest") {
+      setOptions(mapGuestCollectionToOptions(me.mvpCollection));
+    }
+  }, [me, params.contestId]);
 
   useEffect(() => {
     const qp = new URLSearchParams(window.location.search).get("tab");
@@ -112,112 +153,132 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   useEffect(() => {
     if (loading) return;
-
-    void (async () => {
-      setError("");
-      const [detailRes, rankingRes, optionsRes, rewardPreviewRes] = await Promise.all([
-        fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
-      ]);
-
-      if (!detailRes.ok) {
-        const cached = loadContestCache().find((contest) => contest.id === params.contestId);
-        if (cached) {
-          setDetail({ contest: cached, userEntry: null });
-          setRanking({ rankings: [] });
-          setError("Showing cached contest data. Connect with X for live updates and rankings.");
-        } else {
-          setError((await detailRes.text()) || "Cannot load contest detail");
-        }
-      } else {
-        const detailPayload = (await detailRes.json()) as ContestDetail;
-        setDetail(detailPayload);
-        if (detailPayload.userEntry) {
-          setSelected(detailPayload.userEntry.rosterLocks.map((lock) => lock.ownedCardInstanceId));
-        }
-      }
-
-      if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
-      if (rewardPreviewRes.ok) {
-        const rp = (await rewardPreviewRes.json()) as RewardPreviewPayload;
-        if (rp.hasPolicyData) setRewardTiers(rp.tiers);
-      }
-      if (optionsRes.ok) {
-        const payload = (await optionsRes.json()) as { options: LineupOption[] };
-        setOptions(payload.options ?? []);
-      } else if (me?.mode === "guest") {
-        setOptions(mapGuestCollectionToOptions(me.mvpCollection));
-      }
-    })();
-  }, [loading, me, params.contestId]);
+    setError("");
+    void loadAll();
+  }, [loadAll, loading]);
 
   const isGuest = !loading && me?.mode === "guest";
+
+  const rule = detail?.contest.rules[0];
+  const maxRosterSize = rule?.maxRosterSize ?? 5;
+  const hasEntry = Boolean(detail?.userEntry);
+
+  const filteredOptions = useMemo(
+    () => (rule?.cardSetId ? options.filter((item) => item.cardSetId === rule.cardSetId) : options),
+    [options, rule?.cardSetId],
+  );
+
+  const selectedCards = useMemo(
+    () => Array.from({ length: maxRosterSize }).map((_, index) => filteredOptions.find((item) => item.instanceId === selected[index]) ?? null),
+    [filteredOptions, maxRosterSize, selected],
+  );
+
+  const userStatus = detail ? getUserStatus(detail.contest.status, hasEntry, selected.filter(Boolean).length) : "";
+  const myRankingRow = ranking?.rankings?.find((row) => row.userId === me?.user.id) ?? null;
+  const canManageLineup = detail?.contest.status === "OPEN" && !isGuest;
+  const filled = selectedCards.filter(Boolean).length;
+
+  const openBuilder = () => {
+    if (isGuest) return;
+    setBuilderMessage("");
+    setIsBuilderOpen(true);
+    setActiveTab("entry");
+  };
+
+  const closeBuilder = () => {
+    setIsBuilderOpen(false);
+    setActiveSlot(null);
+  };
+
+  const toggle = (instanceId: string) => {
+    if (!canManageLineup) return;
+    setSelected((prev) => {
+      if (activeSlot !== null) {
+        const next = [...prev];
+        const alreadyIn = next.indexOf(instanceId);
+        if (alreadyIn >= 0) next.splice(alreadyIn, 1);
+        next[activeSlot] = instanceId;
+        return next.filter(Boolean).slice(0, maxRosterSize);
+      }
+      if (prev.includes(instanceId)) return prev.filter((id) => id !== instanceId);
+      if (prev.length >= maxRosterSize) return prev;
+      return [...prev, instanceId];
+    });
+  };
+
+  const removeFromSlot = (slot: number) => {
+    if (!canManageLineup) return;
+    setSelected((prev) => prev.filter((_, index) => index !== slot));
+  };
+
+  const submitEntry = async () => {
+    if (!canManageLineup || filled !== maxRosterSize) return;
+    setSubmitState("saving");
+    setBuilderMessage("");
+    const res = await fetch(`/api/contests/${params.contestId}/enter`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lineupInstanceIds: selected }),
+    });
+
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      setBuilderMessage(payload?.error ?? "Contest entry failed");
+      setSubmitState("idle");
+      return;
+    }
+
+    setBuilderMessage("Lineup saved and submitted successfully.");
+    setSubmitState("idle");
+    closeBuilder();
+    await loadAll();
+  };
 
   if (!detail) {
     return (
       <SiteShell>
         <section className="contest-detail-skeleton" aria-label="Loading contest detail">
           <div className="contest-detail-skeleton-hero" />
-          <div className="contest-detail-skeleton-grid">
-            <div className="contest-detail-skeleton-main" />
-            <div className="contest-detail-skeleton-side" />
-          </div>
+          <div className="contest-detail-skeleton-main" />
         </section>
       </SiteShell>
     );
   }
 
-  const rule = detail.contest.rules[0];
-  const maxRosterSize = rule?.maxRosterSize ?? 5;
-  const filteredOptions = rule?.cardSetId ? options.filter((item) => item.cardSetId === rule.cardSetId) : options;
-  const selectedCards = Array.from({ length: maxRosterSize }).map((_, index) => {
-    const id = selected[index];
-    return filteredOptions.find((option) => option.instanceId === id) ?? null;
-  });
-  const hasEntry = Boolean(detail.userEntry);
-  const userStatus = getUserStatus(detail.contest.status, hasEntry, selected.length);
-  const primaryCta = getPrimaryCta({ status: detail.contest.status, hasEntry, isGuest: Boolean(isGuest), contestId: detail.contest.id });
-  const myRankingRow = ranking?.rankings?.find((row) => row.userId === me?.user.id) ?? null;
-
   return (
     <SiteShell>
-      {isGuest ? <EmptyState title="Guest mode preview" description="Connect with X to submit lineup and appear on ranking." /> : null}
-      {error ? <EmptyState title="Contest notice" description={error} /> : null}
+      {error ? <EmptyState title="Contest detail notice" description={error} /> : null}
 
-      <Surface className="contest-detail-v4-hero" variant="raised">
-        <div className="contest-detail-v4-main">
-          <div className="contest-detail-v4-head">
-            <p className="mcg-eyebrow">Contest {detail.contest.code}</p>
-            <ContestStatusBadge status={detail.contest.status} />
-          </div>
+      <Surface className="contest-detail-v4-hero" variant="highlight">
+        <div className="contest-detail-v4-headline">
+          <p className="mcg-eyebrow">{detail.contest.seasonName ?? "MCG Contest"}</p>
           <h1>{detail.contest.title}</h1>
-          <p className="contest-detail-v4-desc">
-            {detail.contest.seasonName
-              ? `${detail.contest.seasonName} showdown. Draft your strongest ${maxRosterSize}-card lineup and compete for ranked rewards.`
-              : `Draft your strongest ${maxRosterSize}-card lineup and compete for ranked rewards.`}
-          </p>
-          <div className="contest-detail-v4-metrics">
-            <div><span>Registration</span><strong>{detail.contest.status === "OPEN" ? "Open now" : "Closed"}</strong></div>
-            <div><span>Team lock / start</span><strong>{formatDateLabel(detail.contest.lockAt ?? detail.contest.liveAt)}</strong></div>
-            <div><span>Contest end</span><strong>{formatDateLabel(detail.contest.endsAt)}</strong></div>
-            <div><span>Entry fee</span><strong>See rules</strong></div>
-            <div><span>Lineup size</span><strong>{maxRosterSize} cards</strong></div>
-            <div><span>Rewards</span><strong>{rewardTiers?.length ? `${rewardTiers.length} tiers` : "Ranked drops + points"}</strong></div>
-          </div>
+          <p className="contest-inline-note">Code: {detail.contest.code} · League: {detail.contest.leagueTierRequired ?? "OPEN"}</p>
         </div>
+
+        <div className="contest-detail-v4-hero-meta">
+          <ContestStatusBadge status={detail.contest.status} />
+          <div><span>Lock</span><strong>{formatDateLabel(detail.contest.lockAt)}</strong></div>
+          <div><span>Live</span><strong>{formatDateLabel(detail.contest.liveAt)}</strong></div>
+          <div><span>End</span><strong>{formatDateLabel(detail.contest.endsAt)}</strong></div>
+          <div><span>Players</span><strong>{detail.contest._count.entries}</strong></div>
+          <div><span>Lineup</span><strong>{maxRosterSize} cards</strong></div>
+          <div><span>Rewards</span><strong>{rewardTiers?.length ? `${rewardTiers.length} tiers` : "Ranked drops + points"}</strong></div>
+        </div>
+
         <div className="contest-detail-v4-status">
           <p className="mcg-eyebrow">Your status</p>
           <h3>{userStatus}</h3>
           <p className="contest-inline-note">{hasEntry ? "You already have an entry for this contest." : "No submitted entry yet."}</p>
-          {primaryCta.href ? (
-            <Link href={primaryCta.href} className="btn btn-primary contest-detail-v4-cta">{primaryCta.label}</Link>
+          {detail.contest.status === "OPEN" ? (
+            <button className="btn btn-primary contest-detail-v4-cta" onClick={openBuilder}>{hasEntry ? "Edit lineup" : "Build lineup"}</button>
           ) : (
-            <button className="btn btn-primary contest-detail-v4-cta" onClick={() => primaryCta.tab && setActiveTab(primaryCta.tab)}>{primaryCta.label}</button>
+            <button className="btn btn-primary contest-detail-v4-cta" onClick={() => setActiveTab("leaderboard")}>Track ranking</button>
           )}
         </div>
       </Surface>
+
+      {builderMessage ? <p className="contest-inline-note contest-builder-inline-success">{builderMessage}</p> : null}
 
       <nav className="contest-detail-v4-tabs" aria-label="Contest details sections">
         {[
@@ -238,19 +299,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           <Surface className="contest-detail-v4-panel" variant="raised">
             <p className="mcg-eyebrow">Contest summary</p>
             <h3>What happens now</h3>
-            <p className="contest-inline-note">Status: {detail.contest.status}. Participants: {detail.contest._count.entries}. League: {detail.contest.leagueTierRequired ?? "OPEN"}.</p>
             <ul className="contest-detail-v4-list">
               <li>Registration window: {detail.contest.status === "OPEN" ? "active" : "closed"}.</li>
               <li>Lineup lock: {formatDateLabel(detail.contest.lockAt)}.</li>
               <li>Contest live start: {formatDateLabel(detail.contest.liveAt)}.</li>
               <li>Final snapshot: {formatDateLabel(detail.contest.endsAt)}.</li>
             </ul>
-          </Surface>
-          <Surface className="contest-detail-v4-panel" variant="raised">
-            <p className="mcg-eyebrow">Action</p>
-            <h3>{primaryCta.label}</h3>
-            <p className="contest-inline-note">Use this action as your next step for this contest state.</p>
-            {primaryCta.href ? <Link href={primaryCta.href} className="btn btn-primary">{primaryCta.label}</Link> : null}
           </Surface>
           <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} tiers={rewardTiers} />
         </section>
@@ -262,8 +316,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             <Surface className="contest-detail-v4-panel" variant="raised">
               <p className="mcg-eyebrow">My entry</p>
               <h3>No team selected</h3>
-              <p className="contest-inline-note">Create your lineup in the focused builder experience.</p>
-              {detail.contest.status === "OPEN" ? <Link href={`/contests/${detail.contest.id}/lineup`} className="btn btn-primary">Build lineup</Link> : null}
+              <p className="contest-inline-note">Create your lineup in the focused modal builder.</p>
+              {detail.contest.status === "OPEN" ? <button className="btn btn-primary" onClick={openBuilder}>Build lineup</button> : null}
             </Surface>
           ) : (
             <EnteredLineupPanel selectedCards={selectedCards} />
@@ -303,11 +357,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       {activeTab === "rewards" ? (
         <section className="contest-detail-v4-grid">
           <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} tiers={rewardTiers} />
-          <Surface className="contest-detail-v4-panel" variant="raised">
-            <p className="mcg-eyebrow">Reward structure</p>
-            <h3>By rank / tier</h3>
-            <p className="contest-inline-note">Entry fees and payout logic are enforced by backend policy. This tab surfaces the user-facing reward tiers.</p>
-          </Surface>
         </section>
       ) : null}
 
@@ -322,15 +371,61 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               <li>At LOCKED status, lineup changes are disabled.</li>
             </ul>
           </Surface>
-          <Surface className="contest-detail-v4-panel" variant="raised">
-            <p className="mcg-eyebrow">Timing + scoring notes</p>
-            <ul className="contest-detail-v4-list">
-              <li>Team lock / start: {formatDateLabel(detail.contest.lockAt ?? detail.contest.liveAt)}.</li>
-              <li>Contest end snapshot: {formatDateLabel(detail.contest.endsAt)}.</li>
-              <li>Scoring breakdown and final rankings appear after settlement.</li>
-            </ul>
-          </Surface>
         </section>
+      ) : null}
+
+      {isBuilderOpen ? (
+        <div className="contest-modal-overlay contest-lineup-overlay" role="presentation" onClick={closeBuilder}>
+          <div className="contest-modal contest-lineup-modal" role="dialog" aria-modal="true" aria-label="Build lineup" onClick={(event) => event.stopPropagation()}>
+            <div className="contest-lineup-modal-head">
+              <div>
+                <p className="mcg-eyebrow">Lineup builder</p>
+                <h2>{detail.contest.title}</h2>
+                <p className="contest-inline-note">{filled}/{maxRosterSize} slots filled</p>
+              </div>
+              <button className="admin-v2-link-chip" onClick={closeBuilder}>Close</button>
+            </div>
+
+            <div className="contest-lineup-modal-layout">
+              <section className="contest-builder-v4-slots">
+                <p className="mcg-eyebrow">Selected lineup slots</p>
+                <div className="contest-lineup-grid-v2 tcg-layout">
+                  {Array.from({ length: maxRosterSize }).map((_, index) => (
+                    <LineupSlot
+                      key={index}
+                      index={index}
+                      card={selectedCards[index]}
+                      canEdit={canManageLineup}
+                      isActive={activeSlot === index}
+                      onRemove={() => removeFromSlot(index)}
+                      onOpenPicker={() => setActiveSlot(index)}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section className="contest-builder-v4-pool">
+                <EligibleCardsPanel
+                  options={filteredOptions}
+                  selectedIds={selected}
+                  activeSlot={activeSlot}
+                  canManage={canManageLineup}
+                  onAssign={(instanceId) => {
+                    toggle(instanceId);
+                    if (activeSlot !== null) setActiveSlot(null);
+                  }}
+                />
+              </section>
+            </div>
+
+            <footer className="contest-lineup-modal-footer">
+              <p className="contest-inline-note">Validation: {filled}/{maxRosterSize} slots filled.</p>
+              <button className="btn btn-primary" onClick={() => void submitEntry()} disabled={!canManageLineup || filled !== maxRosterSize || submitState === "saving"}>
+                {submitState === "saving" ? "Saving lineup…" : hasEntry ? "Save lineup" : "Submit lineup"}
+              </button>
+            </footer>
+          </div>
+        </div>
       ) : null}
     </SiteShell>
   );
