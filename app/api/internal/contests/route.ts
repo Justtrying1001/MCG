@@ -19,6 +19,15 @@ export async function GET(request: NextRequest) {
     const contests = await prisma.contest.findMany({
       include: {
         rules: true,
+        rewardPolicy: {
+          include: {
+            bundles: {
+              include: { components: true },
+              orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+            },
+            distributionRules: { orderBy: [{ priority: "asc" }] },
+          },
+        },
         _count: {
           select: {
             entries: true,
