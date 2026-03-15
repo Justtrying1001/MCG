@@ -65,7 +65,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en">
-      <body className={`${barlowCondensed.variable} ${inter.variable} ${jetBrainsMono.variable} ${rajdhani.variable} ${dmMono.variable} ${lora.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Lora:ital@1&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
         {children}
         <Analytics />
       </body>

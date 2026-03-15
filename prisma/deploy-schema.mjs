@@ -1,11 +1,14 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { tmpdir } from "node:os";
 
 const LOCK_TIMEOUT_CODE = "P1002";
 const LOCK_TIMEOUT_MARKER = "pg_advisory_lock";
 const MAX_DEPLOY_ATTEMPTS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRIES ?? "3", 10);
 const RETRY_DELAY_MS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRY_DELAY_MS ?? "5000", 10);
+const MAX_P3009_RETRIES = 5;
 
 const FAILED_MIGRATION_CODE = "P3009";
 const FAILED_MIGRATION_NAME_PATTERN = /The `([^`]+)` migration[^\n]*failed/i;
@@ -67,6 +70,60 @@ function isAdvisoryLockTimeout(output) {
   return output.includes(LOCK_TIMEOUT_CODE) && output.includes(LOCK_TIMEOUT_MARKER);
 }
 
+/**
+ * Parse the failed migration name from a P3009 error message.
+ * Example: "The `20260315000003_remove_settlement_plan_approved_enum` migration started at ..."
+ */
+function parseP3009FailedMigration(output) {
+  const match = output.match(/The `([\w]+)` migration started at/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Run cleanup SQL via `prisma db execute` to undo partial DDL state
+ * left by a partially-applied migration (e.g. leftover enum types).
+ */
+function runCleanupSql(sql) {
+  const tmpFile = join(tmpdir(), `mcg-cleanup-${randomBytes(6).toString("hex")}.sql`);
+  try {
+    writeFileSync(tmpFile, sql, "utf8");
+    const result = runPrisma(["db", "execute", "--file", tmpFile, "--schema", "prisma/schema.prisma"]);
+    if (!result.ok) {
+      console.warn("[deploy-schema] Cleanup SQL warning:", result.output.trim());
+    }
+  } finally {
+    try { unlinkSync(tmpFile); } catch { /* ignore */ }
+  }
+}
+
+/**
+ * Per-migration cleanup: drop any partial state left by an interrupted
+ * enum-swap migration so it can be safely retried.
+ */
+function cleanupPartialState(migrationName) {
+  if (migrationName.includes("remove_settlement_plan_approved_enum")) {
+    runCleanupSql(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ContestSettlementPlanStatus_new')
+           AND EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ContestSettlementPlanStatus') THEN
+          DROP TYPE "ContestSettlementPlanStatus_new";
+        END IF;
+      END $$;
+    `);
+  }
+
+  if (migrationName.includes("remove_contest_entry_status_locked")) {
+    runCleanupSql(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ContestEntryStatus_new')
+           AND EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ContestEntryStatus') THEN
+          DROP TYPE "ContestEntryStatus_new";
+        END IF;
+      END $$;
+    `);
+  }
+}
+
 async function deployWithLockRetry() {
   const attempts = Math.max(1, MAX_DEPLOY_ATTEMPTS);
 
@@ -87,59 +144,69 @@ async function deployWithLockRetry() {
 }
 
 async function main() {
-  const migrate = await deployWithLockRetry();
-  if (migrate.ok) {
-    console.log("Prisma migrate deploy succeeded.");
-    return;
-  }
+  // ── P3009 loop: resolve stuck (failed) migrations then retry ─────────────
+  for (let p3009Attempt = 1; p3009Attempt <= MAX_P3009_RETRIES; p3009Attempt++) {
+    const migrate = await deployWithLockRetry();
 
-  if (migrate.output.includes(FAILED_MIGRATION_CODE)) {
-    const failedMigration = extractFailedMigrationName(migrate.output);
-    if (!failedMigration) {
-      process.stderr.write(migrate.output);
-      process.exit(migrate.status);
+    if (migrate.ok) {
+      console.log("Prisma migrate deploy succeeded.");
+      return;
     }
 
-    console.warn(`Prisma migrate deploy reported ${FAILED_MIGRATION_CODE} on ${failedMigration}. Marking it rolled back and retrying deploy.`);
-    markRolledBack(failedMigration);
+    // ── P3009: failed migration blocking deploy ───────────────────────────
+    if (migrate.output.includes("P3009")) {
+      const failedName = parseP3009FailedMigration(migrate.output);
+      if (!failedName) {
+        console.error("[deploy-schema] P3009 but could not parse migration name. Output:\n", migrate.output);
+        process.exit(migrate.status);
+      }
 
-    const retryAfterRollback = await deployWithLockRetry();
-    if (!retryAfterRollback.ok) {
-      process.stderr.write(retryAfterRollback.output);
-      process.exit(retryAfterRollback.status);
+      console.warn(`[deploy-schema] P3009 — stuck migration detected: ${failedName} (attempt ${p3009Attempt}/${MAX_P3009_RETRIES})`);
+      cleanupPartialState(failedName);
+
+      const resolve = runPrisma(["migrate", "resolve", "--rolled-back", failedName]);
+      if (!resolve.ok) {
+        console.error("[deploy-schema] Could not resolve failed migration:\n", resolve.output);
+        process.exit(resolve.status);
+      }
+      console.log(`[deploy-schema] Marked ${failedName} as rolled-back — retrying deploy`);
+      continue; // retry the outer loop
     }
 
-    console.log("Prisma migrate deploy succeeded after failed-migration recovery.");
-    return;
-  }
+    // ── P3005: fresh DB with no migration history — baseline all but last ─
+    if (migrate.output.includes("P3005")) {
+      const migrations = getMigrationDirectories();
+      if (migrations.length <= 1) {
+        process.stderr.write(migrate.output);
+        process.exit(migrate.status);
+      }
 
-  if (!migrate.output.includes("P3005")) {
+      const migrationsToBaseline = migrations.slice(0, -1);
+      console.warn(
+        `Prisma migrate deploy reported P3005. Baselining ${migrationsToBaseline.length} historical migration(s), then retrying deploy.`
+      );
+
+      for (const migrationName of migrationsToBaseline) {
+        markApplied(migrationName);
+      }
+
+      const redeploy = await deployWithLockRetry();
+      if (!redeploy.ok) {
+        process.stderr.write(redeploy.output);
+        process.exit(redeploy.status);
+      }
+
+      console.log("Prisma migrate deploy succeeded after baseline recovery.");
+      return;
+    }
+
+    // ── Unknown error ─────────────────────────────────────────────────────
     process.stderr.write(migrate.output);
     process.exit(migrate.status);
   }
 
-  const migrations = getMigrationDirectories();
-  if (migrations.length <= 1) {
-    process.stderr.write(migrate.output);
-    process.exit(migrate.status);
-  }
-
-  const migrationsToBaseline = migrations.slice(0, -1);
-  console.warn(
-    `Prisma migrate deploy reported P3005. Baselining ${migrationsToBaseline.length} historical migration(s), then retrying deploy.`
-  );
-
-  for (const migrationName of migrationsToBaseline) {
-    markApplied(migrationName);
-  }
-
-  const redeploy = await deployWithLockRetry();
-  if (!redeploy.ok) {
-    process.stderr.write(redeploy.output);
-    process.exit(redeploy.status);
-  }
-
-  console.log("Prisma migrate deploy succeeded after baseline recovery.");
+  console.error(`[deploy-schema] Failed to apply migrations after ${MAX_P3009_RETRIES} P3009 resolution attempts`);
+  process.exit(1);
 }
 
 main();

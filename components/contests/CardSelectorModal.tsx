@@ -94,7 +94,7 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
         <div className="contest-modal-grid visual">
           {filtered.map((item) => {
             const isSelected = selectedIds.includes(item.instanceId);
-            const isLocked = item.isLockedInOtherContest && !isSelected;
+            const isLocked = item.isLockedByActiveContest && !isSelected;
             return (
               <LineupCardTile
                 key={item.instanceId}

@@ -29,7 +29,7 @@ export type ContestListItem = {
 export type LineupOption = {
   instanceId: string;
   cardTemplateId: string;
-  isLockedInOtherContest: boolean;
+  isLockedByActiveContest: boolean;
   cardSetId: string;
   cardSetCode: string;
   cardSetName: string;

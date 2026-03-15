@@ -52,6 +52,7 @@ export function ContestResultPanel({
       ) : myRank ? (
         <p className="contest-inline-note">No rewards assigned for your final rank.</p>
       ) : null}
+      <p className="contest-inline-note">Rewards are granted during settlement processing. Your cards are unlocked once the contest is settled.</p>
       <Link href="/contests" className="mcg-btn ghost">Explore next contests</Link>
     </Surface>
   );

@@ -29,7 +29,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { href: "/admin/contests/operations", label: "Contest operations", hint: "Lifecycle, scoring, settlement diagnostics" },
       { href: "/admin/moderation", label: "Moderation", hint: "Queue review and decisions", critical: true },
       { href: "/admin/rewards", label: "Rewards", hint: "Manual compensation and grants", critical: true },
-      { href: "/admin/supply", label: "Supply", hint: "Sale/reward pack distribution and remaining" },
       { href: "/admin/quests", label: "Quests", hint: "Quest catalog and builder" },
       { href: "/admin/milestones", label: "Milestones", hint: "Milestone progression management" },
     ],

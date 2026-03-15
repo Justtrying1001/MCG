@@ -72,7 +72,7 @@ export default function ContestsPage() {
         return;
       }
 
-      const payload = (await res.json()) as ContestPayload;
+      const payload = (await res.json().catch(() => null)) as ContestPayload | null;
       const rows = Array.isArray(payload.contests) ? payload.contests : [];
       setContests(rows);
     } catch {
