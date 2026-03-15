@@ -83,7 +83,7 @@ export async function listContestsMvp() {
     tx.contest.findMany({
       where: {
         configPublishedAt: { not: null },
-        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
+        status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
       },
       include: {
         rules: true,
