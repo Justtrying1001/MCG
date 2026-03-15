@@ -27,18 +27,23 @@ describe("contest scoring engine runtime", () => {
     expect(priceScoreFromChange(-1)).toBe(0);
     expect(priceScoreFromChange(0)).toBe(50);
     expect(priceScoreFromChange(0.5)).toBe(100);
+    // null → 0, not 50 (missing data should not give neutral benefit)
+    expect(priceScoreFromChange(null)).toBe(0);
 
     expect(volumeScoreFromChange(-1)).toBe(0);
     expect(volumeScoreFromChange(0)).toBe(50);
     expect(volumeScoreFromChange(1)).toBe(100);
+    expect(volumeScoreFromChange(null)).toBe(0);
 
     expect(marketCapScoreFromChange(-1)).toBe(0);
     expect(marketCapScoreFromChange(0)).toBe(50);
     expect(marketCapScoreFromChange(0.5)).toBe(100);
+    expect(marketCapScoreFromChange(null)).toBe(0);
 
     expect(rankScoreFromChange(-1)).toBe(0);
     expect(rankScoreFromChange(0)).toBe(50);
     expect(rankScoreFromChange(0.3)).toBe(100);
+    expect(rankScoreFromChange(null)).toBe(0);
 
     expect(rankMultiplierFromChange(-0.1)).toBe(1);
     expect(rankMultiplierFromChange(0)).toBe(1);

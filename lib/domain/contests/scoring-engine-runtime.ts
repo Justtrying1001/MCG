@@ -65,7 +65,7 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
     const startByToken = new Map(startRows.map((row) => [row.tokenProjectId, row]));
     const endByToken = new Map(endRows.map((row) => [row.tokenProjectId, row]));
 
-    const tokenScores: Array<{ tokenProjectId: string; score: number; priceChange: number | null; marketCapChange: number | null; volumeChange: number | null; rankChange: number | null }> = [];
+    const tokenScores: Array<{ tokenProjectId: string; score: number; priceChange: number | null; marketCapChange: number | null; volumeChange: number | null; rankChange: number | null; dataQuality: string }> = [];
 
     for (const [tokenProjectId, start] of startByToken.entries()) {
       const end = endByToken.get(tokenProjectId);
@@ -76,8 +76,14 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
       const volumeChange = relativeChange(start.volume24hUsd, end.volume24hUsd);
       const rankChange = rankRelativeChange(start.marketCapRank, end.marketCapRank);
 
+      const isIncomplete = priceChange === null || marketCapChange === null || volumeChange === null;
+      const dataQuality = isIncomplete ? "INCOMPLETE" : "COMPLETE";
+      if (isIncomplete) {
+        console.warn(`[scoring] Token ${tokenProjectId} in contest ${contestId} has incomplete market data — score computed from partial data`);
+      }
+
       const score = computeTokenScore({ priceChange, marketCapChange, volumeChange, rankChange });
-      tokenScores.push({ tokenProjectId, score, priceChange, marketCapChange, volumeChange, rankChange });
+      tokenScores.push({ tokenProjectId, score, priceChange, marketCapChange, volumeChange, rankChange, dataQuality });
 
       await tx.contestTokenScore.upsert({
         where: { contestId_tokenProjectId: { contestId, tokenProjectId } },
@@ -102,6 +108,7 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
     }
 
     const tokenScoreByProject = new Map(tokenScores.map((row) => [row.tokenProjectId, row.score]));
+    const tokenDataQualityByProject = new Map(tokenScores.map((row) => [row.tokenProjectId, row.dataQuality]));
 
     const entries = await tx.contestEntry.findMany({
       where: { contestId },
@@ -134,6 +141,7 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
       for (const lock of entry.rosterLocks) {
         const tokenProjectId = lock.ownedCardInstance.cardTemplate.tokenProjectId;
         const baseScore = tokenScoreByProject.get(tokenProjectId) ?? 0;
+        const dataQuality = tokenDataQualityByProject.get(tokenProjectId) ?? "COMPLETE";
 
         const rarityCode = lock.ownedCardInstance.cardTemplate.rarity?.code ?? "COMMON";
         const editionCode = lock.ownedCardInstance.cardTemplate.edition?.code ?? "BASE";
@@ -153,6 +161,7 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
             rarityMultiplier,
             editionMultiplier,
             finalScore,
+            dataQuality,
           },
         });
         entryBreakdownsCount += 1;
@@ -229,7 +238,7 @@ export function computeTokenScore(input: {
 }
 
 function boundedScore(change: number | null, denominator: number) {
-  if (change === null || !Number.isFinite(change)) return 50;
+  if (change === null || !Number.isFinite(change)) return 0;
   return 50 + (50 * clamp(change / denominator, -1, 1));
 }
 

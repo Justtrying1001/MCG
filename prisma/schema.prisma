@@ -642,6 +642,7 @@ model ContestEntryScoreBreakdown {
   rarityMultiplier Float
   editionMultiplier Float
   finalScore       Float
+  dataQuality      String   @default("COMPLETE")
   computedAt       DateTime @default(now())
 
   entry         ContestEntry       @relation(fields: [entryId], references: [id], onDelete: Cascade)
