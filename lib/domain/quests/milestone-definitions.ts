@@ -458,6 +458,6 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
   },
 ];
 
-if (MILESTONE_SEED_DEFINITIONS.length !== 15) {
-  throw new Error(`Expected 15 milestones, found ${MILESTONE_SEED_DEFINITIONS.length}`);
+if (MILESTONE_SEED_DEFINITIONS.length !== 25) {
+  throw new Error(`Expected 25 milestones, found ${MILESTONE_SEED_DEFINITIONS.length}`);
 }
