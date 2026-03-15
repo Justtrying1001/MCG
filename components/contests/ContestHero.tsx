@@ -8,7 +8,7 @@ export function ContestHero({
   code,
   title,
   status,
-  startsAt,
+  liveAt,
   lockAt,
   endsAt,
   rosterSize,
@@ -20,7 +20,7 @@ export function ContestHero({
   code: string;
   title: string;
   status: ContestStatus;
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   rosterSize: number;
@@ -42,7 +42,7 @@ export function ContestHero({
         />
 
         <div className="contest-hero-meta-row">
-          <span className="mcg-chip">Starts {formatDate(startsAt)}</span>
+          <span className="mcg-chip">Goes live {formatDate(liveAt)}</span>
           <span className="mcg-chip">Team lock {formatDate(lockAt)}</span>
           <span className="mcg-chip">Ends {formatDate(endsAt)}</span>
           <span className="mcg-chip">Roster {rosterSize}</span>

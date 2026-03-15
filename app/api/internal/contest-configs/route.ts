@@ -15,7 +15,7 @@ const createSchema = z.object({
   autoGenerateCode: z.boolean().optional(),
   title: z.string().trim().min(1),
   description: z.string().optional().nullable(),
-  startsAt: z.string().nullable().optional(),
+  liveAt: z.string().nullable().optional(),
   lockAt: z.string().nullable().optional(),
   endsAt: z.string().nullable().optional(),
   entryFeeEnabled: z.boolean().optional(),
@@ -52,15 +52,15 @@ const createSchema = z.object({
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  const startsAt = asDate(value.startsAt);
+  const liveAt = asDate(value.liveAt);
   const lockAt = asDate(value.lockAt);
   const endsAt = asDate(value.endsAt);
 
   if (!value.autoGenerateCode && !value.code?.trim()) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["code"], message: "code is required when autoGenerateCode is false" });
   }
-  if (value.startsAt && !startsAt) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startsAt"], message: "Invalid startsAt datetime" });
+  if (value.liveAt && !liveAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["liveAt"], message: "Invalid liveAt datetime" });
   }
   if (value.lockAt && !lockAt) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["lockAt"], message: "Invalid lockAt datetime" });

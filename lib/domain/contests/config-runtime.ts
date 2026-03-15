@@ -45,7 +45,7 @@ export type ContestConfigInput = {
   code: string;
   title: string;
   description?: string | null;
-  startsAt?: string | null;
+  liveAt?: string | null;
   lockAt?: string | null;
   endsAt?: string | null;
   status?: ContestStatus;
@@ -84,7 +84,7 @@ export async function createContestDraft(input: ContestConfigInput) {
         title: normalized.title,
         description: normalized.description,
         status: normalized.status,
-        startsAt: normalized.startsAt,
+        liveAt: normalized.liveAt,
         lockAt: normalized.lockAt,
         endsAt: normalized.endsAt,
         configPublishedAt: null,
@@ -139,7 +139,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     code: input.code ?? existing.code,
     title: input.title ?? existing.title,
     description: input.description ?? existing.description,
-    startsAt: input.startsAt ?? existing.startsAt?.toISOString() ?? null,
+    liveAt: input.liveAt ?? existing.liveAt?.toISOString() ?? null,
     lockAt: input.lockAt ?? existing.lockAt?.toISOString() ?? null,
     endsAt: input.endsAt ?? existing.endsAt?.toISOString() ?? null,
     status: input.status ?? existing.status,
@@ -180,7 +180,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
         title: normalized.title,
         description: normalized.description,
         status: normalized.status,
-        startsAt: normalized.startsAt,
+        liveAt: normalized.liveAt,
         lockAt: normalized.lockAt,
         endsAt: normalized.endsAt,
       },
@@ -311,11 +311,11 @@ type ContestWithConfig = Prisma.ContestGetPayload<{ include: typeof contestDraft
 export function validateContestDraftEntity(contest: ContestWithConfig): DraftIssue[] {
   const issues: DraftIssue[] = [];
 
-  if (!contest.startsAt || !contest.lockAt || !contest.endsAt) {
-    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "entryOpensAt, lockAt and endsAt are required" });
+  if (!contest.liveAt || !contest.lockAt || !contest.endsAt) {
+    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "liveAt, lockAt and endsAt are required" });
   } else {
-    if (contest.startsAt >= contest.lockAt) {
-      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "lockAt", message: "lockAt must be after entryOpensAt" });
+    if (contest.lockAt >= contest.liveAt) {
+      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "liveAt", message: "liveAt must be after lockAt" });
     }
     if (contest.lockAt > contest.endsAt) {
       issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "endsAt", message: "endsAt must be at or after lockAt" });
@@ -451,12 +451,12 @@ function normalizeContestInput(input: ContestConfigInput) {
     throw new ContestRuntimeError("cardSetId is required when eligibilityMode=CARD_SET_ONLY", 400);
   }
 
-  const startsAt = input.startsAt ? new Date(input.startsAt) : null;
+  const liveAt = input.liveAt ? new Date(input.liveAt) : null;
   const lockAt = input.lockAt ? new Date(input.lockAt) : null;
   const endsAt = input.endsAt ? new Date(input.endsAt) : null;
 
-  if (startsAt && lockAt && startsAt >= lockAt) {
-    throw new ContestRuntimeError("lockAt must be after startsAt", 400);
+  if (lockAt && liveAt && lockAt >= liveAt) {
+    throw new ContestRuntimeError("liveAt must be after lockAt", 400);
   }
   if (lockAt && endsAt && lockAt > endsAt) {
     throw new ContestRuntimeError("endsAt must be at or after lockAt", 400);
@@ -467,7 +467,7 @@ function normalizeContestInput(input: ContestConfigInput) {
     title,
     description: input.description?.trim() || null,
     status: input.status ?? ContestStatus.DRAFT,
-    startsAt,
+    liveAt,
     lockAt,
     endsAt,
     teamSizeMode,

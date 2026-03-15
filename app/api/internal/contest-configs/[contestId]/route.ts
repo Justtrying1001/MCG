@@ -10,7 +10,7 @@ const patchSchema = z.object({
   code: z.string().trim().min(1).optional(),
   title: z.string().trim().min(1).optional(),
   description: z.string().nullable().optional(),
-  startsAt: z.string().nullable().optional(),
+  liveAt: z.string().nullable().optional(),
   lockAt: z.string().nullable().optional(),
   endsAt: z.string().nullable().optional(),
   entryFeeEnabled: z.boolean().optional(),
@@ -47,8 +47,8 @@ const patchSchema = z.object({
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  if (value.startsAt && !asDate(value.startsAt)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["startsAt"], message: "Invalid startsAt datetime" });
+  if (value.liveAt && !asDate(value.liveAt)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["liveAt"], message: "Invalid liveAt datetime" });
   }
   if (value.lockAt && !asDate(value.lockAt)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["lockAt"], message: "Invalid lockAt datetime" });

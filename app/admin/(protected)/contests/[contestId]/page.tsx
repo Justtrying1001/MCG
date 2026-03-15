@@ -13,7 +13,7 @@ type OverviewPayload = {
     code: string;
     title: string;
     status: ContestStatus;
-    startsAt: string | null;
+    liveAt: string | null;
     lockAt: string | null;
     endsAt: string | null;
     _count: {
@@ -102,7 +102,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
               <Meta label="Scores" value={String(data.contest._count.scores)} />
               <Meta label="Rankings" value={String(data.contest._count.rankings)} />
               <Meta label="Settlements" value={String(data.contest._count.settlements)} />
-              <Meta label="Starts" value={formatDate(data.contest.startsAt)} />
+              <Meta label="Goes Live" value={formatDate(data.contest.liveAt)} />
               <Meta label="Lock" value={formatDate(data.contest.lockAt)} />
               <Meta label="Ends" value={formatDate(data.contest.endsAt)} />
             </div>
@@ -126,7 +126,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
 
           <section className="contest-section" style={{ display: "grid", gap: "0.4rem" }}>
             <h2 className="contest-section-title">Milestones</h2>
-            <p className="contest-inline-note">Start: {formatDate(data.contest.startsAt)}</p>
+            <p className="contest-inline-note">Goes Live: {formatDate(data.contest.liveAt)}</p>
             <p className="contest-inline-note">Lock: {formatDate(data.contest.lockAt)}</p>
             <p className="contest-inline-note">End: {formatDate(data.contest.endsAt)}</p>
           </section>

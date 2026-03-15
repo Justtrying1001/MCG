@@ -4,8 +4,8 @@ import { validateContestDraftEntity } from "@/lib/domain/contests/config-runtime
 
 function baseContest() {
   return {
-    startsAt: new Date("2026-03-01T10:00:00.000Z"),
-    lockAt: new Date("2026-03-01T11:00:00.000Z"),
+    lockAt: new Date("2026-03-01T10:00:00.000Z"),
+    liveAt: new Date("2026-03-01T11:00:00.000Z"),
     endsAt: new Date("2026-03-01T12:00:00.000Z"),
     rules: [
       {

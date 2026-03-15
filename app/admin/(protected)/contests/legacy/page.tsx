@@ -18,7 +18,7 @@ type AdminContest = {
   code: string;
   title: string;
   status: "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   rules: ContestRule[];
@@ -42,7 +42,7 @@ export default function AdminContestsPage() {
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState<AdminContest["status"]>("DRAFT");
-  const [startsAt, setStartsAt] = useState("");
+  const [liveAt, setStartsAt] = useState("");
   const [lockAt, setLockAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [maxRosterSize, setMaxRosterSize] = useState("5");
@@ -104,7 +104,7 @@ export default function AdminContestsPage() {
         code: code.trim(),
         title: title.trim(),
         status,
-        startsAt: startsAt || null,
+        liveAt: liveAt || null,
         lockAt: lockAt || null,
         endsAt: endsAt || null,
         maxRosterSize: parsedMaxRosterSize,
@@ -147,7 +147,7 @@ export default function AdminContestsPage() {
                 <option key={value} value={value}>{value}</option>
               ))}
             </select>
-            <input className="input" type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} />
+            <input className="input" type="datetime-local" value={liveAt} onChange={(event) => setStartsAt(event.target.value)} />
             <input className="input" type="datetime-local" value={lockAt} onChange={(event) => setLockAt(event.target.value)} />
             <input className="input" type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} />
             <input className="input" type="number" min={1} value={maxRosterSize} onChange={(event) => setMaxRosterSize(event.target.value)} />
@@ -189,7 +189,7 @@ export default function AdminContestsPage() {
                     <ContestMeta label="Entries" value={String(contest._count.entries)} />
                     <ContestMeta label="Rankings" value={String(contest._count.rankings)} />
                     <ContestMeta label="Settled" value={contest._count.settlements > 0 ? "Yes" : "No"} />
-                    <ContestMeta label="Starts" value={formatDate(contest.startsAt)} />
+                    <ContestMeta label="Starts" value={formatDate(contest.liveAt)} />
                     <ContestMeta label="Lock" value={formatDate(contest.lockAt)} />
                     <ContestMeta label="Ends" value={formatDate(contest.endsAt)} />
                   </div>

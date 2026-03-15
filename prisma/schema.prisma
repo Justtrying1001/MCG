@@ -466,7 +466,7 @@ model Contest {
   description String?
   status    ContestStatus @default(DRAFT)
   configPublishedAt DateTime?
-  startsAt  DateTime?
+  liveAt    DateTime?
   lockAt    DateTime?
   endsAt    DateTime?
   createdAt DateTime      @default(now())

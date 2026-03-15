@@ -21,7 +21,7 @@ type ContestDetailPayload = {
     code: string;
     title: string;
     status: ContestStatus;
-    startsAt: string | null;
+    liveAt: string | null;
     lockAt: string | null;
     endsAt: string | null;
     rules: ContestRule[];
@@ -296,7 +296,7 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
                 <ContestMeta label="Scores" value={String(detail.contest._count.scores)} />
                 <ContestMeta label="Rankings" value={String(detail.contest._count.rankings)} />
                 <ContestMeta label="Settlements" value={String(detail.contest._count.settlements)} />
-                <ContestMeta label="Starts" value={formatDate(detail.contest.startsAt)} />
+                <ContestMeta label="Starts" value={formatDate(detail.contest.liveAt)} />
                 <ContestMeta label="Lock" value={formatDate(detail.contest.lockAt)} />
                 <ContestMeta label="Ends" value={formatDate(detail.contest.endsAt)} />
                 <ContestMeta label="Roster size" value={String(rule?.maxRosterSize ?? 5)} />

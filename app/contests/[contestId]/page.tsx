@@ -28,7 +28,7 @@ type ContestDetail = {
     title: string;
     code: string;
     status: ContestStatus;
-    startsAt: string | null;
+    liveAt: string | null;
     lockAt: string | null;
     endsAt: string | null;
     rules: ContestRule[];
@@ -221,7 +221,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         code={detail.contest.code}
         title={detail.contest.title}
         status={detail.contest.status}
-        startsAt={detail.contest.startsAt}
+        liveAt={detail.contest.liveAt}
         lockAt={detail.contest.lockAt}
         endsAt={detail.contest.endsAt}
         rosterSize={maxRosterSize}
@@ -235,7 +235,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       <ContestStatsGrid
         status={detail.contest.status}
-        startsAt={detail.contest.startsAt}
+        liveAt={detail.contest.liveAt}
         lockAt={detail.contest.lockAt}
         endsAt={detail.contest.endsAt}
         rosterSize={maxRosterSize}

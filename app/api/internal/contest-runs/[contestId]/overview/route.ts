@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
         code: true,
         title: true,
         status: true,
-        startsAt: true,
+        liveAt: true,
         lockAt: true,
         endsAt: true,
         _count: {

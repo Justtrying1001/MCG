@@ -90,7 +90,7 @@ export async function listContestsMvp() {
         rules: true,
         _count: { select: { entries: true } },
       },
-      orderBy: [{ startsAt: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ liveAt: "asc" }, { createdAt: "desc" }],
       take: 50,
     })
   );
@@ -432,7 +432,7 @@ export async function settleContestMvp(params: { contestId: string; rewards: Rew
 export async function createContestMvp(input: {
   code: string;
   title: string;
-  startsAt?: string | null;
+  liveAt?: string | null;
   lockAt?: string | null;
   endsAt?: string | null;
   status?: ContestStatus;
@@ -455,7 +455,7 @@ export async function createContestMvp(input: {
         code,
         title,
         status,
-        startsAt: input.startsAt ? new Date(input.startsAt) : null,
+        liveAt: input.liveAt ? new Date(input.liveAt) : null,
         lockAt: input.lockAt ? new Date(input.lockAt) : null,
         endsAt: input.endsAt ? new Date(input.endsAt) : null,
         rules: {

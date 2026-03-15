@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const contest = await createContestMvp({
       code: body?.code,
       title: body?.title,
-      startsAt: body?.startsAt,
+      liveAt: body?.liveAt,
       lockAt: body?.lockAt,
       endsAt: body?.endsAt,
       status: body?.status as ContestStatus | undefined,

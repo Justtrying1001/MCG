@@ -13,7 +13,7 @@ type ReconciliationStep = {
 type ContestLifecycleSnapshot = {
   id: string;
   status: ContestStatus;
-  startsAt: Date | null;
+  liveAt: Date | null;
   lockAt: Date | null;
   endsAt: Date | null;
 };
@@ -37,7 +37,7 @@ function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { tar
     return { target: ContestStatus.SETTLED, reason: "ENDS_AT_REACHED" };
   }
 
-  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && contest.startsAt && now >= contest.startsAt) {
+  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && contest.liveAt && now >= contest.liveAt) {
     return { target: ContestStatus.LIVE, reason: "STARTS_AT_REACHED" };
   }
 
@@ -70,7 +70,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
   const now = nowInput ?? new Date();
   const contest = await prisma.contest.findUnique({
     where: { id: contestId },
-    select: { id: true, status: true, startsAt: true, lockAt: true, endsAt: true },
+    select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
   });
 
   if (!contest) return null;
@@ -96,7 +96,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
     if (updated.count === 0) {
       const latest = await prisma.contest.findUnique({
         where: { id: contestId },
-        select: { id: true, status: true, startsAt: true, lockAt: true, endsAt: true },
+        select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
       });
       if (!latest) break;
       current = latest;
@@ -122,7 +122,7 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
     where: {
       OR: [
         { status: ContestStatus.OPEN, lockAt: { not: null, lte: now } },
-        { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] }, startsAt: { not: null, lte: now } },
+        { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] }, liveAt: { not: null, lte: now } },
         { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE] }, endsAt: { not: null, lte: now } },
       ],
     },

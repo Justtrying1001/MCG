@@ -11,7 +11,7 @@ export type ContestListItem = {
   code: string;
   title: string;
   status: ContestStatus;
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   rules: ContestRule[];

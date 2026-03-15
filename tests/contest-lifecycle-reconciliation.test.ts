@@ -43,7 +43,7 @@ describe("contest lifecycle reconciliation", () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.OPEN,
-      startsAt: new Date("2026-03-14T13:30:00.000Z"),
+      liveAt: new Date("2026-03-14T13:30:00.000Z"),
       lockAt: new Date("2026-03-14T13:00:00.000Z"),
       endsAt: new Date("2026-03-14T14:00:00.000Z"),
     });
@@ -59,7 +59,7 @@ describe("contest lifecycle reconciliation", () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.OPEN,
-      startsAt: new Date("2026-03-14T13:30:00.000Z"),
+      liveAt: new Date("2026-03-14T13:30:00.000Z"),
       lockAt: new Date("2026-03-14T13:00:00.000Z"),
       endsAt: new Date("2026-03-14T14:00:00.000Z"),
     });
@@ -77,7 +77,7 @@ describe("contest lifecycle reconciliation", () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.LIVE,
-      startsAt: new Date("2026-03-14T12:00:00.000Z"),
+      liveAt: new Date("2026-03-14T12:00:00.000Z"),
       lockAt: new Date("2026-03-14T13:00:00.000Z"),
       endsAt: new Date("2026-03-14T14:00:00.000Z"),
     });
@@ -94,7 +94,7 @@ describe("contest lifecycle reconciliation", () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.OPEN,
-      startsAt: new Date("2026-03-14T12:00:00.000Z"),
+      liveAt: new Date("2026-03-14T12:00:00.000Z"),
       lockAt: new Date("2026-03-14T13:00:00.000Z"),
       endsAt: new Date("2026-03-14T14:00:00.000Z"),
     });
@@ -116,7 +116,7 @@ describe("contest lifecycle reconciliation", () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.OPEN,
-      startsAt: new Date("2026-03-14T13:30:00.000Z"),
+      liveAt: new Date("2026-03-14T13:30:00.000Z"),
       lockAt: new Date("2026-03-14T13:00:00.000Z"),
       endsAt: new Date("2026-03-14T14:00:00.000Z"),
     });
