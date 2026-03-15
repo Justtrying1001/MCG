@@ -16,6 +16,7 @@ import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
 import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
 import { EnteredLineupPanel } from "@/components/contests/EnteredLineupPanel";
 import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
+import { ScoreBreakdownPanel } from "@/components/contests/ScoreBreakdownPanel";
 import { RulesDrawer } from "@/components/contests/RulesDrawer";
 import { loadContestCache } from "@/components/contests/contestUtils";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
@@ -47,6 +48,17 @@ type RankingPayload = {
 
 type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
 
+type ScoreBreakdownRow = {
+  id: string;
+  baseScore: number;
+  rarityMultiplier: number;
+  editionMultiplier: number;
+  finalScore: number;
+  dataQuality: string;
+  tokenProject: { displayName: string; slug: string };
+  cardInstance: { cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
+};
+
 function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
   const list: LineupOption[] = [];
   for (const row of collection) {
@@ -75,6 +87,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
   const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[]>([]);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -94,11 +107,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     void (async () => {
       setError("");
-      const [detailRes, rankingRes, optionsRes, rewardsRes] = await Promise.all([
+      const [detailRes, rankingRes, optionsRes, rewardsRes, breakdownRes] = await Promise.all([
         fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
       ]);
 
       if (!detailRes.ok) {
@@ -120,6 +134,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
       if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
+      if (breakdownRes.ok) {
+        const bd = (await breakdownRes.json()) as { rows: ScoreBreakdownRow[] };
+        setScoreBreakdown(bd.rows ?? []);
+      }
 
       if (optionsRes.ok) {
         const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
@@ -269,6 +287,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           />
 
           {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
+          <ScoreBreakdownPanel rows={scoreBreakdown} />
           <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} myRewards={myRewards} />
         </div>
 
