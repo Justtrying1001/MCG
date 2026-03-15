@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
@@ -32,7 +32,7 @@ export default function AdminQuestSubmissionsPage() {
   const [actionMessage, setActionMessage] = useState("");
   const [rejectReasonCode, setRejectReasonCode] = useState("PROOF_NOT_VALID");
 
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -48,11 +48,11 @@ export default function AdminQuestSubmissionsPage() {
     const payload = (await response.json()) as { submissions: SubmissionRow[] };
     setRows(payload.submissions ?? []);
     setLoading(false);
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     void loadRows();
-  }, [statusFilter]);
+  }, [loadRows]);
 
   const review = async (submissionId: string, action: "APPROVE" | "REJECT") => {
     setActionMessage("");

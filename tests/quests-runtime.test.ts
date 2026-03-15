@@ -139,6 +139,22 @@ describe("quests runtime phase 3", () => {
     vi.clearAllMocks();
   });
 
+  it("retries milestone sync when serializable transaction conflicts occur", async () => {
+    prismaMock.$transaction
+      .mockRejectedValueOnce({ code: "P2034" })
+      .mockResolvedValueOnce(undefined);
+
+    await expect(syncContestEntryQuestProgression("u1")).resolves.toBeUndefined();
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(2);
+  });
+
+  it("skips sync after repeated serializable conflicts to keep quests API responsive", async () => {
+    prismaMock.$transaction.mockRejectedValue({ code: "P2034" });
+
+    await expect(syncContestEntryQuestProgression("u1")).resolves.toBeUndefined();
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(3);
+  });
+
   it("supports internal quest CRUD primitives", async () => {
     prismaMock.questDefinition.create.mockResolvedValue({ id: "q1", code: "contest_2" });
     prismaMock.questDefinition.findMany.mockResolvedValue([{ id: "q1", code: "contest_2" }]);

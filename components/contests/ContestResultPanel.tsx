@@ -8,11 +8,13 @@ export function ContestResultPanel({
   myRank,
   myScore,
   myRewards,
+  rankedUsers = 0,
 }: {
   status: string;
   myRank: number | null;
   myScore: number | null;
   myRewards?: MyRewards | null;
+  rankedUsers?: number;
 }) {
   if (status !== "SETTLED") {
     if (status === "LIVE" || status === "LOCKED") {

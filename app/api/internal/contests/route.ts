@@ -1,4 +1,3 @@
-import { ContestStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
@@ -6,6 +5,7 @@ import { reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reco
 import { ContestRuntimeError, createContestMvp } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 import { prisma } from "@/lib/prisma";
+import { ContestStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   const auth = requireInternalAdminAccess(request);
@@ -14,11 +14,42 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await reconcileDueContestsByTime();
+    await reconcileDueContestsByTime().catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[api/internal/contests] lifecycle reconciliation failed: ${message}`);
+    });
 
     const contests = await prisma.contest.findMany({
-      include: {
-        rules: true,
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        description: true,
+        status: true,
+        configPublishedAt: true,
+        openAt: true,
+        liveAt: true,
+        lockAt: true,
+        endsAt: true,
+        rewardPolicy: {
+          select: {
+            bundles: {
+              orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+              select: {
+                id: true,
+                name: true,
+                components: {
+                  select: {
+                    type: true,
+                    pointsAmount: true,
+                    xpAmount: true,
+                    packQuantity: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         _count: {
           select: {
             entries: true,
@@ -32,7 +63,38 @@ export async function GET(request: NextRequest) {
       take: 200,
     });
 
-    return NextResponse.json({ contests });
+    const safeContests = contests.map((contest) => ({
+      id: contest.id,
+      code: contest.code,
+      title: contest.title,
+      description: contest.description ?? null,
+      status: contest.status,
+      configPublishedAt: contest.configPublishedAt,
+      openAt: contest.openAt,
+      liveAt: contest.liveAt,
+      lockAt: contest.lockAt,
+      endsAt: contest.endsAt,
+      rewardPolicy: contest.rewardPolicy
+        ? {
+            bundles: contest.rewardPolicy.bundles.map((bundle) => ({
+              id: bundle.id,
+              name: bundle.name,
+              components: bundle.components.map((component) => ({
+                type: component.type,
+                pointsAmount: component.pointsAmount ?? null,
+                xpAmount: component.xpAmount ?? null,
+                packQuantity: component.packQuantity ?? null,
+              })),
+            })),
+          }
+        : null,
+      _count: {
+        entries: contest._count.entries,
+        settlements: contest._count.settlements,
+      },
+    }));
+
+    return NextResponse.json({ contests: safeContests });
   } catch (error) {
     return handleApiError(error, "Cannot load internal contests");
   }

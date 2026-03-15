@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { getEditionTheme, getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
@@ -75,7 +76,7 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
           <div className="mvp-reverse-foil" aria-hidden="true" />
           <div className="mvp-reverse-art-mask" aria-hidden="true" />
           <div className="mvp-reverse-art-reveal" aria-hidden="true">
-            {card.imageUrl && <img src={card.imageUrl} alt="" />}
+            {card.imageUrl && <Image src={card.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />}
           </div>
         </>
       )}
@@ -100,7 +101,7 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
           <div className="mvp-mcgart-pattern" aria-hidden="true" />
           <div className="mvp-mcgart-art-mask" aria-hidden="true" />
           <div className="mvp-mcgart-art-reveal" aria-hidden="true">
-            {card.imageUrl && <img src={card.imageUrl} alt="" />}
+            {card.imageUrl && <Image src={card.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />}
           </div>
         </>
       )}
@@ -130,8 +131,13 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
 
       <div className="mvp-card-art-shell" style={editionTheme.needsMcgArtLayer || editionTheme.needsReverseLayers ? { visibility: "hidden" } : undefined}>
         {card.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt={card.displayName} loading={variant === "reveal" ? "eager" : "lazy"} />
+          <Image
+            src={card.imageUrl}
+            alt={card.displayName}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            loading={variant === "reveal" ? "eager" : "lazy"}
+          />
         ) : (
           <div className="mvp-card-art-placeholder">MCG</div>
         )}

@@ -60,6 +60,7 @@ export type ContestConfigInput = {
   entryFeeEnabled?: boolean;
   entryFeeCurrency?: "POINTS";
   entryFeeAmount?: number | null;
+  ruleConfig?: Record<string, unknown> | null;
   rewardBundles?: RewardBundleInput[];
   distributionRules?: DistributionRuleInput[];
 };
@@ -102,6 +103,7 @@ export async function createContestDraft(input: ContestConfigInput) {
             entryFeeEnabled: normalized.entryFeeEnabled,
             entryFeeCurrency: "POINTS",
             entryFeeAmount: normalized.entryFeeAmount,
+            config: (normalized.ruleConfig ?? Prisma.JsonNull) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull,
           },
         },
       },
@@ -155,6 +157,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     entryFeeEnabled: input.entryFeeEnabled ?? existingRule?.entryFeeEnabled ?? false,
     entryFeeCurrency: input.entryFeeCurrency ?? (existingRule?.entryFeeCurrency as "POINTS" | undefined) ?? "POINTS",
     entryFeeAmount: input.entryFeeAmount ?? existingRule?.entryFeeAmount ?? null,
+    ruleConfig: input.ruleConfig ?? ((existingRule?.config as Record<string, unknown> | null) ?? null),
     rewardBundles: input.rewardBundles ?? existing.rewardPolicy?.bundles.map((bundle) => ({
       name: bundle.name,
       priority: bundle.priority,
@@ -206,6 +209,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
       entryFeeEnabled: normalized.entryFeeEnabled,
       entryFeeCurrency: "POINTS",
       entryFeeAmount: normalized.entryFeeAmount,
+      config: (normalized.ruleConfig ?? Prisma.JsonNull) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull,
     };
 
     if (rule?.id) {
@@ -311,10 +315,9 @@ export async function publishContest(contestId: string) {
       );
     }
 
-    // When QStash is configured the contest stays DRAFT until the contest-open job fires.
-    // Without QStash (dev / test) we open immediately for backward compatibility.
-    const statusUpdate = hasQStash ? {} : { status: ContestStatus.OPEN };
-    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), ...statusUpdate } });
+    // Publishing always moves draft to OPEN immediately.
+    // openAt controls when players can effectively register.
+    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), status: ContestStatus.OPEN } });
     await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.PUBLISHED } });
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
@@ -458,14 +461,17 @@ type ContestWithConfig = Prisma.ContestGetPayload<{ include: typeof contestDraft
 export function validateContestDraftEntity(contest: ContestWithConfig): DraftIssue[] {
   const issues: DraftIssue[] = [];
 
-  if (!contest.liveAt || !contest.lockAt || !contest.endsAt) {
-    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "liveAt, lockAt and endsAt are required" });
+  if (!contest.openAt || !contest.liveAt || !contest.lockAt || !contest.endsAt) {
+    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "openAt, liveAt, lockAt and endsAt are required" });
   } else {
-    if (contest.lockAt >= contest.liveAt) {
-      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "liveAt", message: "liveAt must be after lockAt" });
+    if (contest.openAt > contest.liveAt) {
+      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "openAt", message: "openAt must be before or equal to liveAt" });
     }
-    if (contest.lockAt > contest.endsAt) {
-      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "endsAt", message: "endsAt must be at or after lockAt" });
+    if (contest.lockAt > contest.liveAt) {
+      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "lockAt", message: "lockAt must be before or equal to liveAt" });
+    }
+    if (contest.liveAt >= contest.endsAt) {
+      issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "endsAt", message: "endsAt must be after liveAt" });
     }
   }
 
@@ -603,11 +609,14 @@ function normalizeContestInput(input: ContestConfigInput) {
   const lockAt = input.lockAt ? new Date(input.lockAt) : null;
   const endsAt = input.endsAt ? new Date(input.endsAt) : null;
 
-  if (lockAt && liveAt && lockAt >= liveAt) {
-    throw new ContestRuntimeError("liveAt must be after lockAt", 400);
+  if (openAt && liveAt && openAt > liveAt) {
+    throw new ContestRuntimeError("openAt must be before or equal to liveAt", 400);
   }
-  if (lockAt && endsAt && lockAt > endsAt) {
-    throw new ContestRuntimeError("endsAt must be at or after lockAt", 400);
+  if (lockAt && liveAt && lockAt > liveAt) {
+    throw new ContestRuntimeError("lockAt must be before or equal to liveAt", 400);
+  }
+  if (liveAt && endsAt && liveAt >= endsAt) {
+    throw new ContestRuntimeError("endsAt must be after liveAt", 400);
   }
 
   return {
@@ -625,6 +634,7 @@ function normalizeContestInput(input: ContestConfigInput) {
     cardSetId: input.cardSetId?.trim() || null,
     entryFeeEnabled,
     entryFeeAmount,
+    ruleConfig: (input.ruleConfig ?? null) as Record<string, unknown> | null,
     rewardBundles: input.rewardBundles ?? [],
     distributionRules: input.distributionRules ?? [],
   };

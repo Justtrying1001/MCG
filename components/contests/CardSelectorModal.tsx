@@ -14,6 +14,8 @@ type Props = {
 
 type SortMode = "rarity" | "name" | "potential";
 
+const RARITY_ORDER = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
+
 export function CardSelectorModal({ open, options, selectedIds, onToggle, onClose, canEnter }: Props) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
@@ -24,7 +26,6 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
   const rarityOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.rarityCode))], [options]);
   const editionOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.editionCode))], [options]);
   const tokenOptions = useMemo(() => ["all", ...new Set(options.map((card) => card.tokenProjectName))], [options]);
-  const rarityOrder = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
   const filtered = useMemo(() => {
     const rows = options.filter((card) => {
@@ -38,13 +39,13 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
     rows.sort((a, b) => {
       if (sortMode === "name") return a.name.localeCompare(b.name);
       if (sortMode === "potential") {
-        const ai = rarityOrder.indexOf(a.rarityCode.toUpperCase());
-        const bi = rarityOrder.indexOf(b.rarityCode.toUpperCase());
+        const ai = RARITY_ORDER.indexOf(a.rarityCode.toUpperCase());
+        const bi = RARITY_ORDER.indexOf(b.rarityCode.toUpperCase());
         if (ai !== bi) return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
         return a.tokenProjectName.localeCompare(b.tokenProjectName);
       }
-      const ai = rarityOrder.indexOf(a.rarityCode.toUpperCase());
-      const bi = rarityOrder.indexOf(b.rarityCode.toUpperCase());
+      const ai = RARITY_ORDER.indexOf(a.rarityCode.toUpperCase());
+      const bi = RARITY_ORDER.indexOf(b.rarityCode.toUpperCase());
       const rarityDelta = (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       if (rarityDelta !== 0) return rarityDelta;
       return a.name.localeCompare(b.name);

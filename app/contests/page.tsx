@@ -65,7 +65,8 @@ export default function ContestsPage() {
       }
 
       if (!res.ok) {
-        setError("We couldn't load contests right now. Please retry in a moment.");
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(payload?.error ?? "We couldn't load contests right now. Please retry in a moment.");
         setContests([]);
         setIsLoading(false);
         return;
@@ -119,8 +120,8 @@ export default function ContestsPage() {
   const visible = useMemo(() => {
     const filtered = contests.filter((contest) => belongsToTab(contest, tab));
     return filtered.sort((a, b) => {
-      const aDate = new Date(a.lockAt ?? a.endsAt ?? a.startsAt ?? 0).getTime();
-      const bDate = new Date(b.lockAt ?? b.endsAt ?? b.startsAt ?? 0).getTime();
+      const aDate = new Date(a.lockAt ?? a.endsAt ?? a.liveAt ?? 0).getTime();
+      const bDate = new Date(b.lockAt ?? b.endsAt ?? b.liveAt ?? 0).getTime();
       return aDate - bDate;
     });
   }, [contests, tab]);

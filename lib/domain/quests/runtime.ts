@@ -24,6 +24,32 @@ export class QuestRuntimeError extends Error {
   }
 }
 
+function isMissingPrismaTableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+    && (error.code === "P2021" || error.code === "P2022");
+}
+
+function getPrismaErrorCode(error: unknown): string | null {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code;
+  if (!error || typeof error !== "object") return null;
+
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
+function isRetryablePrismaTransactionConflict(error: unknown) {
+  return getPrismaErrorCode(error) === "P2034";
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getModelDelegate<T>(tx: Prisma.TransactionClient, key: string): T | null {
+  const delegate = (tx as unknown as Record<string, unknown>)[key];
+  return delegate ? (delegate as T) : null;
+}
+
 type SocialQuestConfigSummary = {
   proofRequired: boolean;
   targetUrl: string | null;
@@ -271,6 +297,8 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
 }
 
 async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: string) {
+  const userInviteDelegate = getModelDelegate<{ count: (args: { where: { inviterId: string } }) => Promise<number> }>(tx, "userInvite");
+
   const [
     contestParticipations,
     packOpenCount,
@@ -421,9 +449,35 @@ export async function applyContestEntryQuestProgressionTx(tx: Prisma.Transaction
 }
 
 export async function syncContestEntryQuestProgression(userId: string) {
-  return prisma.$transaction(async (tx) => {
-    await applyAutoMilestoneQuestProgressionTx(tx, userId);
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        await applyAutoMilestoneQuestProgressionTx(tx, userId);
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      return;
+    } catch (error) {
+      if (error instanceof TypeError || isMissingPrismaTableError(error)) {
+        return;
+      }
+
+      if (isRetryablePrismaTransactionConflict(error)) {
+        if (attempt < maxAttempts) {
+          await wait(attempt * 25);
+          continue;
+        }
+
+        console.warn("syncContestEntryQuestProgression skipped after transaction conflicts", {
+          userId,
+          attempts: attempt,
+        });
+        return;
+      }
+
+      throw error;
+    }
+  }
 }
 
 export async function submitSocialQuestMvp(params: {

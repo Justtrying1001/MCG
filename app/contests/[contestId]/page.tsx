@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
 import { RulesDrawer } from "@/components/contests/RulesDrawer";
 import { loadContestCache } from "@/components/contests/contestUtils";
-import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
+import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import type { MvpCollectionItem } from "@/types/cards";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -32,36 +32,11 @@ type ContestDetail = {
     status: string;
     rosterLocks: Array<{ id: string; ownedCardInstanceId: string }>;
   } | null;
-  rewardGrants?: Array<{
-    id: string;
-    type: "POINTS" | "PACK" | "CARD_INSTANCE";
-    amount: number | null;
-    packDefinitionId: string | null;
-    createdAt: string;
-  }>;
-  scoreBreakdown?: Array<{
-    id: string;
-    tokenProjectId: string;
-    baseScore: number;
-    rarityMultiplier: number;
-    editionMultiplier: number;
-    finalScore: number;
-    cardInstance: {
-      id: string;
-      cardTemplate: {
-        name: string;
-        imageUrl: string | null;
-        tokenProject: { displayName: string };
-      };
-    };
-  }>;
 };
 
 type RankingPayload = {
   rankings: Array<{ id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } }>;
 };
-
-type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
 
 type RewardTier = { label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number };
 type RewardPreviewPayload = { hasPolicyData: boolean; tiers: RewardTier[] };
@@ -132,13 +107,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
-  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
-  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[]>([]);
   const [rewardTiers, setRewardTiers] = useState<RewardTier[] | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
-  const [error, setError] = useState("");
-  const [submitState, setSubmitState] = useState<"idle" | "saving" | "success">("idle");
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -146,61 +117,20 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   // Countdown tick
   useEffect(() => {
-    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
-    return () => window.clearInterval(id);
+    const qp = new URLSearchParams(window.location.search).get("tab");
+    if (qp === "overview" || qp === "entry" || qp === "leaderboard" || qp === "rewards" || qp === "rules") {
+      setActiveTab(qp);
+    }
   }, []);
 
   // Data fetch
   useEffect(() => {
     if (loading) return;
+    setError("");
+    void loadAll();
+  }, [loadAll, loading]);
 
-    void (async () => {
-      setError("");
-      const [detailRes, rankingRes, optionsRes, rewardsRes, breakdownRes, rewardPreviewRes] = await Promise.all([
-        fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
-      ]);
-
-      if (!detailRes.ok) {
-        const cached = loadContestCache().find((contest) => contest.id === params.contestId);
-        if (cached) {
-          setDetail({ contest: cached, userEntry: null });
-          setRanking({ rankings: [] });
-          setError("Showing cached contest data. Connect with X for live updates and rankings.");
-        } else {
-          setError((await detailRes.text()) || "Cannot load contest detail");
-        }
-      } else {
-        const detailPayload = (await detailRes.json()) as ContestDetail;
-        setDetail(detailPayload);
-        if (detailPayload.userEntry) {
-          setSelected(detailPayload.userEntry.rosterLocks.map((lock) => lock.ownedCardInstanceId));
-        }
-      }
-
-      if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
-      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
-      if (breakdownRes.ok) {
-        const bd = (await breakdownRes.json()) as { rows: ScoreBreakdownRow[] };
-        setScoreBreakdown(bd.rows ?? []);
-      }
-      if (rewardPreviewRes.ok) {
-        const rp = (await rewardPreviewRes.json()) as RewardPreviewPayload;
-        if (rp.hasPolicyData) setRewardTiers(rp.tiers);
-      }
-
-      if (optionsRes.ok) {
-        const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
-        setOptions(lineupPayload.options ?? []);
-      } else if (me?.mode === "guest") {
-        setOptions(mapGuestCollectionToOptions(me.mvpCollection));
-      }
-    })();
-  }, [loading, me, params.contestId]);
+  const isGuest = !loading && me?.mode === "guest";
 
   const rule = detail?.contest.rules[0];
   const maxRosterSize = rule?.maxRosterSize ?? 5;
@@ -208,20 +138,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const canManageLineup = detail?.contest.status === "OPEN";
   const canEnter = canManageLineup && !isGuest;
 
-  const filteredOptions = useMemo(() => {
-    if (!rule?.cardSetId) return options;
-    return options.filter((item) => item.cardSetId === rule.cardSetId);
-  }, [options, rule?.cardSetId]);
+  const filteredOptions = useMemo(
+    () => (rule?.cardSetId ? options.filter((item) => item.cardSetId === rule.cardSetId) : options),
+    [options, rule?.cardSetId],
+  );
 
   const selectedCards = useMemo(
-    () =>
-      Array.from({ length: maxRosterSize }).map((_, index) => {
-        const id = selected[index];
-        return filteredOptions.find((option) => option.instanceId === id) ?? null;
-      }),
+    () => Array.from({ length: maxRosterSize }).map((_, index) => filteredOptions.find((item) => item.instanceId === selected[index]) ?? null),
     [filteredOptions, maxRosterSize, selected],
   );
 
+  const userStatus = detail ? getUserStatus(detail.contest.status, hasEntry, selected.filter(Boolean).length) : "";
   const myRankingRow = ranking?.rankings?.find((row) => row.userId === me?.user.id) ?? null;
   const filledCount = selected.filter(Boolean).length;
 
@@ -239,8 +166,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     setSelected((prev) => {
       if (activeSlot !== null) {
         const next = [...prev];
-        const existingIndex = next.indexOf(instanceId);
-        if (existingIndex >= 0) next.splice(existingIndex, 1);
+        const alreadyIn = next.indexOf(instanceId);
+        if (alreadyIn >= 0) next.splice(alreadyIn, 1);
         next[activeSlot] = instanceId;
         return next.filter(Boolean).slice(0, maxRosterSize);
       }
@@ -274,7 +201,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const submitEntry = async () => {
     if (!detail || !canEnter || selected.length !== maxRosterSize) return;
     setSubmitState("saving");
-    setError("");
+    setBuilderMessage("");
     const res = await fetch(`/api/contests/${params.contestId}/enter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -282,13 +209,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     });
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-      setError(payload?.error ?? "Contest entry failed");
+      setBuilderMessage(payload?.error ?? "Contest entry failed");
       setSubmitState("idle");
       return;
     }
     const updated = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
     if (updated.ok) setDetail((await updated.json()) as ContestDetail);
     setSubmitState("idle");
+    closeBuilder();
+    await loadAll();
   };
 
   // ── Skeleton ────────────────────────────────────────────────────────────────

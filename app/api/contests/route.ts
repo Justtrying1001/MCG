@@ -28,12 +28,33 @@ export async function GET() {
       seasonByContestId = new Map();
     }
 
-    return NextResponse.json({
-      contests: contests.map((contest) => ({
-        ...contest,
-        seasonName: seasonByContestId.get(contest.id) ?? null,
-      })),
-    });
+    const safeContests = contests.map((contest) => ({
+      id: contest.id,
+      code: contest.code,
+      title: contest.title,
+      status: contest.status,
+      liveAt: contest.liveAt,
+      lockAt: contest.lockAt,
+      endsAt: contest.endsAt,
+      rules: Array.isArray(contest.rules)
+        ? contest.rules.map((rule) => ({
+            id: rule.id,
+            cardSetId: rule.cardSetId ?? null,
+            maxRosterSize: rule.maxRosterSize ?? null,
+            entryFeeEnabled: rule.entryFeeEnabled ?? false,
+            entryFeeAmount: rule.entryFeeAmount ?? null,
+          }))
+        : [],
+      _count: { entries: contest._count.entries },
+      leagueTierRequired: contest.leagueTierRequired ?? null,
+      seasonName: seasonByContestId.get(contest.id) ?? null,
+      rewardPreview: {
+        label: "POINTS",
+        amount: Math.max(120, (contest.rules?.[0]?.maxRosterSize ?? 5) * 45),
+      },
+    }));
+
+    return NextResponse.json({ contests: safeContests });
   } catch (error) {
     return handleApiError(error, "Cannot load contests");
   }

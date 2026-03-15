@@ -10,6 +10,9 @@ const MAX_DEPLOY_ATTEMPTS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRIES ??
 const RETRY_DELAY_MS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRY_DELAY_MS ?? "5000", 10);
 const MAX_P3009_RETRIES = 5;
 
+const FAILED_MIGRATION_CODE = "P3009";
+const FAILED_MIGRATION_NAME_PATTERN = /The `([^`]+)` migration[^\n]*failed/i;
+
 function runPrisma(args) {
   const command = process.platform === "win32" ? "npx.cmd" : "npx";
   const result = spawnSync(command, ["prisma", ...args], {
@@ -42,6 +45,19 @@ function markApplied(migrationName) {
     process.stderr.write(resolve.output);
     process.exit(resolve.status);
   }
+}
+
+function markRolledBack(migrationName) {
+  const resolve = runPrisma(["migrate", "resolve", "--rolled-back", migrationName]);
+  if (!resolve.ok) {
+    process.stderr.write(resolve.output);
+    process.exit(resolve.status);
+  }
+}
+
+function extractFailedMigrationName(output) {
+  const match = output.match(FAILED_MIGRATION_NAME_PATTERN);
+  return match?.[1] ?? null;
 }
 
 function sleep(milliseconds) {
