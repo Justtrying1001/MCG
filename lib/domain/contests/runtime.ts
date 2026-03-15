@@ -87,7 +87,7 @@ export async function listContestsMvp() {
     tx.contest.findMany({
       where: {
         configPublishedAt: { not: null },
-        status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
+        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
       },
       include: {
         rules: true,
@@ -189,6 +189,10 @@ export async function enterContestMvp(params: {
 
     if (contest.status !== ContestStatus.OPEN) {
       throw new ContestRuntimeError("Contest is not accepting entries", 400);
+    }
+
+    if (contest.openAt && contest.openAt > new Date()) {
+      throw new ContestRuntimeError("Contest registration is not open yet", 400);
     }
 
     if (contest.lockAt && contest.lockAt <= new Date()) {

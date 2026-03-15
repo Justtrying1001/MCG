@@ -315,10 +315,9 @@ export async function publishContest(contestId: string) {
       );
     }
 
-    // When QStash is configured the contest stays DRAFT until the contest-open job fires.
-    // Without QStash (dev / test) we open immediately for backward compatibility.
-    const statusUpdate = hasQStash ? {} : { status: ContestStatus.OPEN };
-    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), ...statusUpdate } });
+    // Publishing always moves draft to OPEN immediately.
+    // openAt controls when players can effectively register.
+    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), status: ContestStatus.OPEN } });
     await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.PUBLISHED } });
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
