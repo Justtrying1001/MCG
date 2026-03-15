@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 
@@ -64,7 +64,7 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
   const [rewards, setRewards] = useState<RewardRow[]>([{ userId: "", type: "POINTS", amount: "", packDefinitionId: "" }]);
   const [settleMessage, setSettleMessage] = useState("");
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     setLoading(true);
     setError("");
     const response = await fetch(`/api/internal/contests/${params.contestId}`, { cache: "no-store" });
@@ -80,11 +80,11 @@ export default function AdminContestDetailPage({ params }: { params: { contestId
     setDetail(payload);
     setStatusDraft(payload.contest.status);
     setLoading(false);
-  };
+  }, [params.contestId]);
 
   useEffect(() => {
     void loadDetail();
-  }, [params.contestId]);
+  }, [loadDetail]);
 
   const rule = useMemo(() => detail?.contest.rules?.[0] ?? null, [detail]);
 

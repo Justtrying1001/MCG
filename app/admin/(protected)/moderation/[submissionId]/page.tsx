@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 
@@ -37,7 +37,7 @@ export default function ModerationSubmissionDetailPage() {
   const [decisionCode, setDecisionCode] = useState(REJECT_REASONS[0]);
   const [actionMessage, setActionMessage] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const response = await fetch(`/api/internal/moderation/submissions/${params.submissionId}/context`, { cache: "no-store" });
     if (!response.ok) {
@@ -51,11 +51,11 @@ export default function ModerationSubmissionDetailPage() {
     setData(payload);
     setError("");
     setLoading(false);
-  };
+  }, [params.submissionId]);
 
   useEffect(() => {
     void load();
-  }, [params.submissionId]);
+  }, [load]);
 
   const decide = async (decision: "APPROVE" | "REJECT") => {
     if (decision === "REJECT") {
