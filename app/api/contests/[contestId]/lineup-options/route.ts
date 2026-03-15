@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { ContestStatus } from "@prisma/client";
+import { ContestEntryStatus, ContestStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
-
-import { ContestEntryStatus, ContestStatus } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
@@ -50,7 +48,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       where: {
         ownedCardInstanceId: { in: instances.map((instance) => instance.id) },
         contestEntry: {
-          contest: { status: { in: ACTIVE_CONTEST_STATUSES } },
+          contest: { status: { in: ACTIVE_LOCK_STATUSES } },
         },
       },
       select: {

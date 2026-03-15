@@ -306,7 +306,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       <ContestProgressTimeline
         status={detail.contest.status}
-        startsAt={detail.contest.startsAt}
+        startsAt={detail.contest.liveAt}
         lockAt={detail.contest.lockAt}
         endsAt={detail.contest.endsAt}
       />
@@ -344,7 +344,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
           {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
           <ScoreBreakdownPanel rows={scoreBreakdown} />
-          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} myRewards={myRewards} />
+          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} myRewards={myRewards} rankedUsers={ranking?.rankings?.length ?? 0} />
         </div>
 
         <aside className="contest-main-right">
