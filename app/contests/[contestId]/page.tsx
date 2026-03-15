@@ -309,6 +309,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             isGuest={Boolean(isGuest)}
             lineupFilled={selected.filter(Boolean).length}
             rosterSize={maxRosterSize}
+            hasEntry={Boolean(detail.userEntry)}
           />
           <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
           <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} tiers={rewardTiers} />
