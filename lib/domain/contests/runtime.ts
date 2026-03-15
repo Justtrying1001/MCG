@@ -80,18 +80,20 @@ async function getContestRule(tx: Prisma.TransactionClient, contestId: string) {
 }
 
 export async function listContestsMvp() {
-  await reconcileDueContestsByTime();
+  // Fire-and-forget safety net: catches any QStash jobs that failed or were delayed.
+  void reconcileDueContestsByTime().catch(() => {});
+
   return prismaSafe((tx) =>
     tx.contest.findMany({
       where: {
         configPublishedAt: { not: null },
-        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
+        status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
       },
       include: {
         rules: true,
         _count: { select: { entries: true } },
       },
-      orderBy: [{ startsAt: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ liveAt: "asc" }, { createdAt: "desc" }],
       take: 50,
     })
   );
@@ -200,7 +202,7 @@ export async function enterContestMvp(params: {
 
     const rule = await getContestRule(tx, params.contestId);
     const teamSizeMode = rule?.teamSizeMode ?? TEAM_SIZE_MODE_EXACT;
-    const maxRosterSize = rule?.teamSizeValue ?? rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
+    const maxRosterSize = rule?.maxRosterSize ?? DEFAULT_LINEUP_SIZE;
 
     if (teamSizeMode !== TEAM_SIZE_MODE_EXACT) {
       throw new ContestRuntimeError("Only EXACT team size mode is currently supported", 400);
@@ -246,7 +248,7 @@ export async function enterContestMvp(params: {
         ownedCardInstanceId: { in: lineupInstanceIds },
         contestEntry: {
           contest: { status: { in: ACTIVE_LOCK_STATUSES } },
-          status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.LOCKED, ContestEntryStatus.SCORED] },
+          status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.SCORED] },
         },
       },
       select: {
@@ -322,22 +324,6 @@ export async function enterContestMvp(params: {
         throw new ContestRuntimeError("Contest entry fee debit failed", 500);
       }
     }
-
-    const previousLocks = existingEntry?.rosterLocks ?? [];
-    if (previousLocks.length) {
-      await tx.ownedCardInstance.updateMany({
-        where: {
-          id: { in: previousLocks.map((lock) => lock.ownedCardInstanceId) },
-          userId: params.userId,
-        },
-        data: { lockState: null },
-      });
-    }
-
-    await tx.ownedCardInstance.updateMany({
-      where: { id: { in: lineupInstanceIds }, userId: params.userId },
-      data: { lockState: `CONTEST:${params.contestId}:ENTRY:${entry.id}` },
-    });
 
     if (!existingEntry) {
       await applyContestEntryQuestProgressionTx(tx, params.userId);
@@ -492,7 +478,7 @@ export async function settleContestMvp(params: { contestId: string; rewards: Rew
 export async function createContestMvp(input: {
   code: string;
   title: string;
-  startsAt?: string | null;
+  liveAt?: string | null;
   lockAt?: string | null;
   endsAt?: string | null;
   status?: ContestStatus;
@@ -515,7 +501,7 @@ export async function createContestMvp(input: {
         code,
         title,
         status,
-        startsAt: input.startsAt ? new Date(input.startsAt) : null,
+        liveAt: input.liveAt ? new Date(input.liveAt) : null,
         lockAt: input.lockAt ? new Date(input.lockAt) : null,
         endsAt: input.endsAt ? new Date(input.endsAt) : null,
         rules: {
@@ -551,7 +537,7 @@ export async function getContestRankingMvp(contestId: string) {
     const rankingsRaw = await tx.contestRanking.findMany({
       where: { contestId },
       orderBy: [{ rank: "asc" }],
-      include: { user: { select: { displayName: true, xUsername: true } } },
+      include: { user: { select: { id: true, displayName: true, xUsername: true } } },
     });
 
     const rankings = rankingsRaw.map((row) => ({

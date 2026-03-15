@@ -11,7 +11,7 @@ export type ContestListItem = {
   code: string;
   title: string;
   status: ContestStatus;
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   rules: ContestRule[];
@@ -23,8 +23,7 @@ export type ContestListItem = {
 export type LineupOption = {
   instanceId: string;
   cardTemplateId: string;
-  lockState: string | null;
-  isLockedByActiveContest: boolean;
+  isLockedInOtherContest: boolean;
   cardSetId: string;
   cardSetCode: string;
   cardSetName: string;

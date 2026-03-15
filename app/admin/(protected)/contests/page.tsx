@@ -24,7 +24,7 @@ type AdminContest = {
   title: string;
   status: ContestStatus;
   configPublishedAt: string | null;
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   _count: { entries: number; rankings: number; settlements: number; scores: number };
@@ -143,7 +143,7 @@ export default function AdminContestsCatalogPage() {
   const stats = useMemo(() => {
     const now = Date.now();
     const active = contests.filter((c) => ["OPEN", "LOCKED", "LIVE"].includes(c.status)).length;
-    const upcoming = contests.filter((c) => c.startsAt && new Date(c.startsAt).getTime() > now).length;
+    const upcoming = contests.filter((c) => c.liveAt && new Date(c.liveAt).getTime() > now).length;
     const running = contests.filter((c) => c.status === "LIVE").length;
     const finished = contests.filter((c) => c.status === "SETTLED").length;
     return { active, upcoming, running, finished };
@@ -293,7 +293,7 @@ export default function AdminContestsCatalogPage() {
                 </div>
 
                 <div className="contest-console-meta">
-                  <p><strong>Start:</strong> {fmt(contest.startsAt)}</p>
+                  <p><strong>Start:</strong> {fmt(contest.liveAt)}</p>
                   <p><strong>Lock:</strong> {fmt(contest.lockAt)}</p>
                   <p><strong>End:</strong> {fmt(contest.endsAt)}</p>
                   <p><strong>Settlement:</strong> {contest._count.settlements > 0 ? "Done" : "Pending"}</p>

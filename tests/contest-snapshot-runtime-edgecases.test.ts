@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock } = vi.hoisted(() => ({
-  prismaMock: { $transaction: vi.fn() },
+const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock, warnSpy } = vi.hoisted(() => ({
+  prismaMock: {
+    $transaction: vi.fn(),
+    contestTokenSnapshot: { findMany: vi.fn() },
+  },
   resolveEligibleTokensForContestMock: vi.fn(),
   fetchCoinsMarketsMock: vi.fn(),
 }));
@@ -15,32 +18,31 @@ import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/
 describe("snapshot runtime edge cases", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it("rejects END snapshot when START canonical rows are missing", async () => {
-    const tx: any = {
-      contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
-      contestTokenSnapshot: {
-        findMany: vi.fn().mockResolvedValue([]),
-      },
-    };
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+    // resolveCanonicalTokensFromStart calls prisma.contestTokenSnapshot.findMany directly (outside tx)
+    prismaMock.contestTokenSnapshot.findMany.mockResolvedValue([]);
+    fetchCoinsMarketsMock.mockResolvedValue([]);
 
     await expect(captureEndSnapshot("c1")).rejects.toThrow(/START snapshot is required/i);
   });
 
   it("is idempotent for START snapshot via upsert semantics", async () => {
     const upsertCalls: any[] = [];
-    const tx: any = {
-      contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
-      contestTokenSnapshot: {
-        upsert: vi.fn(async (args: any) => {
-          upsertCalls.push(args.where.contestId_tokenProjectId_phase);
-          return { id: `s_${upsertCalls.length}` };
-        }),
-      },
-    };
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+    prismaMock.$transaction.mockImplementation(async (fn: any) => {
+      const tx: any = {
+        contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
+        contestTokenSnapshot: {
+          upsert: vi.fn(async (args: any) => {
+            upsertCalls.push(args.where.contestId_tokenProjectId_phase);
+            return { id: `s_${upsertCalls.length}` };
+          }),
+        },
+      };
+      return fn(tx);
+    });
 
     resolveEligibleTokensForContestMock.mockResolvedValue([
       { tokenProjectId: "tp1", slug: "dogecoin", coingeckoId: "dogecoin" },
@@ -57,26 +59,54 @@ describe("snapshot runtime edge cases", () => {
     expect(new Set(upsertCalls.map((r) => `${r.contestId}:${r.tokenProjectId}:${r.phase}`)).size).toBe(2);
   });
 
-  it("fails fast on CoinGecko failure to block lifecycle transition", async () => {
-    const upserts: any[] = [];
-    const tx: any = {
-      contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
-      contestTokenSnapshot: {
-        upsert: vi.fn(async (args: any) => {
-          upserts.push(args);
-          return { id: `s_${upserts.length}` };
-        }),
-      },
-    };
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+  it("throws after 3 retries when CoinGecko fails on START snapshot", async () => {
+    vi.useFakeTimers();
 
     resolveEligibleTokensForContestMock.mockResolvedValue([
       { tokenProjectId: "tp1", slug: "dogecoin", coingeckoId: "dogecoin" },
-      { tokenProjectId: "tp2", slug: "pepe", coingeckoId: null },
     ]);
     fetchCoinsMarketsMock.mockRejectedValue(new Error("429 rate limit"));
 
-    await expect(captureStartSnapshot("c1")).rejects.toThrow(/CoinGecko snapshot fetch failed/i);
-    expect(upserts).toHaveLength(0);
+    const assertion = expect(captureStartSnapshot("c1")).rejects.toThrow("429 rate limit");
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(fetchCoinsMarketsMock).toHaveBeenCalledTimes(3);
+    expect(warnSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it("continues with null metrics after 3 retries on END snapshot CoinGecko failure", async () => {
+    vi.useFakeTimers();
+
+    prismaMock.contestTokenSnapshot.findMany.mockResolvedValue([
+      { tokenProjectId: "tp1", geckoId: "dogecoin", tokenProject: { slug: "dogecoin", coingeckoId: "dogecoin" } },
+      { tokenProjectId: "tp2", geckoId: "pepe", tokenProject: { slug: "pepe", coingeckoId: null } },
+    ]);
+
+    const upserts: any[] = [];
+    prismaMock.$transaction.mockImplementation(async (fn: any) => {
+      const tx: any = {
+        contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
+        contestTokenSnapshot: {
+          upsert: vi.fn(async (args: any) => {
+            upserts.push(args);
+            return { id: `e_${upserts.length}` };
+          }),
+        },
+      };
+      return fn(tx);
+    });
+
+    fetchCoinsMarketsMock.mockRejectedValue(new Error("503 service unavailable"));
+
+    let result: any;
+    const promise = captureEndSnapshot("c1").then((r) => { result = r; });
+    await vi.runAllTimersAsync();
+    await promise;
+
+    expect(result.capturedCount).toBe(0);
+    expect(result.missingCount).toBe(2);
+    expect(upserts[0].create.priceUsd).toBeNull();
+    expect(upserts[0].create.marketDataUpdatedAt).toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
   });
 });

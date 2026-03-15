@@ -1,7 +1,7 @@
 import { ContestStatus } from "@prisma/client";
 
 import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
-import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
+import { generateSettlementPlan, executeSettlementPlan } from "@/lib/domain/contests/settlement-plan-runtime";
 import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { prisma } from "@/lib/prisma";
 
@@ -14,7 +14,7 @@ type ReconciliationStep = {
 type ContestLifecycleSnapshot = {
   id: string;
   status: ContestStatus;
-  startsAt: Date | null;
+  liveAt: Date | null;
   lockAt: Date | null;
   endsAt: Date | null;
 };
@@ -38,7 +38,7 @@ function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { tar
     return { target: ContestStatus.SETTLED, reason: "ENDS_AT_REACHED" };
   }
 
-  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && contest.startsAt && now >= contest.startsAt) {
+  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && contest.liveAt && now >= contest.liveAt) {
     return { target: ContestStatus.LIVE, reason: "STARTS_AT_REACHED" };
   }
 
@@ -58,13 +58,47 @@ function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatu
 
 async function runAutomationBeforeTransition(contestId: string, target: ContestStatus) {
   if (target === ContestStatus.LIVE) {
-    await captureStartSnapshot(contestId);
+    try {
+      await captureStartSnapshot(contestId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[lifecycle] START snapshot failed for contest ${contestId} — canceling contest: ${message}`);
+      await prisma.contest.update({ where: { id: contestId }, data: { status: ContestStatus.CANCELED } });
+      throw error;
+    }
   }
 
   if (target === ContestStatus.SETTLED) {
     await captureEndSnapshot(contestId);
     await computeContestScoresFromSnapshots(contestId);
-    await executeAutoSettlementForContest(contestId);
+    await tryAutoSettle(contestId);
+  }
+}
+
+async function tryAutoSettle(contestId: string) {
+  try {
+    const contest = await prisma.contest.findUnique({
+      where: { id: contestId },
+      include: {
+        rewardPolicy: { select: { status: true } },
+        settlements: { select: { id: true } },
+        rankings: { select: { userId: true } },
+      },
+    });
+
+    if (!contest) return;
+    if (contest.settlements.length > 0) return;
+    if (contest.rankings.length === 0) return;
+    if (contest.rewardPolicy?.status !== "PUBLISHED") {
+      console.warn(`[auto-settle] Contest ${contestId} has no published reward policy — skipping auto-settlement`);
+      return;
+    }
+
+    const { planId } = await generateSettlementPlan(contestId);
+    await executeSettlementPlan(planId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[auto-settle] Failed for contest ${contestId}: ${message}`);
   }
 }
 
@@ -72,7 +106,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
   const now = nowInput ?? new Date();
   const contest = await prisma.contest.findUnique({
     where: { id: contestId },
-    select: { id: true, status: true, startsAt: true, lockAt: true, endsAt: true },
+    select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
   });
 
   if (!contest) return null;
@@ -98,7 +132,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
     if (updated.count === 0) {
       const latest = await prisma.contest.findUnique({
         where: { id: contestId },
-        select: { id: true, status: true, startsAt: true, lockAt: true, endsAt: true },
+        select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
       });
       if (!latest) break;
       current = latest;
@@ -124,7 +158,7 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
     where: {
       OR: [
         { status: ContestStatus.OPEN, lockAt: { not: null, lte: now } },
-        { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] }, startsAt: { not: null, lte: now } },
+        { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] }, liveAt: { not: null, lte: now } },
         { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE] }, endsAt: { not: null, lte: now } },
       ],
     },
@@ -135,8 +169,13 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
 
   const results: ContestLifecycleReconciliationResult[] = [];
   for (const contest of dueContests) {
-    const result = await reconcileContestLifecycleByTime(contest.id, now);
-    if (result) results.push(result);
+    try {
+      const result = await reconcileContestLifecycleByTime(contest.id, now);
+      if (result) results.push(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[cron] reconcileContestLifecycleByTime failed for contest ${contest.id}: ${message}`);
+    }
   }
   return results;
 }

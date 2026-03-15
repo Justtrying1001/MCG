@@ -5,7 +5,7 @@ import { formatCountdown, formatDate, getTargetDate } from "@/components/contest
 
 export function ContestStatsGrid({
   status,
-  startsAt,
+  liveAt,
   lockAt,
   endsAt,
   rosterSize,
@@ -14,7 +14,7 @@ export function ContestStatsGrid({
   nowTs,
 }: {
   status: ContestStatus;
-  startsAt: string | null;
+  liveAt: string | null;
   lockAt: string | null;
   endsAt: string | null;
   rosterSize: number;
@@ -29,7 +29,7 @@ export function ContestStatsGrid({
     { label: "Entries", value: String(entries), hint: "Registered lineups" },
     { label: "Roster Size", value: `${rosterSize} cards`, hint: "Required lineup size" },
     { label: "Reward", value: `${rewardPoints} pts`, hint: "Base reward preview" },
-    { label: "Starts", value: formatDate(startsAt), hint: "Contest opening" },
+    { label: "Goes Live", value: formatDate(liveAt), hint: "Contest goes live" },
     { label: "Team Lock", value: formatDate(lockAt), hint: "Lineup freeze time" },
     { label: "Ends", value: formatDate(endsAt), hint: "Scoring cutoff" },
     { label: "Next Milestone", value: nextMilestone, hint: status === "OPEN" ? "Time to lock" : "Time to end" },

@@ -1,6 +1,6 @@
 import { Surface } from "@/components/ui/Surface";
 
-type RankingRow = { id: string; userId: string; rank: number; score: number; displayName?: string | null; xUsername?: string | null };
+type RankingRow = { id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } };
 
 export function LeaderboardCard({ rankings, currentUserId }: { rankings: RankingRow[]; currentUserId?: string }) {
   if (!rankings.length) {
@@ -23,7 +23,7 @@ export function LeaderboardCard({ rankings, currentUserId }: { rankings: Ranking
           return (
             <div key={row.id} className={`contest-leaderboard-row-v2${isMe ? " is-me" : ""}`}>
               <span>#{row.rank}</span>
-              <span>{isMe ? "You" : label}</span>
+              <span>{isMe ? "You" : (row.user.displayName || row.user.xUsername)}</span>
               <strong>{row.score.toFixed(2)}</strong>
             </div>
           );

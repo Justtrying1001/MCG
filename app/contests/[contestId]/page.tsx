@@ -15,6 +15,7 @@ import { LeaderboardCard } from "@/components/contests/LeaderboardCard";
 import { ContestRewardPreview } from "@/components/contests/ContestRewardPreview";
 import { EnteredLineupPanel } from "@/components/contests/EnteredLineupPanel";
 import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
+import { ScoreBreakdownPanel } from "@/components/contests/ScoreBreakdownPanel";
 import { RulesDrawer } from "@/components/contests/RulesDrawer";
 import { loadContestCache } from "@/components/contests/contestUtils";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
@@ -27,7 +28,7 @@ type ContestDetail = {
     title: string;
     code: string;
     status: ContestStatus;
-    startsAt: string | null;
+    liveAt: string | null;
     lockAt: string | null;
     endsAt: string | null;
     rules: ContestRule[];
@@ -67,7 +68,23 @@ type ContestDetail = {
 };
 
 type RankingPayload = {
-  rankings: Array<{ id: string; userId: string; rank: number; score: number; displayName?: string | null; xUsername?: string | null }>;
+  rankings: Array<{ id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } }>;
+};
+
+type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
+
+type RewardTier = { label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number };
+type RewardPreviewPayload = { hasPolicyData: boolean; tiers: RewardTier[] };
+
+type ScoreBreakdownRow = {
+  id: string;
+  baseScore: number;
+  rarityMultiplier: number;
+  editionMultiplier: number;
+  finalScore: number;
+  dataQuality: string;
+  tokenProject: { displayName: string; slug: string };
+  cardInstance: { cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
 };
 
 
@@ -87,8 +104,7 @@ function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOpt
       list.push({
         instanceId: `guest-${row.templateId}-${i + 1}`,
         cardTemplateId: row.templateId,
-        lockState: null,
-        isLockedByActiveContest: false,
+        isLockedInOtherContest: false,
         cardSetId: row.card.setCode ?? "guest-set",
         cardSetCode: row.card.setCode ?? "SET",
         cardSetName: row.card.setEditionLabel ?? "Guest Collection",
@@ -107,6 +123,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
+  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[]>([]);
+  const [rewardTiers, setRewardTiers] = useState<RewardTier[] | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -125,10 +144,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     void (async () => {
       setError("");
-      const [detailRes, rankingRes, optionsRes] = await Promise.all([
+      const [detailRes, rankingRes, optionsRes, rewardsRes, breakdownRes, rewardPreviewRes] = await Promise.all([
         fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
       ]);
 
       if (!detailRes.ok) {
@@ -149,6 +171,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       }
 
       if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
+      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
+      if (breakdownRes.ok) {
+        const bd = (await breakdownRes.json()) as { rows: ScoreBreakdownRow[] };
+        setScoreBreakdown(bd.rows ?? []);
+      }
+      if (rewardPreviewRes.ok) {
+        const rp = (await rewardPreviewRes.json()) as RewardPreviewPayload;
+        if (rp.hasPolicyData) setRewardTiers(rp.tiers);
+      }
 
       if (optionsRes.ok) {
         const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
@@ -261,7 +292,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         code={detail.contest.code}
         title={detail.contest.title}
         status={detail.contest.status}
-        startsAt={detail.contest.startsAt}
+        liveAt={detail.contest.liveAt}
         lockAt={detail.contest.lockAt}
         endsAt={detail.contest.endsAt}
         rosterSize={maxRosterSize}
@@ -282,7 +313,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       <ContestStatsGrid
         status={detail.contest.status}
-        startsAt={detail.contest.startsAt}
+        liveAt={detail.contest.liveAt}
         lockAt={detail.contest.lockAt}
         endsAt={detail.contest.endsAt}
         rosterSize={maxRosterSize}
@@ -312,37 +343,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           />
 
           {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
-          {detail.contest.status === "LIVE" ? (
-            <Surface className="contest-result-panel contest-live-panel" variant="raised">
-              <p className="mcg-eyebrow">Live tracking</p>
-              <h3 className="mcg-title">Contest running</h3>
-              <p className="contest-inline-note">
-                Participants: {detail.contest._count.entries}. Leaderboard may remain provisional until scoring finalization.
-              </p>
-              <div className="contest-live-grid">
-                {selectedCards.filter(Boolean).map((card, index) => {
-                  const live = pseudoLiveDelta(`${card?.instanceId ?? index}`);
-                  const up = live.pct >= 0;
-                  return (
-                    <div className="contest-live-card" key={card?.instanceId ?? `slot-${index}`}>
-                      <strong>{card?.tokenProjectName ?? `Slot ${index + 1}`}</strong>
-                      <span className={up ? "up" : "down"}>Token delta {up ? "+" : ""}{live.pct.toFixed(2)}%</span>
-                      <span className={up ? "up" : "down"}>Price change {up ? "+" : ""}{live.price.toFixed(3)} USD</span>
-                      <span className={live.volume >= 0 ? "up" : "down"}>Volume change {live.volume >= 0 ? "+" : ""}{live.volume.toFixed(1)}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </Surface>
-          ) : null}
-          <ContestResultPanel
-            status={detail.contest.status}
-            myRank={myRankingRow?.rank ?? null}
-            myScore={myRankingRow?.score ?? null}
-            rewards={detail.rewardGrants ?? []}
-            breakdown={detail.scoreBreakdown ?? []}
-            rankedUsers={ranking?.rankings?.length ?? 0}
-          />
+          <ScoreBreakdownPanel rows={scoreBreakdown} />
+          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} myRewards={myRewards} />
         </div>
 
         <aside className="contest-main-right">
@@ -354,9 +356,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             isGuest={Boolean(isGuest)}
             lineupFilled={selected.filter(Boolean).length}
             rosterSize={maxRosterSize}
+            hasEntry={Boolean(detail.userEntry)}
           />
           <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
-          <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} />
+          <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} tiers={rewardTiers} />
           <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
           <Surface className="contest-sidebar-panel">
             <Button variant="ghost" onClick={() => setRulesOpen(true)}>View detailed rules</Button>

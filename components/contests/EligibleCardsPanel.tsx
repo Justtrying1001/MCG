@@ -96,7 +96,7 @@ export function EligibleCardsPanel({
       <div className="contest-eligible-grid visual">
         {visible.map((item) => {
           const isSelected = selectedIds.includes(item.instanceId);
-          const isLocked = item.isLockedByActiveContest && !isSelected;
+          const isLocked = item.isLockedInOtherContest && !isSelected;
           return (
             <LineupCardTile
               key={item.instanceId}

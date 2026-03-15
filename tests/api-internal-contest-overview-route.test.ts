@@ -30,7 +30,7 @@ describe("/api/internal/contest-runs/:contestId/overview", () => {
       code: "W1",
       title: "Week 1",
       status: "LIVE",
-      startsAt: null,
+      liveAt: null,
       lockAt: null,
       endsAt: null,
       _count: { entries: 10, scores: 10, rankings: 10, settlements: 0 },

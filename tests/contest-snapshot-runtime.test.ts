@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { prismaMock, resolveEligibleTokensForContestMock, fetchCoinsMarketsMock } = vi.hoisted(() => ({
   prismaMock: {
     $transaction: vi.fn(),
+    contestTokenSnapshot: { findMany: vi.fn() },
   },
   resolveEligibleTokensForContestMock: vi.fn(),
   fetchCoinsMarketsMock: vi.fn(),
@@ -45,19 +46,24 @@ describe("contest snapshot runtime", () => {
 
     expect(result.phase).toBe("START");
     expect(result.capturedCount).toBe(2);
+    expect(result.missingCount).toBe(0);
     expect(upserts).toHaveLength(2);
     expect(upserts[0].create.marketDataUpdatedAt).toBeInstanceOf(Date);
+    expect(upserts[0].create.capturedCount).toBe(2);
+    expect(upserts[0].create.missingCount).toBe(0);
   });
 
   it("uses START canonical token population when capturing END", async () => {
+    // resolveCanonicalTokensFromStart is called outside the transaction via prisma directly
+    prismaMock.contestTokenSnapshot.findMany.mockResolvedValue([
+      { tokenProjectId: "tp1", geckoId: "dogecoin", tokenProject: { slug: "dogecoin", coingeckoId: null } },
+      { tokenProjectId: "tp2", geckoId: "pepe", tokenProject: { slug: "pepe", coingeckoId: "pepe" } },
+    ]);
+
     const upserts: any[] = [];
     const tx: any = {
       contest: { findUnique: vi.fn().mockResolvedValue({ id: "c1" }) },
       contestTokenSnapshot: {
-        findMany: vi.fn().mockResolvedValue([
-          { tokenProjectId: "tp1", geckoId: "dogecoin", tokenProject: { slug: "dogecoin", coingeckoId: null } },
-          { tokenProjectId: "tp2", geckoId: "pepe", tokenProject: { slug: "pepe", coingeckoId: "pepe" } },
-        ]),
         upsert: vi.fn(async (args: any) => {
           upserts.push(args);
           return { id: `e_${upserts.length}` };
@@ -65,6 +71,7 @@ describe("contest snapshot runtime", () => {
       },
     };
     prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
     fetchCoinsMarketsMock.mockResolvedValue([
       { id: "dogecoin", current_price: 0.13, market_cap: 1100, total_volume: 65, market_cap_rank: 7, last_updated: "2026-03-14T10:10:00Z" },
       { id: "pepe", current_price: 0.2, market_cap: 1900, total_volume: 60, market_cap_rank: 25, last_updated: "2026-03-14T10:10:00Z" },
@@ -73,6 +80,7 @@ describe("contest snapshot runtime", () => {
     const result = await captureEndSnapshot("c1");
     expect(result.phase).toBe("END");
     expect(result.tokenCount).toBe(2);
+    expect(result.capturedCount).toBe(2); // both tokens have geckoIds resolved and matched in market response
     expect(upserts).toHaveLength(2);
   });
 });

@@ -33,16 +33,16 @@ function createStatefulTx() {
       cardSetId: null as string | null,
     },
     ownedCardInstances: [
-      { id: "i1", userId: "u1", cardTemplateId: "t1", lockState: null as string | null },
-      { id: "i2", userId: "u1", cardTemplateId: "t2", lockState: null as string | null },
-      { id: "i3", userId: "u1", cardTemplateId: "t3", lockState: null as string | null },
-      { id: "i4", userId: "u1", cardTemplateId: "t4", lockState: null as string | null },
-      { id: "i5", userId: "u1", cardTemplateId: "t5", lockState: null as string | null },
-      { id: "j1", userId: "u2", cardTemplateId: "t1", lockState: null as string | null },
-      { id: "j2", userId: "u2", cardTemplateId: "t2", lockState: null as string | null },
-      { id: "j3", userId: "u2", cardTemplateId: "t3", lockState: null as string | null },
-      { id: "j4", userId: "u2", cardTemplateId: "t4", lockState: null as string | null },
-      { id: "j5", userId: "u2", cardTemplateId: "t5", lockState: null as string | null },
+      { id: "i1", userId: "u1", cardTemplateId: "t1" },
+      { id: "i2", userId: "u1", cardTemplateId: "t2" },
+      { id: "i3", userId: "u1", cardTemplateId: "t3" },
+      { id: "i4", userId: "u1", cardTemplateId: "t4" },
+      { id: "i5", userId: "u1", cardTemplateId: "t5" },
+      { id: "j1", userId: "u2", cardTemplateId: "t1" },
+      { id: "j2", userId: "u2", cardTemplateId: "t2" },
+      { id: "j3", userId: "u2", cardTemplateId: "t3" },
+      { id: "j4", userId: "u2", cardTemplateId: "t4" },
+      { id: "j5", userId: "u2", cardTemplateId: "t5" },
     ],
     entries: [] as Array<{ id: string; contestId: string; userId: string; status: string }>,
     rosterLocks: [] as Array<{ contestEntryId: string; ownedCardInstanceId: string; contestId: string }>,
@@ -119,16 +119,7 @@ function createStatefulTx() {
         }
         return { ...entry, rosterLocks: state.rosterLocks.filter((row) => row.contestEntryId === where.id) };
       }),
-      updateMany: vi.fn(async ({ where, data }: any) => {
-        let count = 0;
-        for (const row of state.ownedCardInstances) {
-          if (where.id.in.includes(row.id) && row.userId === where.userId) {
-            row.lockState = data.lockState;
-            count += 1;
-          }
-        }
-        return { count };
-      }),
+      updateMany: vi.fn(async () => ({ count: 0 })),
     },
     rosterLock: {
       findMany: vi.fn(async ({ where }: any) => {
@@ -221,7 +212,6 @@ describe("contest runtime stateful flow", () => {
     expect(result.entry.status).toBe("SUBMITTED");
     expect(state.entries).toHaveLength(1);
     expect(state.rosterLocks).toHaveLength(5);
-    expect(state.ownedCardInstances.filter((row) => row.userId === "u1").every((row) => row.lockState?.includes("CONTEST:contest_1"))).toBe(true);
 
     const updated = await enterContestMvp({
       contestId: "contest_1",

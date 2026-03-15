@@ -83,7 +83,7 @@ describe("contest scoring engine real smoke", () => {
         code: `SMOKE_${suffix}`,
         title: `Smoke ${suffix}`,
         status: ContestStatus.OPEN,
-        startsAt: new Date(Date.now() - 60_000),
+        liveAt: new Date(Date.now() - 60_000),
         lockAt: new Date(Date.now() + 60 * 60 * 1000),
         endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
         rules: { create: { maxRosterSize: 5, teamSizeMode: "EXACT", teamSizeValue: 5, eligibilityMode: "ANY", entryFeeEnabled: false } },

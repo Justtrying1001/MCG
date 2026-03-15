@@ -12,7 +12,6 @@ const DISTRIBUTION_RULE_TYPES = {
 
 const SETTLEMENT_PLAN_STATUS = {
   DRAFT: "DRAFT",
-  APPROVED: "APPROVED",
   EXECUTED: "EXECUTED",
   CANCELED: "CANCELED",
 } as const;
@@ -235,8 +234,8 @@ export async function executeSettlementPlan(planId: string) {
       throw new ContestRuntimeError("Contest already has a settlement execution", 409);
     }
 
-    if (plan.status !== SETTLEMENT_PLAN_STATUS.DRAFT && plan.status !== SETTLEMENT_PLAN_STATUS.APPROVED) {
-      throw new ContestRuntimeError("Only DRAFT or APPROVED plans can be executed", 409);
+    if (plan.status !== SETTLEMENT_PLAN_STATUS.DRAFT) {
+      throw new ContestRuntimeError("Only DRAFT plans can be executed", 409);
     }
 
     const settlement = await tx.contestSettlement.create({ data: { contestId: plan.contestId } });
@@ -272,6 +271,14 @@ export async function executeSettlementPlan(planId: string) {
         }
 
         if (component.type === "XP") {
+          await tx.rewardGrant.create({
+            data: {
+              userId: item.userId,
+              type: RewardType.XP,
+              amount: component.amount,
+              sourceContestSettlementId: settlement.id,
+            },
+          });
           await tx.userProgression.upsert({
             where: { userId: item.userId },
             create: { userId: item.userId, xp: component.amount, level: 1 },
@@ -284,17 +291,11 @@ export async function executeSettlementPlan(planId: string) {
 
     await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
-    await tx.ownedCardInstance.updateMany({
-      where: {
-        contestRosterLocks: {
-          some: {
-            contestEntry: { contestId: plan.contestId },
-          },
-        },
-      },
-      data: { lockState: null },
+
+    // Release all card locks for this contest now that it is settled
+    await tx.rosterLock.deleteMany({
+      where: { contestEntry: { contestId: plan.contestId } },
     });
-    await tx.rosterLock.deleteMany({ where: { contestEntry: { contestId: plan.contestId } } });
     await tx.contestSettlementPlan.update({
       where: { id: plan.id },
       data: { status: SETTLEMENT_PLAN_STATUS.EXECUTED, executedAt: new Date() },

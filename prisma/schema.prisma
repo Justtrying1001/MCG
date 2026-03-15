@@ -124,6 +124,7 @@ enum RewardType {
   POINTS
   PACK
   CARD_INSTANCE
+  XP
 }
 
 enum RewardLedgerEntryType {
@@ -169,7 +170,6 @@ enum ContestRewardDistributionRuleType {
 
 enum ContestSettlementPlanStatus {
   DRAFT
-  APPROVED
   EXECUTED
   CANCELED
 }
@@ -213,7 +213,6 @@ enum ContestStatus {
 
 enum ContestEntryStatus {
   SUBMITTED
-  LOCKED
   SCORED
   SETTLED
   CANCELED
@@ -323,7 +322,6 @@ model OwnedCardInstance {
   cardTemplateId           String
   sourcePackOpeningEventId String?
   acquiredAt               DateTime @default(now())
-  lockState                String?
   metadata                 Json?
 
   user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -548,9 +546,13 @@ model Contest {
   description String?
   status    ContestStatus @default(DRAFT)
   configPublishedAt DateTime?
-  startsAt  DateTime?
+  openAt    DateTime?
+  liveAt    DateTime?
   lockAt    DateTime?
   endsAt    DateTime?
+  qstashOpenJobId   String?
+  qstashLiveJobId   String?
+  qstashSettleJobId String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   seasonId  String?
@@ -575,7 +577,6 @@ model ContestRule {
   cardSetId     String?
   maxRosterSize Int?
   teamSizeMode  ContestTeamSizeMode @default(EXACT)
-  teamSizeValue Int?
   eligibilityMode ContestEligibilityMode @default(ANY)
   entryFeeEnabled Boolean @default(false)
   entryFeeCurrency String @default("POINTS")
@@ -691,6 +692,8 @@ model ContestTokenSnapshot {
   marketDataUpdatedAt DateTime?
   capturedAt    DateTime            @default(now())
   provider      String              @default("COINGECKO")
+  capturedCount Int                 @default(0)
+  missingCount  Int                 @default(0)
 
   contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
   tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
@@ -728,6 +731,7 @@ model ContestEntryScoreBreakdown {
   rarityMultiplier Float
   editionMultiplier Float
   finalScore       Float
+  dataQuality      String   @default("COMPLETE")
   computedAt       DateTime @default(now())
 
   entry         ContestEntry       @relation(fields: [entryId], references: [id], onDelete: Cascade)
