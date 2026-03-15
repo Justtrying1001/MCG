@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Receiver } from "@upstash/qstash";
 
 import { handleApiError } from "@/lib/api-error";
 import { reconcileContestLifecycleByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
+import { verifyQStashSignature } from "@/lib/qstash-verify";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const receiver = new Receiver({
-    currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,
-    nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY!,
-  });
-
-  const signature = request.headers.get("upstash-signature") ?? "";
   const body = await request.text();
+  const signature = request.headers.get("upstash-signature") ?? "";
 
-  const isValid = await receiver.verify({ signature, body });
+  const isValid = await verifyQStashSignature(signature, body);
   if (!isValid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

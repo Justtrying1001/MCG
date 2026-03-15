@@ -59,18 +59,29 @@ function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatu
 async function runAutomationBeforeTransition(contestId: string, target: ContestStatus) {
   if (target === ContestStatus.LIVE) {
     try {
-      await captureStartSnapshot(contestId);
+      const result = await captureStartSnapshot(contestId);
+      console.info(`[lifecycle] Contest ${contestId} START snapshot captured — tokens=${result.tokenCount} captured=${result.capturedCount}`);
     } catch (error) {
+      // Snapshot failure must NOT cancel the contest — admin can re-capture via dashboard.
+      // Only a hard DB error (connection lost, etc.) would be worth escalating.
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`[lifecycle] START snapshot failed for contest ${contestId} — canceling contest: ${message}`);
-      await prisma.contest.update({ where: { id: contestId }, data: { status: ContestStatus.CANCELED } });
-      throw error;
+      console.warn(`[lifecycle] START snapshot failed for contest ${contestId} — proceeding to LIVE anyway (snapshot can be re-triggered from admin): ${message}`);
     }
   }
 
   if (target === ContestStatus.SETTLED) {
-    await captureEndSnapshot(contestId);
-    await computeContestScoresFromSnapshots(contestId);
+    try {
+      await captureEndSnapshot(contestId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[lifecycle] END snapshot failed for contest ${contestId} — continuing settlement: ${message}`);
+    }
+    try {
+      await computeContestScoresFromSnapshots(contestId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[lifecycle] Score computation failed for contest ${contestId} — continuing settlement: ${message}`);
+    }
     await tryAutoSettle(contestId);
   }
 }
@@ -104,6 +115,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
     const next = nextStatus(current.status, target);
     if (!next) break;
 
+    console.info(`[lifecycle] Contest ${contestId} transitioning ${current.status} → ${next} — reason: ${reason}`);
     await runAutomationBeforeTransition(contestId, next);
 
     const updated = await prisma.contest.updateMany({

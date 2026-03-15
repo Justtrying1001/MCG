@@ -345,10 +345,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         <main className="cpd-main">
 
           {/* Lineup block */}
-          <section className="cpd-block">
+          <section className={`cpd-block${!canManageLineup ? " cpd-block-locked" : ""}`}>
             <div className="cpd-block-header">
               <div>
-                <h2 className="cpd-block-title">Your Lineup</h2>
+                <div className="cpd-lineup-title-row">
+                  <h2 className="cpd-block-title">Your Lineup</h2>
+                  {status === "LOCKED" && <span className="cpd-status-badge cpd-badge-locked">🔒 Locked</span>}
+                  {status === "LIVE" && <span className="cpd-status-badge cpd-badge-live">● Live</span>}
+                  {isSettled && <span className="cpd-status-badge cpd-badge-settled">✓ Finished</span>}
+                </div>
                 <span className="cpd-block-meta">{filledCount}/{maxRosterSize} slots filled</span>
               </div>
               <div className="cpd-lineup-actions">
@@ -370,14 +375,21 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               </div>
             </div>
 
-            <div className="cpd-slots-grid">
+            <div className={`cpd-slots-grid${maxRosterSize === 5 ? " cpd-slots-grid-5" : ""}`}>
               {selectedCards.map((card, slotIndex) => (
                 <button
                   key={slotIndex}
                   type="button"
-                  className={`cpd-slot${card ? " cpd-slot-filled" : " cpd-slot-empty"}${canManageLineup ? " cpd-slot-interactive" : ""}`}
+                  className={`cpd-slot${card ? " cpd-slot-filled" : " cpd-slot-empty"}${canManageLineup ? " cpd-slot-interactive" : ""}${!canManageLineup && !card ? " cpd-slot-locked-empty" : ""}`}
                   onClick={() => handleSlotClick(slotIndex)}
-                  title={card ? `Slot ${slotIndex + 1}: ${card.name} — click to remove` : `Slot ${slotIndex + 1}: empty — click to add a card`}
+                  disabled={!canManageLineup}
+                  title={
+                    !canManageLineup
+                      ? `Slot ${slotIndex + 1}${card ? `: ${card.name}` : " — empty"}`
+                      : card
+                      ? `Slot ${slotIndex + 1}: ${card.name} — click to remove`
+                      : `Slot ${slotIndex + 1}: empty — click to add a card`
+                  }
                 >
                   {card ? (
                     <>
@@ -452,6 +464,42 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               </div>
             )}
           </section>
+
+          {/* Settled result block */}
+          {isSettled && myRankingRow && (
+            <section className="cpd-block cpd-block-settled">
+              <div className="cpd-settled-header">
+                <span className="cpd-settled-icon">🏆</span>
+                <div>
+                  <h2 className="cpd-block-title">Final Result</h2>
+                  <span className="cpd-block-meta">Contest finished</span>
+                </div>
+              </div>
+              <div className="cpd-settled-stats">
+                <div className="cpd-settled-stat">
+                  <span>Final rank</span>
+                  <strong className="cpd-stat-gold">#{myRankingRow.rank}</strong>
+                </div>
+                <div className="cpd-settled-stat">
+                  <span>Score</span>
+                  <strong>{myRankingRow.score.toFixed(2)}</strong>
+                </div>
+                {myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0) && (
+                  <div className="cpd-settled-stat">
+                    <span>Rewards</span>
+                    <strong className="cpd-reward-gold">
+                      {[
+                        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
+                        myRewards.xpTotal > 0 ? `+${myRewards.xpTotal} XP` : null,
+                        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
+                      ].filter(Boolean).join(" · ")}
+                    </strong>
+                  </div>
+                )}
+              </div>
+              <p className="cpd-settled-note">Rewards are granted during settlement processing. Your cards are unlocked once the contest is settled.</p>
+            </section>
+          )}
 
         </main>
 
@@ -797,6 +845,90 @@ const CSS = `
     text-align: center;
     padding: 24px 0;
     margin: 0;
+  }
+
+  /* ── Lineup title row & status badges ── */
+  .cpd-lineup-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cpd-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .cpd-badge-locked {
+    background: rgba(255, 200, 0, 0.08);
+    border: 1px solid rgba(255, 200, 0, 0.25);
+    color: #f5c842;
+  }
+  .cpd-badge-live {
+    background: rgba(45, 181, 110, 0.1);
+    border: 1px solid rgba(45, 181, 110, 0.3);
+    color: #2db56e;
+  }
+  .cpd-badge-settled {
+    background: rgba(200, 168, 75, 0.1);
+    border: 1px solid rgba(200, 168, 75, 0.3);
+    color: #c8a84b;
+  }
+  /* Locked block visual dimming */
+  .cpd-block-locked {
+    opacity: 0.9;
+  }
+  .cpd-slot-locked-empty {
+    border-color: rgba(255,255,255,0.07) !important;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* ── Settled result block ── */
+  .cpd-block-settled {
+    background: rgba(200, 168, 75, 0.05);
+    border-color: rgba(200, 168, 75, 0.2);
+  }
+  .cpd-settled-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .cpd-settled-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+  .cpd-settled-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .cpd-settled-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    min-width: 100px;
+  }
+  .cpd-settled-stat span { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+  .cpd-settled-stat strong { font-size: 1.1rem; color: #e0e0e8; }
+  .cpd-settled-note {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+    margin: 0;
+    line-height: 1.5;
   }
 
   /* ── Lineup actions ── */
@@ -1177,8 +1309,27 @@ const CSS = `
     .cpd-main {
       order: 1;
     }
+    /* 3 + 2 layout for slots on mobile */
     .cpd-slots-grid {
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .cpd-slots-grid .cpd-slot:nth-child(4),
+    .cpd-slots-grid .cpd-slot:nth-child(5) {
+      grid-column: span 1;
+    }
+    /* Center last 2 slots when roster is 5 */
+    .cpd-slots-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+    }
+    .cpd-slots-grid-5 .cpd-slot {
+      grid-column: span 2;
+    }
+    .cpd-slots-grid-5 .cpd-slot:nth-child(4) {
+      grid-column: 2 / span 2;
+    }
+    .cpd-slots-grid-5 .cpd-slot:nth-child(5) {
+      grid-column: 4 / span 2;
     }
     .cpd-skeleton-body {
       grid-template-columns: 1fr;
