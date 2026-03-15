@@ -89,8 +89,22 @@ export async function listContestsMvp() {
         configPublishedAt: { not: null },
         status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED] },
       },
-      include: {
-        rules: true,
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        status: true,
+        liveAt: true,
+        lockAt: true,
+        endsAt: true,
+        leagueTierRequired: true,
+        rules: {
+          select: {
+            id: true,
+            cardSetId: true,
+            maxRosterSize: true,
+          },
+        },
         _count: { select: { entries: true } },
       },
       orderBy: [{ liveAt: "asc" }, { createdAt: "desc" }],
