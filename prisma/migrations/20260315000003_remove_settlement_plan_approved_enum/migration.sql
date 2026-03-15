@@ -13,8 +13,12 @@ END $$;
 CREATE TYPE "ContestSettlementPlanStatus_new" AS ENUM ('DRAFT', 'EXECUTED', 'CANCELED');
 
 ALTER TABLE "ContestSettlementPlan"
+  ALTER COLUMN "status" DROP DEFAULT,
   ALTER COLUMN "status" TYPE "ContestSettlementPlanStatus_new"
   USING "status"::text::"ContestSettlementPlanStatus_new";
+
+ALTER TABLE "ContestSettlementPlan"
+  ALTER COLUMN "status" SET DEFAULT 'DRAFT';
 
 DROP TYPE "ContestSettlementPlanStatus";
 
