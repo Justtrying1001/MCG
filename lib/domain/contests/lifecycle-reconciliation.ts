@@ -58,7 +58,14 @@ function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatu
 
 async function runAutomationBeforeTransition(contestId: string, target: ContestStatus) {
   if (target === ContestStatus.LIVE) {
-    await captureStartSnapshot(contestId);
+    try {
+      await captureStartSnapshot(contestId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[lifecycle] START snapshot failed for contest ${contestId} — canceling contest: ${message}`);
+      await prisma.contest.update({ where: { id: contestId }, data: { status: ContestStatus.CANCELED } });
+      throw error;
+    }
   }
 
   if (target === ContestStatus.SETTLED) {
@@ -162,8 +169,13 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
 
   const results: ContestLifecycleReconciliationResult[] = [];
   for (const contest of dueContests) {
-    const result = await reconcileContestLifecycleByTime(contest.id, now);
-    if (result) results.push(result);
+    try {
+      const result = await reconcileContestLifecycleByTime(contest.id, now);
+      if (result) results.push(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[cron] reconcileContestLifecycleByTime failed for contest ${contest.id}: ${message}`);
+    }
   }
   return results;
 }

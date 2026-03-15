@@ -603,6 +603,8 @@ model ContestTokenSnapshot {
   marketDataUpdatedAt DateTime?
   capturedAt    DateTime            @default(now())
   provider      String              @default("COINGECKO")
+  capturedCount Int                 @default(0)
+  missingCount  Int                 @default(0)
 
   contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
   tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
