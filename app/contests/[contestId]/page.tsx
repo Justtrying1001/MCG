@@ -45,6 +45,8 @@ type RankingPayload = {
   rankings: Array<{ id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } }>;
 };
 
+type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
+
 function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
   const list: LineupOption[] = [];
   for (const row of collection) {
@@ -72,6 +74,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
+  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -91,10 +94,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     void (async () => {
       setError("");
-      const [detailRes, rankingRes, optionsRes] = await Promise.all([
+      const [detailRes, rankingRes, optionsRes, rewardsRes] = await Promise.all([
         fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
       ]);
 
       if (!detailRes.ok) {
@@ -115,6 +119,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       }
 
       if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
+      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
 
       if (optionsRes.ok) {
         const lineupPayload = (await optionsRes.json()) as { options: LineupOption[] };
@@ -264,7 +269,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           />
 
           {detail.userEntry ? <EnteredLineupPanel selectedCards={selectedCards} /> : null}
-          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} />
+          <ContestResultPanel status={detail.contest.status} myRank={myRankingRow?.rank ?? null} myScore={myRankingRow?.score ?? null} myRewards={myRewards} />
         </div>
 
         <aside className="contest-main-right">
