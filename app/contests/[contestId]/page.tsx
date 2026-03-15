@@ -48,6 +48,9 @@ type RankingPayload = {
 
 type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
 
+type RewardTier = { label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number };
+type RewardPreviewPayload = { hasPolicyData: boolean; tiers: RewardTier[] };
+
 type ScoreBreakdownRow = {
   id: string;
   baseScore: number;
@@ -88,6 +91,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
   const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[]>([]);
+  const [rewardTiers, setRewardTiers] = useState<RewardTier[] | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -107,12 +111,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     void (async () => {
       setError("");
-      const [detailRes, rankingRes, optionsRes, rewardsRes, breakdownRes] = await Promise.all([
+      const [detailRes, rankingRes, optionsRes, rewardsRes, breakdownRes, rewardPreviewRes] = await Promise.all([
         fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
         fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
+        fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
       ]);
 
       if (!detailRes.ok) {
@@ -137,6 +142,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       if (breakdownRes.ok) {
         const bd = (await breakdownRes.json()) as { rows: ScoreBreakdownRow[] };
         setScoreBreakdown(bd.rows ?? []);
+      }
+      if (rewardPreviewRes.ok) {
+        const rp = (await rewardPreviewRes.json()) as RewardPreviewPayload;
+        if (rp.hasPolicyData) setRewardTiers(rp.tiers);
       }
 
       if (optionsRes.ok) {
@@ -302,7 +311,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             rosterSize={maxRosterSize}
           />
           <LineupSummaryPanel selectedCards={selectedCards} maxRosterSize={maxRosterSize} />
-          <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} />
+          <ContestRewardPreview rosterSize={maxRosterSize} entries={detail.contest._count.entries} tiers={rewardTiers} />
           <LeaderboardCard rankings={ranking?.rankings ?? []} currentUserId={me?.user.id} />
           <Surface className="contest-sidebar-panel">
             <Button variant="ghost" onClick={() => setRulesOpen(true)}>View detailed rules</Button>
