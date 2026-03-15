@@ -11,8 +11,12 @@ END $$;
 CREATE TYPE "ContestEntryStatus_new" AS ENUM ('SUBMITTED', 'SCORED', 'SETTLED', 'CANCELED');
 
 ALTER TABLE "ContestEntry"
+  ALTER COLUMN "status" DROP DEFAULT,
   ALTER COLUMN "status" TYPE "ContestEntryStatus_new"
   USING "status"::text::"ContestEntryStatus_new";
+
+ALTER TABLE "ContestEntry"
+  ALTER COLUMN "status" SET DEFAULT 'SUBMITTED';
 
 DROP TYPE "ContestEntryStatus";
 
