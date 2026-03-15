@@ -20,8 +20,9 @@ export type MilestoneSeedDefinition = {
 
 export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
   // ── Packs opened ─────────────────────────────────────────────────────────
+  // Old codes preserved for DB backward-compat; new entries use new codes
   {
-    code: "ms_pack_01",
+    code: "ms_open_packs_01",
     slug: "packs-opened-1",
     seedKey: "MILESTONE_V2_PACK_OPEN_1",
     title: "First unboxing",
@@ -38,7 +39,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_pack_05",
+    code: "ms_open_packs_05",
     slug: "packs-opened-5",
     seedKey: "MILESTONE_V2_PACK_OPEN_5",
     title: "Pack opener",
@@ -55,7 +56,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_pack_20",
+    code: "ms_open_packs_20",
     slug: "packs-opened-20",
     seedKey: "MILESTONE_V2_PACK_OPEN_20",
     title: "Pack veteran",
@@ -108,7 +109,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
 
   // ── Cards collected — total ───────────────────────────────────────────────
   {
-    code: "ms_cards_25",
+    code: "ms_total_cards_25",
     slug: "cards-collected-25",
     seedKey: "MILESTONE_V2_TOTAL_CARDS_25",
     title: "Newcomer",
@@ -125,7 +126,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_cards_100",
+    code: "ms_total_cards_100",
     slug: "cards-collected-100",
     seedKey: "MILESTONE_V2_TOTAL_CARDS_100",
     title: "Accumulator",
@@ -195,7 +196,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
 
   // ── Unique cards ──────────────────────────────────────────────────────────
   {
-    code: "ms_unique_10",
+    code: "ms_unique_cards_10",
     slug: "unique-cards-10",
     seedKey: "MILESTONE_V2_UNIQUE_CARDS_10",
     title: "Curious",
@@ -212,7 +213,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_unique_25",
+    code: "ms_unique_cards_25",
     slug: "unique-cards-25",
     seedKey: "MILESTONE_V2_UNIQUE_CARDS_25",
     title: "Explorer",
@@ -282,7 +283,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
 
   // ── Contests entered ──────────────────────────────────────────────────────
   {
-    code: "ms_cj_1",
+    code: "ms_contests_joined_1",
     slug: "contests-joined-1",
     seedKey: "MILESTONE_V2_CONTESTS_JOINED_1",
     title: "First entry",
@@ -316,7 +317,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_cj_10",
+    code: "ms_contests_joined_10",
     slug: "contests-joined-10",
     seedKey: "MILESTONE_V2_CONTESTS_JOINED_10",
     title: "Competitor",
@@ -369,7 +370,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
 
   // ── Contest wins ──────────────────────────────────────────────────────────
   {
-    code: "ms_cw_1",
+    code: "ms_contests_won_1",
     slug: "contests-won-1",
     seedKey: "MILESTONE_V2_CONTESTS_WON_1",
     title: "First blood",
@@ -456,7 +457,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_inv_5",
+    code: "ms_invites_5_bronze",
     slug: "invites-5",
     seedKey: "MILESTONE_V2_INVITED_FRIENDS_5",
     title: "Connector",
@@ -473,7 +474,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_inv_10",
+    code: "ms_invites_10_iron",
     slug: "invites-10",
     seedKey: "MILESTONE_V2_INVITED_FRIENDS_10",
     title: "Networker",
@@ -507,7 +508,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_inv_100",
+    code: "ms_invites_100_platinum",
     slug: "invites-100",
     seedKey: "MILESTONE_V2_INVITED_FRIENDS_100",
     title: "Cult leader",
@@ -543,7 +544,7 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     repeatable: false,
   },
   {
-    code: "ms_pts_5000",
+    code: "ms_reward_points_5000",
     slug: "points-earned-5000",
     seedKey: "MILESTONE_V2_REWARD_POINTS_5000",
     title: "Points powerhouse",

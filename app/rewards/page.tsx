@@ -719,7 +719,7 @@ export default function RewardsPage() {
       {!loading && me?.mode === "guest" ? <EmptyState title="Sign in to access rewards" /> : null}
 
       {!loading && me?.mode === "user" ? (
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.5rem 1rem" }}>
+        <div style={{ padding: "1.5rem 0" }}>
 
           {/* ── Page header ── */}
           <div style={{ marginBottom: "1.5rem" }}>
