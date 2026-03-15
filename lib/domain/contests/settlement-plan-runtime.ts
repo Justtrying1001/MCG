@@ -273,6 +273,14 @@ export async function executeSettlementPlan(planId: string) {
         }
 
         if (component.type === "XP") {
+          await tx.rewardGrant.create({
+            data: {
+              userId: item.userId,
+              type: RewardType.XP,
+              amount: component.amount,
+              sourceContestSettlementId: settlement.id,
+            },
+          });
           await tx.userProgression.upsert({
             where: { userId: item.userId },
             create: { userId: item.userId, xp: component.amount, level: 1 },
@@ -285,6 +293,11 @@ export async function executeSettlementPlan(planId: string) {
 
     await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
+
+    // Release all card locks for this contest now that it is settled
+    await tx.rosterLock.deleteMany({
+      where: { contestEntry: { contestId: plan.contestId } },
+    });
     await tx.contestSettlementPlan.update({
       where: { id: plan.id },
       data: { status: SETTLEMENT_PLAN_STATUS.EXECUTED, executedAt: new Date() },
