@@ -5749,3 +5749,9 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 }
+
+.contest-hub-error-state {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}

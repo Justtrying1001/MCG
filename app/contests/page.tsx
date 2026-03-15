@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContestHubHeader } from "@/components/contests/ContestHubHeader";
@@ -9,7 +9,7 @@ import { ContestStatusSegmented, type ContestHubTab } from "@/components/contest
 import type { ContestListItem } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
 
-type ContestPayload = { contests: ContestListItem[] };
+type ContestPayload = { contests?: ContestListItem[] };
 
 function belongsToTab(contest: ContestListItem, tab: ContestHubTab) {
   if (tab === "OPEN") return contest.status === "OPEN";
@@ -26,8 +26,8 @@ function getEmptyByTab(tab: ContestHubTab) {
   }
   if (tab === "IN_PROGRESS") {
     return {
-      title: "No contests in progress",
-      description: "When a contest locks or goes live, it will appear here for tracking.",
+      title: "No contests in this lifecycle",
+      description: "Adjust filters or check another status tab.",
     };
   }
   return {
@@ -37,12 +37,50 @@ function getEmptyByTab(tab: ContestHubTab) {
 }
 
 export default function ContestsPage() {
-  const { me, loading } = useSession();
+  const { me, loading, refresh } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<ContestHubTab>("OPEN");
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [retryCount, setRetryCount] = useState(0);
+
+  const guestBlocked = !loading && me?.mode === "guest";
+
+  const loadContests = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/contests", { cache: "no-store" });
+
+      if (res.status === 401) {
+        const hasSession = await refresh();
+        if (!hasSession) {
+          setError("Your session expired. Please reconnect to load contests.");
+          setContests([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!res.ok) {
+        setError("We couldn't load contests right now. Please retry in a moment.");
+        setContests([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const payload = (await res.json()) as ContestPayload;
+      const rows = Array.isArray(payload.contests) ? payload.contests : [];
+      setContests(rows);
+    } catch {
+      setError("Network issue while loading contests. Please check your connection and retry.");
+      setContests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [refresh]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTs(Date.now()), 1000);
@@ -52,31 +90,19 @@ export default function ContestsPage() {
   useEffect(() => {
     if (loading) return;
     if (!me || me.mode === "guest") {
+      setContests([]);
+      setError("");
       setIsLoading(false);
       return;
     }
-
-    void (async () => {
-      setIsLoading(true);
-      setError("");
-      const res = await fetch("/api/contests", { cache: "no-store" });
-      if (!res.ok) {
-        setError("We couldn't load contests right now. Please retry in a moment.");
-        setIsLoading(false);
-        return;
-      }
-      const payload = (await res.json()) as ContestPayload;
-      setContests(payload.contests ?? []);
-      setIsLoading(false);
-    })();
-  }, [loading, me]);
-
-  const guestBlocked = !loading && me?.mode === "guest";
+    void loadContests();
+  }, [loading, me, retryCount, loadContests]);
 
   const counts = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
     const inProgress = contests.filter((contest) => contest.status === "LOCKED" || contest.status === "LIVE").length;
     const finished = contests.filter((contest) => contest.status === "SETTLED").length;
+
     return {
       open,
       inProgress,
@@ -126,7 +152,12 @@ export default function ContestsPage() {
                 ))}
               </section>
             ) : error ? (
-              <EmptyState title="Unable to load contests" description={error} />
+              <section className="contest-hub-error-state" role="alert">
+                <EmptyState title="Unable to load contests" description={error} />
+                <button type="button" className="mcg-btn" onClick={() => setRetryCount((current) => current + 1)}>
+                  Retry
+                </button>
+              </section>
             ) : contests.length === 0 ? (
               <EmptyState title="No contests available" description="Check back soon for new tournaments." />
             ) : visible.length === 0 ? (
