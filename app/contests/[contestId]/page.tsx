@@ -53,7 +53,7 @@ function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOpt
       list.push({
         instanceId: `guest-${row.templateId}-${i + 1}`,
         cardTemplateId: row.templateId,
-        lockState: null,
+        isLockedInOtherContest: false,
         cardSetId: row.card.setCode ?? "guest-set",
         cardSetCode: row.card.setCode ?? "SET",
         cardSetName: row.card.setEditionLabel ?? "Guest Collection",

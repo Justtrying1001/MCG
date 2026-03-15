@@ -21,7 +21,7 @@ export type ContestListItem = {
 export type LineupOption = {
   instanceId: string;
   cardTemplateId: string;
-  lockState: string | null;
+  isLockedInOtherContest: boolean;
   cardSetId: string;
   cardSetCode: string;
   cardSetName: string;

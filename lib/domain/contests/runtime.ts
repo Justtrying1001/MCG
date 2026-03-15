@@ -278,22 +278,6 @@ export async function enterContestMvp(params: {
       }
     }
 
-    const previousLocks = existingEntry?.rosterLocks ?? [];
-    if (previousLocks.length) {
-      await tx.ownedCardInstance.updateMany({
-        where: {
-          id: { in: previousLocks.map((lock) => lock.ownedCardInstanceId) },
-          userId: params.userId,
-        },
-        data: { lockState: null },
-      });
-    }
-
-    await tx.ownedCardInstance.updateMany({
-      where: { id: { in: lineupInstanceIds }, userId: params.userId },
-      data: { lockState: `CONTEST:${params.contestId}:ENTRY:${entry.id}` },
-    });
-
     if (!existingEntry) {
       await applyContestEntryQuestProgressionTx(tx, params.userId);
     }

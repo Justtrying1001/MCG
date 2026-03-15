@@ -284,7 +284,6 @@ model OwnedCardInstance {
   cardTemplateId           String
   sourcePackOpeningEventId String?
   acquiredAt               DateTime @default(now())
-  lockState                String?
   metadata                 Json?
 
   user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
