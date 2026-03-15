@@ -115,7 +115,7 @@ export default function AdminContestsLibraryPage() {
         subtitle="Create, edit and publish contests from a clear product-focused library. Technical operations stay in a separate console."
         actions={
           <div className="admin-v2-action-row">
-            <Link href="/admin/contests/create" className="contest-console-cta">Create contest</Link>
+            <Link href="/admin/contests/create" className="contest-console-cta">Create Contest</Link>
             <Link href="/admin/contests/legacy" className="admin-v2-link-chip">Legacy console</Link>
             <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
           </div>
@@ -156,7 +156,7 @@ export default function AdminContestsLibraryPage() {
 
                 <div className="contest-library-dates">
                   <p><strong>Registration opens:</strong> {fmt(contest.openAt)}</p>
-                  <p><strong>Contest starts / team lock:</strong> {fmt(contest.liveAt)}</p>
+                  <p><strong>Start:</strong> {fmt(contest.liveAt)}</p>
                   <p><strong>Contest ends:</strong> {fmt(contest.endsAt)}</p>
                 </div>
 
