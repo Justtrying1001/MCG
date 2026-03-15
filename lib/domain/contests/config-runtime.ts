@@ -1,4 +1,5 @@
 import {
+  ContestEntryStatus,
   ContestRewardPolicyStatus,
   ContestStatus,
   Prisma,
@@ -272,12 +273,58 @@ export async function unpublishContest(contestId: string) {
 }
 
 export async function archiveContest(contestId: string) {
-  const contest = await prisma.contest.update({
-    where: { id: contestId },
-    data: { status: ContestStatus.CANCELED },
-    include: contestDraftInclude,
-  });
-  return { contest };
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.contest.findUnique({
+      where: { id: contestId },
+      select: { id: true, status: true, _count: { select: { entries: true } } },
+    });
+
+    if (!existing) throw new ContestRuntimeError("Contest not found", 404);
+
+    if (existing.status === ContestStatus.LIVE || existing.status === ContestStatus.LOCKED) {
+      throw new ContestRuntimeError(
+        `Cannot cancel a ${existing.status} contest. Stop the contest lifecycle before archiving.`,
+        409
+      );
+    }
+
+    if (existing.status === ContestStatus.SETTLED) {
+      throw new ContestRuntimeError("Cannot cancel an already SETTLED contest.", 409);
+    }
+
+    if (existing.status === ContestStatus.CANCELED) {
+      throw new ContestRuntimeError("Contest is already CANCELED.", 409);
+    }
+
+    const activeLockCount = await tx.rosterLock.count({
+      where: {
+        contestEntry: {
+          contestId,
+          status: { in: [ContestEntryStatus.SUBMITTED, ContestEntryStatus.SCORED] },
+        },
+      },
+    });
+
+    if (activeLockCount > 0) {
+      throw new ContestRuntimeError(
+        `Contest has ${activeLockCount} active card lock(s). Clear entries before canceling.`,
+        409
+      );
+    }
+
+    await tx.contestEntry.updateMany({
+      where: { contestId, status: { not: ContestEntryStatus.SETTLED } },
+      data: { status: ContestEntryStatus.CANCELED },
+    });
+
+    const contest = await tx.contest.update({
+      where: { id: contestId },
+      data: { status: ContestStatus.CANCELED },
+      include: contestDraftInclude,
+    });
+
+    return { contest };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 export async function deleteContestDraft(contestId: string) {
