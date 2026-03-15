@@ -45,7 +45,6 @@ export default function ContestsPage() {
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
 
-  const guestBlocked = !loading && me?.mode === "guest";
 
   const loadContests = useCallback(async () => {
     setIsLoading(true);
@@ -73,7 +72,7 @@ export default function ContestsPage() {
       }
 
       const payload = (await res.json().catch(() => null)) as ContestPayload | null;
-      const rows = Array.isArray(payload.contests) ? payload.contests : [];
+      const rows = Array.isArray(payload?.contests) ? payload.contests : [];
       setContests(rows);
     } catch {
       setError("Network issue while loading contests. Please check your connection and retry.");
@@ -90,7 +89,7 @@ export default function ContestsPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!me || me.mode === "guest") {
+    if (!me) {
       setContests([]);
       setError("");
       setIsLoading(false);
@@ -140,37 +139,31 @@ export default function ContestsPage() {
           }}
         />
 
-        {guestBlocked ? (
-          <EmptyState title="Contests require an authenticated account" description="Guest mode can preview pages but cannot submit entries." />
-        ) : (
-          <>
-            <ContestStatusSegmented active={tab} onChange={setTab} counts={counts.segmented} />
+        <ContestStatusSegmented active={tab} onChange={setTab} counts={counts.segmented} />
 
-            {isLoading ? (
-              <section className="contest-premium-grid" aria-label="Loading contests">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="contest-premium-skeleton-card" />
-                ))}
-              </section>
-            ) : error ? (
-              <section className="contest-hub-error-state" role="alert">
-                <EmptyState title="Unable to load contests" description={error} />
-                <button type="button" className="mcg-btn" onClick={() => setRetryCount((current) => current + 1)}>
-                  Retry
-                </button>
-              </section>
-            ) : contests.length === 0 ? (
-              <EmptyState title="No contests available" description="Check back soon for new tournaments." />
-            ) : visible.length === 0 ? (
-              <EmptyState title={emptyByTab.title} description={emptyByTab.description} />
-            ) : (
-              <section className="contest-premium-grid" aria-live="polite">
-                {visible.map((contest) => (
-                  <ContestPremiumCard key={contest.id} contest={contest} nowTs={nowTs} />
-                ))}
-              </section>
-            )}
-          </>
+        {isLoading ? (
+          <section className="contest-premium-grid" aria-label="Loading contests">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="contest-premium-skeleton-card" />
+            ))}
+          </section>
+        ) : error ? (
+          <section className="contest-hub-error-state" role="alert">
+            <EmptyState title="Unable to load contests" description={error} />
+            <button type="button" className="mcg-btn" onClick={() => setRetryCount((current) => current + 1)}>
+              Retry
+            </button>
+          </section>
+        ) : contests.length === 0 ? (
+          <EmptyState title="No contests available" description="Check back soon for new tournaments." />
+        ) : visible.length === 0 ? (
+          <EmptyState title={emptyByTab.title} description={emptyByTab.description} />
+        ) : (
+          <section className="contest-premium-grid" aria-live="polite">
+            {visible.map((contest) => (
+              <ContestPremiumCard key={contest.id} contest={contest} nowTs={nowTs} />
+            ))}
+          </section>
         )}
       </div>
     </SiteShell>
