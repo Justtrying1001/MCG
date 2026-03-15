@@ -36,7 +36,7 @@ export function TeamBuilder({
       <div className="contest-builder-head">
         <div>
           <p className="mcg-eyebrow">Tournament team builder</p>
-          <strong className="contest-builder-title">Build your 5-card lineup</strong>
+          <strong className="contest-builder-title">Build your {maxRosterSize}-card lineup</strong>
         </div>
         <strong>{filled}/{maxRosterSize} slots filled</strong>
       </div>
