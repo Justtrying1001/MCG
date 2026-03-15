@@ -7,6 +7,9 @@ const LOCK_TIMEOUT_MARKER = "pg_advisory_lock";
 const MAX_DEPLOY_ATTEMPTS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRIES ?? "3", 10);
 const RETRY_DELAY_MS = Number.parseInt(process.env.PRISMA_DEPLOY_RETRY_DELAY_MS ?? "5000", 10);
 
+const FAILED_MIGRATION_CODE = "P3009";
+const FAILED_MIGRATION_NAME_PATTERN = /The `([^`]+)` migration[^\n]*failed/i;
+
 function runPrisma(args) {
   const command = process.platform === "win32" ? "npx.cmd" : "npx";
   const result = spawnSync(command, ["prisma", ...args], {
@@ -39,6 +42,19 @@ function markApplied(migrationName) {
     process.stderr.write(resolve.output);
     process.exit(resolve.status);
   }
+}
+
+function markRolledBack(migrationName) {
+  const resolve = runPrisma(["migrate", "resolve", "--rolled-back", migrationName]);
+  if (!resolve.ok) {
+    process.stderr.write(resolve.output);
+    process.exit(resolve.status);
+  }
+}
+
+function extractFailedMigrationName(output) {
+  const match = output.match(FAILED_MIGRATION_NAME_PATTERN);
+  return match?.[1] ?? null;
 }
 
 function sleep(milliseconds) {
@@ -74,6 +90,26 @@ async function main() {
   const migrate = await deployWithLockRetry();
   if (migrate.ok) {
     console.log("Prisma migrate deploy succeeded.");
+    return;
+  }
+
+  if (migrate.output.includes(FAILED_MIGRATION_CODE)) {
+    const failedMigration = extractFailedMigrationName(migrate.output);
+    if (!failedMigration) {
+      process.stderr.write(migrate.output);
+      process.exit(migrate.status);
+    }
+
+    console.warn(`Prisma migrate deploy reported ${FAILED_MIGRATION_CODE} on ${failedMigration}. Marking it rolled back and retrying deploy.`);
+    markRolledBack(failedMigration);
+
+    const retryAfterRollback = await deployWithLockRetry();
+    if (!retryAfterRollback.ok) {
+      process.stderr.write(retryAfterRollback.output);
+      process.exit(retryAfterRollback.status);
+    }
+
+    console.log("Prisma migrate deploy succeeded after failed-migration recovery.");
     return;
   }
 

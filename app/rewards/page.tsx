@@ -2,13 +2,15 @@
 
 import type { MilestoneType } from "@/lib/domain/quests/social";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Surface } from "@/components/ui/Surface";
-import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Surface } from "@/components/ui/Surface";
+
 import { MILESTONE_SEED_DEFINITIONS } from "@/lib/domain/quests/milestone-definitions";
 import { getMilestoneObjectiveText, resolveSocialCtaLabelForUserQuest } from "@/lib/domain/quests/social";
 
@@ -51,6 +53,16 @@ type QuestRow = {
 
 type QuestGroup = { key: string; title: string; quests: QuestRow[] };
 
+type HistoryRow = {
+  id: string;
+  title: string;
+  itemType: "Quest" | "Milestone" | "Reward";
+  statusLabel: string;
+  points: number;
+  happenedAt: string;
+  dedupeKey: string;
+};
+
 function isSocial(quest: QuestRow) {
   return quest.type === "SOCIAL_FOLLOW_X" || quest.type === "SOCIAL_ENGAGEMENT_X";
 }
@@ -63,27 +75,32 @@ function isQuestCompleted(quest: QuestRow) {
   return quest.status === "COMPLETED" || quest.latestSubmissionStatus === "APPROVED";
 }
 
-function toStatusTone(status: QuestStatus, latestSubmissionStatus: SubmissionStatus): "open" | "locked" | "live" | "settled" {
-  if (status === "COMPLETED" || latestSubmissionStatus === "APPROVED") return "settled";
-  if (status === "CLAIMABLE") return "live";
-  if (latestSubmissionStatus === "SUBMITTED") return "locked";
+function getQuestState(quest: QuestRow) {
+  if (quest.latestSubmissionStatus === "SUBMITTED") return "PENDING_REVIEW" as const;
+  if (quest.latestSubmissionStatus === "REJECTED" || quest.status === "REJECTED") return "REJECTED" as const;
+  if (isQuestCompleted(quest)) {
+    if (quest.claimedAt) return "CLAIMED_SETTLED" as const;
+    return "COMPLETED" as const;
+  }
+  if (quest.status === "IN_PROGRESS") return "IN_PROGRESS" as const;
+  return "OPEN" as const;
+}
+
+function toStatusTone(state: ReturnType<typeof getQuestState>): "open" | "locked" | "live" | "settled" {
+  if (state === "CLAIMED_SETTLED" || state === "COMPLETED") return "settled";
+  if (state === "PENDING_REVIEW") return "locked";
+  if (state === "IN_PROGRESS") return "live";
+  if (state === "REJECTED") return "locked";
   return "open";
 }
 
-
-function getQuestStateLabel(quest: QuestRow) {
-  if (quest.latestSubmissionStatus === "SUBMITTED") return "PENDING REVIEW";
-  if (quest.latestSubmissionStatus === "REJECTED") return "REJECTED";
-  if (isQuestCompleted(quest)) return "COMPLETED";
-  if (quest.status === "IN_PROGRESS") return "IN PROGRESS";
-  if (quest.status === "CLAIMABLE") return "CLAIMABLE";
-  return "AVAILABLE";
-}
-
-function isQuestActionable(quest: QuestRow) {
-  if (isQuestCompleted(quest)) return false;
-  if (quest.latestSubmissionStatus === "SUBMITTED") return true;
-  return true;
+function getStatusLabel(state: ReturnType<typeof getQuestState>) {
+  if (state === "PENDING_REVIEW") return "PENDING REVIEW";
+  if (state === "IN_PROGRESS") return "IN PROGRESS";
+  if (state === "COMPLETED") return "COMPLETED";
+  if (state === "CLAIMED_SETTLED") return "SETTLED";
+  if (state === "REJECTED") return "REJECTED";
+  return "OPEN";
 }
 
 function getGroupKey(quest: QuestRow) {
@@ -116,42 +133,54 @@ function formatDate(value: string | null) {
 
 export default function RewardsPage() {
   const { me, loading } = useSession();
+
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [quests, setQuests] = useState<QuestRow[]>([]);
-  const [error, setError] = useState("");
+  const [questsError, setQuestsError] = useState("");
+  const [ledgerError, setLedgerError] = useState("");
+  const [loadingData, setLoadingData] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [proofUrlByQuest, setProofUrlByQuest] = useState<Record<string, string>>({});
   const [noteByQuest, setNoteByQuest] = useState<Record<string, string>>({});
   const [clock, setClock] = useState(() => Date.now());
   const [autoPendingByQuest, setAutoPendingByQuest] = useState<Record<string, number>>({});
+
   const autoTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const loadData = async () => {
-    try {
-      const [ledgerResponse, questsResponse] = await Promise.all([
-        fetch("/api/rewards/ledger", { cache: "no-store" }),
-        fetch("/api/quests", { cache: "no-store" }),
-      ]);
+    setLoadingData(true);
+    setQuestsError("");
+    setLedgerError("");
 
-      if (!ledgerResponse.ok || !questsResponse.ok) {
-        const details = [
-          !questsResponse.ok ? `/api/quests ${questsResponse.status}` : null,
-          !ledgerResponse.ok ? `/api/rewards/ledger ${ledgerResponse.status}` : null,
-        ].filter(Boolean).join(" · ");
+    const [questsResult, ledgerResult] = await Promise.allSettled([
+      fetch("/api/quests", { cache: "no-store" }),
+      fetch("/api/rewards/ledger", { cache: "no-store" }),
+    ]);
 
-        setError(details ? `Cannot load rewards data (${details})` : "Cannot load rewards data");
-        return;
-      }
-
-      const ledgerPayload = (await ledgerResponse.json()) as { entries: LedgerRow[] };
-      const questsPayload = (await questsResponse.json()) as { quests: QuestRow[] };
-
-      setLedger(ledgerPayload.entries ?? []);
-      setQuests(questsPayload.quests ?? []);
-    } catch {
-      setError("Cannot load rewards data (network error)");
+    if (questsResult.status === "rejected") {
+      setQuests([]);
+      setQuestsError("Cannot load quests data (network error)");
+    } else if (!questsResult.value.ok) {
+      setQuests([]);
+      setQuestsError(`Cannot load quests data (/api/quests ${questsResult.value.status})`);
+    } else {
+      const payload = (await questsResult.value.json()) as { quests?: QuestRow[] };
+      setQuests(payload.quests ?? []);
     }
+
+    if (ledgerResult.status === "rejected") {
+      setLedger([]);
+      setLedgerError("Cannot load rewards ledger (network error)");
+    } else if (!ledgerResult.value.ok) {
+      setLedger([]);
+      setLedgerError(`Cannot load rewards ledger (/api/rewards/ledger ${ledgerResult.value.status})`);
+    } else {
+      const payload = (await ledgerResult.value.json()) as { entries?: LedgerRow[] };
+      setLedger(payload.entries ?? []);
+    }
+
+    setLoadingData(false);
   };
 
   const submitQuest = async (quest: QuestRow, mode: "manual" | "auto") => {
@@ -206,7 +235,6 @@ export default function RewardsPage() {
 
   useEffect(() => {
     if (loading || !me || me.mode === "guest") return;
-    setError("");
     void loadData();
   }, [loading, me]);
 
@@ -226,20 +254,32 @@ export default function RewardsPage() {
 
   const viewModel = useMemo(() => {
     const socialQuests = quests.filter(isSocial);
+
     const activeSocialQuests = socialQuests
-      .filter((quest) => !isQuestCompleted(quest))
+      .filter((quest) => {
+        const state = getQuestState(quest);
+        return state !== "COMPLETED" && state !== "CLAIMED_SETTLED";
+      })
       .sort((left, right) => {
-        const leftPending = left.latestSubmissionStatus === "SUBMITTED" ? 0 : 1;
-        const rightPending = right.latestSubmissionStatus === "SUBMITTED" ? 0 : 1;
-        if (leftPending !== rightPending) return leftPending - rightPending;
-        const leftProgress = left.status === "IN_PROGRESS" ? 0 : 1;
-        const rightProgress = right.status === "IN_PROGRESS" ? 0 : 1;
-        if (leftProgress !== rightProgress) return leftProgress - rightProgress;
+        const rank = (quest: QuestRow) => {
+          const state = getQuestState(quest);
+          if (state === "IN_PROGRESS") return 0;
+          if (state === "OPEN") return 1;
+          if (state === "PENDING_REVIEW") return 2;
+          if (state === "REJECTED") return 3;
+          return 4;
+        };
+
+        const delta = rank(left) - rank(right);
+        if (delta !== 0) return delta;
         return left.title.localeCompare(right.title);
       });
 
     const completedSocialQuests = socialQuests
-      .filter((quest) => isQuestCompleted(quest))
+      .filter((quest) => {
+        const state = getQuestState(quest);
+        return state === "COMPLETED" || state === "CLAIMED_SETTLED";
+      })
       .sort((left, right) => new Date(right.completedAt ?? 0).getTime() - new Date(left.completedAt ?? 0).getTime());
 
     const groupedActive = activeSocialQuests.reduce<Map<string, QuestRow[]>>((accumulator, quest) => {
@@ -257,12 +297,13 @@ export default function RewardsPage() {
     }));
 
     const seedByCode = new Map(MILESTONE_SEED_DEFINITIONS.map((definition) => [definition.code, definition] as const));
-
     const milestoneRows = quests
       .filter(isMilestone)
       .map((quest) => {
         const definition = seedByCode.get(quest.code);
         const targetValue = quest.targetValue ?? quest.configSummary.targetValue ?? definition?.threshold ?? 0;
+        const completed = getQuestState(quest) === "COMPLETED" || getQuestState(quest) === "CLAIMED_SETTLED";
+
         return {
           key: quest.id,
           title: quest.title,
@@ -270,7 +311,7 @@ export default function RewardsPage() {
           rewardPoints: quest.rewardPoints,
           progressValue: quest.progressValue,
           targetValue,
-          completed: isQuestCompleted(quest),
+          completed,
           completedAt: quest.completedAt,
           sortOrder: definition?.sortOrder ?? Number.MAX_SAFE_INTEGER,
         };
@@ -282,40 +323,52 @@ export default function RewardsPage() {
       });
 
     const questById = new Map(quests.map((quest) => [quest.id, quest] as const));
+    const historyRows = new Map<string, HistoryRow>();
 
-    const ledgerQuestRows = ledger
-      .filter((entry) => entry.entryType === "CREDIT" && entry.reasonType === "QUEST_REWARD")
-      .map((entry) => {
-        const quest = entry.reasonRef ? questById.get(entry.reasonRef) : undefined;
-        return {
-          id: `ledger-${entry.id}`,
-          itemType: quest ? (isMilestone(quest) ? "Milestone" : "Quest") : "Reward",
-          title: quest?.title ?? (entry.reasonRef ? `Quest ${entry.reasonRef}` : "Quest reward"),
-          statusLabel: "Reward credited",
-          points: entry.amount,
-          happenedAt: entry.createdAt,
-          reasonRef: entry.reasonRef ?? null,
-        };
-      });
+    for (const entry of ledger) {
+      if (entry.entryType !== "CREDIT" || entry.reasonType !== "QUEST_REWARD") continue;
 
-    const ledgerQuestIds = new Set(ledgerQuestRows.map((row) => row.reasonRef).filter(Boolean));
+      const quest = entry.reasonRef ? questById.get(entry.reasonRef) : undefined;
+      const row: HistoryRow = {
+        id: `ledger-${entry.id}`,
+        itemType: quest ? (isMilestone(quest) ? "Milestone" : "Quest") : "Reward",
+        title: quest?.title ?? (entry.reasonRef ? `Quest ${entry.reasonRef}` : "Quest reward"),
+        statusLabel: "Reward credited",
+        points: entry.amount,
+        happenedAt: entry.createdAt,
+        dedupeKey: `ledger:${entry.reasonRef ?? entry.id}`,
+      };
 
-    const fallbackCompletedRows = quests
-      .filter((quest) => isQuestCompleted(quest) && !ledgerQuestIds.has(quest.id))
-      .map((quest) => ({
+      historyRows.set(row.dedupeKey, row);
+    }
+
+    for (const quest of quests) {
+      const state = getQuestState(quest);
+      if (state !== "COMPLETED" && state !== "CLAIMED_SETTLED") continue;
+      if (historyRows.has(`ledger:${quest.id}`)) continue;
+
+      const happenedAt = quest.claimedAt ?? quest.completedAt;
+      if (!happenedAt) continue;
+
+      const row: HistoryRow = {
         id: `quest-${quest.id}`,
         itemType: isMilestone(quest) ? "Milestone" : "Quest",
         title: quest.title,
-        statusLabel: "Completed (awaiting ledger credit)",
+        statusLabel: state === "CLAIMED_SETTLED" ? "Settled" : "Completed (awaiting ledger credit)",
         points: quest.rewardPoints,
-        happenedAt: quest.claimedAt ?? quest.completedAt,
-      }))
-      .filter((row) => row.happenedAt);
+        happenedAt,
+        dedupeKey: `fallback:${quest.id}`,
+      };
 
-    const historyRows = [...ledgerQuestRows, ...fallbackCompletedRows]
-      .sort((left, right) => new Date(right.happenedAt as string).getTime() - new Date(left.happenedAt as string).getTime());
+      historyRows.set(row.dedupeKey, row);
+    }
 
-    return { activeSocialGroups, completedSocialQuests, milestones: milestoneRows, historyRows };
+    return {
+      activeSocialGroups,
+      completedSocialQuests,
+      milestones: milestoneRows,
+      historyRows: [...historyRows.values()].sort((left, right) => new Date(right.happenedAt).getTime() - new Date(left.happenedAt).getTime()),
+    };
   }, [ledger, quests]);
 
   const totalCredits = ledger.filter((entry) => entry.entryType === "CREDIT").reduce((sum, entry) => sum + entry.amount, 0);
@@ -329,11 +382,11 @@ export default function RewardsPage() {
         subtitle="Complete actions, unlock milestones, and track every earned reward from real backend data."
       />
 
-      {loading ? <EmptyState title="Loading rewards…" /> : null}
+      {loading || loadingData ? <EmptyState title="Loading rewards…" /> : null}
       {!loading && me?.mode === "guest" ? <EmptyState title="Sign in with X to access rewards" /> : null}
-      {!loading && me?.mode === "user" && error ? <EmptyState title="Rewards unavailable" description={error} /> : null}
+      {!loading && me?.mode === "user" && questsError ? <EmptyState title="Rewards unavailable" description={questsError} /> : null}
 
-      {!loading && me?.mode === "user" && !error ? (
+      {!loading && me?.mode === "user" && !questsError ? (
         <div className="rewards-page-layout-v3">
           <Surface className="rewards-summary-v3" variant="raised">
             <div>
@@ -358,15 +411,16 @@ export default function RewardsPage() {
           </Surface>
 
           {actionMsg ? <div className="contest-inline-note">{actionMsg}</div> : null}
+          {ledgerError ? <div className="rewards-inline-warning-v3">{ledgerError}. History is partially unavailable.</div> : null}
 
           <section className="rewards-section-v3">
             <SectionHeader
               eyebrow="1. Quests"
-              title="Do-to-earn"
-              subtitle="Social quests are grouped by action so each task is easy to understand and execute."
+              title="Actionable quests"
+              subtitle="Only open, in-progress, pending-review or rejected quests stay in the main list. Completed quests are moved to a secondary zone."
             />
 
-            {viewModel.activeSocialGroups.length === 0 ? <EmptyState title="No active social quests" description="All current social quests are completed. Check History for earned rewards." /> : null}
+            {viewModel.activeSocialGroups.length === 0 ? <EmptyState title="No actionable social quests" description="All social quests are already completed or settled." /> : null}
 
             {viewModel.activeSocialGroups.map((group) => (
               <Surface key={group.key} className="rewards-quest-group-v3">
@@ -374,84 +428,76 @@ export default function RewardsPage() {
                   <h3>{group.title}</h3>
                   <span className="mcg-chip">{group.quests.length} quest(s)</span>
                 </div>
+
                 <div className="rewards-quest-grid-v3">
                   {group.quests.map((quest) => {
+                    const state = getQuestState(quest);
                     const etaStart = autoPendingByQuest[quest.id];
                     const etaRemainingSec = etaStart ? Math.max(0, Math.ceil((etaStart + 60_000 - clock) / 1000)) : null;
-                    const isCompleted = isQuestCompleted(quest);
-                    const proofRequired = Boolean(quest.configSummary.proofRequired && quest.validationMode !== "AUTO");
-                    const isPendingReview = quest.latestSubmissionStatus === "SUBMITTED";
-                    const statusTone = toStatusTone(quest.status, quest.latestSubmissionStatus);
-                    const ctaLabel = resolveSocialCtaLabelForUserQuest({
-                      type: quest.type,
-                      configSummary: {
-                        ctaLabel: quest.configSummary.ctaLabel ?? null,
-                        socialAction: quest.configSummary.socialAction ?? null,
-                      },
-                    });
+                    const proofRequired = Boolean(quest.configSummary.proofRequired);
+                    const canSubmitManually = quest.validationMode !== "AUTO";
+                    const canAutoTrigger = quest.validationMode === "AUTO" && Boolean(quest.configSummary.targetUrl) && state !== "PENDING_REVIEW";
 
                     return (
-                      <article key={quest.id} className={`rewards-quest-card-v3${isQuestActionable(quest) ? "" : " completed"}`}>
+                      <article key={quest.id} className="rewards-quest-card-v3">
                         <div className="rewards-quest-card-head-v3">
                           <div>
                             <p className="mcg-eyebrow">{quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : "Engagement"}</p>
                             <h4>{quest.title}</h4>
                           </div>
-                          <StatusBadge tone={statusTone} label={getQuestStateLabel(quest)} />
+                          <StatusBadge tone={toStatusTone(state)} label={getStatusLabel(state)} />
                         </div>
-                        <p className="contest-inline-note">{quest.description ?? "Social quest"}</p>
-                        {quest.configSummary.instructions ? <p className="contest-inline-note">{quest.configSummary.instructions}</p> : null}
+
+                        <p className="contest-inline-note">{quest.description ?? quest.configSummary.instructions ?? "Social quest"}</p>
 
                         <div className="rewards-quest-meta-v3">
-                          <span className="mcg-chip">{quest.rewardPoints > 0 ? `+${quest.rewardPoints} points` : "No points reward"}</span>
-                          <span className="mcg-chip">{etaRemainingSec != null ? `${etaRemainingSec}s auto-check` : `${quest.progressValue}/${quest.targetValue ?? 1}`}</span>
+                          <span className="mcg-chip">+{quest.rewardPoints} points</span>
+                          <span className="mcg-chip">Validation: {quest.validationMode === "MANUAL_REVIEW" ? "Pending review" : quest.validationMode}</span>
+                          {quest.latestSubmissionStatus ? <span className="mcg-chip">Latest submission: {quest.latestSubmissionStatus}</span> : null}
                         </div>
 
-                        {isCompleted ? (
-                          <p className="contest-inline-note">Completed on {formatDate(quest.completedAt)}</p>
-                        ) : isPendingReview ? (
-                          <p className="contest-inline-note">Submission pending review. You cannot submit again until moderation decision.</p>
-                        ) : (
-                          <div className="rewards-quest-actions-v3">
-                            {quest.validationMode === "AUTO" ? (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  disabled={submittingId === quest.id || !quest.configSummary.targetUrl}
-                                  onClick={() => startAutoSocialQuest(quest)}
-                                >
-                                  {ctaLabel}
-                                </Button>
-                                {!quest.configSummary.targetUrl ? <p className="contest-inline-note">Target URL unavailable for this quest.</p> : null}
-                              </>
-                            ) : (
-                              <>
-                                <input
-                                  className="input"
-                                  placeholder={proofRequired ? "Proof URL (required)" : "Proof URL (optional)"}
-                                  value={proofUrlByQuest[quest.id] ?? ""}
-                                  onChange={(event) => setProofUrlByQuest((previous) => ({ ...previous, [quest.id]: event.target.value }))}
-                                />
-                                <textarea
-                                  className="input"
-                                  rows={2}
-                                  placeholder="Note for moderation (optional)"
-                                  value={noteByQuest[quest.id] ?? ""}
-                                  onChange={(event) => setNoteByQuest((previous) => ({ ...previous, [quest.id]: event.target.value }))}
-                                />
-                                <Button
-                                  variant="ghost"
-                                  disabled={submittingId === quest.id || (proofRequired && !(proofUrlByQuest[quest.id] ?? "").trim())}
-                                  onClick={() => {
-                                    void submitQuest(quest, "manual");
-                                  }}
-                                >
-                                  Submit proof
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className="rewards-quest-actions-v3">
+                          {state === "PENDING_REVIEW" ? (
+                            <p className="contest-inline-note">Your submission is pending moderator review.</p>
+                          ) : null}
+
+                          {canAutoTrigger ? (
+                            <Button
+                              variant="primary"
+                              disabled={submittingId === quest.id || Boolean(etaRemainingSec)}
+                              onClick={() => startAutoSocialQuest(quest)}
+                            >
+                              {etaRemainingSec ? `Auto-check in ${etaRemainingSec}s` : resolveSocialCtaLabelForUserQuest(quest)}
+                            </Button>
+                          ) : null}
+
+                          {canSubmitManually ? (
+                            <>
+                              <input
+                                className="input"
+                                placeholder={proofRequired ? "Proof URL (required)" : "Proof URL (optional)"}
+                                value={proofUrlByQuest[quest.id] ?? ""}
+                                onChange={(event) => setProofUrlByQuest((previous) => ({ ...previous, [quest.id]: event.target.value }))}
+                              />
+                              <textarea
+                                className="input"
+                                rows={2}
+                                placeholder="Note for moderation (optional)"
+                                value={noteByQuest[quest.id] ?? ""}
+                                onChange={(event) => setNoteByQuest((previous) => ({ ...previous, [quest.id]: event.target.value }))}
+                              />
+                              <Button
+                                variant="ghost"
+                                disabled={state === "PENDING_REVIEW" || submittingId === quest.id || (proofRequired && !(proofUrlByQuest[quest.id] ?? "").trim())}
+                                onClick={() => {
+                                  void submitQuest(quest, "manual");
+                                }}
+                              >
+                                Submit proof
+                              </Button>
+                            </>
+                          ) : null}
+                        </div>
                       </article>
                     );
                   })}
@@ -464,8 +510,8 @@ export default function RewardsPage() {
             <section className="rewards-section-v3">
               <SectionHeader
                 eyebrow="Completed quests"
-                title="Already done"
-                subtitle="Completed social quests are moved out of the active list and kept here as a secondary, muted section."
+                title="Already completed"
+                subtitle="Completed and settled social quests are intentionally de-emphasized and separated from active work."
               />
               <Surface className="rewards-completed-wrap-v3">
                 <div className="rewards-completed-grid-v3">
@@ -476,11 +522,11 @@ export default function RewardsPage() {
                           <p className="mcg-eyebrow">{quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : "Engagement"}</p>
                           <h4>{quest.title}</h4>
                         </div>
-                        <StatusBadge tone="settled" label="COMPLETED" />
+                        <StatusBadge tone="settled" label={getStatusLabel(getQuestState(quest))} />
                       </div>
                       <p className="contest-inline-note">{quest.description ?? "Social quest"}</p>
                       <div className="rewards-quest-meta-v3">
-                        <span className="mcg-chip">{quest.rewardPoints > 0 ? `+${quest.rewardPoints} points` : "No points reward"}</span>
+                        <span className="mcg-chip">+{quest.rewardPoints} points</span>
                         <span className="mcg-chip">Completed {formatDate(quest.completedAt)}</span>
                       </div>
                     </article>
@@ -493,38 +539,42 @@ export default function RewardsPage() {
           <section className="rewards-section-v3">
             <SectionHeader
               eyebrow="2. Milestones"
-              title="Progress milestones"
-              subtitle="Completed milestones are highlighted first. Remaining milestones stay visible but muted."
+              title="Milestone progress"
+              subtitle="Completed milestones are shown first. Incomplete milestones remain visible but muted as secondary targets."
             />
             <Surface>
-              <div className="rewards-milestone-grid-v3">
-                {viewModel.milestones.map((milestone) => {
-                  const progressPct = Math.min(100, Math.round((milestone.progressValue / Math.max(1, milestone.targetValue)) * 100));
-                  return (
-                    <article key={milestone.key} className={`rewards-milestone-card-v3${milestone.completed ? " completed" : " muted"}`}>
-                      <div className="rewards-milestone-head-v3">
-                        <h4>{milestone.title}</h4>
-                        <StatusBadge tone={milestone.completed ? "settled" : "locked"} label={milestone.completed ? "DONE" : "LOCKED"} />
-                      </div>
-                      <p className="contest-inline-note">{milestone.objective}</p>
-                      <div className="rewards-milestone-bar-v3"><span style={{ width: `${progressPct}%` }} /></div>
-                      <div className="rewards-milestone-meta-v3">
-                        <span className="mcg-chip">{milestone.progressValue}/{milestone.targetValue}</span>
-                        <span className="mcg-chip">+{milestone.rewardPoints} points</span>
-                      </div>
-                      <p className="contest-inline-note">{milestone.completed ? `Completed on ${formatDate(milestone.completedAt)}` : "Not completed yet"}</p>
-                    </article>
-                  );
-                })}
-              </div>
+              {viewModel.milestones.length === 0 ? (
+                <EmptyState title="No milestones available" description="Milestones will appear when the backend seed data is available." />
+              ) : (
+                <div className="rewards-milestone-grid-v3">
+                  {viewModel.milestones.map((milestone) => {
+                    const progressPct = Math.min(100, Math.round((milestone.progressValue / Math.max(1, milestone.targetValue)) * 100));
+                    return (
+                      <article key={milestone.key} className={`rewards-milestone-card-v3${milestone.completed ? " completed" : " muted"}`}>
+                        <div className="rewards-milestone-head-v3">
+                          <h4>{milestone.title}</h4>
+                          <StatusBadge tone={milestone.completed ? "settled" : "locked"} label={milestone.completed ? "DONE" : "LOCKED"} />
+                        </div>
+                        <p className="contest-inline-note">{milestone.objective}</p>
+                        <div className="rewards-milestone-bar-v3"><span style={{ width: `${progressPct}%` }} /></div>
+                        <div className="rewards-milestone-meta-v3">
+                          <span className="mcg-chip">{milestone.progressValue}/{milestone.targetValue}</span>
+                          <span className="mcg-chip">+{milestone.rewardPoints} points</span>
+                        </div>
+                        <p className="contest-inline-note">{milestone.completed ? `Completed on ${formatDate(milestone.completedAt)}` : "Not completed yet"}</p>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </Surface>
           </section>
 
           <section className="rewards-section-v3">
             <SectionHeader
               eyebrow="3. History"
-              title="Validated rewards history"
-              subtitle="Chronological timeline of completed quests and milestones tied to real reward events."
+              title="Rewards history"
+              subtitle="Chronological ledger-backed timeline of completed quests and milestones without duplicates."
             />
             <Surface>
               {viewModel.historyRows.length === 0 ? (
