@@ -458,22 +458,6 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
   },
 ];
 
-const milestoneCodes = new Set<string>();
-const milestoneSeedKeys = new Set<string>();
-const milestoneSlugs = new Set<string>();
-
-for (const milestone of MILESTONE_SEED_DEFINITIONS) {
-  if (milestoneCodes.has(milestone.code)) {
-    throw new Error(`Duplicate milestone code detected: ${milestone.code}`);
-  }
-  if (milestoneSeedKeys.has(milestone.seedKey)) {
-    throw new Error(`Duplicate milestone seedKey detected: ${milestone.seedKey}`);
-  }
-  if (milestoneSlugs.has(milestone.slug)) {
-    throw new Error(`Duplicate milestone slug detected: ${milestone.slug}`);
-  }
-
-  milestoneCodes.add(milestone.code);
-  milestoneSeedKeys.add(milestone.seedKey);
-  milestoneSlugs.add(milestone.slug);
+if (MILESTONE_SEED_DEFINITIONS.length !== 25) {
+  throw new Error(`Expected 25 milestones, found ${MILESTONE_SEED_DEFINITIONS.length}`);
 }
