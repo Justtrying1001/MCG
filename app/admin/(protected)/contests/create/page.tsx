@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useReducer, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -49,8 +49,10 @@ const DEFAULT_REWARD_RULES: RewardRuleDraft[] = [
 
 export default function AdminContestBuilderPage() {
   const params = useSearchParams();
+  const router = useRouter();
   const [contestId, setContestId] = useState(params.get("contestId") ?? "");
   const [message, setMessage] = useState("");
+  const [publishSuccess, setPublishSuccess] = useState(false);
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
   const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
 
@@ -71,7 +73,8 @@ export default function AdminContestBuilderPage() {
   const [cardSetId, setCardSetId] = useState("");
 
   const [rulesText, setRulesText] = useState("");
-  const [infoNotes, setInfoNotes] = useState("");
+  const [participationNotes, setParticipationNotes] = useState("");
+  const [optionalClarifications, setOptionalClarifications] = useState("");
 
   const [rules, dispatchRules] = useReducer(rewardRuleReducer, DEFAULT_REWARD_RULES);
 
@@ -108,7 +111,10 @@ export default function AdminContestBuilderPage() {
       setEligibilityMode(rule?.eligibilityMode === "CARD_SET_ONLY" ? "CARD_SET_ONLY" : "ANY");
       setCardSetId(rule?.cardSetId ?? "");
       setRulesText(typeof ruleConfig.rulesText === "string" ? ruleConfig.rulesText : "");
-      setInfoNotes(typeof ruleConfig.infoNotes === "string" ? ruleConfig.infoNotes : "");
+      const notes = typeof ruleConfig.infoNotes === "string" ? ruleConfig.infoNotes : "";
+      const [participation = "", clarifications = ""] = notes.split("\n\n---\n\n");
+      setParticipationNotes(participation);
+      setOptionalClarifications(clarifications);
       setAutoCode(false);
     })();
   }, [contestId]);
@@ -144,11 +150,11 @@ export default function AdminContestBuilderPage() {
       distributionRules: rewardPayload.distributionRules,
       ruleConfig: {
         rulesText: rulesText.trim() || null,
-        infoNotes: infoNotes.trim() || null,
+        infoNotes: [participationNotes.trim(), optionalClarifications.trim()].filter(Boolean).join("\n\n---\n\n") || null,
         coverImageUrl: coverImageUrl.trim() || null,
       },
     };
-  }, [autoCode, cardSetId, code, coverImageUrl, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, infoNotes, maxRosterSize, openAt, rules, rulesText, startsAt, title]);
+  }, [autoCode, cardSetId, code, coverImageUrl, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, maxRosterSize, openAt, optionalClarifications, participationNotes, rules, rulesText, startsAt, title]);
 
   const issues = useMemo(() => {
     const arr: string[] = [];
@@ -232,7 +238,11 @@ export default function AdminContestBuilderPage() {
       return;
     }
 
-    setMessage("Contest published successfully.");
+    setPublishSuccess(true);
+    setMessage("Contest published successfully. Redirecting to Contest Library…");
+    window.setTimeout(() => {
+      router.push("/admin/contests?published=1");
+    }, 1200);
   };
 
   return (
@@ -251,6 +261,12 @@ export default function AdminContestBuilderPage() {
           <a key={step.id} href={`#${step.id}`} className="contest-builder-v2-step-pill">{step.label}</a>
         ))}
       </nav>
+
+      {publishSuccess ? (
+        <div className="admin-callout success">
+          <p className="contest-inline-note"><strong>Contest published successfully.</strong> It is now visible in Contest Library and ready for user-facing surfaces.</p>
+        </div>
+      ) : null}
 
       <section className="contest-builder-v2-layout">
         <div className="contest-builder-v2-main">
@@ -350,8 +366,11 @@ export default function AdminContestBuilderPage() {
               {rules.map((rule) => (
                 <article key={rule.id} className="contest-builder-v2-reward-card">
                   <div className="contest-builder-v2-reward-top">
-                    <input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} />
-                    <p className="contest-builder-v2-reward-target">{describeRewardRule(rule)}</p>
+                    <div>
+                      <input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} />
+                      <p className="contest-builder-v2-reward-target">{describeRewardRule(rule)}</p>
+                    </div>
+                    <span className="contest-builder-v2-reward-tier-chip">{getTierHint(rule.distributionType, rule.distributionValue)}</span>
                   </div>
                   <div className="admin-field-grid">
                     <select className="input" value={rule.rewardType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { rewardType: e.target.value as RewardType } })}><option value="POINTS">Points</option><option value="XP">XP</option><option value="PACK">Pack</option></select>
@@ -359,9 +378,9 @@ export default function AdminContestBuilderPage() {
                     <select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Exact rank</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top %</option></select>
                     <input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} />
                   </div>
+                  <p className="contest-inline-note">Player-facing: <strong>{rule.label}</strong> receives <strong>{rule.amount}</strong> {rule.rewardType === "PACK" ? "pack(s)" : rule.rewardType.toLowerCase()} for <strong>{describeRewardRule(rule)}</strong>.</p>
                 </article>
-              ))}
-            </div>
+              ))}            </div>
             <Button onClick={() => dispatchRules({ type: "add" })}>Add reward rule</Button>
           </section>
 
@@ -371,7 +390,8 @@ export default function AdminContestBuilderPage() {
               <p className="contest-inline-note">Improve player-facing clarity with explicit rules and participation notes.</p>
             </header>
             <textarea className="input" placeholder="Rules shown to players" value={rulesText} onChange={(e) => setRulesText(e.target.value)} />
-            <textarea className="input" placeholder="Participation notes and useful context" value={infoNotes} onChange={(e) => setInfoNotes(e.target.value)} />
+            <textarea className="input" placeholder="Participation notes (entry, lock, restrictions)" value={participationNotes} onChange={(e) => setParticipationNotes(e.target.value)} />
+            <textarea className="input" placeholder="Optional clarifications (scoring quirks, FAQ hints)" value={optionalClarifications} onChange={(e) => setOptionalClarifications(e.target.value)} />
           </section>
 
           <section id="review" className="admin-panel contest-builder-v2-section contest-builder-v2-review">
@@ -441,6 +461,13 @@ export default function AdminContestBuilderPage() {
       </section>
     </div>
   );
+}
+
+
+function getTierHint(type: DistributionType, value: number) {
+  if (type === "FIXED_RANKS") return `Rank ${value}`;
+  if (type === "TOP_N") return `Top ${value}`;
+  return `Top ${value}%`;
 }
 
 function toInputDate(value: string | null) {

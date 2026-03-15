@@ -41,11 +41,17 @@ export async function GET() {
             id: rule.id,
             cardSetId: rule.cardSetId ?? null,
             maxRosterSize: rule.maxRosterSize ?? null,
+            entryFeeEnabled: rule.entryFeeEnabled ?? false,
+            entryFeeAmount: rule.entryFeeAmount ?? null,
           }))
         : [],
       _count: { entries: contest._count.entries },
       leagueTierRequired: contest.leagueTierRequired ?? null,
       seasonName: seasonByContestId.get(contest.id) ?? null,
+      rewardPreview: {
+        label: "POINTS",
+        amount: Math.max(120, (contest.rules?.[0]?.maxRosterSize ?? 5) * 45),
+      },
     }));
 
     return NextResponse.json({ contests: safeContests });
