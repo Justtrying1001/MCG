@@ -25,7 +25,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     id: "operations",
     label: "Operations",
     items: [
-      { href: "/admin/contests", label: "Contests", hint: "Create, publish, lifecycle, settlement" },
+      { href: "/admin/contests", label: "Contest library", hint: "Create, edit and publish contests" },
+      { href: "/admin/contests/operations", label: "Contest operations", hint: "Lifecycle, scoring, settlement diagnostics" },
       { href: "/admin/moderation", label: "Moderation", hint: "Queue review and decisions", critical: true },
       { href: "/admin/rewards", label: "Rewards", hint: "Manual compensation and grants", critical: true },
       { href: "/admin/supply", label: "Supply", hint: "Sale/reward pack distribution and remaining" },

@@ -17,6 +17,7 @@ const patchSchema = z.object({
   entryFeeEnabled: z.boolean().optional(),
   entryFeeCurrency: z.literal("POINTS").optional(),
   entryFeeAmount: z.number().int().nullable().optional(),
+  ruleConfig: z.record(z.unknown()).nullable().optional(),
   teamSizeMode: z.literal("EXACT").optional(),
   maxRosterSize: z.number().int().optional(),
   eligibilityMode: z.enum(["ANY", "CARD_SET_ONLY"]).optional(),
