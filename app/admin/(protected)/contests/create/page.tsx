@@ -10,6 +10,21 @@ import { createRewardRuleDraft, describeRewardRule, rewardRuleReducer, toContest
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
 
+type RewardCapacityRow = {
+  packDefinitionId: string;
+  packCode: string | null;
+  required: number;
+  available: number;
+  shortfall: number;
+  verdict: "OK" | "INSUFFICIENT_SUPPLY" | "INVALID_REWARD_CONFIG" | "UNKNOWN_PACK" | "REWARD_POOL_MISSING";
+};
+
+type RewardCapacityCheck = {
+  verdict: "OK" | "INSUFFICIENT_SUPPLY" | "INVALID_REWARD_CONFIG" | "UNKNOWN_PACK" | "REWARD_POOL_MISSING";
+  isPublishable: boolean;
+  rows: RewardCapacityRow[];
+};
+
 const STEPS: Array<{ id: Step; label: string; hint: string }> = [
   { id: 1, label: "Infos contest", hint: "Code, titre, description" },
   { id: 2, label: "Schedule", hint: "Open / lock / end" },
@@ -27,6 +42,7 @@ export default function AdminContestCreatePage() {
   const [contestId, setContestId] = useState(params.get("contestId") ?? "");
   const [message, setMessage] = useState("");
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
+  const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
 
   const [autoCode, setAutoCode] = useState(true);
   const [code, setCode] = useState("");
@@ -143,6 +159,29 @@ export default function AdminContestCreatePage() {
     return body?.contest?.id ?? contestId;
   };
 
+  const runBackendValidation = async (effectiveContestId: string) => {
+    const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/validate`, { method: "POST" });
+    const body = (await response.json().catch(() => null)) as any;
+    if (!response.ok) {
+      setMessage(formatApiError(body, "Échec validation backend"));
+      return { ok: false as const, blocking: true };
+    }
+
+    const capacity = body?.rewardPackCapacity as RewardCapacityCheck | undefined;
+    setRewardCapacityCheck(capacity ?? null);
+
+    if (body?.blocking) {
+      const blockingIssues = Array.isArray(body?.issues)
+        ? body.issues.filter((issue: { severity?: string }) => issue?.severity === "ERROR")
+        : [];
+      const detail = blockingIssues.map((issue: { message?: string }) => issue.message).filter(Boolean).join("; ");
+      setMessage(detail ? `Validation bloquante: ${detail}` : "Validation bloquante");
+      return { ok: false as const, blocking: true };
+    }
+
+    return { ok: true as const, blocking: false };
+  };
+
   const launch = async () => {
     let effectiveContestId = contestId;
     if (!effectiveContestId) {
@@ -150,6 +189,10 @@ export default function AdminContestCreatePage() {
       if (!createdId) return;
       effectiveContestId = createdId;
     }
+
+    const validation = await runBackendValidation(effectiveContestId);
+    if (!validation.ok) return;
+
     const response = await fetch(`/api/internal/contest-configs/${effectiveContestId}/publish`, { method: "POST" });
     const body = (await response.json().catch(() => null)) as any;
     if (!response.ok) return setMessage(formatApiError(body, "Échec publish"));
@@ -180,7 +223,7 @@ export default function AdminContestCreatePage() {
 
             {step === 5 && <div className="admin-section-stack">{rules.map((rule) => <article key={rule.id} className="contest-reward-rule-card"><input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} /><div className="admin-field-grid"><select className="input" value={rule.rewardType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { rewardType: e.target.value as RewardType } })}><option value="POINTS">Points</option><option value="XP">XP</option><option value="PACK">Pack</option></select><input className="input" type="number" min={1} value={rule.amount} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { amount: Number(e.target.value) } })} /><select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Fixed ranks</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top percent</option></select><input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} /></div><p className="contest-inline-note">{describeRewardRule(rule)}</p></article>)}<Button onClick={() => dispatchRules({ type: "add" })}>Ajouter une règle</Button></div>}
 
-            {step === 6 && <div className="admin-section-stack"><div className="admin-callout"><p className="contest-inline-note"><strong>Contest:</strong> {payload.code || "[auto]"} · {payload.title || "—"}</p><p className="contest-inline-note"><strong>Schedule:</strong> {payload.startsAt || "—"} / {payload.lockAt || "—"} / {payload.endsAt || "—"}</p><p className="contest-inline-note"><strong>Eligibility:</strong> {payload.eligibilityMode} {payload.cardSetId ? `(${payload.cardSetId})` : ""}</p></div>{issues.length > 0 ? <div className="admin-callout danger">{issues.map((issue) => <p key={issue} className="contest-inline-note">• {issue}</p>)}</div> : <div className="admin-callout"><p className="contest-inline-note">Aucun blocage détecté. Ready to launch.</p></div>}</div>}
+            {step === 6 && <div className="admin-section-stack"><div className="admin-callout"><p className="contest-inline-note"><strong>Contest:</strong> {payload.code || "[auto]"} · {payload.title || "—"}</p><p className="contest-inline-note"><strong>Schedule:</strong> {payload.startsAt || "—"} / {payload.lockAt || "—"} / {payload.endsAt || "—"}</p><p className="contest-inline-note"><strong>Eligibility:</strong> {payload.eligibilityMode} {payload.cardSetId ? `(${payload.cardSetId})` : ""}</p></div>{issues.length > 0 ? <div className="admin-callout danger">{issues.map((issue) => <p key={issue} className="contest-inline-note">• {issue}</p>)}</div> : <div className="admin-callout"><p className="contest-inline-note">Aucun blocage détecté. Ready to launch.</p></div>}<div className={`admin-callout ${rewardCapacityCheck && !rewardCapacityCheck.isPublishable ? "danger" : ""}`}><p className="contest-inline-note"><strong>Reward pack capacity check</strong></p>{rewardCapacityCheck ? <><p className="contest-inline-note">Status: {rewardCapacityCheck.isPublishable ? "Ready to publish" : "Insufficient reward supply"} ({rewardCapacityCheck.verdict})</p>{rewardCapacityCheck.rows.length === 0 ? <p className="contest-inline-note">No pack rewards in this contest.</p> : rewardCapacityCheck.rows.map((row) => <p key={row.packDefinitionId} className="contest-inline-note">• {row.packCode ?? row.packDefinitionId}: required {row.required} / available {row.available} / missing {row.shortfall} ({row.verdict})</p>)}</> : <p className="contest-inline-note">Run launch (or save draft then launch) to compute backend capacity check.</p>}</div></div>}
 
             <div className="contest-wizard-footer">
               <Button variant="ghost" disabled={step === 1} onClick={() => setStep((s) => Math.max(1, s - 1) as Step)}>Back</Button>

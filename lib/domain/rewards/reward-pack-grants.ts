@@ -69,7 +69,11 @@ export async function listRecentRewardPackGrantsMvp(limit = 100) {
         code: "mvp_reward_pack",
       },
     },
-    include: {
+    select: {
+      id: true,
+      userId: true,
+      createdAt: true,
+      claimedAt: true,
       user: {
         select: {
           id: true,
