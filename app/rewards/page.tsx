@@ -153,34 +153,41 @@ export default function RewardsPage() {
     setQuestsError("");
     setLedgerError("");
 
-    const [questsResult, ledgerResult] = await Promise.allSettled([
-      fetch("/api/quests", { cache: "no-store" }),
-      fetch("/api/rewards/ledger", { cache: "no-store" }),
-    ]);
+    try {
+      const [questsResult, ledgerResult] = await Promise.allSettled([
+        fetch("/api/quests", { cache: "no-store" }),
+        fetch("/api/rewards/ledger", { cache: "no-store" }),
+      ]);
 
-    if (questsResult.status === "rejected") {
+      if (questsResult.status === "rejected") {
+        setQuests([]);
+        setQuestsError("Cannot load quests data (network error)");
+      } else if (!questsResult.value.ok) {
+        setQuests([]);
+        setQuestsError(`Cannot load quests data (/api/quests ${questsResult.value.status})`);
+      } else {
+        const payload = (await questsResult.value.json()) as { quests?: QuestRow[] };
+        setQuests(payload.quests ?? []);
+      }
+
+      if (ledgerResult.status === "rejected") {
+        setLedger([]);
+        setLedgerError("Cannot load rewards ledger (network error)");
+      } else if (!ledgerResult.value.ok) {
+        setLedger([]);
+        setLedgerError(`Cannot load rewards ledger (/api/rewards/ledger ${ledgerResult.value.status})`);
+      } else {
+        const payload = (await ledgerResult.value.json()) as { entries?: LedgerRow[] };
+        setLedger(payload.entries ?? []);
+      }
+    } catch {
       setQuests([]);
-      setQuestsError("Cannot load quests data (network error)");
-    } else if (!questsResult.value.ok) {
-      setQuests([]);
-      setQuestsError(`Cannot load quests data (/api/quests ${questsResult.value.status})`);
-    } else {
-      const payload = (await questsResult.value.json()) as { quests?: QuestRow[] };
-      setQuests(payload.quests ?? []);
-    }
-
-    if (ledgerResult.status === "rejected") {
       setLedger([]);
-      setLedgerError("Cannot load rewards ledger (network error)");
-    } else if (!ledgerResult.value.ok) {
-      setLedger([]);
-      setLedgerError(`Cannot load rewards ledger (/api/rewards/ledger ${ledgerResult.value.status})`);
-    } else {
-      const payload = (await ledgerResult.value.json()) as { entries?: LedgerRow[] };
-      setLedger(payload.entries ?? []);
+      setQuestsError("Cannot load quests data (unexpected error)");
+      setLedgerError("Cannot load rewards ledger (unexpected error)");
+    } finally {
+      setLoadingData(false);
     }
-
-    setLoadingData(false);
   };
 
   const submitQuest = async (quest: QuestRow, mode: "manual" | "auto") => {
@@ -384,9 +391,7 @@ export default function RewardsPage() {
 
       {loading || loadingData ? <EmptyState title="Loading rewards…" /> : null}
       {!loading && me?.mode === "guest" ? <EmptyState title="Sign in with X to access rewards" /> : null}
-      {!loading && me?.mode === "user" && questsError ? <EmptyState title="Rewards unavailable" description={questsError} /> : null}
-
-      {!loading && me?.mode === "user" && !questsError ? (
+      {!loading && me?.mode === "user" ? (
         <div className="rewards-page-layout-v3">
           <Surface className="rewards-summary-v3" variant="raised">
             <div>
@@ -411,6 +416,7 @@ export default function RewardsPage() {
           </Surface>
 
           {actionMsg ? <div className="contest-inline-note">{actionMsg}</div> : null}
+          {questsError ? <div className="rewards-inline-warning-v3">{questsError}. Quest data is partially unavailable.</div> : null}
           {ledgerError ? <div className="rewards-inline-warning-v3">{ledgerError}. History is partially unavailable.</div> : null}
 
           <section className="rewards-section-v3">
