@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { MilestoneType } from "@/lib/domain/quests/social";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
@@ -724,7 +723,6 @@ export default function RewardsPage() {
           <div style={{ marginBottom: "1.5rem" }}>
             <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#fff", marginBottom: "0.2rem" }}>Rewards</h1>
             <p style={{ fontSize: "0.9rem", color: TEXT_MUTED, marginBottom: "0.6rem" }}>Quests, milestones &amp; earning history</p>
-            <Link href="/rewards/packs" style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8834A" }}>→ Packs remportés</Link>
           </div>
 
           {/* ── Summary strip ── */}
