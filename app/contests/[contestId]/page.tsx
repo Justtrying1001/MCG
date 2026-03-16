@@ -286,6 +286,14 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const isLocked = status === "LOCKED";
   const isLive = status === "LIVE";
   const isSettled = status === "SETTLED";
+  const lockAtMs = contest.lockAt ? new Date(contest.lockAt).getTime() : Number.POSITIVE_INFINITY;
+  const endsAtMs = contest.endsAt ? new Date(contest.endsAt).getTime() : Number.POSITIVE_INFINITY;
+  const beforeLock = nowTs < lockAtMs;
+  const beforeEnd = nowTs < endsAtMs;
+
+  const showRegistrationCountdown = isOpen || (isLive && beforeLock);
+  const showLiveWindow = isLocked || (isLive && !beforeLock && beforeEnd);
+  const showFinished = isSettled || !beforeEnd;
 
   const scheduleSteps = [
     {
@@ -332,15 +340,22 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             )}
           </div>
           <div className="cpd-topbar-right">
-            {isOpen && (
+            {showRegistrationCountdown && (
               <>
                 <span className="cpd-topbar-label">Lock in</span>
                 <span className="cpd-countdown">{formatHMS(contest.lockAt, nowTs)}</span>
               </>
             )}
-            {isLive && <span className="cpd-status-chip" data-status="LIVE">● In Progress</span>}
-            {isLocked && <span className="cpd-status-chip">🔒 Locked</span>}
-            {isSettled && <span className="cpd-status-chip" data-status="SETTLED">Finished</span>}
+            {showLiveWindow && (
+              <>
+                <span className="cpd-status-chip" data-status={isLive ? "LIVE" : "LOCKED"}>
+                  {isLive ? "● In Progress" : "🔒 Locked"}
+                </span>
+                <span className="cpd-topbar-label">Ends in</span>
+                <span className="cpd-countdown">{formatHMS(contest.endsAt, nowTs)}</span>
+              </>
+            )}
+            {showFinished && <span className="cpd-status-chip" data-status="SETTLED">Finished</span>}
           </div>
         </div>
 
@@ -680,7 +695,7 @@ const CSS = `
     border-bottom: 1px solid var(--border);
   }
   .cpd-topbar-left  { display: flex; align-items: center; gap: 10px; }
-  .cpd-topbar-right { display: flex; align-items: center; gap: 10px; }
+  .cpd-topbar-right { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
   .cpd-topbar-name  { font-size: 0.9rem; font-weight: 600; color: #e0e0e8; }
   .cpd-topbar-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 
@@ -697,11 +712,12 @@ const CSS = `
     background: rgba(200,168,75,0.12); border: 1px solid rgba(200,168,75,0.3); color: var(--gold);
   }
   .cpd-status-chip {
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
     padding: 3px 10px; border-radius: 20px;
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
   }
   .cpd-status-chip[data-status="LIVE"]    { color: var(--green); border-color: rgba(45,181,110,0.3); background: rgba(45,181,110,0.08); animation: cpdLivePulse 2s ease-in-out infinite; }
+  .cpd-status-chip[data-status="LOCKED"]  { color: #d7d7de; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); }
   .cpd-status-chip[data-status="SETTLED"] { color: var(--muted); border-color: rgba(90,90,122,0.3); background: rgba(90,90,122,0.08); }
 
   /* Live dot */
@@ -1166,6 +1182,9 @@ const CSS = `
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
+    .cpd-topbar { align-items: flex-start; }
+    .cpd-topbar-right { gap: 4px; }
+    .cpd-status-chip { font-size: 0.62rem; padding: 2px 8px; }
     .cpd-hero { flex-direction: column; align-items: flex-start; padding: 32px 0 24px; }
     .cpd-stat-pills { width: 100%; justify-content: flex-start; }
     .cpd-grid { grid-template-columns: 1fr; }
