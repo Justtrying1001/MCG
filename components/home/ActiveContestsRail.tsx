@@ -31,7 +31,7 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
           actions={<Link href="/contests" className="mcg-btn ghost">All contests</Link>}
         />
         {contests.length === 0 ? (
-          <EmptyState title="No active contests" description="Next competition window will appear here." />
+          <EmptyState title="No active contests" description="The next contest window will appear here." />
         ) : (
           <div className="mcg-rail">
             {contests.map((contest) => (

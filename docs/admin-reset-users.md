@@ -56,7 +56,8 @@ Restart the local Next.js server after changing env vars.
 
 - API route: `POST /api/internal/admin/reset-users`
 - Requires internal admin auth and role check with minimum `ADMIN_SUPERVISOR`.
-- Feature flag gate: action is blocked unless `ENABLE_USER_RESET=true`.
+- `ROOT_ADMIN_X_USERNAME` (or `OWNER_X_USERNAME`) can be set to force the owner account to resolve as `ADMIN_SUPERVISOR` even when `ADMIN_DEFAULT_ROLE` is lower.
+- Feature flag gate: action is blocked unless `ENABLE_USER_RESET=true` (returns HTTP 403 with an explicit env message when disabled).
 - UI requires explicit typed confirmation: `RESET USERS`.
 - UI diagnostics expose current role, root-admin status, env flag value, and whether API access is currently allowed.
 

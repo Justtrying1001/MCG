@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, describeUserResetFlagState, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
+import { getUserResetFeatureDisabledReason } from "@/lib/admin-reset-users";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {

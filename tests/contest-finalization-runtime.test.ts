@@ -28,7 +28,7 @@ vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({ captureEndSnapshot: c
 vi.mock("@/lib/domain/contests/scoring-engine-runtime", () => ({ computeContestScoresFromSnapshots: computeContestScoresFromSnapshotsMock }));
 vi.mock("@/lib/domain/contests/settlement-plan-runtime", () => ({ executeAutoSettlementForContest: executeAutoSettlementForContestMock }));
 
-import { finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
+import { deriveContestProgressFromCounts, finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
 
 describe("finalizeContestFromEndSnapshotTrigger", () => {
   beforeEach(() => {
@@ -113,4 +113,20 @@ describe("finalizeContestFromEndSnapshotTrigger", () => {
     await expect(finalizeContestFromEndSnapshotTrigger("c1")).rejects.toThrow(/\[RANKING\] broken compute/);
     expect(executeAutoSettlementForContestMock).not.toHaveBeenCalled();
   });
+  it("derives scoring-ready when ranking + settlement exist even without breakdown rows", () => {
+    expect(deriveContestProgressFromCounts({
+      entries: 12,
+      tokenScores: 12,
+      breakdownRows: 0,
+      scores: 12,
+      rankings: 12,
+      settlements: 1,
+    })).toEqual({
+      entries: 12,
+      scoringReady: true,
+      rankingGenerated: true,
+      settlementDone: true,
+    });
+  });
+
 });

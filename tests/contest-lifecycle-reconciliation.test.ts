@@ -4,9 +4,7 @@ import { ContestStatus } from "@prisma/client";
 const {
   prismaMock,
   captureStartSnapshotMock,
-  captureEndSnapshotMock,
-  computeContestScoresFromSnapshotsMock,
-  executeAutoSettlementForContestMock,
+  finalizeContestFromEndSnapshotTriggerMock,
 } = vi.hoisted(() => ({
   prismaMock: {
     contest: {
@@ -16,21 +14,15 @@ const {
     },
   },
   captureStartSnapshotMock: vi.fn(),
-  captureEndSnapshotMock: vi.fn(),
-  computeContestScoresFromSnapshotsMock: vi.fn(),
-  executeAutoSettlementForContestMock: vi.fn(),
+  finalizeContestFromEndSnapshotTriggerMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({
   captureStartSnapshot: captureStartSnapshotMock,
-  captureEndSnapshot: captureEndSnapshotMock,
 }));
-vi.mock("@/lib/domain/contests/scoring-engine-runtime", () => ({
-  computeContestScoresFromSnapshots: computeContestScoresFromSnapshotsMock,
-}));
-vi.mock("@/lib/domain/contests/settlement-plan-runtime", () => ({
-  executeAutoSettlementForContest: executeAutoSettlementForContestMock,
+vi.mock("@/lib/domain/contests/finalization-runtime", () => ({
+  finalizeContestFromEndSnapshotTrigger: finalizeContestFromEndSnapshotTriggerMock,
 }));
 
 import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
@@ -39,9 +31,7 @@ describe("contest lifecycle reconciliation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     captureStartSnapshotMock.mockResolvedValue({});
-    captureEndSnapshotMock.mockResolvedValue({});
-    computeContestScoresFromSnapshotsMock.mockResolvedValue({});
-    executeAutoSettlementForContestMock.mockResolvedValue({ executed: true });
+    finalizeContestFromEndSnapshotTriggerMock.mockResolvedValue({});
     prismaMock.contest.updateMany.mockResolvedValue({ count: 1 });
   });
 
@@ -75,11 +65,10 @@ describe("contest lifecycle reconciliation", () => {
     expect(result?.finalStatus).toBe(ContestStatus.LOCKED);
     expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.LOCKED]);
     expect(captureStartSnapshotMock).not.toHaveBeenCalled();
-    expect(captureEndSnapshotMock).not.toHaveBeenCalled();
-    expect(computeContestScoresFromSnapshotsMock).not.toHaveBeenCalled();
+    expect(finalizeContestFromEndSnapshotTriggerMock).not.toHaveBeenCalled();
   });
 
-  it("moves LIVE to SETTLED after endsAt with end automation", async () => {
+  it("moves LIVE to SETTLED after endsAt with full finalization automation", async () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: ContestStatus.LIVE,
@@ -92,9 +81,7 @@ describe("contest lifecycle reconciliation", () => {
 
     expect(result?.finalStatus).toBe(ContestStatus.SETTLED);
     expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.SETTLED]);
-    expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
-    expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledWith("c1");
-    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
+    expect(finalizeContestFromEndSnapshotTriggerMock).toHaveBeenCalledWith("c1");
   });
 
   it("catches up OPEN directly to SETTLED step-by-step", async () => {
@@ -114,9 +101,7 @@ describe("contest lifecycle reconciliation", () => {
       "LIVE->SETTLED",
     ]);
     expect(captureStartSnapshotMock).toHaveBeenCalledTimes(1);
-    expect(captureEndSnapshotMock).toHaveBeenCalledTimes(1);
-    expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledTimes(1);
-    expect(executeAutoSettlementForContestMock).toHaveBeenCalledTimes(1);
+    expect(finalizeContestFromEndSnapshotTriggerMock).toHaveBeenCalledTimes(1);
   });
 
   it("reconciles due contests in batch", async () => {

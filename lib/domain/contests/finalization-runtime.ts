@@ -141,14 +141,16 @@ export function deriveContestProgressFromCounts(counts: {
   rankings: number;
   settlements: number;
 }) {
+  const rankingGenerated = counts.rankings > 0 && counts.rankings >= counts.scores;
+  const settlementDone = counts.settlements > 0;
   const scoringReady = counts.entries === 0
     ? counts.tokenScores > 0 || counts.scores === 0
-    : counts.tokenScores > 0 && counts.scores >= counts.entries && counts.breakdownRows > 0;
+    : counts.tokenScores > 0 && counts.scores >= counts.entries && (counts.breakdownRows > 0 || rankingGenerated || settlementDone);
 
   return {
     entries: counts.entries,
     scoringReady,
-    rankingGenerated: counts.rankings > 0 && counts.rankings >= counts.scores,
-    settlementDone: counts.settlements > 0,
+    rankingGenerated,
+    settlementDone,
   };
 }
