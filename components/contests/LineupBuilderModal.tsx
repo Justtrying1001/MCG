@@ -336,9 +336,6 @@ export function LineupBuilderModal({
                     <div className="bldr-card-locked-overlay">Locked</div>
                   )}
 
-                  {duplicateTokenInOtherSlot && !isSelected && (
-                    <div className="bldr-card-locked-overlay">Already used</div>
-                  )}
                 </div>
               );
             })}
