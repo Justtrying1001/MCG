@@ -49,6 +49,12 @@ type RewardPayload = {
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
 };
 
+
+type SlotCardView = {
+  card: LineupOption;
+  finalScore: number | null;
+};
+
 function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   const sanitized = roster.slice(0, rosterSize);
   while (sanitized.length < rosterSize) sanitized.push("");
@@ -200,8 +206,37 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const slotCards = useMemo(() => {
     const optionById = new Map(options.map((item) => [item.instanceId, item]));
-    return lineupSlots.map((id) => (id ? (optionById.get(id) ?? null) : null));
-  }, [lineupSlots, options]);
+    const breakdownByInstanceId = new Map((scoreBreakdown ?? []).map((row) => [row.cardInstance.id, row]));
+
+    return lineupSlots.map<SlotCardView | null>((id) => {
+      if (!id) return null;
+      const optionCard = optionById.get(id);
+      if (optionCard) {
+        const row = breakdownByInstanceId.get(id);
+        return { card: optionCard, finalScore: row?.finalScore ?? null };
+      }
+
+      const row = breakdownByInstanceId.get(id);
+      if (!row) return null;
+
+      const fallback: LineupOption = {
+        instanceId: id,
+        cardTemplateId: id,
+        isLockedByActiveContest: false,
+        cardSetId: "settled",
+        cardSetCode: "SETTLED",
+        cardSetName: "Settled lineup",
+        rarityCode: row.cardInstance.cardTemplate.rarity?.code ?? "COMMON",
+        editionCode: row.cardInstance.cardTemplate.edition?.code ?? "BASE",
+        name: row.cardInstance.cardTemplate.name,
+        imageUrl: row.cardInstance.cardTemplate.imageUrl,
+        tokenProjectName: row.tokenProject.displayName,
+        tokenProjectId: null,
+      };
+
+      return { card: fallback, finalScore: row.finalScore };
+    });
+  }, [lineupSlots, options, scoreBreakdown]);
 
   const submitLineup = async (isDraft = false) => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
@@ -425,8 +460,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
               <div className={`cpd-slots-grid cpd-slots-grid-${rosterSize}`}>
                 {Array.from({ length: rosterSize }).map((_, i) => {
-                  const card = slotCards[i];
-                  if (!card) {
+                  const slotCard = slotCards[i];
+                  if (!slotCard) {
                     return (
                       <button
                         key={i}
@@ -453,9 +488,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                       role={isOpen ? "button" : undefined}
                       tabIndex={isOpen ? 0 : undefined}
                     >
-                      <MvpCardTile card={toMvpCardView(card)} variant="compact" interactive={false} />
+                      <MvpCardTile card={toMvpCardView(slotCard.card)} variant="compact" interactive={false} />
                       {(isLocked || isLive) && (
                         <div className="cpd-slot-lock-overlay">🔒 Locked</div>
+                      )}
+                      {isSettled && slotCard.finalScore !== null && (
+                        <div className="cpd-slot-final-score">{slotCard.finalScore.toFixed(2)}</div>
                       )}
                     </div>
                   );
@@ -877,6 +915,19 @@ const CSS = `
     display: flex; align-items: center; justify-content: center;
     font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.55);
     letter-spacing: 0.06em; backdrop-filter: blur(2px);
+  }
+  .cpd-slot-final-score {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(200,168,75,0.6);
+    background: rgba(12,16,27,0.92);
+    color: #f6de96;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 7px;
+    z-index: 2;
   }
   .cpd-lineup-submitted {
     margin: 14px 0 0; padding: 9px 14px; border-radius: 8px;

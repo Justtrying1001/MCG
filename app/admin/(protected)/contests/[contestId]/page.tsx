@@ -64,6 +64,37 @@ type SnapshotPayload = {
   end: SnapshotPhaseData;
 };
 
+
+type TokenScoreDetail = {
+  id: string;
+  tokenProject: { displayName: string; slug: string };
+  priceChange: number | null;
+  marketCapChange: number | null;
+  volumeChange: number | null;
+  rankChange: number | null;
+  baseScore: number;
+  rankMultiplier: number;
+  finalScore: number;
+};
+
+type ScoringBreakdownDetail = {
+  id: string;
+  baseScore: number;
+  rarityMultiplier: number;
+  editionMultiplier: number;
+  finalScore: number;
+  dataQuality: string;
+  tokenProject: { displayName: string; slug: string };
+  entry: { id: string; userId: string; user: { xUsername: string | null; displayName: string | null } };
+  cardInstance: { id: string; cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
+};
+
+type ScoringDetailPayload = {
+  ok: boolean;
+  tokenScores: TokenScoreDetail[];
+  breakdownRows: ScoringBreakdownDetail[];
+};
+
 export default function ContestOverviewPage({ params }: { params: { contestId: string } }) {
   const router = useRouter();
   const [data, setData] = useState<OverviewPayload | null>(null);
@@ -78,6 +109,10 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
   const [message, setMessage] = useState("");
   const [showStartDetail, setShowStartDetail] = useState(false);
   const [showEndDetail, setShowEndDetail] = useState(false);
+  const [showScoringDetail, setShowScoringDetail] = useState(false);
+  const [scoringDetailLoading, setScoringDetailLoading] = useState(false);
+  const [scoringDetail, setScoringDetail] = useState<ScoringDetailPayload | null>(null);
+  const [scoringDetailError, setScoringDetailError] = useState("");
 
   const loadSnapshots = async () => {
     setSnapshotsLoading(true);
@@ -89,23 +124,27 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     setSnapshotsLoading(false);
   };
 
+  const loadOverview = async () => {
+    const overviewRes = await fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" });
+    if (!overviewRes.ok) {
+      const payload = (await overviewRes.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(payload?.error ?? "Cannot load contest overview");
+    }
+    const payload = (await overviewRes.json()) as OverviewPayload;
+    setData(payload);
+    return payload;
+  };
+
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [overviewRes] = await Promise.all([
-        fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" }),
-        loadSnapshots(),
-      ]);
-
-      if (!overviewRes.ok) {
-        const payload = (await overviewRes.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error ?? "Cannot load contest overview");
-        setLoading(false);
-        return;
+      setError("");
+      try {
+        await Promise.all([loadOverview(), loadSnapshots()]);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Cannot load contest overview");
       }
-
-      const payload = (await overviewRes.json()) as OverviewPayload;
-      setData(payload);
       setLoading(false);
     };
 
@@ -166,6 +205,34 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     router.refresh();
   };
 
+  const waitForFinalization = async () => {
+    const maxAttempts = 30;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const overview = await loadOverview();
+      if (overview.progress.settlementDone || (overview.progress.scoringReady && overview.progress.rankingGenerated)) {
+        return overview;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 2000));
+    }
+    throw new Error("Finalization is still running. Refresh in a few seconds to see final status.");
+  };
+
+  const loadScoringDetail = async () => {
+    setScoringDetailLoading(true);
+    setScoringDetailError("");
+    try {
+      const response = await fetch(`/api/internal/contest-runs/${params.contestId}/scoring/detail`, { cache: "no-store" });
+      const payload = (await response.json().catch(() => null)) as ScoringDetailPayload & { error?: string };
+      if (!response.ok || !payload) {
+        throw new Error(payload?.error ?? "Cannot load scoring details");
+      }
+      setScoringDetail(payload);
+    } catch (detailError) {
+      setScoringDetailError(detailError instanceof Error ? detailError.message : "Cannot load scoring details");
+    }
+    setScoringDetailLoading(false);
+  };
+
   const captureSnapshot = async (phase: "START" | "END", isRecapture = false) => {
     const msg = isRecapture
       ? `This will overwrite the existing ${phase} snapshot. Only do this if price data is missing. Confirm?`
@@ -184,13 +251,14 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
       setError(payload?.error ?? `Cannot capture ${phase} snapshot`);
     } else {
       if (phase === "END") {
-        setMessage(`Contest finalization pipeline executed from END snapshot trigger.`);
+        setMessage("END snapshot captured. Finalization pipeline running…");
+        await waitForFinalization();
+        setMessage("Contest finalization pipeline completed.");
       } else {
         setMessage(`${phase} snapshot captured — ${payload?.capturedCount ?? 0}/${payload?.tokenCount ?? 0} tokens captured, ${payload?.missingCount ?? 0} missing.`);
+        await loadOverview();
       }
       await loadSnapshots();
-      const overviewRes = await fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" });
-      if (overviewRes.ok) setData((await overviewRes.json()) as OverviewPayload);
     }
     setBusyCapture(null);
   };
@@ -209,8 +277,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
       setError(payload?.error ?? "Cannot rebuild rankings");
     } else {
       setMessage(`Rankings rebuilt — ${payload?.rankingsCount ?? 0} rankings generated for ${payload?.userScoresCount ?? 0} users.`);
-      const overviewRes = await fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" });
-      if (overviewRes.ok) setData((await overviewRes.json()) as OverviewPayload);
+      await loadOverview();
     }
     setBusyRebuildRankings(false);
   };
@@ -298,7 +365,20 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                       ⚠ {snapshots.end.tokenCount - snapshots.end.capturedWithPrice} token{snapshots.end.tokenCount - snapshots.end.capturedWithPrice > 1 ? "s" : ""} have no price data
                     </p>
                   ) : null}
-                  <PipelineRow label="Scoring" ok={data.progress.scoringReady} detail={data.progress.scoringReady ? "Calculated" : "Pending"} />
+                  <PipelineRow
+                    label="Scoring"
+                    ok={data.progress.scoringReady}
+                    detail={data.progress.scoringReady ? "Calculated" : "Pending"}
+                    expandable={data.progress.scoringReady}
+                    expanded={showScoringDetail}
+                    onToggle={() => {
+                      setShowScoringDetail((v) => {
+                        const next = !v;
+                        if (next && !scoringDetail && !scoringDetailLoading) void loadScoringDetail();
+                        return next;
+                      });
+                    }}
+                  />
                   <PipelineRow label="Ranking" ok={data.progress.rankingGenerated} detail={data.progress.rankingGenerated ? "Generated" : "Pending"} />
                   <PipelineRow label="Settlement" ok={data.progress.settlementDone} detail={data.progress.settlementDone ? "Done" : "Pending"} />
                 </div>
@@ -309,6 +389,10 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
 
                 {showEndDetail && snapshots.end.tokens.length > 0 ? (
                   <SnapshotTable phase="END" tokens={snapshots.end.tokens} />
+                ) : null}
+
+                {showScoringDetail ? (
+                  <ScoringDetailPanel payload={scoringDetail} loading={scoringDetailLoading} error={scoringDetailError} />
                 ) : null}
 
                 {data.contest.status === "LIVE" && !snapshots.hasStartSnapshot ? (
@@ -459,6 +543,75 @@ function SnapshotTable({ phase, tokens }: { phase: "START" | "END"; tokens: Snap
   );
 }
 
+
+function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetailPayload | null; loading: boolean; error: string }) {
+  if (loading) return <p className="contest-inline-note">Loading scoring details…</p>;
+  if (error) return <p className="contest-error">{error}</p>;
+  if (!payload) return null;
+
+  const groupedRows = payload.breakdownRows.reduce<Record<string, { label: string; rows: ScoringBreakdownDetail[] }>>((acc, row) => {
+    const label = row.entry.user.displayName || row.entry.user.xUsername || row.entry.userId;
+    if (!acc[row.entry.userId]) {
+      acc[row.entry.userId] = { label, rows: [] };
+    }
+    acc[row.entry.userId].rows.push(row);
+    return acc;
+  }, {});
+
+  return (
+    <div style={{ display: "grid", gap: "0.8rem", marginTop: "0.5rem" }}>
+      <div style={{ overflowX: "auto" }}>
+        <p className="contest-meta-label" style={{ marginBottom: "0.4rem" }}>Token scores ({payload.tokenScores.length})</p>
+        <table style={{ borderCollapse: "collapse", fontSize: "0.8rem", width: "100%" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+              <Th>Token</Th>
+              <Th>Base score</Th>
+              <Th>Multiplier</Th>
+              <Th>Final score</Th>
+              <Th>Price Δ</Th>
+              <Th>MC Δ</Th>
+              <Th>Vol Δ</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {payload.tokenScores.map((row) => (
+              <tr key={row.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                <Td>{row.tokenProject.displayName || row.tokenProject.slug}</Td>
+                <Td>{row.baseScore.toFixed(2)}</Td>
+                <Td>×{row.rankMultiplier.toFixed(3)}</Td>
+                <Td><strong>{row.finalScore.toFixed(2)}</strong></Td>
+                <Td>{formatPercent(row.priceChange)}</Td>
+                <Td>{formatPercent(row.marketCapChange)}</Td>
+                <Td>{formatPercent(row.volumeChange)}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ display: "grid", gap: "0.6rem" }}>
+        <p className="contest-meta-label">Entry breakdowns ({payload.breakdownRows.length})</p>
+        {Object.entries(groupedRows).map(([userId, group]) => (
+          <div key={userId} style={{ border: "1px solid #eee", borderRadius: 10, padding: "0.5rem" }}>
+            <p className="contest-meta-label" style={{ marginBottom: "0.3rem" }}>{group.label}</p>
+            {group.rows.map((row) => (
+              <div key={row.id} style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.8rem", padding: "0.2rem 0" }}>
+                <span>
+                  {row.cardInstance.cardTemplate.name} · {row.tokenProject.displayName} ({row.cardInstance.cardTemplate.rarity?.code ?? "-"}/{row.cardInstance.cardTemplate.edition?.code ?? "-"})
+                </span>
+                <span>
+                  {row.baseScore.toFixed(2)} × {row.rarityMultiplier.toFixed(2)} × {row.editionMultiplier.toFixed(2)} = <strong>{row.finalScore.toFixed(2)}</strong>
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Th({ children }: { children: React.ReactNode }) {
   return <th style={{ padding: "0.3rem 0.6rem", textAlign: "left", fontWeight: 600, color: "#666" }}>{children}</th>;
 }
@@ -485,6 +638,11 @@ function formatUsd(value: number, decimals = 2) {
   if (value === 0) return "$0";
   if (value < 0.01) return `$${value.toFixed(decimals)}`;
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: decimals })}`;
+}
+
+function formatPercent(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return `${(value * 100).toFixed(2)}%`;
 }
 
 function formatMillions(value: number) {
