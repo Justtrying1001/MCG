@@ -76,11 +76,11 @@ function expectedDistribution(matrix, packsOpened) {
 
 function runScenario(label, matrix) {
   const perToken = sumSupplyPerToken(matrix);
-  const global = perToken * 50;
+  const global = perToken * 25;
 
   console.log(`\n=== ${label} ===`);
   console.log(`planned supply per token: ${perToken}`);
-  console.log(`planned global supply (50 tokens): ${global}`);
+  console.log(`planned global supply (25 tokens): ${global}`);
 
   for (const packsOpened of [1000, 10000]) {
     const expected = expectedDistribution(matrix, packsOpened);

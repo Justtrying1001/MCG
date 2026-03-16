@@ -4,9 +4,11 @@ _Audited: 2026-03-16_
 
 ## Source de vérité unique
 
-**`data/token-master-50.json`** — 50 tokens, généré par `scripts/build-token-master-50.mjs`
+**`data/token-master-25.json`** — 25 tokens (MVP Genesis), généré par `scripts/build-token-master-25.mjs`
 
 C'est le **seul fichier lu au runtime** et par le seed. Toutes les autres sources sont des inputs de build.
+
+> `data/archive/token-master-25.json` — ancienne version 50 tokens, archivée.
 
 ---
 
@@ -14,23 +16,29 @@ C'est le **seul fichier lu au runtime** et par le seed. Toutes les autres source
 
 ```
 data/sources/MCG_Set1_Edition1_v3.csv    ─┐
-data/sources/mcg_base_cards.json         ─┤─→ scripts/build-token-master-50.mjs  ─→  data/token-master-50.json
-data/sources/mcg_projects.json           ─┤                                               │
-data/sources/mcg_card_variants.json      ─┘                                               │
+data/sources/mcg_base_cards.json         ─┤─→ scripts/build-token-master-50.mjs  ─→  data/archive/token-master-25.json (archivé)
+data/sources/mcg_projects.json           ─┤
+data/sources/mcg_card_variants.json      ─┘
+                                                                                           │
+                                                                              scripts/build-token-master-25.mjs
+                                                                                           │
+                                                                                           ▼
+                                                                              data/token-master-25.json (source de vérité — 25 tokens MVP Genesis)
+                                                                                           │
                                                                                            ▼
                                                                           prisma/seed-mvp-controlled-emission.mjs
                                                                                            │
                                                                                            ▼
                                                                               DB: TokenProject.coingeckoId
                                                                               DB: CardTemplate.metadata.tokenIdentity.coingeckoId
-                                                                              DB: CardTemplate (5 rarities × 5 editions × 50 tokens = 1250 rows)
+                                                                              DB: CardTemplate (5 rarities × 5 editions × 25 tokens = 625 rows)
 
 data/sources/MCG_Set1_Edition1_v3.csv  ─┐
 data/sources/mcg_base_cards.json       ─┤─→ scripts/build-mcg-cards-master.mjs ─→  data/mcg-cards-master.json
-data/sources/mcg_projects.json         ─┤   (also reads data/token-master-50.json)      (build artifact, not used at runtime)
+data/sources/mcg_projects.json         ─┤   (also reads data/token-master-25.json)      (build artifact, not used at runtime)
 data/sources/mcg_card_variants.json    ─┘
 
-lib/domain/cards/token-master.ts  ←── data/token-master-50.json  (runtime, cached in-process)
+lib/domain/cards/token-master.ts  ←── data/token-master-25.json  (runtime, cached in-process)
 ```
 
 **Déclenchement du seed :** automatique à chaque deploy via `vercel-build`:
@@ -45,7 +53,7 @@ où `bootstrap:mvp:cloud:deploy` = `seed:mvp:controlled-emission` + `check:mvp:b
 
 | Fichier | Rôle | Utilisé par |
 |---------|------|-------------|
-| `data/token-master-50.json` | Source de vérité runtime — 50 tokens avec tous leurs champs | `prisma/seed-mvp-controlled-emission.mjs`, `lib/domain/cards/token-master.ts` (runtime), `scripts/build-mcg-cards-master.mjs` |
+| `data/token-master-25.json` | Source de vérité runtime — 25 tokens MVP Genesis avec tous leurs champs | `prisma/seed-mvp-controlled-emission.mjs`, `lib/domain/cards/token-master.ts` (runtime), `scripts/build-mcg-cards-master.mjs` |
 | `lib/domain/cards/token-master.ts` | Cache in-process du token master, expose lookup par slug/coingeckoId/symbol/tokenId | `lib/serializers.ts`, `lib/domain/acquisition/open-pack.ts`, `lib/domain/projections/collection.ts` |
 | `prisma/seed-mvp-controlled-emission.mjs` | Seed DB : upsert TokenProject + CardTemplate (1250 rows) + PackDefinition | Déclenché par `vercel-build` |
 
@@ -53,7 +61,7 @@ où `bootstrap:mvp:cloud:deploy` = `seed:mvp:controlled-emission` + `check:mvp:b
 
 ## Fichiers build-only (dans `data/sources/`)
 
-Ces fichiers sont des **inputs bruts** utilisés uniquement pour générer `data/token-master-50.json` et `data/mcg-cards-master.json`. Ils ne sont jamais lus au runtime.
+Ces fichiers sont des **inputs bruts** utilisés uniquement pour générer `data/token-master-25.json` et `data/mcg-cards-master.json`. Ils ne sont jamais lus au runtime.
 
 | Fichier | Lignes | Rôle | Champs clés apportés |
 |---------|--------|------|----------------------|
@@ -68,19 +76,19 @@ Ces fichiers sont des **inputs bruts** utilisés uniquement pour générer `data
 
 | Fichier | Généré par | Runtime ? | Notes |
 |---------|-----------|-----------|-------|
-| `data/token-master-50.json` | `scripts/build-token-master-50.mjs` | **OUI** | Source de vérité. Régénérer si les sources changent. |
+| `data/token-master-25.json` | `scripts/build-token-master-25.mjs` | **OUI** | Source de vérité MVP Genesis (25 tokens). |
+| `data/archive/token-master-25.json` | `scripts/build-token-master-50.mjs` | Non | Archivé. Ancienne version 50 tokens, conservée pour référence. |
 | `data/mcg-cards-master.json` | `scripts/build-mcg-cards-master.mjs` | Non | Consolidation éditoriale complète. Non consommé par le runtime, usage documentaire/asset pipeline. |
 
 ---
 
 ## Coverage coingeckoId
 
-**50/50 tokens ont un `coingeckoId` valide** dans `data/token-master-50.json`.
+**25/25 tokens ont un `coingeckoId` valide** dans `data/token-master-25.json`.
 
 | Stratégie de résolution | Tokens |
 |------------------------|--------|
-| `coingeckoId` (depuis CSV directement) | 49 |
-| `symbol+name` (fallback matching) | 1 |
+| `coingeckoId` (depuis CSV directement) | 25 |
 | Manquants | **0** |
 
 ### Propagation en DB
@@ -115,8 +123,8 @@ La résolution dans `eligibility-runtime.ts` → `dedupeEligibleTokens()` lit `t
 ## Commandes utiles
 
 ```bash
-# Régénérer data/token-master-50.json depuis les sources
-node scripts/build-token-master-50.mjs
+# Régénérer data/token-master-25.json depuis le master 50 archivé
+node scripts/build-token-master-25.mjs
 
 # Régénérer data/mcg-cards-master.json (consolidation éditoriale)
 node scripts/build-mcg-cards-master.mjs
@@ -211,4 +219,4 @@ Le seed (`seed-mvp-controlled-emission.mjs`) contient maintenant **3 niveaux de 
 
 1. **Niveau 1** — `tokenProject.upsert` inclut `coingeckoId` dans `create` ET `update`
 2. **Niveau 2** — Patch post-upsert depuis `cardTemplate.metadata.tokenIdentity.coingeckoId`
-3. **Niveau 3** — Patch de sécurité depuis `mvpTokens` (token-master-50.json en mémoire) pour tout slug encore null
+3. **Niveau 3** — Patch de sécurité depuis `mvpTokens` (token-master-25.json en mémoire) pour tout slug encore null

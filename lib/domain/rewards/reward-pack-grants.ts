@@ -66,7 +66,7 @@ export async function listRecentRewardPackGrantsMvp(limit = 100) {
     where: {
       type: RewardType.PACK,
       packDefinition: {
-        code: "mvp_reward_pack",
+        code: "genesis_reward_pack",
       },
     },
     select: {

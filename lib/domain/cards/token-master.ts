@@ -55,7 +55,7 @@ type TokenMasterPayload = {
   tokens: TokenMasterRow[];
 };
 
-const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-50.json");
+const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-25.json");
 
 let cachedPayload: TokenMasterPayload | null = null;
 let cachedByTokenId: Map<string, TokenMasterRow> | null = null;
@@ -85,7 +85,7 @@ function ensureLoaded() {
   }
 }
 
-export function listTokenMasterMvp50() {
+export function listTokenMasterMvp25() {
   ensureLoaded();
   return [...(cachedPayload?.tokens ?? [])];
 }

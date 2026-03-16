@@ -163,8 +163,8 @@ function createTx(state: InMemoryState) {
 function createState(overrides?: Partial<InMemoryState>): InMemoryState {
   return {
     user: { id: "u1", points: 500, packsOpened: 0 },
-    pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
-    cardSet: { id: "set1", code: "MVP_SET_V1" },
+    pack: { id: "p1", code: "genesis_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+    cardSet: { id: "set1", code: "GENESIS_SET_V1" },
     templates: [
       { id: "t1", plannedSupply: 100, issuedSupply: 0, tokenProject: { slug: "dogecoin" } },
       { id: "t2", plannedSupply: 100, issuedSupply: 0, tokenProject: { slug: "shiba-inu" } },
@@ -228,12 +228,12 @@ describe("openSalePackMvpDbNative", () => {
 
   it("throws explicit error when sale pack exists but is inactive", async () => {
     const state = createState({
-      pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+      pack: { id: "p1", code: "genesis_sale_pack", source: "SALE", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     });
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
 
     await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
-      message: "Pack mvp_sale_pack is not available: inactive pack definition",
+      message: "Pack genesis_sale_pack is not available: inactive pack definition",
       status: 503,
     });
   });
@@ -245,7 +245,7 @@ describe("openSalePackMvpDbNative", () => {
     const result = await openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 });
 
     expect(result.pulledCardsMvp).toHaveLength(5);
-    expect(state.pack?.code).toBe("mvp_sale_pack");
+    expect(state.pack?.code).toBe("genesis_sale_pack");
     expect(state.pack?.isActive).toBe(true);
   });
 
@@ -265,7 +265,7 @@ describe("openSalePackMvpDbNative", () => {
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
 
     await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
-      message: "Pack mvp_sale_pack is not available: no active template supply remaining (cloud bootstrap missing or exhausted)",
+      message: "Pack genesis_sale_pack is not available: no active template supply remaining (cloud bootstrap missing or exhausted)",
       status: 503,
     });
   });
@@ -273,7 +273,7 @@ describe("openSalePackMvpDbNative", () => {
   it("keeps supply and pack invariants under parallel opens", async () => {
     const state = createState({
       user: { id: "u1", points: 1000, packsOpened: 0 },
-      pack: { id: "p1", code: "mvp_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 2, openedPackCount: 0 },
+      pack: { id: "p1", code: "genesis_sale_pack", source: "SALE", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 2, openedPackCount: 0 },
       templates: [{ id: "t1", plannedSupply: 10, issuedSupply: 0, tokenProject: { slug: "dogecoin" } }],
     });
 
@@ -309,7 +309,7 @@ describe("grantRewardPackMvpDbNative", () => {
 
   it("grants and opens reward pack while consuming reward stock", async () => {
     const state = createState({
-      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+      pack: { id: "pr1", code: "genesis_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     });
 
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
@@ -326,7 +326,7 @@ describe("grantRewardPackMvpDbNative", () => {
 
   it("supports GRANT_ONLY reward delivery and still consumes reward stock", async () => {
     const state = createState({
-      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+      pack: { id: "pr1", code: "genesis_reward_pack", source: "REWARD", isActive: true, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     });
 
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
@@ -342,7 +342,7 @@ describe("grantRewardPackMvpDbNative", () => {
 
   it("fails on inactive reward pack", async () => {
     const state = createState({
-      pack: { id: "pr1", code: "mvp_reward_pack", source: "REWARD", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
+      pack: { id: "pr1", code: "genesis_reward_pack", source: "REWARD", isActive: false, cardSetId: "set1", cardsPerPack: 5, plannedPackCount: 10, openedPackCount: 0 },
     });
 
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));

@@ -41,7 +41,7 @@ describe("/api/internal/rewards/pack-grant", () => {
     requireInternalAdminAccessMock.mockReturnValue({ ok: true, mode: "session" });
     grantRewardPackMvpMock.mockResolvedValue({
       mode: "GRANT_AND_OPEN",
-      packCode: "mvp_reward_pack",
+      packCode: "genesis_reward_pack",
       rewardGrantId: "rg_1",
       openingEventId: "evt_1",
       pulledCardsMvp: [{ templateId: "tpl_1" }],
@@ -68,7 +68,7 @@ describe("/api/internal/rewards/pack-grant", () => {
         id: "rg_1",
         userId: "u1",
         user: { id: "u1", displayName: "A", xUsername: "a" },
-        packDefinition: { id: "p1", code: "mvp_reward_pack", displayName: "MCG MVP Reward Pack", source: "REWARD" },
+        packDefinition: { id: "p1", code: "genesis_reward_pack", displayName: "MCG Genesis Reward Pack", source: "REWARD" },
         sourcePackOpeningEvent: { id: "evt_1", openedAt: new Date("2026-03-01T10:00:00.000Z") },
         createdAt: new Date("2026-03-01T10:00:00.000Z"),
       },

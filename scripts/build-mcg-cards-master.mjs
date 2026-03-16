@@ -2,7 +2,7 @@
  * build-mcg-cards-master.mjs
  *
  * Consolidates all 4 source files into a single flat data/mcg-cards-master.json
- * with one entry per token (50 entries).
+ * with one entry per token (25 entries).
  *
  * Sources:
  *   MCG_Set1_Edition1_v3.csv        → editorial / art fields
@@ -20,7 +20,7 @@ const CSV_PATH      = path.join(SOURCES_DIR, 'MCG_Set1_Edition1_v3.csv');
 const BASE_PATH     = path.join(SOURCES_DIR, 'mcg_base_cards.json');
 const PROJECTS_PATH = path.join(SOURCES_DIR, 'mcg_projects.json');
 const VARIANTS_PATH = path.join(SOURCES_DIR, 'mcg_card_variants.json');
-const TOKEN_MASTER  = path.join(ROOT, 'data', 'token-master-50.json');
+const TOKEN_MASTER  = path.join(ROOT, 'data', 'token-master-25.json');
 const OUTPUT_PATH   = path.join(ROOT, 'data', 'mcg-cards-master.json');
 
 // ---------------------------------------------------------------------------
@@ -84,7 +84,7 @@ function main() {
   const projects  = JSON.parse(readFileSync(PROJECTS_PATH, 'utf8'));
   const variants  = JSON.parse(readFileSync(VARIANTS_PATH, 'utf8'));
 
-  // Load already-resolved token-master-50.json so we reuse its coingeckoId→base
+  // Load already-resolved token-master-25.json so we reuse its coingeckoId→base
   // mapping (which handles excluded tokens + replacements)
   const tokenMaster = JSON.parse(readFileSync(TOKEN_MASTER, 'utf8'));
   const masterTokens = tokenMaster.tokens;
@@ -165,10 +165,10 @@ function main() {
       projectTier:       base?.projectTier  ? 'mcg_base_cards.json' : 'unresolved',
       projectId:         base?.projectId    ? 'mcg_base_cards.json' : (proj?.projectId    ? 'mcg_projects.json' : 'unresolved'),
       baseCardId:        base?.baseCardId   ? 'mcg_base_cards.json' : 'unresolved',
-      cardNumber:        csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-50.json (auto-filled)',
-      cardTitle:         csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-50.json (auto-filled)',
-      cardSubtitle:      csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-50.json (auto-filled)',
-      flavorText:        csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-50.json (auto-filled)',
+      cardNumber:        csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-25.json (auto-filled)',
+      cardTitle:         csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-25.json (auto-filled)',
+      cardSubtitle:      csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-25.json (auto-filled)',
+      flavorText:        csv ? 'MCG_Set1_Edition1_v3.csv' : 'token-master-25.json (auto-filled)',
       heroArtworkPrompt: csv?.heroArtworkPrompt ? 'MCG_Set1_Edition1_v3.csv' : 'unresolved',
       visualIdentityCore: csv?.visualIdentityCore && csv.visualIdentityCore !== 'AUTO_FILLED_FROM_LEGACY_SOURCE' ? 'MCG_Set1_Edition1_v3.csv' : 'unresolved',
       colorCues:         csv?.colorCues && csv.colorCues !== 'AUTO_FILLED_FROM_LEGACY_SOURCE' ? 'MCG_Set1_Edition1_v3.csv' : 'unresolved',
@@ -288,13 +288,13 @@ function main() {
   const payload = {
     version:      1,
     generatedAt:  new Date().toISOString(),
-    description:  'Consolidated master card data — one flat entry per token (50 tokens). Merges MCG_Set1_Edition1_v3.csv + mcg_base_cards.json + mcg_projects.json + mcg_card_variants.json.',
+    description:  'Consolidated master card data — one flat entry per token (25 tokens). Merges MCG_Set1_Edition1_v3.csv + mcg_base_cards.json + mcg_projects.json + mcg_card_variants.json.',
     inputSources: {
       csv:          'MCG_Set1_Edition1_v3.csv',
       baseCards:    'mcg_base_cards.json',
       projects:     'mcg_projects.json',
       variants:     'mcg_card_variants.json',
-      tokenMaster:  'data/token-master-50.json',
+      tokenMaster:  'data/token-master-25.json',
     },
     report,
     cards,
