@@ -21,7 +21,7 @@ function getEmptyByTab(tab: ContestHubTab) {
   if (tab === "OPEN") {
     return {
       title: "No open contests right now",
-      description: "Check back soon — new competitions are prepared regularly.",
+      description: "Check back soon — new contests are prepared regularly.",
     };
   }
   if (tab === "IN_PROGRESS") {

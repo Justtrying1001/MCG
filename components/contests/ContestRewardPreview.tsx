@@ -11,7 +11,7 @@ export function ContestRewardPreview({
   entries: number;
   tiers?: RewardTier[] | null;
 }) {
-  const tier = entries >= 100 ? "High competition" : entries >= 30 ? "Mid competition" : "Early field";
+  const tier = entries >= 100 ? "High contest activity" : entries >= 30 ? "Medium contest activity" : "Early field";
 
   if (tiers && tiers.length > 0) {
     return (

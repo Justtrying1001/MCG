@@ -502,7 +502,7 @@ function PipelineRow({
           className="contest-inline-note"
           style={{ background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}
         >
-          {expanded ? "hide detail" : "voir détail"}
+          {expanded ? "Hide details" : "Show details"}
         </button>
       ) : null}
     </div>
