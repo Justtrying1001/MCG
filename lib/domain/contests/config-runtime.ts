@@ -255,7 +255,7 @@ export async function validateContestDraft(contestId: string) {
         code: "REWARD_PACK_POOL_MISSING",
         severity: "ERROR",
         field: `rewardPacks.${row.packCode ?? row.packDefinitionId}`,
-        message: `Reward pool missing for ${row.packCode ?? row.packDefinitionId}`,
+        message: `Reward pool missing for ${row.packCode ?? row.packDefinitionId} (expected rewardPackSupply.id=${row.packCode ?? "<pack_code>"}; run reward-pool bootstrap/backfill).`,
       });
       continue;
     }

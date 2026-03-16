@@ -279,7 +279,7 @@ async function run() {
   }
 
   for (const pack of MVP_PACKS) {
-    await prisma.packDefinition.upsert({
+    const definition = await prisma.packDefinition.upsert({
       where: { code: pack.code },
       update: {
         displayName: pack.displayName,
@@ -298,7 +298,30 @@ async function run() {
         cardsPerPack: CARDS_PER_PACK,
         isActive: true,
       },
+      select: { id: true, code: true, source: true, plannedPackCount: true },
     });
+
+    if (definition.source === "REWARD") {
+      const attributed = await prisma.rewardGrant.count({
+        where: {
+          type: "PACK",
+          packDefinitionId: definition.id,
+        },
+      });
+
+      await prisma.rewardPackSupply.upsert({
+        where: { id: definition.code },
+        update: {
+          totalSupply: Math.max(definition.plannedPackCount, 0),
+          distributed: Math.min(attributed, Math.max(definition.plannedPackCount, 0)),
+        },
+        create: {
+          id: definition.code,
+          totalSupply: Math.max(definition.plannedPackCount, 0),
+          distributed: Math.min(attributed, Math.max(definition.plannedPackCount, 0)),
+        },
+      });
+    }
   }
 
   console.log("MVP controlled-emission bootstrap completed.");
