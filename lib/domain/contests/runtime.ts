@@ -11,6 +11,7 @@ import {
 import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
+import { hasDuplicateLogicalTokens } from "@/lib/domain/contests/lineup-token";
 
 const DEFAULT_LINEUP_SIZE = 5;
 const TEAM_SIZE_MODE_EXACT = "EXACT";
@@ -237,7 +238,11 @@ export async function enterContestMvp(params: {
         id: { in: lineupInstanceIds },
         userId: params.userId,
       },
-      select: { id: true, cardTemplateId: true },
+      select: {
+        id: true,
+        cardTemplateId: true,
+        cardTemplate: { select: { tokenProjectId: true } },
+      },
     });
 
     if (ownedInstances.length !== lineupInstanceIds.length) {
@@ -245,6 +250,13 @@ export async function enterContestMvp(params: {
         "One or more lineup card instances are not owned by the user (ownership truth: OwnedCardInstance)",
         400
       );
+    }
+
+    if (hasDuplicateLogicalTokens(ownedInstances.map((instance) => ({
+      tokenProjectId: instance.cardTemplate.tokenProjectId,
+      cardTemplateId: instance.cardTemplateId,
+    })))) {
+      throw new ContestRuntimeError("Lineup cannot contain the same token twice", 400);
     }
 
     const effectiveEligibilityMode = rule?.eligibilityMode ?? "ANY";
