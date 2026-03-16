@@ -196,7 +196,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     const hasSlots = lineupSlots.some(Boolean);
     if (hasSlots) return;
 
-    const fallbackLineupIds = scoreBreakdown.map((row) => row.cardInstance.id);
+    const fallbackLineupIds = scoreBreakdown
+      .map((row) => row.cardInstance.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
     setLineupSlots(toSlots(fallbackLineupIds, rosterSize));
   }, [contestData?.status, detail?.userEntry, lineupSlots, rosterSize, scoreBreakdown]);
 
