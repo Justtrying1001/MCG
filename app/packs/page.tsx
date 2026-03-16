@@ -39,6 +39,18 @@ type PackConfigPayload = {
 type RewardPackGrant = {
   id: string;
   createdAt: string;
+  sourceContestSettlementId: string | null;
+  sourcePackOpeningEventId: string | null;
+  sourceContestSettlement?: {
+    contest?: {
+      title: string;
+    } | null;
+  } | null;
+  sourcePackOpeningEvent?: {
+    packDefinition?: {
+      displayName: string;
+    } | null;
+  } | null;
   packDefinition: {
     code: string;
     displayName: string;
@@ -285,6 +297,50 @@ export default function PacksPage() {
     return editionRows.map((r) => ({ label: r.label, pct: r.rate }));
   }, [editionRows]);
 
+  const groupedRewardGrants = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        key: string;
+        displayName: string;
+        description: string | null;
+        grants: RewardPackGrant[];
+        sourceLabel: string;
+      }
+    >();
+
+    const sourceLabelForGrant = (grant: RewardPackGrant) => {
+      if (grant.sourceContestSettlement?.contest?.title) {
+        return `Contest reward · ${grant.sourceContestSettlement.contest.title}`;
+      }
+      if (grant.sourcePackOpeningEvent?.packDefinition?.displayName) {
+        return `Pack bonus · ${grant.sourcePackOpeningEvent.packDefinition.displayName}`;
+      }
+      return "Earned reward pack";
+    };
+
+    for (const grant of rewardGrants) {
+      const sourceLabel = sourceLabelForGrant(grant);
+      const key = `${grant.packDefinition.code}::${sourceLabel}`;
+      const existing = grouped.get(key);
+
+      if (existing) {
+        existing.grants.push(grant);
+        continue;
+      }
+
+      grouped.set(key, {
+        key,
+        displayName: grant.packDefinition.displayName,
+        description: grant.packDefinition.description ?? null,
+        grants: [grant],
+        sourceLabel,
+      });
+    }
+
+    return Array.from(grouped.values());
+  }, [rewardGrants]);
+
   return (
     <SiteShell>
       {!me ? (
@@ -317,42 +373,60 @@ export default function PacksPage() {
       />
 
       {me ? (
-        <section className="mcg-surface" style={{ display: "grid", gap: "0.8rem" }}>
-          <h2 style={{ margin: 0 }}>Your reward packs</h2>
-          <p className="mcg-muted" style={{ margin: 0 }}>Open the packs you won in contests or quests.</p>
+        <section className="reward-packs-section">
+          <div className="reward-packs-header">
+            <p className="reward-packs-kicker">Reward inventory</p>
+            <h2>Reward Packs</h2>
+            <p className="reward-packs-intro">
+              Packs earned from contests, quests, and future rewards. Open your earned packs here.
+            </p>
+          </div>
 
-          {loadingRewardGrants ? <p className="mcg-muted" style={{ margin: 0 }}>Loading reward packs…</p> : null}
+          {loadingRewardGrants ? <p className="reward-packs-status">Loading reward packs…</p> : null}
 
-          {!loadingRewardGrants && rewardGrants.length === 0 ? (
-            <p className="mcg-muted" style={{ margin: 0 }}>You have no reward packs to open right now.</p>
+          {!loadingRewardGrants && groupedRewardGrants.length === 0 ? (
+            <p className="reward-packs-status">No reward packs yet. Win events and complete quests to build your inventory.</p>
           ) : null}
 
-          {rewardGrants.map((grant) => (
-            <article
-              key={grant.id}
-              className="mcg-surface-raised"
-              style={{
-                padding: "1rem",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0 }}>{grant.packDefinition.displayName}</h3>
-                <p className="mcg-muted" style={{ margin: "0.35rem 0 0" }}>
-                  {grant.packDefinition.description ?? "Reward pack won from a contest."}
-                </p>
-              </div>
-              <Button
-                disabled={isOpening || openingRewardGrantId === grant.id || openingPhase === "tearing"}
-                onClick={() => void openRewardPack(grant.id)}
-              >
-                {openingRewardGrantId === grant.id ? "Opening…" : "Open"}
-              </Button>
-            </article>
-          ))}
+          {!loadingRewardGrants && groupedRewardGrants.length > 0 ? (
+            <div className="reward-pack-grid">
+              {groupedRewardGrants.map((group) => {
+                const quantity = group.grants.length;
+                const nextGrantId = group.grants[0]?.id;
+                const isOpeningThisGroup = Boolean(
+                  openingRewardGrantId && group.grants.some((grant) => grant.id === openingRewardGrantId),
+                );
+
+                return (
+                  <article key={group.key} className="reward-pack-card">
+                    <div className="reward-pack-art-wrap">
+                      <Image src={officialPackImage} alt={`${group.displayName} pack`} className="reward-pack-art" />
+                      {quantity > 1 ? <span className="reward-pack-quantity">x{quantity}</span> : null}
+                    </div>
+
+                    <div className="reward-pack-body">
+                      <p className="reward-pack-source">{group.sourceLabel}</p>
+                      <h3>{group.displayName}</h3>
+                      <p className="reward-pack-copy">
+                        {group.description ?? "Special pack awarded for your progress in MCG."}
+                      </p>
+                    </div>
+
+                    <Button
+                      className="reward-pack-open"
+                      disabled={isOpening || !nextGrantId || isOpeningThisGroup || openingPhase === "tearing"}
+                      onClick={() => {
+                        if (!nextGrantId) return;
+                        void openRewardPack(nextGrantId);
+                      }}
+                    >
+                      {isOpeningThisGroup ? "Opening…" : "Open reward pack"}
+                    </Button>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
