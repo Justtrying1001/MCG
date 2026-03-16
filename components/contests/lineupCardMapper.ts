@@ -2,6 +2,8 @@ import type { LineupOption } from "@/components/contests/types";
 import type { MvpCardView } from "@/types/cards";
 
 export function toMvpCardView(option: LineupOption): MvpCardView {
+  if (option.cardView) return option.cardView;
+  // Fallback for cases where the API didn't return enriched data
   return {
     templateId: option.cardTemplateId,
     tokenId: option.cardTemplateId,
