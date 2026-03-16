@@ -352,6 +352,7 @@ model PackDefinition {
   packOpeningEvents PackOpeningEvent[]
   rewardGrants      RewardGrant[]
   contestRewardComponents ContestRewardComponent[]
+  questRewards      QuestDefinition[]  @relation("QuestPackReward")
 
   @@index([cardSetId])
 }
@@ -448,23 +449,28 @@ model RewardLedgerEntry {
 }
 
 model QuestDefinition {
-  id             String              @id @default(cuid())
-  code           String              @unique
-  type           QuestType
-  title          String
-  description    String?
-  rewardPoints   Int                 @default(0)
-  validationMode QuestValidationMode
-  oneTime        Boolean             @default(true)
-  isActive       Boolean             @default(true)
-  startAt        DateTime?
-  endAt          DateTime?
-  config         Json?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  id                      String              @id @default(cuid())
+  code                    String              @unique
+  type                    QuestType
+  title                   String
+  description             String?
+  rewardPoints            Int                 @default(0)
+  rewardPackDefinitionId  String?
+  rewardPackQuantity      Int                 @default(1)
+  validationMode          QuestValidationMode
+  oneTime                 Boolean             @default(true)
+  isActive                Boolean             @default(true)
+  startAt                 DateTime?
+  endAt                   DateTime?
+  config                  Json?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
 
-  userProgressions UserQuestProgress[]
-  submissions      QuestSubmission[]
+  rewardPackDefinition PackDefinition?      @relation("QuestPackReward", fields: [rewardPackDefinitionId], references: [id], onDelete: SetNull)
+  userProgressions     UserQuestProgress[]
+  submissions          QuestSubmission[]
+
+  @@index([rewardPackDefinitionId])
 }
 
 model UserQuestProgress {

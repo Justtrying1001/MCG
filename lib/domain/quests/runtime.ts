@@ -12,6 +12,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { creditPointsWithLedger } from "@/lib/domain/rewards/ledger";
+import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 import type { MilestoneType } from "@/lib/domain/quests/social";
 
 export class QuestRuntimeError extends Error {
@@ -112,6 +113,8 @@ export type QuestForUserRow = {
   title: string;
   description: string | null;
   rewardPoints: number;
+  rewardPackCode: string | null;
+  rewardPackQuantity: number | null;
   validationMode: QuestValidationMode;
   oneTime: boolean;
   isActive: boolean;
@@ -437,6 +440,16 @@ async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient
         },
       });
     }
+
+    if (reached && quest.rewardPackDefinitionId) {
+      const qty = Math.max(quest.rewardPackQuantity ?? 1, 1);
+      for (let i = 0; i < qty; i++) {
+        await grantRewardPackByDefinitionTx(tx, {
+          userId,
+          packDefinitionId: quest.rewardPackDefinitionId,
+        });
+      }
+    }
   }
 }
 
@@ -577,6 +590,16 @@ export async function submitSocialQuestMvp(params: {
         });
       }
 
+      if (quest.rewardPackDefinitionId) {
+        const qty = Math.max(quest.rewardPackQuantity ?? 1, 1);
+        for (let i = 0; i < qty; i++) {
+          await grantRewardPackByDefinitionTx(tx, {
+            userId: params.userId,
+            packDefinitionId: quest.rewardPackDefinitionId,
+          });
+        }
+      }
+
       return approved;
     }
 
@@ -686,6 +709,16 @@ export async function reviewQuestSubmissionMvp(params: {
           },
         });
       }
+
+      if (submission.quest.rewardPackDefinitionId) {
+        const qty = Math.max(submission.quest.rewardPackQuantity ?? 1, 1);
+        for (let i = 0; i < qty; i++) {
+          await grantRewardPackByDefinitionTx(tx, {
+            userId: submission.userId,
+            packDefinitionId: submission.quest.rewardPackDefinitionId,
+          });
+        }
+      }
     } else if (progress && progress.status !== UserQuestStatus.COMPLETED) {
       await tx.userQuestProgress.update({
         where: { id: progress.id },
@@ -723,6 +756,9 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
       where: { isActive: true },
       orderBy: [{ createdAt: "desc" }],
       take: 200,
+      include: {
+        rewardPackDefinition: { select: { code: true } },
+      },
     }),
     prisma.userQuestProgress.findMany({
       where: { userId },
@@ -760,6 +796,8 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
         title: quest.title,
         description: quest.description,
         rewardPoints: quest.rewardPoints,
+        rewardPackCode: quest.rewardPackDefinition?.code ?? null,
+        rewardPackQuantity: quest.rewardPackDefinitionId ? Math.max(quest.rewardPackQuantity ?? 1, 1) : null,
         validationMode: quest.validationMode,
         oneTime: quest.oneTime,
         isActive: quest.isActive,
@@ -874,6 +912,8 @@ export async function createQuestDefinitionMvp(input: {
   title?: unknown;
   description?: unknown;
   rewardPoints?: unknown;
+  rewardPackDefinitionId?: unknown;
+  rewardPackQuantity?: unknown;
   validationMode?: unknown;
   oneTime?: unknown;
   isActive?: unknown;
@@ -897,6 +937,8 @@ export async function createQuestDefinitionMvp(input: {
     : QuestValidationMode.MANUAL_REVIEW;
 
   const rewardPoints = normalizeRewardPoints(input.rewardPoints ?? 0);
+  const rewardPackDefinitionId = input.rewardPackDefinitionId ? String(input.rewardPackDefinitionId).trim() || null : null;
+  const rewardPackQuantity = Math.max(Number.isInteger(Number(input.rewardPackQuantity)) ? Number(input.rewardPackQuantity) : 1, 1);
   const oneTime = input.oneTime === undefined ? true : Boolean(input.oneTime);
   const isActive = input.isActive === undefined ? true : Boolean(input.isActive);
 
@@ -916,6 +958,8 @@ export async function createQuestDefinitionMvp(input: {
       title,
       description: input.description ? String(input.description) : null,
       rewardPoints,
+      rewardPackDefinitionId,
+      rewardPackQuantity,
       validationMode,
       oneTime,
       isActive,
@@ -934,6 +978,8 @@ export async function updateQuestDefinitionMvp(
     title?: unknown;
     description?: unknown;
     rewardPoints?: unknown;
+    rewardPackDefinitionId?: unknown;
+    rewardPackQuantity?: unknown;
     validationMode?: unknown;
     oneTime?: unknown;
     isActive?: unknown;
@@ -977,6 +1023,13 @@ export async function updateQuestDefinitionMvp(
 
   const config = normalizeQuestConfig(nextType, input.config, false);
 
+  const rewardPackDefinitionId = input.rewardPackDefinitionId !== undefined
+    ? (input.rewardPackDefinitionId ? String(input.rewardPackDefinitionId).trim() || null : null)
+    : undefined;
+  const rewardPackQuantity = input.rewardPackQuantity !== undefined
+    ? Math.max(Number.isInteger(Number(input.rewardPackQuantity)) ? Number(input.rewardPackQuantity) : 1, 1)
+    : undefined;
+
   return prisma.questDefinition.update({
     where: { id: questId },
     data: {
@@ -985,6 +1038,8 @@ export async function updateQuestDefinitionMvp(
       title: input.title !== undefined ? String(input.title).trim() : undefined,
       description: input.description !== undefined ? (input.description ? String(input.description) : null) : undefined,
       rewardPoints: input.rewardPoints !== undefined ? normalizeRewardPoints(input.rewardPoints) : undefined,
+      rewardPackDefinitionId,
+      rewardPackQuantity,
       validationMode: nextValidationMode,
       oneTime: input.oneTime !== undefined ? Boolean(input.oneTime) : undefined,
       isActive: input.isActive !== undefined ? Boolean(input.isActive) : undefined,

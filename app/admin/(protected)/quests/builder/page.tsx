@@ -44,9 +44,13 @@ export default function QuestBuilderPage() {
   const [instructions, setInstructions] = useState("");
   const [proofRequired, setProofRequired] = useState(true);
   const [rewardPoints, setRewardPoints] = useState("100");
+  const [rewardPackDefinitionId, setRewardPackDefinitionId] = useState("");
+  const [rewardPackQuantity, setRewardPackQuantity] = useState("1");
   const [validationMode, setValidationMode] = useState<"AUTO" | "SUBMIT" | "MANUAL_REVIEW">("MANUAL_REVIEW");
   const [isActive, setIsActive] = useState(true);
   const [oneTime, setOneTime] = useState(true);
+
+  const [packDefinitions, setPackDefinitions] = useState<Array<{ id: string; code: string; plannedPackCount: number }>>([]);
 
   const [issues, setIssues] = useState<Array<{ field: string; severity: "ERROR" | "WARN"; message: string }>>([]);
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
@@ -90,10 +94,24 @@ export default function QuestBuilderPage() {
       if (typeof config.milestoneType === "string") setMilestoneType(config.milestoneType as MilestoneType);
       if (typeof config.targetValue === "number") setTargetValue(String(config.targetValue));
       if (typeof config.threshold === "number" && !(typeof config.targetValue === "number")) setTargetValue(String(config.threshold));
+      if (typeof quest.rewardPackDefinitionId === "string" && quest.rewardPackDefinitionId) setRewardPackDefinitionId(quest.rewardPackDefinitionId);
+      if (typeof quest.rewardPackQuantity === "number") setRewardPackQuantity(String(quest.rewardPackQuantity));
       setLoading(false);
     };
     void load();
   }, [questId]);
+
+  useEffect(() => {
+    const loadPacks = async () => {
+      const response = await fetch("/api/internal/pack-definitions", { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = await response.json() as { ok: boolean; packDefinitions?: Array<{ id: string; code: string; plannedPackCount: number }> };
+      if (payload.ok && Array.isArray(payload.packDefinitions)) {
+        setPackDefinitions(payload.packDefinitions);
+      }
+    };
+    void loadPacks();
+  }, []);
 
   const builderInput = useMemo(() => ({
     code,
@@ -108,10 +126,12 @@ export default function QuestBuilderPage() {
     instructions,
     proofRequired,
     rewardPoints: Number(rewardPoints),
+    rewardPackDefinitionId: rewardPackDefinitionId || null,
+    rewardPackQuantity: Number(rewardPackQuantity) || 1,
     validationMode,
     isActive,
     oneTime,
-  }), [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, validationMode, isActive, oneTime]);
+  }), [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, rewardPackDefinitionId, rewardPackQuantity, validationMode, isActive, oneTime]);
 
   const runValidate = async () => {
     setMessage("");
@@ -274,6 +294,15 @@ export default function QuestBuilderPage() {
               <h3 className="contest-section-title">3. Reward & Policy</h3>
               <div className="admin-field-grid">
                 <input className="input" type="number" min={0} placeholder="Reward points" value={rewardPoints} onChange={(event) => setRewardPoints(event.target.value)} />
+                <select className="input" value={rewardPackDefinitionId} onChange={(event) => setRewardPackDefinitionId(event.target.value)}>
+                  <option value="">Reward pack (optional)</option>
+                  {packDefinitions.map((pack) => (
+                    <option key={pack.id} value={pack.id}>{pack.code} ({pack.plannedPackCount} supply)</option>
+                  ))}
+                </select>
+                {rewardPackDefinitionId ? (
+                  <input className="input" type="number" min={1} placeholder="Pack quantity" value={rewardPackQuantity} onChange={(event) => setRewardPackQuantity(event.target.value)} />
+                ) : null}
                 <select className="input" value={validationMode} onChange={(event) => setValidationMode(event.target.value as "AUTO" | "SUBMIT" | "MANUAL_REVIEW")}>
                   <option value="AUTO">AUTO</option>
                   <option value="SUBMIT">SUBMIT</option>

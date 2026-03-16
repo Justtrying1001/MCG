@@ -29,7 +29,10 @@ type RewardPoolRow = {
 export async function getPackSupplySummary() {
   const [saleDefinitions, rewardDefinitions, attributedRows, claimedRows, trackedPools] = await Promise.all([
     prisma.packDefinition.findMany({
-      where: { source: PackSource.SALE },
+      where: {
+        source: PackSource.SALE,
+        OR: [{ isActive: true }, { plannedPackCount: { gt: 0 } }],
+      },
       orderBy: [{ code: "asc" }],
       select: {
         id: true,
@@ -41,7 +44,10 @@ export async function getPackSupplySummary() {
       },
     }),
     prisma.packDefinition.findMany({
-      where: { source: PackSource.REWARD },
+      where: {
+        source: PackSource.REWARD,
+        OR: [{ isActive: true }, { plannedPackCount: { gt: 0 } }],
+      },
       orderBy: [{ code: "asc" }],
       select: {
         id: true,
