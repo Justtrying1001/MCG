@@ -1,30 +1,23 @@
 # data/sources — Raw source files
 
-Ces fichiers sont les **sources brutes** utilisées pour générer `data/archive/token-master-50.json` (archivé) et indirectement `data/token-master-25.json` (source de vérité active).
+Ces fichiers sont les **sources brutes** du pipeline Genesis 25 tokens.
 
-**Ne pas modifier manuellement.** Pour mettre à jour les tokens, modifier ces fichiers, relancer le build 50 puis le filtre 25 :
+Le workflow officiel :
 
 ```bash
-node scripts/build-token-master-50.mjs   # → data/archive/token-master-50.json
 node scripts/build-token-master-25.mjs   # → data/token-master-25.json
-```
-
-Pour régénérer également le master éditorial complet (cartes + variants) :
-
-```bash
-node scripts/build-mcg-cards-master.mjs
+node scripts/build-mcg-cards-master.mjs  # → data/mcg-cards-master.json
 ```
 
 ## Fichiers
 
-| Fichier | Rôle | Champs apportés |
-|---------|------|-----------------|
-| `MCG_Set1_Edition1_v3.csv` | CSV éditorial original (50 tokens, dont 25 retenus) | `coingeckoId`, `cardTitle`, `cardSubtitle`, `flavorText`, `heroArtworkPrompt`, champs visuels/art |
-| `mcg_base_cards.json` | Référentiel base cards — données techniques | `slug`, `imageUrl`, `projectId`, `baseCardId`, `primaryChain`, `faction`, `marketCapRank`, `projectTier` |
-| `mcg_projects.json` | Fallback pour les champs manquants dans mcg_base_cards | Mêmes champs, priorité secondaire |
-| `mcg_card_variants.json` | Définitions des variants de cartes | `variantType`, `frameStyle`, `isDefaultVariant` |
+| Fichier | Rôle | Champs principaux |
+|---------|------|-------------------|
+| `MCG_Set1_Edition1_v3.csv` | Source éditoriale principale | `coingeckoId`, `cardTitle`, `cardSubtitle`, `flavorText`, `heroArtworkPrompt`, champs visuels |
+| `mcg_base_cards.json` | Référentiel de métadonnées cartes | `slug`, `image`, `projectId`, `baseCardId`, `primaryChain`, `faction`, `marketCapRank`, `projectTier` |
+| `mcg_projects.json` | Fallback projet quand `base_cards` est incomplet | `slug`, `image`, `projectId`, `primaryChain`, `marketCapRank` |
+| `mcg_card_variants.json` | Pont vers variants historiques | `variantType`, `frameStyle`, `isDefaultVariant` |
 
-## Ces fichiers ne sont PAS lus au runtime
+## Runtime
 
-Le runtime lit uniquement `data/token-master-25.json` (via `lib/domain/cards/token-master.ts`).
-Le seed lit uniquement `data/token-master-25.json` (via `prisma/seed-mvp-controlled-emission.mjs`).
+Le runtime et le seed lisent **uniquement** `data/token-master-25.json`.

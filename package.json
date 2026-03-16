@@ -17,13 +17,14 @@
     "seed:mvp:controlled-emission": "node prisma/seed-mvp-controlled-emission.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:token-master-50": "node scripts/build-token-master-50.mjs",
     "check:mvp:bootstrap": "node prisma/check-mvp-bootstrap.mjs",
     "bootstrap:mvp:cloud": "npm run seed:mvp:controlled-emission && npm run check:mvp:bootstrap",
     "check:mvp:bootstrap:allow-exhausted": "node prisma/check-mvp-bootstrap.mjs --allow-exhausted",
     "bootstrap:mvp:cloud:deploy": "npm run seed:mvp:controlled-emission && npm run check:mvp:bootstrap:allow-exhausted",
     "seed:milestone:rewards": "node prisma/seed-milestone-rewards.mjs",
-    "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs"
+    "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs",
+    "build:token-master-25": "node scripts/build-token-master-25.mjs",
+    "build:mcg-cards-master": "node scripts/build-mcg-cards-master.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
