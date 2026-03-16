@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
+import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,20 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)
       .map((instance) => {
         const lockedInContestId = activeLockByInstance.get(instance.id);
+        const token = instance.cardTemplate.tokenProject?.slug
+          ? findTokenMasterBySlug(instance.cardTemplate.tokenProject.slug)
+          : null;
+        const cardView = token
+          ? toMvpCardViewFromTokenMasterRow({
+              token,
+              templateId: instance.cardTemplateId,
+              rarityCode: instance.cardTemplate.rarity.code,
+              editionCode: instance.cardTemplate.edition.code,
+              plannedSupply: instance.cardTemplate.plannedSupply,
+              issuedSupply: instance.cardTemplate.issuedSupply,
+              instanceCount: 1,
+            })
+          : null;
         return {
           instanceId: instance.id,
           cardTemplateId: instance.cardTemplateId,
@@ -68,6 +83,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           imageUrl: instance.cardTemplate.imageUrl,
           tokenProjectName: instance.cardTemplate.tokenProject?.displayName ?? "Unknown project",
           tokenProjectId: instance.cardTemplate.tokenProject?.id ?? null,
+          cardView,
         };
       });
 

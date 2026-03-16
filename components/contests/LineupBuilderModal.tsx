@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
+import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 
 type Props = {
   open: boolean;
@@ -187,35 +189,41 @@ export function LineupBuilderModal({
             const card = instanceId ? optionById.get(instanceId) : null;
             const isActive = activeSlot === i;
 
+            if (card) {
+              return (
+                <div
+                  key={i}
+                  className={`bldr-slot-mvp${isActive ? " bldr-slot-mvp-active" : ""}`}
+                  onClick={() => { setActiveSlot(i); onSelectSlot(i); }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Slot ${i + 1}: ${card.name}`}
+                >
+                  <MvpCardTile card={toMvpCardView(card)} variant="compact" interactive={false} />
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className="bldr-slot-remove-btn"
+                      onClick={(e) => { e.stopPropagation(); onRemoveSlot(i); }}
+                      aria-label={`Remove ${card.name}`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <div
                 key={i}
-                className={`bldr-slot ${card ? "bldr-slot-filled-bg" : "bldr-slot-empty"} ${isActive ? (card ? "bldr-slot-active" : "bldr-slot-active") : ""}`}
-                style={{ backgroundImage: card?.imageUrl ? `url(${card.imageUrl})` : card ? `linear-gradient(160deg, ${RARITY_COLOR[card.rarityCode] ?? "#888"}44 0%, #141420 100%)` : undefined }}
+                className={`bldr-slot bldr-slot-empty${isActive ? " bldr-slot-active" : ""}`}
                 onClick={() => { setActiveSlot(i); onSelectSlot(i); }}
                 role="button"
                 tabIndex={0}
-                aria-label={card ? `Slot ${i + 1}: ${card.name}` : `Slot ${i + 1}: empty`}
+                aria-label={`Slot ${i + 1}: empty`}
               >
-                {card ? (
-                  <>
-                    <div className="bldr-slot-inner-overlay">
-                      <span className="bldr-slot-inner-name">{card.name}</span>
-                    </div>
-                    {canEdit && (
-                      <button
-                        type="button"
-                        className="bldr-slot-remove-btn"
-                        onClick={(e) => { e.stopPropagation(); onRemoveSlot(i); }}
-                        aria-label={`Remove ${card.name}`}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <span className="bldr-slot-num">{i + 1}</span>
-                )}
+                <span className="bldr-slot-num">{i + 1}</span>
               </div>
             );
           })}
@@ -284,13 +292,11 @@ export function LineupBuilderModal({
               const isSelected = slotIndex >= 0;
               const hasNoCapacity = selectedCount >= rosterSize && !isSelected;
               const isDisabled = !canEdit || hasNoCapacity || item.isLockedByActiveContest;
-              const rarityColor = RARITY_COLOR[item.rarityCode.toUpperCase()] ?? "rgba(255,255,255,0.5)";
 
               return (
                 <div
                   key={item.instanceId}
-                  className={`bldr-card ${isSelected ? "bldr-card-selected" : ""} ${isDisabled ? "bldr-card-disabled" : ""}`}
-                  style={{ backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : `linear-gradient(160deg, ${rarityColor}44 0%, #141420 100%)` }}
+                  className={`bldr-card-mvp${isSelected ? " bldr-card-selected" : ""}${isDisabled ? " bldr-card-disabled" : ""}`}
                   onClick={() => {
                     if (isDisabled) return;
                     onSelectCard(item.instanceId, activeSlot);
@@ -300,32 +306,16 @@ export function LineupBuilderModal({
                   aria-label={`${item.name} — ${item.rarityCode}`}
                   aria-pressed={isSelected}
                 >
-                  {/* Edition badge top-left */}
-                  <span className="bldr-card-edition-badge">{item.editionCode}</span>
+                  <MvpCardTile card={toMvpCardView(item)} variant="compact" interactive={false} />
 
-                  {/* Rarity badge top-right (only if not selected) */}
-                  {!isSelected && (
-                    <span
-                      className="bldr-card-rarity-badge"
-                      style={{ color: rarityColor }}
-                    >
-                      {item.rarityCode}
-                    </span>
-                  )}
-
-                  {/* Card name footer */}
-                  <div className="bldr-card-footer">
-                    <span className="bldr-card-name">{item.name}</span>
-                  </div>
-
-                  {/* Selected checkmark */}
+                  {/* Selected overlay */}
                   {isSelected && (
-                    <div className="bldr-card-selected-check">✓</div>
+                    <div className="bldr-card-check-overlay">✓</div>
                   )}
 
                   {/* Locked overlay */}
                   {item.isLockedByActiveContest && (
-                    <div className="bldr-card-locked-badge">Locked</div>
+                    <div className="bldr-card-locked-overlay">Locked</div>
                   )}
                 </div>
               );

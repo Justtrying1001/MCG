@@ -1,3 +1,5 @@
+import type { MvpCardView } from "@/types/cards";
+
 export type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 export type ContestEntryStatus = "DRAFT" | "SUBMITTED" | "SCORED" | "SETTLED";
 
@@ -44,4 +46,5 @@ export type LineupOption = {
   imageUrl: string | null;
   tokenProjectName: string;
   tokenProjectId?: string | null;
+  cardView?: MvpCardView | null;
 };

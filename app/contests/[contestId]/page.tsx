@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
+import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
 type ContestDetail = {
@@ -93,6 +95,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
 
+  // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
+  const slotsInitializedRef = useRef(false);
+
   const contestData = detail?.contest;
   const rule = contestData?.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
@@ -108,22 +113,26 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     if (detailRes.ok) {
       const payload = (await detailRes.json()) as ContestDetail;
       setDetail(payload);
-      const nextRosterSize = payload.contest.rules?.[0]?.maxRosterSize ?? 5;
-      const roster = payload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
-      if (roster.length > 0) {
-        setLineupSlots(toSlots(roster, nextRosterSize));
-        try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
-      } else {
-        try {
-          const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
-          if (localDraft) {
-            const parsed = JSON.parse(localDraft) as Array<string | null>;
-            setLineupSlots(toSlots(parsed.filter(Boolean) as string[], nextRosterSize));
-          } else {
+      // Only initialize slots once per page mount — never overwrite user's in-progress selection
+      if (!slotsInitializedRef.current) {
+        slotsInitializedRef.current = true;
+        const nextRosterSize = payload.contest.rules?.[0]?.maxRosterSize ?? 5;
+        const roster = payload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
+        if (roster.length > 0) {
+          setLineupSlots(toSlots(roster, nextRosterSize));
+          try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
+        } else {
+          try {
+            const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
+            if (localDraft) {
+              const parsed = JSON.parse(localDraft) as Array<string | null>;
+              setLineupSlots(toSlots(parsed.filter(Boolean) as string[], nextRosterSize));
+            } else {
+              setLineupSlots(toSlots([], nextRosterSize));
+            }
+          } catch {
             setLineupSlots(toSlots([], nextRosterSize));
           }
-        } catch {
-          setLineupSlots(toSlots([], nextRosterSize));
         }
       }
     } else {
@@ -402,21 +411,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                   return (
                     <div
                       key={i}
-                      className={`cpd-slot cpd-slot-filled-bg ${isOpen ? "cpd-slot-interactive" : ""}`}
+                      className={`cpd-slot-mvp${isOpen ? " cpd-slot-interactive" : ""}`}
                       onClick={() => isOpen && (setShowBuilder(true), setBuilderFlash(""))}
                       role={isOpen ? "button" : undefined}
                       tabIndex={isOpen ? 0 : undefined}
-                      style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : `linear-gradient(160deg, ${RARITY_COLOR[card.rarityCode] ?? "#888"}44 0%, #1c1c2c 100%)` }}
                     >
-                      <span
-                        className="cpd-slot-rarity-top"
-                        style={{ color: RARITY_COLOR[card.rarityCode] ?? "#e0e0e8" }}
-                      >
-                        {card.rarityCode}
-                      </span>
-                      <div className="cpd-slot-gradient-overlay">
-                        <span className="cpd-slot-card-name">{card.name}</span>
-                      </div>
+                      <MvpCardTile card={toMvpCardView(card)} variant="compact" interactive={false} />
                       {(isLocked || isLive) && (
                         <div className="cpd-slot-lock-overlay">🔒 Locked</div>
                       )}
@@ -806,28 +806,15 @@ const CSS = `
   .cpd-slot-number   { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: rgba(255,255,255,0.15); }
   .cpd-slot-add-hint { font-size: 0.58rem; font-weight: 600; color: rgba(200,168,75,0.45); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
 
-  /* Filled slot */
-  .cpd-slot-filled-bg {
-    background-size: cover; background-position: center top;
-    background-color: var(--bg-surface2);
+  /* Filled slot using MvpCardTile */
+  .cpd-slot-mvp {
+    position: relative; border-radius: 10px; overflow: hidden;
+    cursor: default; transition: transform 0.12s;
   }
-  .cpd-slot-rarity-top {
-    position: absolute; top: 6px; right: 6px;
-    font-size: 0.52rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
-    background: rgba(0,0,0,0.55); padding: 2px 6px; border-radius: 4px;
-    backdrop-filter: blur(4px);
-  }
-  .cpd-slot-gradient-overlay {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
-    padding: 24px 6px 6px;
-    display: flex; align-items: flex-end;
-  }
-  .cpd-slot-card-name {
-    font-size: 0.62rem; font-weight: 700; color: #fff; line-height: 1.2;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    text-align: left; width: 100%;
-  }
+  .cpd-slot-mvp.cpd-slot-interactive { cursor: pointer; }
+  .cpd-slot-mvp.cpd-slot-interactive:hover { transform: translateY(-3px); }
+  .cpd-slot-mvp .mvp-premium-card { border-radius: 10px; }
+
   .cpd-slot-lock-overlay {
     position: absolute; inset: 0;
     background: rgba(12,12,18,0.72);
@@ -1058,47 +1045,35 @@ const CSS = `
     display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
   }
 
-  /* Pool card */
-  .bldr-card {
-    position: relative; aspect-ratio: 2/3; border-radius: 10px;
-    overflow: hidden; cursor: pointer;
-    background: var(--bg-surface2); background-size: cover; background-position: center top;
+  /* Pool card (MvpCardTile wrapper) */
+  .bldr-card-mvp {
+    position: relative; border-radius: 10px; overflow: hidden; cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.12s, border-color 0.15s;
   }
-  .bldr-card:hover              { transform: scale(1.03); border-color: rgba(200,168,75,0.5); }
-  .bldr-card.bldr-card-selected { border-color: var(--green); }
-  .bldr-card.bldr-card-disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
-  .bldr-card-rarity-badge {
-    position: absolute; top: 5px; right: 5px;
-    font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
-    padding: 2px 5px; border-radius: 4px;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-  }
-  .bldr-card-edition-badge {
-    position: absolute; top: 5px; left: 5px;
-    font-size: 0.48rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-    padding: 2px 5px; border-radius: 4px;
-    background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.7); backdrop-filter: blur(4px);
-  }
-  .bldr-card-footer {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%);
-    padding: 20px 6px 6px;
-  }
-  .bldr-card-name { font-size: 0.6rem; font-weight: 700; color: #fff; line-height: 1.2; display: block; }
-  .bldr-card-selected-check {
-    position: absolute; top: 5px; right: 5px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--green); color: #fff; font-size: 0.65rem; font-weight: 700;
+  .bldr-card-mvp:hover                { transform: scale(1.03); border-color: rgba(200,168,75,0.5); }
+  .bldr-card-mvp.bldr-card-selected   { border-color: var(--green); }
+  .bldr-card-mvp.bldr-card-disabled   { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+  .bldr-card-check-overlay {
+    position: absolute; inset: 0; z-index: 50;
+    background: rgba(45,181,110,0.4);
     display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; font-weight: 700; color: #fff;
   }
-  .bldr-card-locked-badge {
-    position: absolute; inset: 0;
+  .bldr-card-locked-overlay {
+    position: absolute; inset: 0; z-index: 50;
     background: rgba(12,12,18,0.65);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.65rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.06em;
   }
+
+  /* Selected slot using MvpCardTile */
+  .bldr-slot-mvp {
+    position: relative; border-radius: 8px; overflow: hidden; cursor: pointer;
+    transition: transform 0.12s, outline 0.1s;
+  }
+  .bldr-slot-mvp:hover { transform: scale(1.03); }
+  .bldr-slot-mvp.bldr-slot-mvp-active { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   /* Builder footer */
   .bldr-footer {
