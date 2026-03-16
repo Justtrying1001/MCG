@@ -76,7 +76,7 @@ export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlag
           <AdminStatusBadge tone="warning" label="Environment locked" />
           <p><strong>User reset is unavailable.</strong></p>
           <p>
-            User reset is disabled because ENABLE_USER_RESET must be "true" (current value: {resetFlagValue}).
+            User reset is disabled because ENABLE_USER_RESET must be <code>true</code> (current value: {resetFlagValue}).
           </p>
           <p>
             Set <code>ENABLE_USER_RESET=true</code> in Vercel Project Settings → Environment Variables, then redeploy.
