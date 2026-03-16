@@ -28,6 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
             scores: true,
             rankings: true,
             settlements: true,
+            tokenScores: true,
           },
         },
       },
@@ -36,6 +37,8 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
     if (!contest) {
       return NextResponse.json({ ok: false, error: "Contest not found" }, { status: 404 });
     }
+
+    const breakdownRows = await prisma.contestEntryScoreBreakdown.count({ where: { entry: { contestId: params.contestId } } });
 
     const allowedTransitions = getAllowedContestTransitions(contest.status);
     const blockers: string[] = [];
@@ -51,6 +54,9 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
       contest,
       progress: getContestOverviewProgress({
         entries: contest._count.entries,
+        tokenScores: contest._count.tokenScores,
+        breakdownRows,
+        scores: contest._count.scores,
         rankings: contest._count.rankings,
         settlements: contest._count.settlements,
       }),

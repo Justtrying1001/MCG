@@ -11,14 +11,14 @@ import {
 
 describe("contest workbench helpers", () => {
   it("computes overview key states", () => {
-    expect(getContestOverviewProgress({ entries: 0, rankings: 0, settlements: 0 })).toEqual({
+    expect(getContestOverviewProgress({ entries: 0, tokenScores: 0, breakdownRows: 0, scores: 0, rankings: 0, settlements: 0 })).toEqual({
       entries: 0,
-      scoringReady: false,
+      scoringReady: true,
       rankingGenerated: false,
       settlementDone: false,
     });
 
-    expect(getContestOverviewProgress({ entries: 12, rankings: 12, settlements: 1 })).toEqual({
+    expect(getContestOverviewProgress({ entries: 12, tokenScores: 6, breakdownRows: 60, scores: 12, rankings: 12, settlements: 1 })).toEqual({
       entries: 12,
       scoringReady: true,
       rankingGenerated: true,

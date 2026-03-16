@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { handleApiError } from "@/lib/api-error";
-import { captureEndSnapshot } from "@/lib/domain/contests/snapshot-runtime";
+import { finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: { contest
   const actor = roleCheck.actor;
 
   try {
-    const result = await captureEndSnapshot(params.contestId);
+    const result = await finalizeContestFromEndSnapshotTrigger(params.contestId);
     await safeLogAdminAction({
       actionType: "CONTEST_SNAPSHOT_END_CAPTURE",
       module: "CONTESTS",

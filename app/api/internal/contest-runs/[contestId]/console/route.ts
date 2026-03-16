@@ -170,8 +170,8 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
       diagnostics: {
         hasStartSnapshot: snapshotsByPhase.START.length > 0,
         hasEndSnapshot: snapshotsByPhase.END.length > 0,
-        scoringCalculated: contest._count.scores > 0,
-        rankingGenerated: contest._count.rankings > 0,
+        scoringCalculated: tokenScores.length > 0 && breakdownRows.length >= players.reduce((sum, player) => sum + player.lineup.length, 0) && contest._count.scores >= contest._count.entries,
+        rankingGenerated: contest._count.rankings > 0 && contest._count.rankings >= contest._count.scores,
         settlementDone: contest._count.settlements > 0,
       },
     });
