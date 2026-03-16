@@ -34,11 +34,11 @@ function makeTx() {
     },
     ownedCardInstance: {
       findMany: vi.fn().mockResolvedValue([
-        { id: "i1", cardTemplateId: "t1" },
-        { id: "i2", cardTemplateId: "t2" },
-        { id: "i3", cardTemplateId: "t3" },
-        { id: "i4", cardTemplateId: "t4" },
-        { id: "i5", cardTemplateId: "t5" },
+        { id: "i1", cardTemplateId: "t1", cardTemplate: { tokenProjectId: "token_1" } },
+        { id: "i2", cardTemplateId: "t2", cardTemplate: { tokenProjectId: "token_2" } },
+        { id: "i3", cardTemplateId: "t3", cardTemplate: { tokenProjectId: "token_3" } },
+        { id: "i4", cardTemplateId: "t4", cardTemplate: { tokenProjectId: "token_4" } },
+        { id: "i5", cardTemplateId: "t5", cardTemplate: { tokenProjectId: "token_5" } },
       ]),
       updateMany: vi.fn().mockResolvedValue({ count: 5 }),
     },
@@ -80,5 +80,25 @@ describe("contest entry fee integration", () => {
         lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
       })
     ).rejects.toMatchObject({ status: 409, message: "Insufficient points for contest entry fee" });
+  });
+
+  it("rejects lineup containing duplicate token projects across different owned copies", async () => {
+    const tx = makeTx();
+    tx.ownedCardInstance.findMany.mockResolvedValue([
+      { id: "i1", cardTemplateId: "t1", cardTemplate: { tokenProjectId: "token_a" } },
+      { id: "i2", cardTemplateId: "t2", cardTemplate: { tokenProjectId: "token_a" } },
+      { id: "i3", cardTemplateId: "t3", cardTemplate: { tokenProjectId: "token_b" } },
+      { id: "i4", cardTemplateId: "t4", cardTemplate: { tokenProjectId: "token_c" } },
+      { id: "i5", cardTemplateId: "t5", cardTemplate: { tokenProjectId: "token_d" } },
+    ]);
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    await expect(
+      enterContestMvp({
+        contestId: "c1",
+        userId: "u1",
+        lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
+      })
+    ).rejects.toMatchObject({ status: 400, message: "Lineup cannot contain duplicate tokens" });
   });
 });
