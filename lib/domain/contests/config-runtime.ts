@@ -435,7 +435,7 @@ export async function deleteContestDraft(contestId: string) {
     });
     if (!contest) throw new ContestRuntimeError("Contest not found", 404);
 
-    const deletableStatuses = [ContestStatus.CANCELED, ContestStatus.SETTLED, ContestStatus.DRAFT];
+    const deletableStatuses: ContestStatus[] = [ContestStatus.CANCELED, ContestStatus.SETTLED, ContestStatus.DRAFT];
     if (!deletableStatuses.includes(contest.status)) {
       throw new ContestRuntimeError(
         `Cannot delete a ${contest.status} contest. Stop it first before deleting.`,
