@@ -110,7 +110,22 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setDetail(payload);
       const nextRosterSize = payload.contest.rules?.[0]?.maxRosterSize ?? 5;
       const roster = payload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
-      setLineupSlots(toSlots(roster, nextRosterSize));
+      if (roster.length > 0) {
+        setLineupSlots(toSlots(roster, nextRosterSize));
+        try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
+      } else {
+        try {
+          const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
+          if (localDraft) {
+            const parsed = JSON.parse(localDraft) as Array<string | null>;
+            setLineupSlots(toSlots(parsed.filter(Boolean) as string[], nextRosterSize));
+          } else {
+            setLineupSlots(toSlots([], nextRosterSize));
+          }
+        } catch {
+          setLineupSlots(toSlots([], nextRosterSize));
+        }
+      }
     } else {
       setError("Unable to load contest details.");
       setDetail(null);
@@ -157,7 +172,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return lineupSlots.map((id) => (id ? (optionById.get(id) ?? null) : null));
   }, [lineupSlots, options]);
 
-  const submitLineup = async () => {
+  const submitLineup = async (isDraft = false) => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
     setSubmitBusy(true);
     setError("");
@@ -172,10 +187,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setSubmitBusy(false);
       return;
     }
+    try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
     await loadAll();
     setSubmitBusy(false);
     setShowBuilder(false);
-    setBuilderFlash("Lineup submitted successfully.");
+    setBuilderFlash(isDraft ? "Draft saved." : "✓ Lineup submitted successfully!");
   };
 
   const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
@@ -328,6 +344,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         </div>
 
         {error && <div className="cpd-banner cpd-banner-warn">{error}</div>}
+        {builderFlash && !showBuilder && (
+          <div className="cpd-banner cpd-banner-success">{builderFlash}</div>
+        )}
 
         {/* ── MAIN GRID ─────────────────────────────────────────────────── */}
         <div className="cpd-grid">
@@ -387,7 +406,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                       onClick={() => isOpen && (setShowBuilder(true), setBuilderFlash(""))}
                       role={isOpen ? "button" : undefined}
                       tabIndex={isOpen ? 0 : undefined}
-                      style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                      style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : `linear-gradient(160deg, ${RARITY_COLOR[card.rarityCode] ?? "#888"}44 0%, #1c1c2c 100%)` }}
                     >
                       <span
                         className="cpd-slot-rarity-top"
@@ -406,19 +425,23 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 })}
               </div>
 
-              {isOpen && selectedIds.length === rosterSize && !hasEntry && (
+              {isOpen && selectedIds.length === rosterSize && (
                 <button
                   type="button"
-                  className="cpd-btn-submit"
+                  className={`cpd-btn-submit-main${hasEntry ? " cpd-btn-submit-update" : ""}`}
                   onClick={() => void submitLineup()}
                   disabled={submitBusy}
                   style={{ marginTop: 14 }}
                 >
-                  {submitBusy ? "Submitting…" : "Submit Lineup"}
+                  {submitBusy ? "Submitting…" : hasEntry ? "Update Lineup" : "Submit Lineup"}
                 </button>
               )}
 
-              {detail.userEntry?.status === "SUBMITTED" && (
+              {(isLocked || isLive) && (
+                <p className="cpd-lineup-locked-note">🔒 Lineup locked — no changes allowed</p>
+              )}
+
+              {detail.userEntry?.status === "SUBMITTED" && !builderFlash && (
                 <div className="cpd-lineup-submitted">✓ Lineup submitted</div>
               )}
             </div>
@@ -566,9 +589,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
         onSelectCard={handleSelectCard}
         onRemoveSlot={handleRemoveSlot}
-        onSaveDraft={() => {
-          setBuilderFlash("Draft saved locally.");
-          setShowBuilder(false);
+        onSaveDraft={async () => {
+          if (selectedIds.length === rosterSize) {
+            await submitLineup(true);
+          } else {
+            try {
+              localStorage.setItem(`lineup-draft-${params.contestId}`, JSON.stringify(lineupSlots));
+            } catch {}
+            setBuilderFlash("Draft saved.");
+            setShowBuilder(false);
+          }
         }}
         onSubmit={() => void submitLineup()}
       />
@@ -682,8 +712,9 @@ const CSS = `
 
   /* ── Banners ── */
   .cpd-banner { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px; }
-  .cpd-banner-warn { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25); color: #f87171; }
-  .cpd-banner-info { background: rgba(200,168,75,0.08); border: 1px solid rgba(200,168,75,0.2); color: var(--gold); }
+  .cpd-banner-warn    { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25); color: #f87171; }
+  .cpd-banner-info    { background: rgba(200,168,75,0.08); border: 1px solid rgba(200,168,75,0.2); color: var(--gold); }
+  .cpd-banner-success { background: rgba(45,181,110,0.08); border: 1px solid rgba(45,181,110,0.25); color: var(--green); font-weight: 600; }
 
   /* ── Main grid ── */
   .cpd-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 20px; align-items: start; }
@@ -729,16 +760,25 @@ const CSS = `
     font-family: 'DM Sans', sans-serif;
   }
   .cpd-btn-gold:hover { opacity: 0.85; }
-  .cpd-btn-submit {
+  .cpd-btn-submit-main {
     display: flex; align-items: center; justify-content: center;
-    width: 100%; padding: 10px 18px;
-    border: 1px solid rgba(45,181,110,0.4); border-radius: 8px;
-    background: rgba(45,181,110,0.1); color: var(--green);
-    font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    width: 100%; padding: 13px 18px;
+    border: none; border-radius: 10px;
+    background: #c8a84b; color: #0c0c12;
+    font-size: 0.92rem; font-weight: 700; letter-spacing: 0.03em;
+    cursor: pointer; transition: opacity 0.15s;
     font-family: 'DM Sans', sans-serif;
   }
-  .cpd-btn-submit:hover    { background: rgba(45,181,110,0.18); }
-  .cpd-btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cpd-btn-submit-main:hover    { opacity: 0.87; }
+  .cpd-btn-submit-main:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cpd-btn-submit-update {
+    background: var(--green); color: #0c0c12;
+  }
+  .cpd-lineup-locked-note {
+    margin: 12px 0 0; padding: 9px 14px; border-radius: 8px;
+    background: rgba(255,200,0,0.05); border: 1px solid rgba(255,200,0,0.15);
+    font-size: 0.78rem; color: #f5c842; font-weight: 600; text-align: center; margin-top: 14px;
+  }
 
   /* ── Slot grid ── */
   .cpd-slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
@@ -1062,13 +1102,13 @@ const CSS = `
 
   /* Builder footer */
   .bldr-footer {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    display: flex; flex-direction: column; gap: 10px;
     padding: 14px 22px;
     background: #0c0c12;
     border-top: 1px solid var(--border);
     flex-shrink: 0;
-    flex-wrap: wrap;
   }
+  .bldr-footer-top  { display: flex; align-items: center; justify-content: space-between; }
   .bldr-footer-info { display: flex; flex-direction: column; gap: 3px; }
   .bldr-footer-count { font-size: 0.85rem; font-weight: 700; color: var(--text); }
   .bldr-footer-validation { font-size: 0.75rem; color: var(--muted); }
@@ -1081,17 +1121,22 @@ const CSS = `
     transition: border-color 0.15s, color 0.15s;
     font-family: 'DM Sans', sans-serif;
   }
-  .bldr-btn-ghost:hover           { border-color: rgba(255,255,255,0.18); color: var(--text); }
-  .bldr-btn-ghost:disabled        { opacity: 0.4; cursor: not-allowed; }
-  .bldr-btn-submit {
-    padding: 10px 24px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
-    border: none; color: #0c0c12; font-size: 0.88rem; font-weight: 700;
+  .bldr-btn-ghost:hover    { border-color: rgba(255,255,255,0.18); color: var(--text); }
+  .bldr-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+  .bldr-btn-submit-main {
+    flex: 1; padding: 11px 24px; border-radius: 8px;
+    background: linear-gradient(135deg, #c8a84b, #ecc96a);
+    border: none; color: #0c0c12; font-size: 0.92rem; font-weight: 700;
     cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', sans-serif; letter-spacing: 0.02em;
   }
-  .bldr-btn-submit:hover    { opacity: 0.88; }
-  .bldr-btn-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+  .bldr-btn-submit-main:hover    { opacity: 0.88; }
+  .bldr-btn-submit-main:disabled { opacity: 0.35; cursor: not-allowed; }
+  @keyframes bldrSubmitPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200,168,75,0); }
+    50%       { box-shadow: 0 0 0 8px rgba(200,168,75,0.25); }
+  }
+  .bldr-btn-pulse { animation: bldrSubmitPulse 2s ease-in-out infinite; }
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
