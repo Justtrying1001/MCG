@@ -22,8 +22,28 @@ export async function GET() {
       select: {
         id: true,
         createdAt: true,
+        sourceContestSettlementId: true,
+        sourcePackOpeningEventId: true,
         packDefinition: {
           select: { id: true, displayName: true, code: true },
+        },
+        sourceContestSettlement: {
+          select: {
+            contest: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+        sourcePackOpeningEvent: {
+          select: {
+            packDefinition: {
+              select: {
+                displayName: true,
+              },
+            },
+          },
         },
       },
       orderBy: [{ createdAt: "asc" }],
