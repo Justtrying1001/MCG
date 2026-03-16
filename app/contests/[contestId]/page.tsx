@@ -2,14 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
-import { RulesDrawer } from "@/components/contests/RulesDrawer";
-import { loadContestCache } from "@/components/contests/contestUtils";
-import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
-import type { MvpCollectionItem } from "@/types/cards";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
+import { LineupCardTile } from "@/components/contests/LineupCardTile";
+import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
 type ContestDetail = {
   contest: {
@@ -19,9 +15,12 @@ type ContestDetail = {
     status: ContestStatus;
     liveAt: string | null;
     lockAt: string | null;
+    liveAt: string | null;
     endsAt: string | null;
     openAt?: string | null;
     rules: ContestRule[];
+    seasonName?: string | null;
+    leagueTierRequired?: string | null;
     _count: { entries: number };
     seasonName?: string | null;
     seasonId?: string | null;
@@ -29,8 +28,8 @@ type ContestDetail = {
   };
   userEntry: {
     id: string;
-    status: string;
-    rosterLocks: Array<{ id: string; ownedCardInstanceId: string }>;
+    status: ContestEntryStatus;
+    rosterLocks: Array<{ ownedCardInstanceId: string }>;
   } | null;
   rewardGrants?: Array<{
     id: string;
@@ -42,28 +41,34 @@ type ContestDetail = {
 };
 
 type RankingPayload = {
-  rankings: Array<{
-    id: string;
-    userId: string;
-    rank: number;
-    score: number;
-    user: { displayName: string; xUsername: string };
-  }>;
+  contest: { status: ContestStatus };
+  rankings: Array<{ id: string; userId: string; rank: number; score: number; displayName: string }>;
 };
 
-type MyRewardsPayload = { pointsTotal: number; xpTotal: number; packsTotal: number };
-type RewardTier = { label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number };
-type RewardPreviewPayload = { hasPolicyData: boolean; tiers: RewardTier[] };
+type RewardPayload = {
+  hasPolicyData: boolean;
+  tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
+};
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+type TabKey = "overview" | "entry" | "leaderboard" | "rewards" | "rules";
 
-function fmtCountdown(targetMs: number | null, nowMs: number): string {
-  if (targetMs === null) return "--:--:--";
-  const diff = Math.max(0, targetMs - nowMs);
-  const h = Math.floor(diff / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  const s = Math.floor((diff % 60_000) / 1_000);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+const TABS: Array<{ key: TabKey; label: string }> = [
+  { key: "overview", label: "Overview" },
+  { key: "entry", label: "My Entry" },
+  { key: "leaderboard", label: "Leaderboard" },
+  { key: "rewards", label: "Rewards" },
+  { key: "rules", label: "Rules" },
+];
+
+function formatDate(value: string | null) {
+  if (!value) return "TBD";
+  return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function toSlots(roster: string[], rosterSize: number): Array<string | null> {
+  const sanitized = roster.slice(0, rosterSize);
+  while (sanitized.length < rosterSize) sanitized.push("");
+  return sanitized.map((value) => value || null);
 }
 
 function fmtDate(iso: string | null | undefined): string {
@@ -110,150 +115,94 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
-  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
-  const [rewardTiers, setRewardTiers] = useState<RewardTier[] | null>(null);
+  const [rewards, setRewards] = useState<RewardPayload | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [lineupSlots, setLineupSlots] = useState<Array<string | null>>([]);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [activeBuilderSlot, setActiveBuilderSlot] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [error, setError] = useState("");
-  const [submitState, setSubmitState] = useState<"idle" | "saving">("idle");
-  const [activeSlot, setActiveSlot] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [rulesOpen, setRulesOpen] = useState(false);
-  const [nowTs, setNowTs] = useState(() => Date.now());
+  const [submitBusy, setSubmitBusy] = useState(false);
+  const [builderFlash, setBuilderFlash] = useState("");
 
-  // Countdown tick
-  useEffect(() => {
-    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  const contest = detail?.contest;
+  const rule = contest?.rules[0];
+  const rosterSize = rule?.maxRosterSize ?? 5;
 
-  // Data fetch
-  useEffect(() => {
-    if (loading) return;
-    void (async () => {
-      setError("");
-      const [detailRes, rankingRes, optionsRes, rewardsRes, rewardPreviewRes] = await Promise.all([
-        fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
-        fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
-      ]);
+  const loadAll = useCallback(async () => {
+    const [detailRes, rankingRes, optionsRes, rewardsRes] = await Promise.all([
+      fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
+      fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
+    ]);
 
-      if (!detailRes.ok) {
-        const cached = loadContestCache().find((c) => c.id === params.contestId);
-        if (cached) {
-          setDetail({ contest: cached, userEntry: null });
-          setRanking({ rankings: [] });
-          setError("Showing cached contest data. Connect with X for live updates.");
-        } else {
-          setError((await detailRes.text()) || "Cannot load contest detail");
-        }
-      } else {
-        const d = (await detailRes.json()) as ContestDetail;
-        setDetail(d);
-        if (d.userEntry) {
-          setSelected(d.userEntry.rosterLocks.map((lock) => lock.ownedCardInstanceId));
-        }
-      }
-
-      if (rankingRes.ok) {
-        setRanking((await rankingRes.json()) as RankingPayload);
-      } else {
-        setRanking({ rankings: [] });
-      }
-
-      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
-
-      if (rewardPreviewRes.ok) {
-        const preview = (await rewardPreviewRes.json()) as RewardPreviewPayload;
-        setRewardTiers(preview.tiers ?? []);
-      } else {
-        setRewardTiers([]);
-      }
-
-      if (optionsRes.ok) {
-        const lp = (await optionsRes.json()) as { options: LineupOption[] };
-        setOptions(lp.options ?? []);
-      }
-    })();
-  }, [loading, me, params.contestId]);
-
-  const rule = detail?.contest.rules[0];
-  const maxRosterSize = rule?.maxRosterSize ?? 5;
-  const isGuest = false;
-  const canManageLineup = detail?.contest.status === "OPEN";
-  const canEnter = Boolean(canManageLineup) && !isGuest;
-
-  const filteredOptions = useMemo(
-    () => (rule?.cardSetId ? options.filter((o) => o.cardSetId === rule.cardSetId) : options),
-    [options, rule?.cardSetId],
-  );
-
-  const selectedCards = useMemo(
-    () =>
-      Array.from({ length: maxRosterSize }).map((_, i) =>
-        filteredOptions.find((o) => o.instanceId === selected[i]) ?? null,
-      ),
-    [filteredOptions, maxRosterSize, selected],
-  );
-
-  const myRankingRow = ranking?.rankings?.find((r) => r.userId === me?.user.id) ?? null;
-  const filledCount = selected.filter(Boolean).length;
-
-  const countdownTarget = useMemo(() => {
-    if (!detail) return null;
-    const { status, lockAt, endsAt } = detail.contest;
-    if (status === "OPEN" && lockAt) return new Date(lockAt).getTime();
-    if ((status === "LOCKED" || status === "LIVE") && endsAt) return new Date(endsAt).getTime();
-    return null;
-  }, [detail]);
-
-  const toggle = (instanceId: string) => {
-    if (!canManageLineup) return;
-    setSelected((prev) => {
-      if (activeSlot !== null) {
-        const next = [...prev];
-        const idx = next.indexOf(instanceId);
-        if (idx >= 0) next.splice(idx, 1);
-        next[activeSlot] = instanceId;
-        return next.filter(Boolean).slice(0, maxRosterSize);
-      }
-      if (prev.includes(instanceId)) return prev.filter((id) => id !== instanceId);
-      if (prev.length >= maxRosterSize) return prev;
-      return [...prev, instanceId];
-    });
-  };
-
-  const removeFromSlot = (slot: number) => {
-    if (!canManageLineup) return;
-    setSelected((prev) => prev.filter((_, i) => i !== slot));
-  };
-
-  const handleSlotClick = (slotIndex: number) => {
-    if (!canManageLineup) return;
-    if (selectedCards[slotIndex]) {
-      removeFromSlot(slotIndex);
+    if (detailRes.ok) {
+      const payload = (await detailRes.json()) as ContestDetail;
+      setDetail(payload);
+      const nextRosterSize = payload.contest.rules?.[0]?.maxRosterSize ?? 5;
+      const roster = payload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
+      setLineupSlots(toSlots(roster, nextRosterSize));
     } else {
-      setActiveSlot(slotIndex);
-      setShowModal(true);
+      setError("Unable to load contest details.");
+      setDetail(null);
     }
-  };
 
-  const openModal = () => {
-    const firstEmpty = selectedCards.findIndex((c) => c === null);
-    setActiveSlot(firstEmpty >= 0 ? firstEmpty : 0);
-    setShowModal(true);
-  };
+    if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
+    if (rewardsRes.ok) setRewards((await rewardsRes.json()) as RewardPayload);
+    if (optionsRes.ok) {
+      const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
+      setOptions(Array.isArray(payload?.options) ? payload.options : []);
+    }
+  }, [params.contestId]);
 
-  const submitEntry = async () => {
-    if (!detail || !canEnter || filledCount !== maxRosterSize) return;
-    setSubmitState("saving");
+  useEffect(() => {
+    if (loading || !me) return;
+    setError("");
+    void loadAll();
+  }, [loading, me, loadAll]);
+
+  useEffect(() => {
+    if (!builderFlash) return;
+    const id = window.setTimeout(() => setBuilderFlash(""), 2400);
+    return () => window.clearTimeout(id);
+  }, [builderFlash]);
+
+  const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
+  const canManageLineup = contest?.status === "OPEN";
+  const hasEntry = Boolean(detail?.userEntry);
+
+  const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
+  const selectedCards = useMemo(() => {
+    const optionById = new Map(options.map((item) => [item.instanceId, item]));
+    return selectedIds.map((id) => optionById.get(id)).filter(Boolean) as LineupOption[];
+  }, [selectedIds, options]);
+
+  const userStatus = useMemo(() => {
+    if (!contest) return "No team selected";
+    if (!detail?.userEntry) return selectedIds.length > 0 ? "Team drafted" : "No team selected";
+    if (contest.status === "OPEN") return "Team submitted";
+    if (contest.status === "LOCKED") return "Team locked";
+    if (contest.status === "LIVE") return "Contest live";
+    return "Results available";
+  }, [contest, detail?.userEntry, selectedIds.length]);
+
+  const primaryCtaLabel = useMemo(() => {
+    if (!contest) return "Build lineup";
+    if (contest.status === "SETTLED") return "View results";
+    if (contest.status === "LIVE") return "Track contest";
+    if (hasEntry) return canManageLineup ? "Edit lineup" : "View my entry";
+    return "Build lineup";
+  }, [contest, hasEntry, canManageLineup]);
+
+  const submitLineup = async () => {
+    if (!contest || selectedIds.length !== rosterSize || contest.status !== "OPEN") return;
+    setSubmitBusy(true);
     setError("");
     const res = await fetch(`/api/contests/${params.contestId}/enter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lineupInstanceIds: selected }),
+      body: JSON.stringify({ lineupInstanceIds: selectedIds }),
     });
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -261,9 +210,49 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setSubmitState("idle");
       return;
     }
-    const updated = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
-    if (updated.ok) setDetail((await updated.json()) as ContestDetail);
-    setSubmitState("idle");
+    await loadAll();
+    setSubmitBusy(false);
+    setShowBuilder(false);
+    setBuilderFlash("Lineup submitted successfully.");
+    setActiveTab("entry");
+  };
+
+  const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
+    if (!canManageLineup) return;
+    setLineupSlots((prev) => {
+      const next = [...(prev.length === rosterSize ? prev : toSlots(prev.filter(Boolean) as string[], rosterSize))];
+      const existingIndex = next.findIndex((value) => value === instanceId);
+      const targetIndex = targetSlotIndex ?? activeBuilderSlot;
+
+      if (existingIndex >= 0 && existingIndex === targetIndex) {
+        next[existingIndex] = null;
+        return next;
+      }
+
+      if (existingIndex >= 0) {
+        next[existingIndex] = null;
+      }
+
+      if (targetIndex >= 0 && targetIndex < rosterSize) {
+        next[targetIndex] = instanceId;
+        return next;
+      }
+
+      const emptyIndex = next.findIndex((value) => value === null);
+      if (emptyIndex >= 0) {
+        next[emptyIndex] = instanceId;
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveSlot = (slotIndex: number) => {
+    if (!canManageLineup) return;
+    setLineupSlots((prev) => {
+      const next = [...prev];
+      next[slotIndex] = null;
+      return next;
+    });
   };
 
   // ── Skeleton ────────────────────────────────────────────────────────────────
@@ -321,342 +310,160 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <SiteShell>
-      <style>{CSS}</style>
-
-      {/* ── Sticky contest topbar ── */}
-      <div className="cpd-topbar">
-        <div className="cpd-topbar-left">
-          {isOpen && <span className="cpd-dot-live" aria-hidden="true" />}
-          <span className="cpd-topbar-name">{contest?.title}</span>
-          {contest?.leagueTierRequired && (
-            <span className="cpd-league-badge">{contest.leagueTierRequired}</span>
-          )}
-        </div>
-        <div className="cpd-topbar-right">
-          {countdownTarget !== null ? (
-            <>
-              <span className="cpd-topbar-label">
-                {isOpen ? "Lock in" : isLive ? "Ends in" : "Locked"}
-              </span>
-              <span className="cpd-countdown">{fmtCountdown(countdownTarget, nowTs)}</span>
-            </>
-          ) : (
-            <span className="cpd-status-chip" data-status={status}>{status}</span>
-          )}
-        </div>
-      </div>
-
-      {/* ── Hero ── */}
-      <section className="cpd-hero">
-        <div className="cpd-hero-left">
-          <p className="cpd-hero-eyebrow">{contest?.seasonName ?? "Season"}</p>
-          <h1 className="cpd-hero-title">{contest?.code.toUpperCase()}</h1>
-          <p className="cpd-hero-subtitle">{contest?.title}</p>
-        </div>
-        <div className="cpd-hero-right">
-          <div className="cpd-stat-pills">
-            <div className="cpd-stat-pill">
-              <span className="cpd-stat-label">Participants</span>
-              <strong className="cpd-stat-value">{contest?._count.entries}</strong>
-            </div>
-            <div className="cpd-stat-pill">
-              <span className="cpd-stat-label">Your rank</span>
-              <strong className="cpd-stat-value cpd-stat-gold">
-                {myRankingRow ? `#${myRankingRow.rank}` : "—"}
-              </strong>
-            </div>
-            <div className="cpd-stat-pill">
-              <span className="cpd-stat-label">Your score</span>
-              <strong className="cpd-stat-value cpd-stat-gold">
-                {myRankingRow ? myRankingRow.score.toFixed(2) : "—"}
-              </strong>
-            </div>
+      <section className="contest-detail-hero">
+        <div className="contest-detail-hero-main">
+          <p className="contest-premium-code">{contest?.code ?? "—"}</p>
+          <h1>{contest?.title ?? "Contest"}</h1>
+          <p className="contest-inline-note">Leaderboard-centric contest with one lineup per player.</p>
+          <div className="contest-detail-kpis">
+            <span><b>Status</b>{contest?.status ?? "—"}</span>
+            <span><b>Entry fee</b>{entryFee}</span>
+            <span><b>Lineup size</b>{rosterSize} cards</span>
+            <span><b>Registration</b>{canManageLineup ? "Open" : "Closed"}</span>
+            <span><b>Lock</b>{formatDate(contest?.lockAt ?? null)}</span>
+            <span><b>End</b>{formatDate(contest?.endsAt ?? null)}</span>
+            <span><b>Reward teaser</b>{Math.max(120, rosterSize * 45)} pts</span>
+            <span><b>Participants</b>{contest?._count.entries ?? 0}</span>
           </div>
+        </div>
+        <div className="contest-detail-user-status">
+          <p className="mcg-eyebrow">Your status</p>
+          <h3>{userStatus}</h3>
+          <button
+            type="button"
+            className="mcg-btn"
+            onClick={() => {
+              if (!contest) return;
+              if (contest.status === "OPEN") {
+                setShowBuilder(true);
+                setBuilderFlash("");
+                return;
+              }
+              if (contest.status === "LIVE") {
+                setActiveTab("leaderboard");
+                return;
+              }
+              setActiveTab("entry");
+            }}
+            disabled={!contest}
+          >
+            {primaryCtaLabel}
+          </button>
         </div>
       </section>
 
-      {/* ── Banners ── */}
-      {error && <div className="cpd-banner cpd-banner-warn" role="alert">{error}</div>}
-      {isGuest && (
-        <div className="cpd-banner cpd-banner-info">
-          Guest preview — connect with X to submit a lineup and appear on the leaderboard.
-        </div>
-      )}
+      {error ? <section className="mcg-surface">{error}</section> : null}
 
-      {/* ── Main grid ── */}
-      <div className="cpd-grid">
+      <nav className="contest-detail-tabs" aria-label="Contest sections">
+        {TABS.map((tab) => (
+          <button key={tab.key} type="button" className={activeTab === tab.key ? "active" : ""} onClick={() => setActiveTab(tab.key)}>
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
-        {/* ── Left column ── */}
-        <main className="cpd-main">
+      {activeTab === "overview" ? (
+        <section className="contest-detail-panel">
+          <h2>Contest summary</h2>
+          <p className="contest-inline-note">Current phase: {contest?.status ?? "—"}. Build and submit before lock, then track rank live.</p>
+          <div className="contest-overview-grid">
+            <article className="mcg-surface"><h3>Timeline</h3><p>Lock: {formatDate(contest?.lockAt ?? null)}</p><p>Live: {formatDate(contest?.liveAt ?? null)}</p><p>End: {formatDate(contest?.endsAt ?? null)}</p></article>
+            <article className="mcg-surface"><h3>Rewards</h3><p>Top positions receive progressive rewards tiers.</p><p>Preview available in Rewards tab.</p></article>
+            <article className="mcg-surface"><h3>Participation</h3><p>{hasEntry ? "You already submitted a lineup." : "No lineup submitted yet."}</p></article>
+          </div>
+        </section>
+      ) : null}
 
-          {/* ── Lineup block ── */}
-          <section className={`cpd-block${!canManageLineup ? " cpd-block-locked" : ""}`}>
-            <div className="cpd-block-header">
-              <div>
-                <div className="cpd-lineup-title-row">
-                  <h2 className="cpd-block-title">Your Lineup</h2>
-                  {isLocked && <span className="cpd-status-badge cpd-badge-locked">🔒 Locked</span>}
-                  {isLive && <span className="cpd-status-badge cpd-badge-live">● Live</span>}
-                  {isSettled && <span className="cpd-status-badge cpd-badge-settled">✓ Finished</span>}
-                </div>
-                <span className="cpd-block-meta">{filledCount}/{maxRosterSize} slots filled</span>
-              </div>
-              <div className="cpd-lineup-actions">
-                {canManageLineup && (
-                  <button type="button" className="cpd-btn-gold" onClick={openModal}>
-                    Build Lineup
-                  </button>
-                )}
-                {canEnter && filledCount === maxRosterSize && !detail?.userEntry && (
-                  <button
-                    type="button"
-                    className="cpd-btn-submit"
-                    disabled={submitState === "saving"}
-                    onClick={() => void submitEntry()}
-                  >
-                    {submitState === "saving" ? "Saving…" : "Submit Entry"}
-                  </button>
-                )}
-              </div>
+      {activeTab === "entry" ? (
+        <section className="contest-detail-panel">
+          <h2>My Entry</h2>
+          {!hasEntry && selectedIds.length === 0 ? (
+            <div className="mcg-surface">
+              <h3>No team selected</h3>
+              <p className="contest-inline-note">Build your lineup before lock to join this contest.</p>
+              <button type="button" className="mcg-btn" onClick={() => setShowBuilder(true)} disabled={!canManageLineup}>Build lineup</button>
             </div>
-
-            <div className={`cpd-slots-grid${maxRosterSize === 5 ? " cpd-slots-grid-5" : ""}`}>
-              {selectedCards.map((card, slotIndex) => (
-                <button
-                  key={slotIndex}
-                  type="button"
-                  disabled={!canManageLineup}
-                  className={[
-                    "cpd-slot",
-                    card ? "cpd-slot-filled" : "cpd-slot-empty",
-                    canManageLineup ? "cpd-slot-interactive" : "",
-                    !canManageLineup && !card ? "cpd-slot-locked-empty" : "",
-                  ].filter(Boolean).join(" ")}
-                  onClick={() => handleSlotClick(slotIndex)}
-                  title={
-                    canManageLineup
-                      ? card
-                        ? `Slot ${slotIndex + 1}: ${card.name} — click to remove`
-                        : `Slot ${slotIndex + 1}: empty — click to add`
-                      : card
-                      ? `Slot ${slotIndex + 1}: ${card.name}`
-                      : `Slot ${slotIndex + 1}: empty`
-                  }
-                >
-                  {card ? (
-                    <>
-                      {card.imageUrl ? (
-                        <img className="cpd-slot-img" src={card.imageUrl} alt={card.name} loading="lazy" />
-                      ) : (
-                        <div className="cpd-slot-img-placeholder">
-                          {card.tokenProjectName.slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="cpd-slot-info">
-                        <strong className="cpd-slot-name">{card.name}</strong>
-                        <span
-                          className="cpd-slot-rarity"
-                          style={{ color: RARITY_COLOR[card.rarityCode.toUpperCase()] ?? "#6b7280" }}
-                        >
-                          {card.rarityCode}
-                        </span>
-                      </div>
-                      {canManageLineup && <span className="cpd-slot-remove" aria-hidden="true">✕</span>}
-                    </>
-                  ) : (
-                    <>
-                      <span className="cpd-slot-number">{slotIndex + 1}</span>
-                      {canManageLineup && <span className="cpd-slot-add-hint">+ Add</span>}
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {detail?.userEntry && (
-              <p className="cpd-lineup-submitted">
-                ✓ Lineup submitted · Entry #{detail.userEntry.id.slice(-6).toUpperCase()}
-              </p>
-            )}
-          </section>
-
-          {/* ── Settled result block ── */}
-          {isSettled && myRankingRow && (
-            <section className="cpd-block cpd-block-settled">
-              <div className="cpd-settled-header">
-                <span className="cpd-settled-icon">🏆</span>
-                <div>
-                  <h2 className="cpd-block-title">Final Result</h2>
-                  <span className="cpd-block-meta">Contest finished</span>
-                </div>
+          ) : (
+            <>
+              <p className="contest-inline-note">{selectedIds.length}/{rosterSize} cards selected.</p>
+              <div className="contest-entry-preview-grid">
+                {selectedCards.map((card) => <LineupCardTile key={card.instanceId} option={card} selected />)}
               </div>
-              <div className="cpd-settled-stats">
-                <div className="cpd-settled-stat">
-                  <span>Final rank</span>
-                  <strong className="cpd-stat-gold">#{myRankingRow.rank}</strong>
-                </div>
-                <div className="cpd-settled-stat">
-                  <span>Score</span>
-                  <strong>{myRankingRow.score.toFixed(2)}</strong>
-                </div>
-                {myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0) && (
-                  <div className="cpd-settled-stat">
-                    <span>Rewards</span>
-                    <strong className="cpd-reward-gold">
-                      {[
-                        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
-                        myRewards.xpTotal > 0 ? `+${myRewards.xpTotal} XP` : null,
-                        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
-                      ].filter(Boolean).join(" · ")}
-                    </strong>
-                  </div>
-                )}
-              </div>
-              <p className="cpd-settled-note">
-                Rewards are granted during settlement processing. Your cards are unlocked once the contest is settled.
-              </p>
-            </section>
+              {canManageLineup ? <button type="button" className="mcg-btn" onClick={() => setShowBuilder(true)}>Edit lineup</button> : null}
+            </>
           )}
+        </section>
+      ) : null}
 
-          {/* ── Leaderboard block ── */}
-          <section className="cpd-block">
-            <div className="cpd-block-header">
-              <h2 className="cpd-block-title">Leaderboard</h2>
-              <span className="cpd-block-meta">{contest?._count.entries} entries</span>
-            </div>
-            {!ranking || ranking.rankings.length === 0 ? (
-              <p className="cpd-empty-msg">No entries yet — be the first to join.</p>
-            ) : (
-              <div className="cpd-leaderboard">
-                {ranking.rankings.slice(0, 20).map((row) => {
-                  const isMe = row.userId === me?.user.id;
-                  const name =
-                    row.user.displayName?.trim() ||
-                    (row.user.xUsername ? `@${row.user.xUsername}` : `Player #${row.rank}`);
-                  return (
-                    <div
-                      key={row.id}
-                      className={[
-                        "cpd-lb-row",
-                        isMe ? "cpd-lb-row-me" : "",
-                        row.rank <= 3 ? "cpd-lb-row-top" : "",
-                      ].filter(Boolean).join(" ")}
-                    >
-                      <span className="cpd-lb-rank">
-                        {row.rank === 1 ? "🥇" : row.rank === 2 ? "🥈" : row.rank === 3 ? "🥉" : `#${row.rank}`}
-                      </span>
-                      <span className="cpd-lb-name">{isMe ? "You" : name}</span>
-                      <strong className="cpd-lb-score">{row.score.toFixed(2)}</strong>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-        </main>
-
-        {/* ── Sidebar ── */}
-        <aside className="cpd-sidebar">
-
-          {/* Rewards */}
-          <section className="cpd-block">
-            <h2 className="cpd-block-title">Rewards</h2>
-            <div className="cpd-rewards-list">
-              {(rewardTiers && rewardTiers.length > 0 ? rewardTiers : [
-                { label: "Rank #1", pointsAmount: rewardPoints, xpAmount: 0, packsCount: 0, bundleName: "", },
-                { label: "Top 3",   pointsAmount: Math.round(rewardPoints * 0.6), xpAmount: 0, packsCount: 0, bundleName: "", },
-                { label: "Top 10",  pointsAmount: Math.round(rewardPoints * 0.3), xpAmount: 0, packsCount: 0, bundleName: "", },
-              ]).map((tier, i) => (
-                <div key={i} className={`cpd-reward-row${i === 0 ? " cpd-reward-row-first" : ""}`}>
-                  <span className="cpd-reward-label">{tier.label}</span>
-                  <div className="cpd-reward-amounts">
-                    {tier.pointsAmount > 0 && (
-                      <strong className={i === 0 ? "cpd-reward-gold" : ""}>{tier.pointsAmount} pts</strong>
-                    )}
-                    {tier.xpAmount > 0 && <span>+{tier.xpAmount} XP</span>}
-                    {tier.packsCount > 0 && (
-                      <span>{tier.packsCount} pack{tier.packsCount > 1 ? "s" : ""}</span>
-                    )}
-                  </div>
-                </div>
+      {activeTab === "leaderboard" ? (
+        <section className="contest-detail-panel">
+          <h2>Leaderboard</h2>
+          {contest?.status === "OPEN" ? <p className="contest-inline-note">Contest not started yet.</p> : null}
+          {(contest?.status === "LOCKED" || contest?.status === "LIVE") && (ranking?.rankings?.length ?? 0) === 0 ? <p className="contest-inline-note">Ranking pending.</p> : null}
+          {(ranking?.rankings?.length ?? 0) > 0 ? (
+            <ol className="contest-leaderboard-list">
+              {ranking?.rankings.map((row) => (
+                <li key={row.id} className={row.userId === me?.user.id ? "is-me" : ""}>
+                  <span>#{row.rank}</span>
+                  <span>{row.displayName}</span>
+                  <b>{row.score.toFixed(2)}</b>
+                </li>
               ))}
-            </div>
-          </section>
+            </ol>
+          ) : null}
+        </section>
+      ) : null}
 
-          {/* Info */}
-          <section className="cpd-block">
-            <h2 className="cpd-block-title">Info</h2>
-            <dl className="cpd-info-grid">
-              <dt>Lineup size</dt><dd>{maxRosterSize} cards</dd>
-              <dt>Entry</dt><dd>Free</dd>
-              <dt>League</dt><dd>{contest?.leagueTierRequired ?? "Open"}</dd>
-              <dt>Field tier</dt><dd>{fieldTier}</dd>
-              <dt>Code</dt><dd className="cpd-mono">{contest?.code}</dd>
-            </dl>
-            <button type="button" className="cpd-btn-ghost" onClick={() => setRulesOpen(true)}>
-              View rules
-            </button>
-          </section>
+      {activeTab === "rewards" ? (
+        <section className="contest-detail-panel">
+          <h2>Rewards</h2>
+          <p className="contest-inline-note">Entry fee: {entryFee}</p>
+          <div className="contest-reward-tiers">
+            {(rewards?.tiers ?? []).map((tier) => (
+              <article key={`${tier.label}-${tier.bundleName}`} className="mcg-surface">
+                <h3>{tier.label}</h3>
+                <p>{tier.bundleName}</p>
+                <p>{tier.pointsAmount} pts · {tier.xpAmount} XP · {tier.packsCount} packs</p>
+              </article>
+            ))}
+            {(rewards?.tiers ?? []).length === 0 ? <p className="contest-inline-note">Rewards structure will be announced soon.</p> : null}
+          </div>
+        </section>
+      ) : null}
 
-          {/* Schedule */}
-          <section className="cpd-block">
-            <h2 className="cpd-block-title">Schedule</h2>
-            <div className="cpd-schedule">
-              {scheduleSteps.map((step) => (
-                <div
-                  key={step.key}
-                  className={[
-                    "cpd-schedule-step",
-                    step.active ? "cpd-step-active" : "",
-                    step.done ? "cpd-step-done" : "",
-                  ].filter(Boolean).join(" ")}
-                >
-                  <div className="cpd-step-indicator">
-                    <span
-                      className={[
-                        "cpd-step-dot",
-                        step.done ? "cpd-step-dot-done" : step.active ? "cpd-step-dot-live" : "cpd-step-dot-pending",
-                      ].join(" ")}
-                      aria-hidden="true"
-                    />
-                    <div className="cpd-step-line" aria-hidden="true" />
-                  </div>
-                  <div className="cpd-step-content">
-                    <p className="cpd-step-label">{step.label}</p>
-                    <p className="cpd-step-date">{step.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+      {activeTab === "rules" ? (
+        <section className="contest-detail-panel">
+          <h2>Rules</h2>
+          <ul className="contest-rules-list">
+            <li>One lineup per user for this leaderboard.</li>
+            <li>Lineup must contain exactly {rosterSize} eligible cards.</li>
+            <li>Submission closes at lock time, then lineups become read-only.</li>
+            <li>Final ranking is based on contest scoring after settlement.</li>
+          </ul>
+        </section>
+      ) : null}
 
-        </aside>
-      </div>
-
-      {/* ── Card picker modal ── */}
-      <CardSelectorModal
-        open={showModal}
-        options={filteredOptions}
-        selectedIds={selected}
-        onToggle={(instanceId) => {
-          toggle(instanceId);
-          if (activeSlot !== null) {
-            setActiveSlot(null);
-            setShowModal(false);
-          }
+      <LineupBuilderModal
+        open={showBuilder}
+        contestTitle={contest?.title ?? "Contest"}
+        contestStatus={contest?.status ?? "OPEN"}
+        lockAt={contest?.lockAt ?? null}
+        entryFeeLabel={entryFee}
+        rosterSize={rosterSize}
+        rule={rule}
+        lineupSlots={lineupSlots.length === rosterSize ? lineupSlots : toSlots(selectedIds, rosterSize)}
+        options={options}
+        busy={submitBusy}
+        flashMessage={builderFlash}
+        onClose={() => setShowBuilder(false)}
+        onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
+        onSelectCard={handleSelectCard}
+        onRemoveSlot={handleRemoveSlot}
+        onSaveDraft={() => {
+          setBuilderFlash("Draft saved locally.");
+          setShowBuilder(false);
         }}
-        onClose={() => { setShowModal(false); setActiveSlot(null); }}
-        canEnter={canEnter}
-      />
-
-      {/* ── Rules drawer ── */}
-      <RulesDrawer
-        open={rulesOpen}
-        onClose={() => setRulesOpen(false)}
-        rosterSize={maxRosterSize}
-        restrictedSet={Boolean(rule?.cardSetId)}
-        status={contest.status}
+        onSubmit={() => void submitLineup()}
       />
     </SiteShell>
   );

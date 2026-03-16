@@ -1,4 +1,5 @@
 export type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
+export type ContestEntryStatus = "DRAFT" | "SUBMITTED" | "SCORED" | "SETTLED";
 
 export type ContestRule = {
   id: string;
@@ -24,6 +25,10 @@ export type ContestListItem = {
   } | null;
   seasonName?: string | null;
   leagueTierRequired?: "BRONZE" | "SILVER" | "GOLD" | "DIAMOND" | "LEGEND" | null;
+  userEntry?: {
+    id: string;
+    status: ContestEntryStatus;
+  } | null;
 };
 
 export type LineupOption = {
@@ -38,4 +43,5 @@ export type LineupOption = {
   name: string;
   imageUrl: string | null;
   tokenProjectName: string;
+  tokenProjectId?: string | null;
 };
