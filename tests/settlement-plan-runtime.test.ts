@@ -177,7 +177,7 @@ describe("settlement plan runtime", () => {
     expect(result.settlementId).toBe("s1");
   });
 
-  it("execute deletes roster locks for contest lineup cards", async () => {
+  it("execute keeps roster locks to preserve settled lineup history", async () => {
     const tx: any = {
       contestSettlementPlan: {
         findUnique: vi.fn().mockResolvedValue({
@@ -218,6 +218,7 @@ describe("settlement plan runtime", () => {
 
     await executeSettlementPlan("sp1");
 
-    expect(tx.rosterLock.deleteMany).toHaveBeenCalledWith({ where: { contestEntry: { contestId: "c1" } } });
+    expect(tx.rosterLock.deleteMany).not.toHaveBeenCalled();
   });
+
 });

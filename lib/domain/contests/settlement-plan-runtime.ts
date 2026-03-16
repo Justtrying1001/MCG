@@ -292,9 +292,6 @@ export async function executeSettlementPlan(planId: string) {
     await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
 
-    await tx.rosterLock.deleteMany({
-      where: { contestEntry: { contestId: plan.contestId } },
-    });
     await tx.contestSettlementPlan.update({
       where: { id: plan.id },
       data: { status: SETTLEMENT_PLAN_STATUS.EXECUTED, executedAt: new Date() },

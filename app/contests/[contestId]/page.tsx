@@ -190,6 +190,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     const id = window.setTimeout(() => setBuilderFlash(""), 2400);
     return () => window.clearTimeout(id);
   }, [builderFlash]);
+  useEffect(() => {
+    if (!detail?.userEntry || contestData?.status !== "SETTLED") return;
+    if (!scoreBreakdown || scoreBreakdown.length === 0) return;
+    const hasSlots = lineupSlots.some(Boolean);
+    if (hasSlots) return;
+
+    const fallbackLineupIds = scoreBreakdown.map((row) => row.cardInstance.id);
+    setLineupSlots(toSlots(fallbackLineupIds, rosterSize));
+  }, [contestData?.status, detail?.userEntry, lineupSlots, rosterSize, scoreBreakdown]);
+
 
   useEffect(() => {
     const id = setInterval(() => setNowTs(Date.now()), 1000);

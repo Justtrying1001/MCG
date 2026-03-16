@@ -26,6 +26,15 @@ describe("contest workbench helpers", () => {
     });
   });
 
+
+  it("treats scoring as ready after ranking/settlement even without breakdown rows", () => {
+    expect(getContestOverviewProgress({ entries: 10, tokenScores: 10, breakdownRows: 0, scores: 10, rankings: 10, settlements: 1 })).toEqual({
+      entries: 10,
+      scoringReady: true,
+      rankingGenerated: true,
+      settlementDone: true,
+    });
+  });
   it("evaluates lifecycle blocked vs allowed", () => {
     expect(lifecycleValidationState({ blocking: true, issues: [{ severity: "ERROR" }] }).canExecute).toBe(false);
     expect(lifecycleValidationState({ blocking: false, issues: [{ severity: "WARN" }] }).canExecute).toBe(true);
