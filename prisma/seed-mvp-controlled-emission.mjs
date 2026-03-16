@@ -128,6 +128,7 @@ async function run() {
 
   const rarityByCode = new Map(rarities.map((r) => [r.code, r]));
   const editionByCode = new Map(editions.map((e) => [e.code, e]));
+  const mvpTokenProjectIds = [];
 
   for (const token of mvpTokens) {
     const tokenProject = await prisma.tokenProject.upsert({
@@ -135,6 +136,7 @@ async function run() {
       update: { displayName: token.displayName, isActive: true, coingeckoId: token.coingeckoId ?? null },
       create: { slug: token.slug, displayName: token.displayName, isActive: true, coingeckoId: token.coingeckoId ?? null },
     });
+    mvpTokenProjectIds.push(tokenProject.id);
 
     for (const rarity of RARITY_SEED) {
       const rarityRow = rarityByCode.get(rarity.code);
@@ -206,6 +208,18 @@ async function run() {
         });
       }
     }
+  }
+
+  const obsoleteTemplates = await prisma.cardTemplate.updateMany({
+    where: {
+      cardSetId: cardSet.id,
+      isActive: true,
+      tokenProjectId: { notIn: mvpTokenProjectIds },
+    },
+    data: { isActive: false },
+  });
+  if (obsoleteTemplates.count > 0) {
+    console.log(`[seed] Deactivated ${obsoleteTemplates.count} obsolete templates outside MVP token list`);
   }
 
   const tokenProjectsWithoutGecko = await prisma.tokenProject.findMany({
