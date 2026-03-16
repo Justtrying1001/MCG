@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-identity";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
@@ -100,6 +101,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [error, setError] = useState("");
   const [submitBusy, setSubmitBusy] = useState(false);
   const [builderFlash, setBuilderFlash] = useState("");
+  const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -199,49 +201,36 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
 
+  const optionById = useMemo(() => new Map(options.map((item) => [item.instanceId, item])), [options]);
+
+  const selectedIdentityKeyBySlot = useMemo(() => lineupSlots.map((id) => {
+    if (!id) return null;
+    const item = optionById.get(id);
+    return item?.tokenProjectId ?? item?.cardTemplateId ?? id;
+  }), [lineupSlots, optionById]);
+
   const myRanking = useMemo(() => {
     if (!me || !ranking) return null;
     return ranking.rankings.find((r) => r.userId === me.user.id) ?? null;
   }, [ranking, me]);
 
-  const slotCards = useMemo(() => {
-    const optionById = new Map(options.map((item) => [item.instanceId, item]));
-    const breakdownByInstanceId = new Map((scoreBreakdown ?? []).map((row) => [row.cardInstance.id, row]));
-
-    return lineupSlots.map<SlotCardView | null>((id) => {
-      if (!id) return null;
-      const optionCard = optionById.get(id);
-      if (optionCard) {
-        const row = breakdownByInstanceId.get(id);
-        return { card: optionCard, finalScore: row?.finalScore ?? null };
-      }
-
-      const row = breakdownByInstanceId.get(id);
-      if (!row) return null;
-
-      const fallback: LineupOption = {
-        instanceId: id,
-        cardTemplateId: id,
-        isLockedByActiveContest: false,
-        cardSetId: "settled",
-        cardSetCode: "SETTLED",
-        cardSetName: "Settled lineup",
-        rarityCode: row.cardInstance.cardTemplate.rarity?.code ?? "COMMON",
-        editionCode: row.cardInstance.cardTemplate.edition?.code ?? "BASE",
-        name: row.cardInstance.cardTemplate.name,
-        imageUrl: row.cardInstance.cardTemplate.imageUrl,
-        tokenProjectName: row.tokenProject.displayName,
-        tokenProjectId: null,
-      };
-
-      return { card: fallback, finalScore: row.finalScore };
-    });
-  }, [lineupSlots, options, scoreBreakdown]);
+  const slotCards = useMemo(() => lineupSlots.map((id) => (id ? (optionById.get(id) ?? null) : null)), [lineupSlots, optionById]);
 
   const submitLineup = async (isDraft = false) => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
+    const selectedItems = selectedIds.map((id) => optionById.get(id)).filter(Boolean);
+    const duplicateIdentityKeys = findDuplicateLineupIdentityKeys(selectedItems.map((item) => ({
+      tokenProjectId: item?.tokenProjectId ?? null,
+      cardTemplateId: item?.cardTemplateId ?? null,
+      instanceId: item?.instanceId ?? null,
+    })));
+    if (duplicateIdentityKeys.length > 0) {
+      setBuilderError("This token is already used in your lineup.");
+      return;
+    }
     setSubmitBusy(true);
     setError("");
+    setBuilderError("");
     const res = await fetch(`/api/contests/${params.contestId}/enter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -262,6 +251,20 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
     if (!canManageLineup) return;
+    const nextItem = optionById.get(instanceId);
+    if (!nextItem) return;
+
+    const identityKey = nextItem.tokenProjectId ?? nextItem.cardTemplateId ?? nextItem.instanceId;
+    if (!identityKey) return;
+
+    const targetIndex = targetSlotIndex ?? activeBuilderSlot;
+    const duplicateIndex = selectedIdentityKeyBySlot.findIndex((key, idx) => key === identityKey && idx !== targetIndex);
+    if (duplicateIndex >= 0) {
+      setBuilderError("This token is already used in your lineup.");
+      return;
+    }
+
+    setBuilderError("");
     setLineupSlots((prev) => {
       const next = [...(prev.length === rosterSize ? prev : toSlots(prev.filter(Boolean) as string[], rosterSize))];
       const existingIndex = next.findIndex((value) => value === instanceId);
@@ -291,6 +294,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const handleRemoveSlot = (slotIndex: number) => {
     if (!canManageLineup) return;
+    setBuilderError("");
     setLineupSlots((prev) => {
       const next = [...prev];
       next[slotIndex] = null;
@@ -425,6 +429,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         </div>
 
         {error && <div className="cpd-banner cpd-banner-warn">{error}</div>}
+        {builderError && <div className="cpd-banner cpd-banner-warn">{builderError}</div>}
         {builderFlash && !showBuilder && (
           <div className="cpd-banner cpd-banner-success">{builderFlash}</div>
         )}
@@ -678,6 +683,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         options={options}
         busy={submitBusy}
         flashMessage={builderFlash}
+        errorMessage={builderError}
         onClose={() => setShowBuilder(false)}
         onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
         onSelectCard={handleSelectCard}
@@ -721,8 +727,8 @@ const CSS = `
   /* ── Topbar ── */
   .cpd-topbar {
     position: sticky;
-    top: 0;
-    z-index: 100;
+    top: calc(var(--nav-h) + 2px);
+    z-index: 80;
     display: flex;
     align-items: center;
     justify-content: space-between;
