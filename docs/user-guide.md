@@ -13,14 +13,14 @@ MCG (Meme Card Game) est un jeu de cartes à collectionner orienté crypto-memes
 
 ### 2.1 Données clés
 - **25 tokens** actifs.
-- **1 600 cartes par token**.
-- **40 000 cartes** planifiées au total.
+- **3 200 cartes par token**.
+- **80 000 cartes** planifiées au total.
 - **5 cartes par pack**.
 - **16 000 packs** planifiés.
 - **500 points de départ** par utilisateur.
 
 ### 2.2 Lecture rapide
-- La capacité totale de packs est de 80 000 cartes (16 000 × 5), supérieure à la supply planifiée de 40 000.
+- La capacité totale de packs est de 80 000 cartes (16 000 × 5), alignée sur la supply planifiée de 80 000.
 - En pratique, la disponibilité dépend de la supply restante et des règles de tirage.
 
 ---

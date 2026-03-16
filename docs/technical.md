@@ -3,7 +3,7 @@
 ## 1) Vue d’ensemble
 MCG est une application **Next.js (App Router)** avec une API intégrée, une logique métier organisée en modules de domaine (`lib/domain/*`) et une persistance **PostgreSQL via Prisma**.
 
-Le dépôt est désormais aligné sur un seul référentiel de cartes actif : **25 tokens Genesis**, soit **40 000 cartes planifiées**.
+Le dépôt est désormais aligné sur un seul référentiel de cartes actif : **25 tokens Genesis**, soit **80 000 cartes planifiées**.
 
 ---
 
@@ -111,9 +111,9 @@ Les migrations sont versionnées dans `prisma/migrations/*` et appliquées via P
 
 ### 8.3 Règles de volumétrie
 - **25 tokens** dans le master actif.
-- Supply par token : **1 600 cartes**.
-- Supply globale : **25 × 1 600 = 40 000 cartes**.
-- Packs : 5 cartes/pack, 16 000 packs planifiés (80 000 cartes de capacité pack, supérieure à la supply planifiée).
+- Supply par token : **3 200 cartes**.
+- Supply globale : **25 × 3 200 = 80 000 cartes**.
+- Packs : 5 cartes/pack, 16 000 packs planifiés (80 000 cartes de capacité pack, alignée sur la supply planifiée).
 
 ---
 
