@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ADMIN_ROLES, requireAdminRole, resolveSessionAdminRole } from "@/lib/admin-ops";
+import { ADMIN_ROLES, describeUserResetFlagState, requireAdminRole, resolveSessionAdminRole } from "@/lib/admin-ops";
 
 describe("admin role checks", () => {
   it("allows supervisor for finance-protected rewards routes", () => {
@@ -65,6 +65,11 @@ describe("admin role checks", () => {
 
     delete process.env.ADMIN_DEFAULT_ROLE;
     delete process.env.ROOT_ADMIN_X_USERNAME;
+  });
+
+  it("describes missing ENABLE_USER_RESET as disabled with not set value", () => {
+    delete process.env.ENABLE_USER_RESET;
+    expect(describeUserResetFlagState()).toEqual({ enabled: false, raw: null, displayValue: "not set" });
   });
 
 });

@@ -101,6 +101,25 @@ export function resolveSessionAdminRole(username: string | null | undefined): Ad
   return parseAdminRole(process.env.ADMIN_DEFAULT_ROLE ?? "ADMIN_SUPERVISOR");
 }
 
+export function getUserResetFlagRaw() {
+  const raw = process.env.ENABLE_USER_RESET;
+  return typeof raw === "string" ? raw : null;
+}
+
+export function isUserResetEnabled() {
+  const raw = getUserResetFlagRaw();
+  return (raw ?? "false").trim().toLowerCase() === "true";
+}
+
+export function describeUserResetFlagState() {
+  const raw = getUserResetFlagRaw();
+  return {
+    enabled: isUserResetEnabled(),
+    raw,
+    displayValue: raw === null ? "not set" : raw,
+  };
+}
+
 export function hasAnyRole(actor: AdminActor, allowed: AdminRole[]) {
   return allowed.includes(actor.role) || actor.role === ADMIN_ROLES.ADMIN_SUPERVISOR;
 }
