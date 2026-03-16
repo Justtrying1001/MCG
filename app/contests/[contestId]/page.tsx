@@ -7,7 +7,6 @@ import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
-import { type BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
@@ -51,6 +50,22 @@ type RewardPayload = {
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
 };
 
+
+
+type ScoreBreakdownRow = {
+  id: string;
+  finalScore: number;
+  tokenProject: { displayName: string };
+  cardInstance: {
+    id?: string;
+    cardTemplate: {
+      name: string;
+      imageUrl: string | null;
+      rarity: { code: string } | null;
+      edition: { code: string } | null;
+    };
+  };
+};
 
 type SlotCardView = {
   card: LineupOption;
@@ -104,7 +119,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[] | null>(null);
 
   // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
   const slotsInitializedRef = useRef(false);
@@ -164,18 +179,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setOptions(Array.isArray(payload?.options) ? payload.options : []);
     }
 
-    const hasFinalScore = Boolean(rankingPayload?.rankings.some((row) => row.userId === me?.user.id));
-    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && (detailPayload.contest.status === "SETTLED" || hasFinalScore));
+    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && detailPayload.contest.status === "SETTLED");
     if (shouldLoadBreakdown) {
       const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
       if (breakdownRes.ok) {
-        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: BreakdownRow[] } | null;
+        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: ScoreBreakdownRow[] } | null;
         setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
       }
     } else {
       setScoreBreakdown(null);
     }
-  }, [params.contestId, me?.user.id]);
+  }, [params.contestId]);
 
   useEffect(() => {
     if (loading || !me) return;
