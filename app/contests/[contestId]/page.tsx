@@ -6,6 +6,7 @@ import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
+import { ScoreBreakdownPanel, type BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
 type ContestDetail = {
@@ -94,6 +95,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [submitBusy, setSubmitBusy] = useState(false);
   const [builderFlash, setBuilderFlash] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
   const slotsInitializedRef = useRef(false);
@@ -110,14 +113,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
     ]);
 
+    let detailPayload: ContestDetail | null = null;
+    let rankingPayload: RankingPayload | null = null;
+
     if (detailRes.ok) {
-      const payload = (await detailRes.json()) as ContestDetail;
-      setDetail(payload);
+      detailPayload = (await detailRes.json()) as ContestDetail;
+      setDetail(detailPayload);
       // Only initialize slots once per page mount — never overwrite user's in-progress selection
       if (!slotsInitializedRef.current) {
         slotsInitializedRef.current = true;
-        const nextRosterSize = payload.contest.rules?.[0]?.maxRosterSize ?? 5;
-        const roster = payload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
+        const nextRosterSize = detailPayload.contest.rules?.[0]?.maxRosterSize ?? 5;
+        const roster = detailPayload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
         if (roster.length > 0) {
           setLineupSlots(toSlots(roster, nextRosterSize));
           try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
@@ -140,13 +146,29 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setDetail(null);
     }
 
-    if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
+    if (rankingRes.ok) {
+      rankingPayload = (await rankingRes.json()) as RankingPayload;
+      setRanking(rankingPayload);
+    }
     if (rewardsRes.ok) setRewards((await rewardsRes.json()) as RewardPayload);
     if (optionsRes.ok) {
       const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
       setOptions(Array.isArray(payload?.options) ? payload.options : []);
     }
-  }, [params.contestId]);
+
+    const hasFinalScore = Boolean(rankingPayload?.rankings.some((row) => row.userId === me?.user.id));
+    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && (detailPayload.contest.status === "SETTLED" || hasFinalScore));
+    if (shouldLoadBreakdown) {
+      const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
+      if (breakdownRes.ok) {
+        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: BreakdownRow[] } | null;
+        setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
+      }
+    } else {
+      setScoreBreakdown(null);
+      setShowBreakdown(false);
+    }
+  }, [params.contestId, me?.user.id]);
 
   useEffect(() => {
     if (loading || !me) return;
@@ -445,6 +467,24 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 <div className="cpd-lineup-submitted">✓ Lineup submitted</div>
               )}
             </div>
+
+
+
+            {(detail.userEntry && scoreBreakdown && scoreBreakdown.length > 0) ? (
+              <div className="cpd-block">
+                <div className="cpd-block-header">
+                  <h2 className="cpd-block-title">Score details</h2>
+                  <button
+                    type="button"
+                    className="cpd-btn-breakdown"
+                    onClick={() => setShowBreakdown((prev) => !prev)}
+                  >
+                    {showBreakdown ? "Hide details" : "Détails du score"}
+                  </button>
+                </div>
+                {showBreakdown ? <ScoreBreakdownPanel rows={scoreBreakdown} /> : null}
+              </div>
+            ) : null}
 
             {/* LEADERBOARD BLOCK */}
             <div className="cpd-block">
@@ -826,6 +866,17 @@ const CSS = `
     margin: 14px 0 0; padding: 9px 14px; border-radius: 8px;
     background: rgba(45,181,110,0.08); border: 1px solid rgba(45,181,110,0.2);
     font-size: 0.8rem; color: var(--green); font-weight: 600;
+  }
+
+  .cpd-btn-breakdown {
+    border: 1px solid rgba(200,168,75,0.45);
+    background: rgba(200,168,75,0.12);
+    color: #f5e7b8;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   /* ── Leaderboard ── */

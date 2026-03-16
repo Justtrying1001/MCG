@@ -1,6 +1,6 @@
 import { Surface } from "@/components/ui/Surface";
 
-type BreakdownRow = {
+export type BreakdownRow = {
   id: string;
   baseScore: number;
   rarityMultiplier: number;

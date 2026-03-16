@@ -12,8 +12,9 @@ export async function POST(request: Request) {
     const user = await getSessionUser();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const body = (await request.json().catch(() => null)) as { rewardGrantId?: unknown } | null;
-    const requestedGrantId = typeof body?.rewardGrantId === "string" ? body.rewardGrantId.trim() : "";
+    const body = (await request.json().catch(() => null)) as { rewardGrantId?: unknown; grantId?: unknown } | null;
+    const requestedGrantIdRaw = typeof body?.grantId === "string" ? body.grantId : body?.rewardGrantId;
+    const requestedGrantId = typeof requestedGrantIdRaw === "string" ? requestedGrantIdRaw.trim() : "";
 
     const grant = requestedGrantId
       ? await prisma.rewardGrant.findFirst({

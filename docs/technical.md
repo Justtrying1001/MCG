@@ -147,3 +147,30 @@ Les migrations sont versionnées dans `prisma/migrations/*` et appliquées via P
 - Les tests couvrent l’économie packs, contests lifecycle/scoring/settlement, API internes et surfaces admin.
 - Les scripts de seed/check garantissent la cohérence du bootstrap Genesis.
 - Le master token actif est unique (`data/token-master-25.json`) pour éviter toute ambiguïté 50 vs 25 tokens.
+
+
+## 11) Scoring breakdown UI (user + admin)
+
+- User contest page (`/contests/:contestId`) now conditionally fetches `GET /api/contests/:contestId/my-score-breakdown` once an entry exists and contest is settled (or a final score is available).
+- The `ScoreBreakdownPanel` renders per-card computation values:
+  - `baseScore`
+  - `rarityMultiplier`
+  - `editionMultiplier`
+  - `finalScore`
+- Admin operator console (`/admin/contests/:contestId/operator`) now includes a `Score Breakdown` table sourced from `consolePayload.scoring.breakdownRows` (internal console API).
+- Formula reminder displayed in admin UI:
+  - `finalScore = baseScore × rarityMultiplier × editionMultiplier`
+
+## 12) Reward packs (contest winnings)
+
+- New endpoint: `GET /api/rewards/packs`
+  - Authenticated user only
+  - Returns unclaimed reward pack grants (`rewardGrant`) and linked `packDefinition` metadata.
+- Existing endpoint enhanced: `POST /api/rewards/packs/claim`
+  - Accepts `grantId` (or legacy `rewardGrantId`)
+  - Claims the selected reward grant and returns pulled cards payload.
+- New page: `/rewards/packs`
+  - Lists pending reward packs
+  - Allows opening a specific grant
+  - Shows reveal modal for pulled cards
+  - Removes opened grant from pending list client-side.
