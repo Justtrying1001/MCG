@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
         : null,
       _count: {
         entries: contest._count.entries,
+        scores: contest._count.scores,
         settlements: contest._count.settlements,
       },
     }));

@@ -33,7 +33,7 @@ type AdminContest = {
       components: Array<{ type: "POINTS" | "PACK" | "XP"; pointsAmount: number | null; xpAmount: number | null; packQuantity: number | null }>;
     }>;
   } | null;
-  _count: { entries: number; settlements: number };
+  _count: { entries: number; scores: number; settlements: number };
 };
 
 const STATUS_OPTIONS: Array<ContestStatus | "ALL"> = ["ALL", "DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
@@ -174,6 +174,8 @@ export default function AdminContestsLibraryPage() {
 
                 <p className="contest-inline-note"><strong>Publish state:</strong> {contest.configPublishedAt ? `Published ${fmt(contest.configPublishedAt)}` : "Not published"} · <strong>Entries:</strong> {contest._count.entries}</p>
 
+                {snapshotIndicator(contest)}
+
                 <div className="contest-console-actions">
                   <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit builder</Link>
                   <Link href={`/admin/contests/${contest.id}/operator`} className="admin-v2-link-chip">Operations</Link>
@@ -190,6 +192,24 @@ export default function AdminContestsLibraryPage() {
       ) : null}
     </div>
   );
+}
+
+function snapshotIndicator(contest: AdminContest) {
+  // Only show for LIVE or SETTLED contests where snapshot is expected
+  if (contest.status !== "LIVE" && contest.status !== "SETTLED") return null;
+
+  // Proxy: scores > 0 means scoring was calculated which requires snapshots
+  const hasSnapshot = contest._count.scores > 0;
+
+  if (hasSnapshot) {
+    return <p className="contest-inline-note" style={{ color: "#27ae60" }}>✓ START snapshot present</p>;
+  }
+
+  if (contest.status === "LIVE") {
+    return <p className="contest-inline-note" style={{ color: "#c0392b" }}>✗ START snapshot missing — check overview</p>;
+  }
+
+  return null;
 }
 
 function buildRewardTeaser(contest: AdminContest) {

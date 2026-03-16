@@ -2,10 +2,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const CSV_PATH = path.join(ROOT, 'MCG_Set1_Edition1_v3.csv');
-const BASE_PATH = path.join(ROOT, 'mcg_base_cards.json');
-const PROJECTS_PATH = path.join(ROOT, 'mcg_projects.json');
-const VARIANTS_PATH = path.join(ROOT, 'mcg_card_variants.json');
+const SOURCES_DIR = path.join(ROOT, 'data', 'sources');
+const CSV_PATH = path.join(SOURCES_DIR, 'MCG_Set1_Edition1_v3.csv');
+const BASE_PATH = path.join(SOURCES_DIR, 'mcg_base_cards.json');
+const PROJECTS_PATH = path.join(SOURCES_DIR, 'mcg_projects.json');
+const VARIANTS_PATH = path.join(SOURCES_DIR, 'mcg_card_variants.json');
 const OUTPUT_PATH = path.join(ROOT, 'data', 'token-master-50.json');
 
 const EXCLUDED_CSV_COINGECKO_IDS = new Set([
