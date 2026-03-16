@@ -12,6 +12,8 @@ export type MilestoneSeedDefinition = {
   metricKey: MilestoneType;
   threshold: number;
   rewardPoints: number;
+  rewardPackDefinitionCode?: string;
+  rewardPackQuantity?: number;
   sortOrder: number;
   active: boolean;
   unique: true;
@@ -381,6 +383,8 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     metricKey: "CONTESTS_WON",
     threshold: 1,
     rewardPoints: 1200,
+    rewardPackDefinitionCode: "genesis_reward_pack",
+    rewardPackQuantity: 1,
     sortOrder: 410,
     active: true,
     unique: true,
@@ -398,6 +402,8 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     metricKey: "CONTESTS_WON",
     threshold: 5,
     rewardPoints: 4000,
+    rewardPackDefinitionCode: "genesis_reward_pack",
+    rewardPackQuantity: 1,
     sortOrder: 420,
     active: true,
     unique: true,

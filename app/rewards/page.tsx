@@ -31,6 +31,8 @@ type QuestRow = {
   title: string;
   description: string | null;
   rewardPoints: number;
+  rewardPackCode: string | null;
+  rewardPackQuantity: number | null;
   status: QuestStatus;
   progressValue: number;
   targetValue: number | null;
@@ -201,6 +203,15 @@ function formatPts(n: number) {
   return `+${n.toLocaleString()} pts`;
 }
 
+function formatReward(quest: Pick<QuestRow, "rewardPoints" | "rewardPackCode" | "rewardPackQuantity">) {
+  const pts = quest.rewardPoints > 0 ? formatPts(quest.rewardPoints) : null;
+  const pack = quest.rewardPackCode ? `🎁 ${quest.rewardPackQuantity ?? 1} pack` : null;
+  if (pts && pack) return `${pts} + ${pack}`;
+  if (pts) return pts;
+  if (pack) return pack;
+  return "—";
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function QuestCard({
@@ -265,7 +276,7 @@ function QuestCard({
         {quest.description ?? quest.configSummary.instructions ?? "Complete this quest to earn points."}
       </p>
 
-      <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#E8834A" }}>{formatPts(quest.rewardPoints)}</p>
+      <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#E8834A" }}>{formatReward(quest)}</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
         {state === "PENDING_REVIEW" && (
@@ -373,19 +384,21 @@ function CompletedQuestCard({ quest }: { quest: QuestRow }) {
       </div>
       <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{quest.description ?? "Social quest"}</p>
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8834A" }}>{formatPts(quest.rewardPoints)}</span>
+        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8834A" }}>{formatReward(quest)}</span>
         <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>Completed {formatDate(quest.completedAt)}</span>
       </div>
     </article>
   );
 }
 
-function MilestoneBadge({ code, category, title, objective, rewardPoints, completedAt, tierIndex }: {
+function MilestoneBadge({ code, category, title, objective, rewardPoints, rewardPackCode, rewardPackQuantity, completedAt, tierIndex }: {
   code: string;
   category: string;
   title: string;
   objective: string;
   rewardPoints: number;
+  rewardPackCode?: string;
+  rewardPackQuantity?: number;
   completedAt: string | null;
   tierIndex: number;
 }) {
@@ -442,7 +455,9 @@ function MilestoneBadge({ code, category, title, objective, rewardPoints, comple
         <div style={{ textAlign: "center", maxWidth: 88 }}>
           <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>{title}</p>
           <p style={{ fontSize: "0.64rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.3, marginTop: "0.15rem" }}>{objective}</p>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#E8834A", marginTop: "0.15rem" }}>{formatPts(rewardPoints)}</p>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#E8834A", marginTop: "0.15rem" }}>
+            {formatReward({ rewardPoints, rewardPackCode: rewardPackCode ?? null, rewardPackQuantity: rewardPackQuantity ?? null })}
+          </p>
           <p style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.35)", marginTop: "0.1rem" }}>{formatDate(completedAt)}</p>
         </div>
       )}
@@ -630,6 +645,8 @@ export default function RewardsPage() {
             title: def.title,
             objective: getMilestoneObjectiveText(def.metricKey, def.threshold),
             rewardPoints: def.rewardPoints,
+            rewardPackCode: def.rewardPackDefinitionCode ?? undefined,
+            rewardPackQuantity: def.rewardPackQuantity ?? undefined,
             completedAt: completed?.completedAt ?? null,
             tierIndex: idx,
           };
@@ -933,6 +950,8 @@ export default function RewardsPage() {
                           title={badge.title}
                           objective={badge.objective}
                           rewardPoints={badge.rewardPoints}
+                          rewardPackCode={badge.rewardPackCode}
+                          rewardPackQuantity={badge.rewardPackQuantity}
                           completedAt={badge.completedAt}
                           tierIndex={badge.tierIndex}
                         />
