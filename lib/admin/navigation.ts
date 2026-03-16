@@ -38,6 +38,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     label: "Users",
     items: [
       { href: "/admin/users", label: "User context", hint: "Search and user-level diagnostics" },
+      { href: "/admin/maintenance/reset-users", label: "Reset users", hint: "Danger zone user data wipe", critical: true },
       { href: "/admin/campaigns", label: "Campaigns", hint: "Catalog and dependencies" },
     ],
   },
