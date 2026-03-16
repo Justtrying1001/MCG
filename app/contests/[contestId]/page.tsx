@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
-import { LineupCardTile } from "@/components/contests/LineupCardTile";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
 type ContestDetail = {
@@ -47,21 +46,6 @@ type RewardPayload = {
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
 };
 
-type TabKey = "overview" | "entry" | "leaderboard" | "rewards" | "rules";
-
-const TABS: Array<{ key: TabKey; label: string }> = [
-  { key: "overview", label: "Overview" },
-  { key: "entry", label: "My Entry" },
-  { key: "leaderboard", label: "Leaderboard" },
-  { key: "rewards", label: "Rewards" },
-  { key: "rules", label: "Rules" },
-];
-
-function formatDate(value: string | null) {
-  if (!value) return "TBD";
-  return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
 function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   const sanitized = roster.slice(0, rosterSize);
   while (sanitized.length < rosterSize) sanitized.push("");
@@ -73,6 +57,16 @@ function fmtDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleString("en-US", {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
+}
+
+function formatHMS(lockAt: string | null, nowTs: number): string {
+  if (!lockAt) return "--:--:--";
+  const diff = new Date(lockAt).getTime() - nowTs;
+  if (diff <= 0) return "00:00:00";
+  const h = Math.floor(diff / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1_000);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 const RARITY_COLOR: Record<string, string> = {
@@ -94,10 +88,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [lineupSlots, setLineupSlots] = useState<Array<string | null>>([]);
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeBuilderSlot, setActiveBuilderSlot] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [error, setError] = useState("");
   const [submitBusy, setSubmitBusy] = useState(false);
   const [builderFlash, setBuilderFlash] = useState("");
+  const [nowTs, setNowTs] = useState(() => Date.now());
 
   const contestData = detail?.contest;
   const rule = contestData?.rules[0];
@@ -142,32 +136,26 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return () => window.clearTimeout(id);
   }, [builderFlash]);
 
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
   const canManageLineup = contestData?.status === "OPEN";
   const hasEntry = Boolean(detail?.userEntry);
 
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
-  const selectedCards = useMemo(() => {
+
+  const myRanking = useMemo(() => {
+    if (!me || !ranking) return null;
+    return ranking.rankings.find((r) => r.userId === me.user.id) ?? null;
+  }, [ranking, me]);
+
+  const slotCards = useMemo(() => {
     const optionById = new Map(options.map((item) => [item.instanceId, item]));
-    return selectedIds.map((id) => optionById.get(id)).filter(Boolean) as LineupOption[];
-  }, [selectedIds, options]);
-
-  const userStatus = useMemo(() => {
-    if (!contestData) return "No team selected";
-    if (!detail?.userEntry) return selectedIds.length > 0 ? "Team drafted" : "No team selected";
-    if (contestData.status === "OPEN") return "Team submitted";
-    if (contestData.status === "LOCKED") return "Team locked";
-    if (contestData.status === "LIVE") return "Contest live";
-    return "Results available";
-  }, [contestData, detail?.userEntry, selectedIds.length]);
-
-  const primaryCtaLabel = useMemo(() => {
-    if (!contestData) return "Build lineup";
-    if (contestData.status === "SETTLED") return "View results";
-    if (contestData.status === "LIVE") return "Track contest";
-    if (hasEntry) return canManageLineup ? "Edit lineup" : "View my entry";
-    return "Build lineup";
-  }, [contestData, hasEntry, canManageLineup]);
+    return lineupSlots.map((id) => (id ? (optionById.get(id) ?? null) : null));
+  }, [lineupSlots, options]);
 
   const submitLineup = async () => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
@@ -188,7 +176,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     setSubmitBusy(false);
     setShowBuilder(false);
     setBuilderFlash("Lineup submitted successfully.");
-    setActiveTab("entry");
   };
 
   const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
@@ -283,138 +270,285 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <SiteShell>
-      <section className="contest-detail-hero">
-        <div className="contest-detail-hero-main">
-          <p className="contest-premium-code">{contest?.code ?? "—"}</p>
-          <h1>{contest?.title ?? "Contest"}</h1>
-          <p className="contest-inline-note">Leaderboard-centric contest with one lineup per player.</p>
-          <div className="contest-detail-kpis">
-            <span><b>Status</b>{contest?.status ?? "—"}</span>
-            <span><b>Entry fee</b>{entryFee}</span>
-            <span><b>Lineup size</b>{rosterSize} cards</span>
-            <span><b>Registration</b>{canManageLineup ? "Open" : "Closed"}</span>
-            <span><b>Lock</b>{formatDate(contest?.lockAt ?? null)}</span>
-            <span><b>End</b>{formatDate(contest?.endsAt ?? null)}</span>
-            <span><b>Reward teaser</b>{Math.max(120, rosterSize * 45)} pts</span>
-            <span><b>Participants</b>{contest?._count.entries ?? 0}</span>
+      <style>{CSS}</style>
+      <div className="cpd-page">
+
+        {/* ── STICKY TOPBAR ─────────────────────────────────────────────── */}
+        <div className="cpd-topbar">
+          <div className="cpd-topbar-left">
+            {isOpen && <span className="cpd-dot-live" />}
+            <span className="cpd-topbar-name">Contest {contest.code}</span>
+            {(contest.seasonName || contest.leagueTierRequired) && (
+              <span className="cpd-league-badge">
+                {contest.seasonName ?? contest.leagueTierRequired}
+              </span>
+            )}
+          </div>
+          <div className="cpd-topbar-right">
+            {isOpen && (
+              <>
+                <span className="cpd-topbar-label">Lock in</span>
+                <span className="cpd-countdown">{formatHMS(contest.lockAt, nowTs)}</span>
+              </>
+            )}
+            {isLive && <span className="cpd-status-chip" data-status="LIVE">● In Progress</span>}
+            {isLocked && <span className="cpd-status-chip">🔒 Locked</span>}
+            {isSettled && <span className="cpd-status-chip" data-status="SETTLED">Finished</span>}
           </div>
         </div>
-        <div className="contest-detail-user-status">
-          <p className="mcg-eyebrow">Your status</p>
-          <h3>{userStatus}</h3>
-          <button
-            type="button"
-            className="mcg-btn"
-            onClick={() => {
-              if (!contest) return;
-              if (contest.status === "OPEN") {
-                setShowBuilder(true);
-                setBuilderFlash("");
-                return;
-              }
-              if (contest.status === "LIVE") {
-                setActiveTab("leaderboard");
-                return;
-              }
-              setActiveTab("entry");
-            }}
-            disabled={!contest}
-          >
-            {primaryCtaLabel}
-          </button>
-        </div>
-      </section>
 
-      {error ? <section className="mcg-surface">{error}</section> : null}
-
-      <nav className="contest-detail-tabs" aria-label="Contest sections">
-        {TABS.map((tab) => (
-          <button key={tab.key} type="button" className={activeTab === tab.key ? "active" : ""} onClick={() => setActiveTab(tab.key)}>
-            {tab.label}
-          </button>
-        ))}
-      </nav>
-
-      {activeTab === "overview" ? (
-        <section className="contest-detail-panel">
-          <h2>Contest summary</h2>
-          <p className="contest-inline-note">Current phase: {contest?.status ?? "—"}. Build and submit before lock, then track rank live.</p>
-          <div className="contest-overview-grid">
-            <article className="mcg-surface"><h3>Timeline</h3><p>Lock: {formatDate(contest?.lockAt ?? null)}</p><p>Live: {formatDate(contest?.liveAt ?? null)}</p><p>End: {formatDate(contest?.endsAt ?? null)}</p></article>
-            <article className="mcg-surface"><h3>Rewards</h3><p>Top positions receive progressive rewards tiers.</p><p>Preview available in Rewards tab.</p></article>
-            <article className="mcg-surface"><h3>Participation</h3><p>{hasEntry ? "You already submitted a lineup." : "No lineup submitted yet."}</p></article>
+        {/* ── HERO ──────────────────────────────────────────────────────── */}
+        <div className="cpd-hero">
+          <div className="cpd-hero-left">
+            <p className="cpd-hero-eyebrow">CONTEST</p>
+            <h1 className="cpd-hero-title">
+              {contest.code}
+              <br />
+              {contest.title}
+            </h1>
           </div>
-        </section>
-      ) : null}
-
-      {activeTab === "entry" ? (
-        <section className="contest-detail-panel">
-          <h2>My Entry</h2>
-          {!hasEntry && selectedIds.length === 0 ? (
-            <div className="mcg-surface">
-              <h3>No team selected</h3>
-              <p className="contest-inline-note">Build your lineup before lock to join this contest.</p>
-              <button type="button" className="mcg-btn" onClick={() => setShowBuilder(true)} disabled={!canManageLineup}>Build lineup</button>
+          <div className="cpd-stat-pills">
+            <div className="cpd-stat-pill">
+              <span className="cpd-stat-label">Participants</span>
+              <span className="cpd-stat-value">{contest._count.entries}</span>
             </div>
-          ) : (
-            <>
-              <p className="contest-inline-note">{selectedIds.length}/{rosterSize} cards selected.</p>
-              <div className="contest-entry-preview-grid">
-                {selectedCards.map((card) => <LineupCardTile key={card.instanceId} option={card} selected />)}
-              </div>
-              {canManageLineup ? <button type="button" className="mcg-btn" onClick={() => setShowBuilder(true)}>Edit lineup</button> : null}
-            </>
-          )}
-        </section>
-      ) : null}
-
-      {activeTab === "leaderboard" ? (
-        <section className="contest-detail-panel">
-          <h2>Leaderboard</h2>
-          {contest?.status === "OPEN" ? <p className="contest-inline-note">Contest not started yet.</p> : null}
-          {(contest?.status === "LOCKED" || contest?.status === "LIVE") && (ranking?.rankings?.length ?? 0) === 0 ? <p className="contest-inline-note">Ranking pending.</p> : null}
-          {(ranking?.rankings?.length ?? 0) > 0 ? (
-            <ol className="contest-leaderboard-list">
-              {ranking?.rankings.map((row) => (
-                <li key={row.id} className={row.userId === me?.user.id ? "is-me" : ""}>
-                  <span>#{row.rank}</span>
-                  <span>{row.displayName}</span>
-                  <b>{row.score.toFixed(2)}</b>
-                </li>
-              ))}
-            </ol>
-          ) : null}
-        </section>
-      ) : null}
-
-      {activeTab === "rewards" ? (
-        <section className="contest-detail-panel">
-          <h2>Rewards</h2>
-          <p className="contest-inline-note">Entry fee: {entryFee}</p>
-          <div className="contest-reward-tiers">
-            {(rewards?.tiers ?? []).map((tier) => (
-              <article key={`${tier.label}-${tier.bundleName}`} className="mcg-surface">
-                <h3>{tier.label}</h3>
-                <p>{tier.bundleName}</p>
-                <p>{tier.pointsAmount} pts · {tier.xpAmount} XP · {tier.packsCount} packs</p>
-              </article>
-            ))}
-            {(rewards?.tiers ?? []).length === 0 ? <p className="contest-inline-note">Rewards structure will be announced soon.</p> : null}
+            <div className="cpd-stat-pill">
+              <span className="cpd-stat-label">Your rank</span>
+              <span className={`cpd-stat-value ${myRanking ? "cpd-stat-gold" : ""}`}>
+                {myRanking ? `#${myRanking.rank}` : "—"}
+              </span>
+            </div>
+            <div className="cpd-stat-pill">
+              <span className="cpd-stat-label">Your score</span>
+              <span className="cpd-stat-value">
+                {myRanking ? myRanking.score.toFixed(2) : "—"}
+              </span>
+            </div>
           </div>
-        </section>
-      ) : null}
+        </div>
 
-      {activeTab === "rules" ? (
-        <section className="contest-detail-panel">
-          <h2>Rules</h2>
-          <ul className="contest-rules-list">
-            <li>One lineup per user for this leaderboard.</li>
-            <li>Lineup must contain exactly {rosterSize} eligible cards.</li>
-            <li>Submission closes at lock time, then lineups become read-only.</li>
-            <li>Final ranking is based on contest scoring after settlement.</li>
-          </ul>
-        </section>
-      ) : null}
+        {error && <div className="cpd-banner cpd-banner-warn">{error}</div>}
+
+        {/* ── MAIN GRID ─────────────────────────────────────────────────── */}
+        <div className="cpd-grid">
+
+          {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
+          <div className="cpd-main">
+
+            {/* LINEUP BLOCK */}
+            <div className={`cpd-block ${isLocked || isLive ? "cpd-block-locked" : ""}`}>
+              <div className="cpd-block-header">
+                <div className="cpd-lineup-title-row">
+                  <h2 className="cpd-block-title">Your Lineup</h2>
+                  {isLocked && <span className="cpd-status-badge cpd-badge-locked">🔒 Locked</span>}
+                  {isLive && <span className="cpd-status-badge cpd-badge-live">● Live</span>}
+                  {isSettled && <span className="cpd-status-badge cpd-badge-settled">Settled</span>}
+                </div>
+                <div className="cpd-lineup-actions">
+                  <span className="cpd-block-meta">{selectedIds.length}/{rosterSize} slots filled</span>
+                  {isOpen && (
+                    <button
+                      type="button"
+                      className="cpd-btn-gold"
+                      onClick={() => { setShowBuilder(true); setBuilderFlash(""); }}
+                    >
+                      Build Lineup ▶
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className={`cpd-slots-grid cpd-slots-grid-${rosterSize}`}>
+                {Array.from({ length: rosterSize }).map((_, i) => {
+                  const card = slotCards[i];
+                  if (!card) {
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`cpd-slot cpd-slot-empty ${isOpen ? "cpd-slot-interactive" : "cpd-slot-locked-empty"}`}
+                        onClick={() => {
+                          if (!isOpen) return;
+                          setActiveBuilderSlot(i);
+                          setShowBuilder(true);
+                          setBuilderFlash("");
+                        }}
+                        disabled={!isOpen}
+                      >
+                        <span className="cpd-slot-number">{i + 1}</span>
+                        <span className="cpd-slot-add-hint">Select</span>
+                      </button>
+                    );
+                  }
+                  return (
+                    <div
+                      key={i}
+                      className={`cpd-slot cpd-slot-filled-bg ${isOpen ? "cpd-slot-interactive" : ""}`}
+                      onClick={() => isOpen && (setShowBuilder(true), setBuilderFlash(""))}
+                      role={isOpen ? "button" : undefined}
+                      tabIndex={isOpen ? 0 : undefined}
+                      style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                    >
+                      <span
+                        className="cpd-slot-rarity-top"
+                        style={{ color: RARITY_COLOR[card.rarityCode] ?? "#e0e0e8" }}
+                      >
+                        {card.rarityCode}
+                      </span>
+                      <div className="cpd-slot-gradient-overlay">
+                        <span className="cpd-slot-card-name">{card.name}</span>
+                      </div>
+                      {(isLocked || isLive) && (
+                        <div className="cpd-slot-lock-overlay">🔒 Locked</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {isOpen && selectedIds.length === rosterSize && !hasEntry && (
+                <button
+                  type="button"
+                  className="cpd-btn-submit"
+                  onClick={() => void submitLineup()}
+                  disabled={submitBusy}
+                  style={{ marginTop: 14 }}
+                >
+                  {submitBusy ? "Submitting…" : "Submit Lineup"}
+                </button>
+              )}
+
+              {detail.userEntry?.status === "SUBMITTED" && (
+                <div className="cpd-lineup-submitted">✓ Lineup submitted</div>
+              )}
+            </div>
+
+            {/* LEADERBOARD BLOCK */}
+            <div className="cpd-block">
+              <div className="cpd-block-header">
+                <h2 className="cpd-block-title">Leaderboard</h2>
+                <span className="cpd-block-meta">{ranking?.rankings.length ?? 0} entries</span>
+              </div>
+
+              {(ranking?.rankings.length ?? 0) === 0 ? (
+                <p className="cpd-empty-msg">No entries yet — be the first to join</p>
+              ) : (
+                <div className="cpd-leaderboard">
+                  {ranking?.rankings.map((row) => {
+                    const isMe = row.userId === me?.user.id;
+                    const medal = row.rank === 1 ? "🥇" : row.rank === 2 ? "🥈" : row.rank === 3 ? "🥉" : null;
+                    return (
+                      <div
+                        key={row.id}
+                        className={`cpd-lb-row ${isMe ? "cpd-lb-row-me" : ""} ${row.rank <= 3 ? "cpd-lb-row-top" : ""}`}
+                      >
+                        <span className="cpd-lb-rank">{medal ?? `#${row.rank}`}</span>
+                        <span className="cpd-lb-name">{row.displayName}</span>
+                        <b className="cpd-lb-score">{row.score.toFixed(2)}</b>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* ── SIDEBAR ───────────────────────────────────────────────────── */}
+          <div className="cpd-sidebar">
+
+            {/* REWARDS */}
+            <div className="cpd-block">
+              <h3 className="cpd-block-title">Rewards</h3>
+              <div className="cpd-rewards-list">
+                {(rewards?.tiers ?? []).length > 0
+                  ? (rewards?.tiers ?? []).map((tier, idx) => (
+                      <div
+                        key={`${tier.label}-${idx}`}
+                        className={`cpd-reward-row ${idx === 0 ? "cpd-reward-row-first" : ""}`}
+                      >
+                        <span className="cpd-reward-label">{tier.label}</span>
+                        <div className="cpd-reward-amounts">
+                          {tier.pointsAmount > 0 && (
+                            <span className={idx === 0 ? "cpd-reward-gold" : ""}>
+                              {tier.pointsAmount} pts
+                            </span>
+                          )}
+                          {tier.xpAmount > 0 && <span>{tier.xpAmount} XP</span>}
+                          {tier.packsCount > 0 && (
+                            <span>🎁 {tier.packsCount} pack{tier.packsCount > 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  : (
+                    <>
+                      <div className="cpd-reward-row cpd-reward-row-first">
+                        <span className="cpd-reward-label">#1</span>
+                        <span className="cpd-reward-gold">{rewardPoints} pts</span>
+                      </div>
+                      <div className="cpd-reward-row">
+                        <span className="cpd-reward-label">#2</span>
+                        <span>{Math.round(rewardPoints * 0.6)} pts</span>
+                      </div>
+                      <div className="cpd-reward-row">
+                        <span className="cpd-reward-label">#3</span>
+                        <span>{Math.round(rewardPoints * 0.3)} pts</span>
+                      </div>
+                    </>
+                  )}
+              </div>
+            </div>
+
+            {/* INFO */}
+            <div className="cpd-block">
+              <h3 className="cpd-block-title">Info</h3>
+              <dl className="cpd-info-grid">
+                <dt>Lineup</dt>
+                <dd>{rosterSize} cards</dd>
+                <dt>Entry fee</dt>
+                <dd>{entryFee}</dd>
+                <dt>League</dt>
+                <dd>{contest.seasonName ?? "Open"}</dd>
+                <dt>Field</dt>
+                <dd>{fieldTier}</dd>
+                <dt>Code</dt>
+                <dd className="cpd-mono">{contest.code}</dd>
+              </dl>
+            </div>
+
+            {/* SCHEDULE */}
+            <div className="cpd-block">
+              <h3 className="cpd-block-title">Schedule</h3>
+              <div className="cpd-schedule">
+                {scheduleSteps.map((step, idx) => {
+                  const dotClass = step.done
+                    ? "cpd-step-dot-done"
+                    : step.active
+                    ? "cpd-step-dot-live"
+                    : "cpd-step-dot-pending";
+                  return (
+                    <div
+                      key={step.key}
+                      className={`cpd-schedule-step ${step.active ? "cpd-step-active" : ""} ${step.done ? "cpd-step-done" : ""}`}
+                    >
+                      <div className="cpd-step-indicator">
+                        <span className={`cpd-step-dot ${dotClass}`} />
+                        {idx < scheduleSteps.length - 1 && <span className="cpd-step-line" />}
+                      </div>
+                      <div className="cpd-step-content">
+                        <p className="cpd-step-label">{step.label}</p>
+                        <p className="cpd-step-date">{step.date}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       <LineupBuilderModal
         open={showBuilder}
@@ -445,265 +579,541 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 // ─── Embedded styles ──────────────────────────────────────────────────────────
 
 const CSS = `
-  /* ── Fonts ── */
-  .cpd-hero-title,
-  .cpd-block-title { font-family: 'Bebas Neue', 'Barlow Condensed', 'Rajdhani', sans-serif; }
+  /* ── Design tokens ── */
+  .cpd-page {
+    --bg-page:     #0c0c12;
+    --bg-surface:  #141420;
+    --bg-surface2: #1c1c2c;
+    --border:      rgba(255,255,255,0.07);
+    --gold:        #c8a84b;
+    --gold-bright: #ecc96a;
+    --green:       #2db56e;
+    --red:         #e63946;
+    --muted:       #5a5a7a;
+    --text:        #e2ddd4;
+    font-family: 'DM Sans', 'Inter', sans-serif;
+    color: var(--text);
+  }
 
   /* ── Topbar ── */
   .cpd-topbar {
     position: sticky;
     top: 0;
-    z-index: 40;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
     margin-bottom: 4px;
-    background: rgba(12, 12, 18, 0.96);
+    background: rgba(12,12,18,0.97);
     backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    border-bottom: 1px solid var(--border);
   }
   .cpd-topbar-left  { display: flex; align-items: center; gap: 10px; }
-  .cpd-topbar-right { display: flex; align-items: center; gap: 8px; }
+  .cpd-topbar-right { display: flex; align-items: center; gap: 10px; }
   .cpd-topbar-name  { font-size: 0.9rem; font-weight: 600; color: #e0e0e8; }
-  .cpd-topbar-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.06em; }
+  .cpd-topbar-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
   .cpd-countdown {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.05rem;
     font-weight: 700;
-    color: #ecc96a;
+    color: var(--gold-bright);
     letter-spacing: 0.04em;
   }
   .cpd-league-badge {
     font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-    padding: 2px 8px; border-radius: 20px;
-    background: rgba(200,168,75,0.15); border: 1px solid rgba(200,168,75,0.35); color: #c8a84b;
+    padding: 2px 9px; border-radius: 20px;
+    background: rgba(200,168,75,0.12); border: 1px solid rgba(200,168,75,0.3); color: var(--gold);
   }
   .cpd-status-chip {
     font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
     padding: 3px 10px; border-radius: 20px;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
   }
-  .cpd-status-chip[data-status="SETTLED"] { color:#2db56e; border-color:rgba(45,181,110,.3); background:rgba(45,181,110,.08); }
-  .cpd-status-chip[data-status="LIVE"]    { color:#ecc96a; border-color:rgba(236,201,106,.3); background:rgba(236,201,106,.08); }
+  .cpd-status-chip[data-status="LIVE"]    { color: var(--green); border-color: rgba(45,181,110,0.3); background: rgba(45,181,110,0.08); animation: cpdLivePulse 2s ease-in-out infinite; }
+  .cpd-status-chip[data-status="SETTLED"] { color: var(--muted); border-color: rgba(90,90,122,0.3); background: rgba(90,90,122,0.08); }
 
   /* Live dot */
   .cpd-dot-live {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    background: #2db56e; flex-shrink: 0;
-    animation: cpdPulse 1.8s ease-in-out infinite;
+    background: var(--green); flex-shrink: 0;
+    animation: cpdPulse 2s ease-in-out infinite;
   }
-  @keyframes cpdPulse {
-    0%,100% { opacity:1; transform:scale(1); }
-    50%      { opacity:.4; transform:scale(.8); }
-  }
+  @keyframes cpdPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  @keyframes cpdLivePulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 
   /* ── Hero ── */
   .cpd-hero {
-    display: grid; grid-template-columns: 1fr auto; align-items: center;
-    gap: 24px; padding: 28px 0 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
   }
-  .cpd-hero-eyebrow { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:rgba(255,255,255,.35); margin:0 0 6px; }
-  .cpd-hero-title   { font-size: clamp(2.8rem,6vw,5rem); line-height:.9; letter-spacing:.02em; color:#fff; margin:0 0 6px; }
-  .cpd-hero-subtitle{ font-size:.9rem; color:rgba(255,255,255,.5); margin:0; }
-  .cpd-stat-pills   { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .cpd-hero-left { flex: 1; min-width: 200px; }
+  .cpd-hero-eyebrow {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--gold); margin: 0 0 8px; font-family: 'DM Sans', sans-serif;
+  }
+  .cpd-hero-title {
+    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 0.85;
+    letter-spacing: 0.02em;
+    color: #fff;
+    margin: 0;
+  }
+  .cpd-stat-pills { display: flex; gap: 10px; flex-wrap: wrap; }
   .cpd-stat-pill {
-    display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:10px 18px; min-width:80px;
-    background:#141420; border:1px solid rgba(255,255,255,.07); border-radius:12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 16px 20px; min-width: 90px;
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px;
   }
-  .cpd-stat-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.4); white-space:nowrap; }
-  .cpd-stat-value { font-size:1.25rem; font-weight:700; color:#e0e0e8; line-height:1; }
-  .cpd-stat-gold  { color:#ecc96a; }
+  .cpd-stat-label {
+    font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); white-space: nowrap;
+  }
+  .cpd-stat-value { font-size: 1.3rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .cpd-stat-gold  { color: var(--gold-bright); }
 
   /* ── Banners ── */
-  .cpd-banner { padding:10px 14px; border-radius:10px; font-size:.85rem; margin-bottom:16px; }
-  .cpd-banner-warn { background:rgba(214,58,50,.1); border:1px solid rgba(214,58,50,.25); color:#f87171; }
-  .cpd-banner-info { background:rgba(200,168,75,.08); border:1px solid rgba(200,168,75,.2); color:#c8a84b; }
+  .cpd-banner { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 16px; }
+  .cpd-banner-warn { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.25); color: #f87171; }
+  .cpd-banner-info { background: rgba(200,168,75,0.08); border: 1px solid rgba(200,168,75,0.2); color: var(--gold); }
 
-  /* ── Grid ── */
-  .cpd-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start; }
+  /* ── Main grid ── */
+  .cpd-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 20px; align-items: start; }
 
   /* ── Shared block ── */
   .cpd-block {
-    background:#141420; border:1px solid rgba(255,255,255,.07);
-    border-radius:14px; padding:20px; margin-bottom:16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
   }
   .cpd-block-header {
-    display:flex; align-items:flex-start; justify-content:space-between;
-    gap:12px; margin-bottom:16px; flex-wrap:wrap;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
   }
-  .cpd-block-title { font-size:1.2rem; letter-spacing:.04em; color:#e0e0e8; margin:0; line-height:1.1; }
-  .cpd-block-meta  { font-size:.75rem; color:rgba(255,255,255,.35); margin:3px 0 0; }
-  .cpd-empty-msg   { font-size:.85rem; color:rgba(255,255,255,.35); text-align:center; padding:24px 0; margin:0; }
+  .cpd-block-title {
+    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+    font-size: 1.25rem; letter-spacing: 0.06em; color: var(--text); margin: 0; line-height: 1.1;
+  }
+  .cpd-block-meta  { font-size: 0.75rem; color: var(--muted); margin: 4px 0 0; }
+  .cpd-empty-msg   { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 24px 0; margin: 0; }
+  .cpd-block-locked { opacity: 0.9; }
 
-  /* ── Lineup status badges ── */
-  .cpd-lineup-title-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  /* ── Lineup title row ── */
+  .cpd-lineup-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .cpd-status-badge {
-    display:inline-flex; align-items:center; gap:4px; padding:2px 10px;
-    border-radius:20px; font-size:.68rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px;
+    border-radius: 20px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
   }
-  .cpd-badge-locked { background:rgba(255,200,0,.08);  border:1px solid rgba(255,200,0,.25);  color:#f5c842; }
-  .cpd-badge-live   { background:rgba(45,181,110,.1);  border:1px solid rgba(45,181,110,.3);  color:#2db56e; }
-  .cpd-badge-settled{ background:rgba(200,168,75,.1);  border:1px solid rgba(200,168,75,.3);  color:#c8a84b; }
-  .cpd-block-locked { opacity:.9; }
-  .cpd-slot-locked-empty { border-color:rgba(255,255,255,.07)!important; cursor:not-allowed; opacity:.45; }
+  .cpd-badge-locked { background: rgba(255,200,0,0.08); border: 1px solid rgba(255,200,0,0.25); color: #f5c842; }
+  .cpd-badge-live   { background: rgba(45,181,110,0.1); border: 1px solid rgba(45,181,110,0.3); color: var(--green); }
+  .cpd-badge-settled{ background: rgba(200,168,75,0.1); border: 1px solid rgba(200,168,75,0.3); color: var(--gold); }
 
   /* ── Lineup actions ── */
-  .cpd-lineup-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .cpd-lineup-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .cpd-btn-gold {
-    display:inline-flex; align-items:center; padding:8px 18px;
-    border:none; border-radius:8px;
-    background:linear-gradient(135deg,#c8a84b,#ecc96a); color:#0c0c12;
-    font-size:.82rem; font-weight:700; letter-spacing:.04em;
-    cursor:pointer; transition:opacity .15s;
+    display: inline-flex; align-items: center; gap: 4px; padding: 8px 18px;
+    border: none; border-radius: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    color: #0c0c12; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em;
+    cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
   }
-  .cpd-btn-gold:hover { opacity:.85; }
+  .cpd-btn-gold:hover { opacity: 0.85; }
   .cpd-btn-submit {
-    padding:8px 18px; border:1px solid rgba(45,181,110,.5); border-radius:8px;
-    background:rgba(45,181,110,.1); color:#2db56e;
-    font-size:.82rem; font-weight:700; cursor:pointer; transition:background .15s;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 10px 18px;
+    border: 1px solid rgba(45,181,110,0.4); border-radius: 8px;
+    background: rgba(45,181,110,0.1); color: var(--green);
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    font-family: 'DM Sans', sans-serif;
   }
-  .cpd-btn-submit:hover    { background:rgba(45,181,110,.18); }
-  .cpd-btn-submit:disabled { opacity:.5; cursor:not-allowed; }
-  .cpd-btn-ghost {
-    display:flex; align-items:center; justify-content:center;
-    width:100%; padding:7px 14px; margin-top:12px;
-    border:1px solid rgba(255,255,255,.1); border-radius:8px;
-    background:transparent; color:rgba(255,255,255,.55);
-    font-size:.8rem; cursor:pointer; transition:border-color .15s,color .15s;
-  }
-  .cpd-btn-ghost:hover { border-color:rgba(255,255,255,.22); color:rgba(255,255,255,.8); }
+  .cpd-btn-submit:hover    { background: rgba(45,181,110,0.18); }
+  .cpd-btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  /* ── Slots ── */
-  .cpd-slots-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:10px; }
+  /* ── Slot grid ── */
+  .cpd-slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+  /* Base slot */
   .cpd-slot {
-    position:relative; aspect-ratio:2/3; border-radius:10px;
-    cursor:default; background:none; border:none; padding:0; overflow:hidden; text-align:center;
-    transition:transform .12s, border-color .15s;
+    position: relative; aspect-ratio: 2/3; border-radius: 10px;
+    overflow: hidden; cursor: default; padding: 0; border: none; background: none;
+    transition: transform 0.12s, border-color 0.15s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
   }
-  .cpd-slot-interactive { cursor:pointer; }
-  .cpd-slot-interactive:hover { transform:translateY(-2px); }
+  .cpd-slot-interactive { cursor: pointer; }
+  .cpd-slot-interactive:hover { transform: translateY(-3px); }
+
+  /* Empty slot */
   .cpd-slot-empty {
-    border:2px dashed rgba(255,255,255,.14); background:rgba(255,255,255,.02); border-radius:10px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    background: var(--bg-surface2);
   }
-  .cpd-slot-empty.cpd-slot-interactive:hover { border-color:rgba(200,168,75,.4); background:rgba(200,168,75,.04); }
-  .cpd-slot-number    { font-size:1.2rem; font-weight:700; color:rgba(255,255,255,.18); }
-  .cpd-slot-add-hint  { font-size:.65rem; font-weight:600; color:rgba(200,168,75,.5); letter-spacing:.06em; text-transform:uppercase; }
-  .cpd-slot-filled {
-    display:flex; flex-direction:column;
-    border:1px solid rgba(255,255,255,.1); border-radius:10px; background:#1c1c2c; overflow:hidden;
+  .cpd-slot-locked-empty { border-color: rgba(255,255,255,0.06) !important; cursor: not-allowed; opacity: 0.4; }
+  .cpd-slot-empty.cpd-slot-interactive:hover {
+    border-color: rgba(200,168,75,0.45); background: rgba(200,168,75,0.04);
   }
-  .cpd-slot-filled:hover .cpd-slot-remove { opacity:1; }
-  .cpd-slot-img             { width:100%; aspect-ratio:1/1; object-fit:cover; flex-shrink:0; }
-  .cpd-slot-img-placeholder {
-    width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-    font-size:1.1rem; font-weight:700; color:rgba(255,255,255,.3); background:rgba(255,255,255,.04); flex-shrink:0;
+  .cpd-slot-number   { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: rgba(255,255,255,0.15); }
+  .cpd-slot-add-hint { font-size: 0.58rem; font-weight: 600; color: rgba(200,168,75,0.45); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+  /* Filled slot */
+  .cpd-slot-filled-bg {
+    background-size: cover; background-position: center top;
+    background-color: var(--bg-surface2);
   }
-  .cpd-slot-info  { padding:6px 4px 4px; display:flex; flex-direction:column; gap:2px; flex:1; }
-  .cpd-slot-name  { font-size:.65rem; font-weight:700; color:#e0e0e8; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .cpd-slot-rarity{ font-size:.55rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
-  .cpd-slot-remove {
-    position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:50%;
-    background:rgba(214,58,50,.85); color:#fff; font-size:.6rem;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; transition:opacity .15s; pointer-events:none;
+  .cpd-slot-rarity-top {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 0.52rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+    background: rgba(0,0,0,0.55); padding: 2px 6px; border-radius: 4px;
+    backdrop-filter: blur(4px);
+  }
+  .cpd-slot-gradient-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
+    padding: 24px 6px 6px;
+    display: flex; align-items: flex-end;
+  }
+  .cpd-slot-card-name {
+    font-size: 0.62rem; font-weight: 700; color: #fff; line-height: 1.2;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    text-align: left; width: 100%;
+  }
+  .cpd-slot-lock-overlay {
+    position: absolute; inset: 0;
+    background: rgba(12,12,18,0.72);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.06em; backdrop-filter: blur(2px);
   }
   .cpd-lineup-submitted {
-    margin:14px 0 0; padding:9px 14px; border-radius:8px;
-    background:rgba(45,181,110,.08); border:1px solid rgba(45,181,110,.2);
-    font-size:.8rem; color:#2db56e; font-weight:600;
+    margin: 14px 0 0; padding: 9px 14px; border-radius: 8px;
+    background: rgba(45,181,110,0.08); border: 1px solid rgba(45,181,110,0.2);
+    font-size: 0.8rem; color: var(--green); font-weight: 600;
   }
-
-  /* ── Settled block ── */
-  .cpd-block-settled { background:rgba(200,168,75,.05); border-color:rgba(200,168,75,.2); }
-  .cpd-settled-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-  .cpd-settled-icon   { font-size:1.8rem; line-height:1; }
-  .cpd-settled-stats  { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-  .cpd-settled-stat {
-    display:flex; flex-direction:column; gap:3px; padding:10px 16px; min-width:100px;
-    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:10px;
-    font-size:.82rem;
-  }
-  .cpd-settled-stat span   { color:rgba(255,255,255,.4); font-size:.7rem; }
-  .cpd-settled-stat strong { font-size:1.1rem; color:#e0e0e8; }
-  .cpd-settled-note { font-size:.75rem; color:rgba(255,255,255,.3); margin:0; line-height:1.5; }
 
   /* ── Leaderboard ── */
-  .cpd-leaderboard { display:flex; flex-direction:column; gap:2px; }
+  .cpd-leaderboard { display: flex; flex-direction: column; gap: 2px; }
   .cpd-lb-row {
-    display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:10px;
-    padding:9px 10px; border-radius:8px; border:1px solid transparent;
-    font-size:.85rem; transition:background .12s;
+    display: grid; grid-template-columns: 42px 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 0.85rem; transition: background 0.12s;
   }
-  .cpd-lb-row:hover      { background:rgba(255,255,255,.03); }
-  .cpd-lb-row-me         { background:rgba(200,168,75,.07); border-color:rgba(200,168,75,.2); }
-  .cpd-lb-row-top .cpd-lb-rank { font-size:1rem; }
-  .cpd-lb-rank  { font-size:.8rem; font-weight:700; color:rgba(255,255,255,.45); text-align:center; }
-  .cpd-lb-name  { color:#e0e0e8; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .cpd-lb-row-me .cpd-lb-name { color:#ecc96a; font-weight:700; }
-  .cpd-lb-score { font-family:'JetBrains Mono',monospace; font-size:.82rem; color:rgba(255,255,255,.6); white-space:nowrap; }
+  .cpd-lb-row:hover   { background: rgba(255,255,255,0.03); }
+  .cpd-lb-row-me      { background: rgba(200,168,75,0.07); border-color: rgba(200,168,75,0.2); border-left: 3px solid var(--gold); }
+  .cpd-lb-row-top .cpd-lb-rank { font-size: 1rem; }
+  .cpd-lb-rank  { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-align: center; }
+  .cpd-lb-name  { color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cpd-lb-row-me .cpd-lb-name { color: var(--gold-bright); font-weight: 700; }
+  .cpd-lb-score { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: rgba(255,255,255,0.55); white-space: nowrap; }
 
   /* ── Sidebar ── */
-  .cpd-sidebar .cpd-block        { margin-bottom:12px; }
-  .cpd-sidebar .cpd-block-title  { font-size:1rem; margin-bottom:14px; }
+  .cpd-sidebar .cpd-block { margin-bottom: 12px; }
 
   /* ── Rewards ── */
-  .cpd-rewards-list   { display:flex; flex-direction:column; gap:2px; }
-  .cpd-reward-row     { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; font-size:.82rem; border:1px solid transparent; }
-  .cpd-reward-row-first { background:rgba(200,168,75,.06); border-color:rgba(200,168,75,.2); }
-  .cpd-reward-label   { color:rgba(255,255,255,.55); font-weight:500; }
-  .cpd-reward-amounts { display:flex; gap:6px; align-items:center; }
-  .cpd-reward-gold    { color:#ecc96a; }
-  .cpd-reward-row-first .cpd-reward-label { color:rgba(255,255,255,.8); font-weight:700; }
+  .cpd-rewards-list { display: flex; flex-direction: column; gap: 2px; }
+  .cpd-reward-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px; border-radius: 8px; font-size: 0.82rem;
+    border: 1px solid transparent;
+    border-bottom: 1px solid var(--border);
+  }
+  .cpd-reward-row:last-child { border-bottom: none; }
+  .cpd-reward-row-first { background: rgba(200,168,75,0.06); border-color: rgba(200,168,75,0.18) !important; }
+  .cpd-reward-label       { color: rgba(255,255,255,0.5); font-weight: 500; }
+  .cpd-reward-row-first .cpd-reward-label { color: var(--text); font-weight: 700; font-size: 0.9rem; }
+  .cpd-reward-amounts { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .cpd-reward-gold    { color: var(--gold-bright); font-weight: 700; }
 
   /* ── Info ── */
-  .cpd-info-grid { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:0; font-size:.82rem; }
-  .cpd-info-grid dt { color:rgba(255,255,255,.4); font-weight:500; white-space:nowrap; }
-  .cpd-info-grid dd { margin:0; color:#e0e0e8; font-weight:600; }
-  .cpd-mono { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:rgba(255,255,255,.5); }
+  .cpd-info-grid {
+    display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 0.82rem;
+  }
+  .cpd-info-grid dt { color: var(--muted); font-weight: 500; white-space: nowrap; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .cpd-info-grid dd { margin: 0; color: var(--text); font-weight: 600; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .cpd-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: rgba(255,255,255,0.45); }
 
   /* ── Schedule ── */
-  .cpd-schedule { display:flex; flex-direction:column; }
-  .cpd-schedule-step { display:flex; gap:12px; }
-  .cpd-step-indicator { display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:14px; padding-top:3px; }
-  .cpd-step-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; display:block; }
-  .cpd-step-dot-done    { background:#2db56e; }
-  .cpd-step-dot-live    { background:#2db56e; animation:cpdPulse 1.8s ease-in-out infinite; }
-  .cpd-step-dot-pending { background:transparent; border:2px solid rgba(255,255,255,.18); }
-  .cpd-step-line { flex:1; width:1px; background:rgba(255,255,255,.08); margin:4px 0; min-height:18px; }
-  .cpd-schedule-step:last-child .cpd-step-line { display:none; }
-  .cpd-step-content { padding-bottom:16px; }
-  .cpd-step-label { font-size:.82rem; font-weight:600; color:rgba(255,255,255,.7); margin:0 0 2px; }
-  .cpd-step-active .cpd-step-label { color:#e0e0e8; }
-  .cpd-step-done .cpd-step-label   { color:rgba(255,255,255,.4); }
-  .cpd-step-date { font-size:.72rem; color:rgba(255,255,255,.35); margin:0; font-family:'JetBrains Mono',monospace; }
-  .cpd-step-active .cpd-step-date  { color:#2db56e; font-weight:600; }
+  .cpd-schedule { display: flex; flex-direction: column; }
+  .cpd-schedule-step { display: flex; gap: 12px; }
+  .cpd-step-indicator { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 14px; padding-top: 3px; }
+  .cpd-step-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; display: block; }
+  .cpd-step-dot-done    { background: var(--green); }
+  .cpd-step-dot-live    { background: var(--green); animation: cpdPulse 1.8s ease-in-out infinite; box-shadow: 0 0 6px rgba(45,181,110,0.6); }
+  .cpd-step-dot-pending { background: transparent; border: 2px solid rgba(255,255,255,0.15); }
+  .cpd-step-line { flex: 1; width: 1px; background: rgba(255,255,255,0.07); margin: 4px 0; min-height: 18px; }
+  .cpd-schedule-step:last-child .cpd-step-line { display: none; }
+  .cpd-step-content { padding-bottom: 16px; }
+  .cpd-step-label { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.6); margin: 0 0 2px; }
+  .cpd-step-active .cpd-step-label { color: var(--green); }
+  .cpd-step-done .cpd-step-label   { color: var(--muted); }
+  .cpd-step-date { font-size: 0.7rem; color: var(--muted); margin: 0; font-family: 'JetBrains Mono', monospace; }
+  .cpd-step-active .cpd-step-date  { color: var(--green); font-weight: 600; }
 
   /* ── Skeleton ── */
-  .cpd-skeleton      { display:flex; flex-direction:column; gap:14px; }
-  .cpd-skeleton-topbar { height:44px; border-radius:8px; background:rgba(255,255,255,.04); animation:cpdShimmer 1.6s infinite; }
-  .cpd-skeleton-hero   { height:130px; border-radius:14px; background:rgba(255,255,255,.04); animation:cpdShimmer 1.6s infinite .1s; }
-  .cpd-skeleton-body   { display:grid; grid-template-columns:1fr 300px; gap:16px; }
-  .cpd-skeleton-main   { height:480px; border-radius:14px; background:rgba(255,255,255,.04); animation:cpdShimmer 1.6s infinite .2s; }
-  .cpd-skeleton-side   { height:380px; border-radius:14px; background:rgba(255,255,255,.04); animation:cpdShimmer 1.6s infinite .3s; }
-  @keyframes cpdShimmer { 0%,100%{opacity:.6} 50%{opacity:1} }
+  .cpd-skeleton      { display: flex; flex-direction: column; gap: 14px; }
+  .cpd-skeleton-topbar { height: 44px; border-radius: 8px; background: rgba(255,255,255,0.04); animation: cpdShimmer 1.6s infinite; }
+  .cpd-skeleton-hero   { height: 140px; border-radius: 14px; background: rgba(255,255,255,0.04); animation: cpdShimmer 1.6s infinite 0.1s; }
+  .cpd-skeleton-body   { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  .cpd-skeleton-main   { height: 480px; border-radius: 14px; background: rgba(255,255,255,0.04); animation: cpdShimmer 1.6s infinite 0.2s; }
+  .cpd-skeleton-side   { height: 380px; border-radius: 14px; background: rgba(255,255,255,0.04); animation: cpdShimmer 1.6s infinite 0.3s; }
+  @keyframes cpdShimmer { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  /* ══ LINEUP BUILDER MODAL ═══════════════════════════════════════════════ */
+  .bldr-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.82);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 40px;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+  }
+  .bldr-modal {
+    width: 100%;
+    max-width: 900px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: calc(100vh - 80px);
+  }
+
+  /* Builder header */
+  .bldr-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 18px 22px;
+    background: #0c0c12;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .bldr-head-left  { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .bldr-head-title {
+    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+    font-size: 1.5rem; letter-spacing: 0.06em; color: var(--text);
+  }
+  .bldr-head-contest { font-size: 0.8rem; color: var(--muted); }
+  .bldr-head-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .bldr-slot-count { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+  .bldr-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.9rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .bldr-close:hover { background: rgba(255,255,255,0.1); }
+
+  /* Slot pills row */
+  .bldr-pills-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(12,12,18,0.5);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .bldr-pill {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg-surface2); border: 1px solid var(--border);
+    color: var(--muted); font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bldr-pill:hover       { border-color: rgba(255,255,255,0.15); color: var(--text); }
+  .bldr-pill.bldr-pill-active { background: var(--gold); border-color: var(--gold); color: #0c0c12; }
+  .bldr-pill.bldr-pill-filled { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .bldr-pills-count { font-size: 0.75rem; color: var(--muted); margin-left: 6px; }
+
+  /* Selected slots row */
+  .bldr-slots-row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(28,28,44,0.4);
+    flex-shrink: 0;
+  }
+  .bldr-slot {
+    position: relative; aspect-ratio: 2/3; border-radius: 8px;
+    overflow: hidden; cursor: pointer;
+    background-size: cover; background-position: center top;
+    transition: transform 0.12s, border-color 0.15s;
+  }
+  .bldr-slot-empty {
+    background: var(--bg-surface2); border: 2px dashed rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bldr-slot-empty:hover { border-color: rgba(200,168,75,0.4); }
+  .bldr-slot-active.bldr-slot-empty { border-color: var(--gold); border-width: 2px; background: rgba(200,168,75,0.06); }
+  .bldr-slot-active.bldr-slot-filled-bg { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .bldr-slot-filled-bg { background-color: var(--bg-surface2); }
+  .bldr-slot-num  { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: rgba(255,255,255,0.15); }
+  .bldr-slot-inner-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+    padding: 20px 4px 5px;
+  }
+  .bldr-slot-inner-name { font-size: 0.55rem; font-weight: 700; color: #fff; line-height: 1.2; padding: 0 4px; display: block; }
+  .bldr-slot-remove-btn {
+    position: absolute; top: 3px; right: 3px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(230,57,70,0.85); color: #fff; font-size: 0.55rem;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .bldr-slot:hover .bldr-slot-remove-btn { opacity: 1; }
+
+  /* Pool section */
+  .bldr-pool-section {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px 22px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Controls */
+  .bldr-controls {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .bldr-search {
+    flex: 1; min-width: 160px;
+    padding: 8px 12px; border-radius: 8px;
+    background: var(--bg-surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.82rem; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .bldr-search:focus { border-color: rgba(255,255,255,0.18); }
+  .bldr-search::placeholder { color: var(--muted); }
+  .bldr-select {
+    padding: 8px 10px; border-radius: 8px; min-width: 130px;
+    background: var(--bg-surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.78rem; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; outline: none;
+    appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5a7a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  /* Pool grid */
+  .bldr-pool-empty { font-size: 0.85rem; color: var(--muted); text-align: center; padding: 32px 0; }
+  .bldr-pool-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
+  }
+
+  /* Pool card */
+  .bldr-card {
+    position: relative; aspect-ratio: 2/3; border-radius: 10px;
+    overflow: hidden; cursor: pointer;
+    background: var(--bg-surface2); background-size: cover; background-position: center top;
+    border: 2px solid transparent;
+    transition: transform 0.12s, border-color 0.15s;
+  }
+  .bldr-card:hover              { transform: scale(1.03); border-color: rgba(200,168,75,0.5); }
+  .bldr-card.bldr-card-selected { border-color: var(--green); }
+  .bldr-card.bldr-card-disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+  .bldr-card-rarity-badge {
+    position: absolute; top: 5px; right: 5px;
+    font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 2px 5px; border-radius: 4px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  }
+  .bldr-card-edition-badge {
+    position: absolute; top: 5px; left: 5px;
+    font-size: 0.48rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 2px 5px; border-radius: 4px;
+    background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.7); backdrop-filter: blur(4px);
+  }
+  .bldr-card-footer {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%);
+    padding: 20px 6px 6px;
+  }
+  .bldr-card-name { font-size: 0.6rem; font-weight: 700; color: #fff; line-height: 1.2; display: block; }
+  .bldr-card-selected-check {
+    position: absolute; top: 5px; right: 5px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green); color: #fff; font-size: 0.65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bldr-card-locked-badge {
+    position: absolute; inset: 0;
+    background: rgba(12,12,18,0.65);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* Builder footer */
+  .bldr-footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 22px;
+    background: #0c0c12;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .bldr-footer-info { display: flex; flex-direction: column; gap: 3px; }
+  .bldr-footer-count { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+  .bldr-footer-validation { font-size: 0.75rem; color: var(--muted); }
+  .bldr-footer-flash  { font-size: 0.75rem; color: var(--green); font-weight: 600; }
+  .bldr-footer-actions { display: flex; gap: 8px; align-items: center; }
+  .bldr-btn-ghost {
+    padding: 9px 16px; border-radius: 8px;
+    background: transparent; border: 1px solid var(--border);
+    color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .bldr-btn-ghost:hover           { border-color: rgba(255,255,255,0.18); color: var(--text); }
+  .bldr-btn-ghost:disabled        { opacity: 0.4; cursor: not-allowed; }
+  .bldr-btn-submit {
+    padding: 10px 24px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    border: none; color: #0c0c12; font-size: 0.88rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .bldr-btn-submit:hover    { opacity: 0.88; }
+  .bldr-btn-submit:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* ── Responsive ── */
-  @media (max-width:768px) {
-    .cpd-hero { grid-template-columns:1fr; gap:16px; }
-    .cpd-stat-pills { justify-content:flex-start; }
-    .cpd-grid { grid-template-columns:1fr; }
-    .cpd-sidebar { order:2; }
-    .cpd-main   { order:1; }
-    /* 3+2 layout for 5-slot roster */
-    .cpd-slots-grid { grid-template-columns:repeat(3,1fr); }
-    .cpd-slots-grid-5 { grid-template-columns:repeat(6,1fr); }
-    .cpd-slots-grid-5 .cpd-slot           { grid-column:span 2; }
-    .cpd-slots-grid-5 .cpd-slot:nth-child(4) { grid-column:2 / span 2; }
-    .cpd-slots-grid-5 .cpd-slot:nth-child(5) { grid-column:4 / span 2; }
-    .cpd-skeleton-body { grid-template-columns:1fr; }
+  @media (max-width: 768px) {
+    .cpd-hero { flex-direction: column; align-items: flex-start; padding: 32px 0 24px; }
+    .cpd-stat-pills { width: 100%; justify-content: flex-start; }
+    .cpd-grid { grid-template-columns: 1fr; }
+    .cpd-sidebar { order: 2; }
+    .cpd-main   { order: 1; }
+    .cpd-slots-grid { grid-template-columns: repeat(3, 1fr); }
+    .cpd-slots-grid-5 { grid-template-columns: repeat(6, 1fr); }
+    .cpd-slots-grid-5 .cpd-slot                   { grid-column: span 2; }
+    .cpd-slots-grid-5 .cpd-slot:nth-child(4)       { grid-column: 2 / span 2; }
+    .cpd-slots-grid-5 .cpd-slot:nth-child(5)       { grid-column: 4 / span 2; }
+    .cpd-skeleton-body { grid-template-columns: 1fr; }
+    .bldr-slots-row { grid-template-columns: repeat(5, 1fr); }
+    .bldr-pool-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  }
+  @media (max-width: 480px) {
+    .cpd-slots-grid-5 { grid-template-columns: repeat(4, 1fr); }
+    .cpd-slots-grid-5 .cpd-slot                   { grid-column: span 2; }
+    .cpd-slots-grid-5 .cpd-slot:nth-child(5)       { grid-column: 2 / span 2; }
+    .bldr-modal { max-height: 100vh; border-radius: 0; }
+    .bldr-overlay { padding: 0; align-items: flex-start; }
   }
 `;
