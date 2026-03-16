@@ -27,7 +27,14 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
   const timingLabel = contest.status === "OPEN" ? "Lock" : contest.status === "SETTLED" ? "Ended" : "Ends";
   const visualToken = getVisualToken(contest);
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const inProgressMeta = contest.status === "LIVE" || contest.status === "LOCKED" ? "In progress" : "Registration";
+
+  const userState = contest.userEntry
+    ? contest.status === "OPEN"
+      ? "Lineup submitted"
+      : contest.status === "SETTLED"
+        ? "Results available"
+        : "Entry live"
+    : "No lineup";
 
   return (
     <Link href={`/contests/${contest.id}`} className="contest-premium-link-wrap" aria-label={`Open contest ${contest.title}`}>
@@ -49,10 +56,10 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
             <span><b>{timingLabel}</b>{formatDate(contest.status === "OPEN" ? contest.lockAt : contest.endsAt)}</span>
             <span><b>Countdown</b>{countdown}</span>
             <span><b>Reward</b>{rewardPreview}</span>
-            <span><b>Entry</b>{entryFee}</span>
-            <span><b>Players</b>{contest._count.entries}</span>
+            <span><b>Entry fee</b>{entryFee}</span>
+            <span><b>Participants</b>{contest._count.entries}</span>
             <span><b>Lineup</b>{rosterSize} cards</span>
-            <span><b>State</b>{inProgressMeta}</span>
+            <span><b>Your status</b>{userState}</span>
             <span><b>League</b>{contest.leagueTierRequired ?? "OPEN"}</span>
           </div>
 
