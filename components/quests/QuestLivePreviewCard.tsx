@@ -75,7 +75,7 @@ export function QuestLivePreviewCard({
             ) : (
               <button type="button" className="btn btn-ghost btn-sm" disabled>Link unavailable</button>
             )}
-            <span className={styles.previewHint}>{hasTarget ? "CTA visible côté user" : "Ajoute target_url pour activer le CTA"}</span>
+            <span className={styles.previewHint}>{hasTarget ? "CTA visible to users" : "Add target_url to enable the CTA"}</span>
           </div>
         ) : null}
       </article>

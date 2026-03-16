@@ -6,7 +6,7 @@
     "dev": "prisma generate && next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && npm run check:language",
     "typecheck": "prisma generate && tsc --noEmit",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
@@ -24,7 +24,8 @@
     "seed:milestone:rewards": "node prisma/seed-milestone-rewards.mjs",
     "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs",
     "build:token-master-25": "node scripts/build-token-master-25.mjs",
-    "build:mcg-cards-master": "node scripts/build-mcg-cards-master.mjs"
+    "build:mcg-cards-master": "node scripts/build-mcg-cards-master.mjs",
+    "check:language": "node scripts/check-language.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

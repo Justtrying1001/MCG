@@ -587,7 +587,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                     className="cpd-btn-breakdown"
                     onClick={() => setShowBreakdown((prev) => !prev)}
                   >
-                    {showBreakdown ? "Hide details" : "Détails du score"}
+                    {showBreakdown ? "Hide details" : "Show details"}
                   </button>
                 </div>
                 {showBreakdown ? <ScoreBreakdownPanel rows={scoreBreakdown} /> : null}

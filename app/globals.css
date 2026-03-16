@@ -21,25 +21,25 @@
   --surface:    rgba(22, 24, 29, 0.84);
   --surface-hi: rgba(22, 24, 29, 0.97);
 
-  /* ── BORDERS — Graphite, pas bleu ── */
+  /* ── BORDERS — Graphite, not blue ── */
   --border:     rgba(35, 38, 45, 0.72);
   --border-hi:  rgba(55, 60, 70, 0.88);
 
-  /* ── BRAND ACTIVE DUO ── */
-  --red:        #D63A32;    /* Signal Red — CTA, émotion, drop */
-  --gold:       #C89B3C;    /* Electric Gold — prestige, rareté */
+  /* ── ACTIVE BRAND DUO ── */
+  --red:        #D63A32;    /* Signal Red — CTA, emotion, drop */
+  --gold:       #C89B3C;    /* Electric Gold — prestige, rarity */
 
-  /* ── COULEURS SECONDAIRES UTILITAIRES ── */
-  --emerald:    #1F7A5C;    /* Progression / récompense / owned */
-  --arc-blue:   #2E6BFF;    /* Info / système / focus */
+  /* ── UTILITY SECONDARY COLORS ── */
+  --emerald:    #1F7A5C;    /* Progress / reward / owned */
+  --arc-blue:   #2E6BFF;    /* Info / system / focus */
   --amber:      #F0A43A;    /* Anticipation / reveal / tease */
 
-  /* ── TEXTE — Bone White hierarchy ── */
-  --text:       #F3F1EC;    /* Bone White — texte principal */
-  --text-2:     #8A8A84;    /* Secondaire */
-  --text-3:     #4A4A47;    /* Tertiaire / muted */
+  /* ── TEXT — Bone White hierarchy ── */
+  --text:       #F3F1EC;    /* Bone White — main text */
+  --text-2:     #8A8A84;    /* Secondary */
+  --text-3:     #4A4A47;    /* Tertiary / muted */
 
-  /* ── RARETÉ — matière d'abord, couleur ensuite ── */
+  /* ── RARITY — material first, color second ── */
   --rarity-common:    #7E8794;
   --rarity-uncommon:  #4FA39A;
   --rarity-rare:      #3C6DF2;

@@ -19,7 +19,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
       <Surface className="contest-hub-hero premium">
         <SectionHeader
           eyebrow="Contests"
-          title="Competition Arena"
+          title="Contest Arena"
           subtitle="Draft your best lineup, adapt before lock, then watch the race unfold."
           actions={<Link href="/collection" className="mcg-btn ghost">Build from collection</Link>}
         />

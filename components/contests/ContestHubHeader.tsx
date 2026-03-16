@@ -13,7 +13,7 @@ export function ContestHubHeader({ counts }: ContestHubHeaderProps) {
   return (
     <Surface className="contest-hub-header" variant="raised">
       <div className="contest-hub-header-copy">
-        <p className="mcg-eyebrow">Competition hub</p>
+        <p className="mcg-eyebrow">Contest hub</p>
         <h1>Contests</h1>
         <p>
           Discover active events, lock your lineup, then follow live rankings until final settlement.
