@@ -10,7 +10,7 @@ describe("MVP controlled-emission bootstrap dry-run", () => {
 
     expect(output).toContain("[dry-run] tokens: 25");
     expect(output).toContain("[dry-run] templates: 625");
-    expect(output).toContain("[dry-run] planned supply per token: 1600");
-    expect(output).toContain("[dry-run] total planned supply: 40000");
+    expect(output).toContain("[dry-run] planned supply per token: 3200");
+    expect(output).toContain("[dry-run] total planned supply: 80000");
   });
 });
