@@ -147,7 +147,6 @@ Les quêtes permettent de gagner des récompenses complémentaires :
 3. Je compose mes lineups en priorisant rareté/édition.
 4. Je suis mon ledger pour monitorer coûts d’entrée et gains.
 
----
 
 ## 9) Bonnes pratiques utilisateur
 - Ouvrir régulièrement les packs tant que le stock est disponible.
