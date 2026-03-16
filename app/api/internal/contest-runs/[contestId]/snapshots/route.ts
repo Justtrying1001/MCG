@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
         volume24hUsd: true,
         marketCapRank: true,
         capturedAt: true,
-        tokenProject: { select: { slug: true, displayName: true } },
+        tokenProject: { select: { slug: true, displayName: true, coingeckoId: true } },
       },
     });
 
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
         geckoId: row.geckoId,
         slug: row.tokenProject.slug,
         displayName: row.tokenProject.displayName,
+        hasCoingeckoId: row.tokenProject.coingeckoId !== null || (row.geckoId !== row.tokenProject.slug),
         priceUsd: row.priceUsd ? Number(row.priceUsd) : null,
         marketCapUsd: row.marketCapUsd ? Number(row.marketCapUsd) : null,
         volume24hUsd: row.volume24hUsd ? Number(row.volume24hUsd) : null,
@@ -44,6 +45,9 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
     const startList = toTokenList(startRows);
     const endList = toTokenList(endRows);
 
+    const startCapturedWithPrice = startList.filter((t) => t.priceUsd !== null).length;
+    const endCapturedWithPrice = endList.filter((t) => t.priceUsd !== null).length;
+
     return NextResponse.json({
       ok: true,
       contestId: params.contestId,
@@ -51,11 +55,13 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
       hasEndSnapshot: endList.length > 0,
       start: {
         tokenCount: startList.length,
+        capturedWithPrice: startCapturedWithPrice,
         capturedAt: startRows[0]?.capturedAt?.toISOString() ?? null,
         tokens: startList,
       },
       end: {
         tokenCount: endList.length,
+        capturedWithPrice: endCapturedWithPrice,
         capturedAt: endRows[0]?.capturedAt?.toISOString() ?? null,
         tokens: endList,
       },

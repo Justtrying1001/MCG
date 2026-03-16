@@ -62,6 +62,19 @@ export async function computeContestScoresFromSnapshots(contestId: string): Prom
       throw new ContestRuntimeError("Both START and END snapshots are required", 409);
     }
 
+    const startRowsWithPrice = startRows.filter((r) => r.priceUsd !== null);
+    if (startRowsWithPrice.length === 0) {
+      throw new ContestRuntimeError(
+        `START snapshot exists but has no price data (${startRows.length} token${startRows.length !== 1 ? "s" : ""}, 0 with price). Re-capture the START snapshot before scoring.`,
+        409
+      );
+    }
+    if (startRowsWithPrice.length < startRows.length) {
+      console.warn(
+        `[scoring] Contest ${contestId} START snapshot is partial: ${startRowsWithPrice.length}/${startRows.length} tokens have price data. Scoring will be degraded.`
+      );
+    }
+
     const startByToken = new Map(startRows.map((row) => [row.tokenProjectId, row]));
     const endByToken = new Map(endRows.map((row) => [row.tokenProjectId, row]));
 

@@ -11,6 +11,7 @@ type SnapshotCaptureResult = {
   tokenCount: number;
   capturedCount: number;
   missingCount: number;
+  missingGeckoIdCount: number;
 };
 
 export async function captureStartSnapshot(contestId: string) {
@@ -29,14 +30,31 @@ async function captureSnapshot(contestId: string, phase: ContestSnapshotPhase): 
 
   if (tokens.length === 0) {
     console.warn(`[contest-snapshot] No eligible tokens for contest=${contestId} phase=${phase} — returning empty snapshot, LIVE transition will proceed`);
-    return { contestId, phase, tokenCount: 0, capturedCount: 0, missingCount: 0 };
+    return { contestId, phase, tokenCount: 0, capturedCount: 0, missingCount: 0, missingGeckoIdCount: 0 };
   }
 
   const geckoIds = tokens.map((token) => token.coingeckoId).filter((id): id is string => Boolean(id));
+  const missingGeckoIdCount = tokens.length - geckoIds.length;
+
+  if (geckoIds.length === 0) {
+    console.warn(
+      `[contest-snapshot] No tokens with coingeckoId for contest=${contestId} phase=${phase}. ` +
+      `Tokens found: ${tokens.length}, all missing geckoId. ` +
+      `Snapshot rows will be stored with null price data — scoring will be degraded.`
+    );
+  } else if (missingGeckoIdCount > 0) {
+    console.warn(
+      `[contest-snapshot] ${missingGeckoIdCount}/${tokens.length} tokens missing coingeckoId for contest=${contestId} phase=${phase}. ` +
+      `These tokens will have null price data in the snapshot.`
+    );
+  }
 
   // Step 2: fetch market data with retry (outside transaction; retries may sleep between attempts)
   let markets: Awaited<ReturnType<typeof fetchCoinsMarkets>> = [];
-  if (phase === ContestSnapshotPhase.START) {
+  if (geckoIds.length === 0) {
+    // No geckoIds at all — skip CoinGecko call entirely, store tokens with null prices
+    markets = [];
+  } else if (phase === ContestSnapshotPhase.START) {
     // START snapshot is critical for scoring — propagate failure to block LIVE transition
     markets = await fetchMarketsWithRetry(geckoIds, phase, contestId);
   } else {
@@ -105,6 +123,7 @@ async function captureSnapshot(contestId: string, phase: ContestSnapshotPhase): 
       tokenCount: tokens.length,
       capturedCount,
       missingCount,
+      missingGeckoIdCount,
     };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }

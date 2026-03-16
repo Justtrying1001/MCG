@@ -44,13 +44,20 @@ type SnapshotToken = {
   capturedAt: string;
 };
 
+type SnapshotPhaseData = {
+  tokenCount: number;
+  capturedWithPrice: number;
+  capturedAt: string | null;
+  tokens: SnapshotToken[];
+};
+
 type SnapshotPayload = {
   ok: boolean;
   contestId: string;
   hasStartSnapshot: boolean;
   hasEndSnapshot: boolean;
-  start: { tokenCount: number; capturedAt: string | null; tokens: SnapshotToken[] };
-  end: { tokenCount: number; capturedAt: string | null; tokens: SnapshotToken[] };
+  start: SnapshotPhaseData;
+  end: SnapshotPhaseData;
 };
 
 export default function ContestOverviewPage({ params }: { params: { contestId: string } }) {
@@ -119,8 +126,11 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     router.refresh();
   };
 
-  const captureSnapshot = async (phase: "START" | "END") => {
-    const confirmed = window.confirm(`Capture ${phase} snapshot now? This will fetch current CoinGecko prices for all eligible tokens.`);
+  const captureSnapshot = async (phase: "START" | "END", isRecapture = false) => {
+    const msg = isRecapture
+      ? `This will overwrite the existing ${phase} snapshot. Only do this if price data is missing. Confirm?`
+      : `Capture ${phase} snapshot now? This will fetch current CoinGecko prices for all eligible tokens.`;
+    const confirmed = window.confirm(msg);
     if (!confirmed) return;
     setBusyCapture(phase);
     setMessage("");
@@ -188,28 +198,40 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                 <div style={{ display: "grid", gap: "0.4rem" }}>
                   <PipelineRow
                     label="START Snapshot"
-                    ok={snapshots.hasStartSnapshot}
+                    ok={snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice > 0}
+                    warn={snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice === 0}
                     detail={
                       snapshots.hasStartSnapshot
-                        ? `${snapshots.start.tokenCount} tokens captured${snapshots.start.capturedAt ? ` — at ${formatDate(snapshots.start.capturedAt)}` : ""}`
+                        ? `${snapshots.start.tokenCount} tokens captured, ${snapshots.start.capturedWithPrice} with price${snapshots.start.capturedAt ? ` — at ${formatDate(snapshots.start.capturedAt)}` : ""}`
                         : "Not captured — will trigger automatically on LIVE transition"
                     }
                     expandable={snapshots.start.tokens.length > 0}
                     expanded={showStartDetail}
                     onToggle={() => setShowStartDetail((v) => !v)}
                   />
+                  {snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice < snapshots.start.tokenCount && snapshots.start.tokenCount > 0 ? (
+                    <p className="contest-inline-note" style={{ color: "#c0392b", paddingLeft: "1.8rem" }}>
+                      ⚠ {snapshots.start.tokenCount - snapshots.start.capturedWithPrice} token{snapshots.start.tokenCount - snapshots.start.capturedWithPrice > 1 ? "s" : ""} captured but {snapshots.start.capturedWithPrice === 0 ? "none have" : "some have no"} price data — missing coingeckoId mapping or CoinGecko fetch failed
+                    </p>
+                  ) : null}
                   <PipelineRow
                     label="END Snapshot"
-                    ok={snapshots.hasEndSnapshot}
+                    ok={snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice > 0}
+                    warn={snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice === 0}
                     detail={
                       snapshots.hasEndSnapshot
-                        ? `${snapshots.end.tokenCount} tokens captured${snapshots.end.capturedAt ? ` — at ${formatDate(snapshots.end.capturedAt)}` : ""}`
+                        ? `${snapshots.end.tokenCount} tokens captured, ${snapshots.end.capturedWithPrice} with price${snapshots.end.capturedAt ? ` — at ${formatDate(snapshots.end.capturedAt)}` : ""}`
                         : "Not captured yet"
                     }
                     expandable={snapshots.end.tokens.length > 0}
                     expanded={showEndDetail}
                     onToggle={() => setShowEndDetail((v) => !v)}
                   />
+                  {snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice < snapshots.end.tokenCount && snapshots.end.tokenCount > 0 ? (
+                    <p className="contest-inline-note" style={{ color: "#c0392b", paddingLeft: "1.8rem" }}>
+                      ⚠ {snapshots.end.tokenCount - snapshots.end.capturedWithPrice} token{snapshots.end.tokenCount - snapshots.end.capturedWithPrice > 1 ? "s" : ""} have no price data
+                    </p>
+                  ) : null}
                   <PipelineRow label="Scoring" ok={data.progress.scoringReady} detail={data.progress.scoringReady ? "Calculated" : "Pending"} />
                   <PipelineRow label="Ranking" ok={data.progress.rankingGenerated} detail={data.progress.rankingGenerated ? "Generated" : "Pending"} />
                   <PipelineRow label="Settlement" ok={data.progress.settlementDone} detail={data.progress.settlementDone ? "Done" : "Pending"} />
@@ -229,6 +251,15 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                       {busyCapture === "START" ? "Capturing…" : "Capture START snapshot now"}
                     </Button>
                     <p className="contest-inline-note" style={{ color: "#c0392b" }}>Contest is LIVE but START snapshot is missing — action required.</p>
+                  </div>
+                ) : null}
+
+                {data.contest.status === "LIVE" && snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice === 0 ? (
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <Button variant="ghost" onClick={() => void captureSnapshot("START", true)} disabled={busyCapture !== null} style={{ color: "#c0392b", borderColor: "#c0392b" }}>
+                      {busyCapture === "START" ? "Capturing…" : "⚠ Re-capture START snapshot"}
+                    </Button>
+                    <p className="contest-inline-note" style={{ color: "#c0392b" }}>START snapshot exists but has 0 prices — scoring will produce all zeros.</p>
                   </div>
                 ) : null}
 
@@ -274,6 +305,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
 function PipelineRow({
   label,
   ok,
+  warn,
   detail,
   expandable,
   expanded,
@@ -281,14 +313,17 @@ function PipelineRow({
 }: {
   label: string;
   ok: boolean;
+  warn?: boolean;
   detail: string;
   expandable?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
 }) {
+  const icon = ok ? "✓" : warn ? "⚠" : "✗";
+  const color = ok ? "#27ae60" : warn ? "#e67e22" : "#c0392b";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-      <span style={{ fontSize: "1rem", color: ok ? "#27ae60" : "#c0392b", minWidth: "1.2rem" }}>{ok ? "✓" : "✗"}</span>
+      <span style={{ fontSize: "1rem", color, minWidth: "1.2rem" }}>{icon}</span>
       <span className="contest-meta-label" style={{ minWidth: "9rem" }}>{label}</span>
       <span className="contest-inline-note" style={{ flex: 1 }}>{detail}</span>
       {expandable && onToggle ? (
