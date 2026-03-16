@@ -38,6 +38,7 @@ async function run() {
       rarityRows,
       editionRows,
       templateRows,
+      rewardPool,
     ] = await Promise.all([
       prisma.cardSet.findUnique({ where: { code: EXPECTED.cardSetCode } }),
       prisma.packDefinition.findUnique({ where: { code: EXPECTED.salePackCode } }),
@@ -56,6 +57,7 @@ async function run() {
           edition: { select: { code: true } },
         },
       }),
+      prisma.rewardPackSupply.findUnique({ where: { id: EXPECTED.rewardPackCode } }),
     ]);
 
     const failures = [];
@@ -98,6 +100,17 @@ async function run() {
       failures.push(`${rewardPack.code} points to unexpected cardSetId=${rewardPack.cardSetId}`);
     }
 
+
+    if (!rewardPool) {
+      failures.push(`Missing RewardPackSupply id=${EXPECTED.rewardPackCode}`);
+    } else {
+      if (rewardPool.totalSupply !== EXPECTED.rewardPlannedPackCount) {
+        failures.push(`RewardPackSupply ${EXPECTED.rewardPackCode} totalSupply=${rewardPool.totalSupply} expected=${EXPECTED.rewardPlannedPackCount}`);
+      }
+      if (rewardPool.distributed > rewardPool.totalSupply) {
+        failures.push(`RewardPackSupply ${EXPECTED.rewardPackCode} distributed=${rewardPool.distributed} exceeds totalSupply=${rewardPool.totalSupply}`);
+      }
+    }
     if (tokenProjectCount < EXPECTED.tokenProjects) {
       failures.push(`Active token projects=${tokenProjectCount}; expected at least ${EXPECTED.tokenProjects}`);
     }
@@ -155,6 +168,7 @@ async function run() {
     console.log(`- cardSet=${EXPECTED.cardSetCode} active=${cardSet.isActive}`);
     console.log(`- salePack=${salePack.code} source=${salePack.source} opened=${salePack.openedPackCount}/${salePack.plannedPackCount}`);
     console.log(`- rewardPack=${rewardPack.code} source=${rewardPack.source} opened=${rewardPack.openedPackCount}/${rewardPack.plannedPackCount}`);
+    console.log(`- rewardPool=${rewardPool?.id ?? "<missing>"} distributed=${rewardPool?.distributed ?? 0}/${rewardPool?.totalSupply ?? 0}`);
     console.log(`- activeTokenProjects=${tokenProjectCount}`);
     console.log(`- activeTemplatesWithSupply=${cardSetTemplates.length}`);
     console.log(`- hasRemainingSupply=${hasRemainingSupply}`);
