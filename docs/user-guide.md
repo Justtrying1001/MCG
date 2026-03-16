@@ -154,3 +154,27 @@ Les quêtes permettent de gagner des récompenses complémentaires :
 - Vérifier les horaires `lockAt/liveAt/endAt` des contests.
 - Éviter d’engager trop tôt une carte si vous hésitez entre plusieurs contests.
 - Suivre les quêtes pour accumuler des rewards complémentaires.
+
+
+## 10) Détail du score en contest
+
+Quand un contest est settled (ou que votre score final est disponible), la page du contest propose un bouton **"Détails du score"**.
+
+Vous y verrez, carte par carte :
+- Base Score
+- Rarity Multiplier
+- Edition Multiplier
+- Final Score
+
+Formule utilisée :
+`finalScore = baseScore × rarityMultiplier × editionMultiplier`
+
+## 11) Ouvrir vos packs remportés
+
+Les packs gagnés en contest sont disponibles dans **Rewards → Packs remportés** (`/rewards/packs`).
+
+Workflow :
+1. Ouvrez la page Packs remportés.
+2. Cliquez sur **Ouvrir** sur le pack souhaité.
+3. Les cartes obtenues sont révélées dans une fenêtre de reveal.
+4. Le pack ouvert disparaît de la liste des packs en attente.

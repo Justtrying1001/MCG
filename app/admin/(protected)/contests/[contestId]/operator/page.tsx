@@ -8,6 +8,7 @@ import {
   AdminPanel,
   AdminStatusBadge,
 } from "@/components/admin/AdminUi";
+import { ScoreBreakdownTable } from "@/components/admin/ScoreBreakdownTable";
 
 type ConsolePayload = {
   contest: { id: string; title: string; code: string; status: string };
@@ -18,7 +19,7 @@ type ConsolePayload = {
   };
   scoring: {
     tokenScores: Array<{ id: string; tokenProject: { displayName: string }; score: number; priceChange: number | null; marketCapChange: number | null; volumeChange: number | null }>;
-    breakdownRows: Array<{ id: string; entry: { userId: string }; tokenProject: { displayName: string }; cardInstance: { cardTemplate: { name: string } }; finalScore: number; rarityMultiplier: number; editionMultiplier: number; baseScore: number }>;
+    breakdownRows: Array<{ id: string; entry: { id: string; userId: string; user?: { displayName: string | null; xUsername: string | null } }; tokenProject: { displayName: string; slug: string }; cardInstance: { cardTemplate: { name: string; rarity?: { code: string } | null; edition?: { code: string } | null } }; finalScore: number; rarityMultiplier: number; editionMultiplier: number; baseScore: number }>;
   };
 };
 
@@ -112,6 +113,14 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
                 </tbody>
               </table>
             </div>
+          </AdminPanel>
+
+          <AdminPanel>
+            <h3>Score Breakdown</h3>
+            <p style={{ margin: "0 0 0.75rem", color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
+              Formula: <code>finalScore = baseScore × rarityMultiplier × editionMultiplier</code>
+            </p>
+            <ScoreBreakdownTable breakdownRows={payload.scoring.breakdownRows} />
           </AdminPanel>
 
           <AdminPanel>
