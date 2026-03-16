@@ -191,7 +191,7 @@ export function LineupBuilderModal({
               <div
                 key={i}
                 className={`bldr-slot ${card ? "bldr-slot-filled-bg" : "bldr-slot-empty"} ${isActive ? (card ? "bldr-slot-active" : "bldr-slot-active") : ""}`}
-                style={card?.imageUrl ? { backgroundImage: `url(${card.imageUrl})` } : undefined}
+                style={{ backgroundImage: card?.imageUrl ? `url(${card.imageUrl})` : card ? `linear-gradient(160deg, ${RARITY_COLOR[card.rarityCode] ?? "#888"}44 0%, #141420 100%)` : undefined }}
                 onClick={() => { setActiveSlot(i); onSelectSlot(i); }}
                 role="button"
                 tabIndex={0}
@@ -290,7 +290,7 @@ export function LineupBuilderModal({
                 <div
                   key={item.instanceId}
                   className={`bldr-card ${isSelected ? "bldr-card-selected" : ""} ${isDisabled ? "bldr-card-disabled" : ""}`}
-                  style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
+                  style={{ backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : `linear-gradient(160deg, ${rarityColor}44 0%, #141420 100%)` }}
                   onClick={() => {
                     if (isDisabled) return;
                     onSelectCard(item.instanceId, activeSlot);
@@ -335,10 +335,14 @@ export function LineupBuilderModal({
 
         {/* ── FOOTER ──────────────────────────────────────────────────── */}
         <div className="bldr-footer">
-          <div className="bldr-footer-info">
-            <span className="bldr-footer-count">{selectedCount} / {rosterSize} selected</span>
-            <span className="bldr-footer-validation">{validationText}</span>
-            {flashMessage && <span className="bldr-footer-flash">{flashMessage}</span>}
+          <div className="bldr-footer-top">
+            <div className="bldr-footer-info">
+              <span className="bldr-footer-count">{selectedCount} / {rosterSize} selected</span>
+              {flashMessage
+                ? <span className="bldr-footer-flash">{flashMessage}</span>
+                : <span className="bldr-footer-validation">{validationText}</span>
+              }
+            </div>
           </div>
           <div className="bldr-footer-actions">
             <button
@@ -349,14 +353,16 @@ export function LineupBuilderModal({
             >
               Save draft
             </button>
-            <button
-              type="button"
-              className="bldr-btn-submit"
-              onClick={onSubmit}
-              disabled={!canEdit || !readyToSubmit || busy}
-            >
-              {busy ? "Submitting…" : "Submit Lineup"}
-            </button>
+            {readyToSubmit && (
+              <button
+                type="button"
+                className={`bldr-btn-submit-main${!busy ? " bldr-btn-pulse" : ""}`}
+                onClick={onSubmit}
+                disabled={!canEdit || busy}
+              >
+                {busy ? "Submitting…" : "Submit Lineup ✓"}
+              </button>
+            )}
           </div>
         </div>
       </div>
