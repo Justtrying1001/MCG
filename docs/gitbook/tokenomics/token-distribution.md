@@ -1,26 +1,17 @@
 # Token Distribution
 
-## Why distribution matters
-Distribution design determines whether the ecosystem can remain fair, liquid, and durable over time.
+## Fair launch and no pre-sale
 
-## Distribution buckets (framework)
-A typical MCG distribution framework can include:
+MCG did not run a private investor round and did not run a pre-sale.
 
-- Ecosystem and player rewards
-- Treasury and long-term development
-- Team and contributors
-- Strategic partnerships and liquidity support
+The full token supply was launched publicly.
 
-## Distribution controls
-### Vesting and unlock schedules
-Time-based release schedules reduce sudden supply shocks and align long-term contributors.
+## No team reserve
 
-### Emission cadence
-Rewards should be emitted in relation to real participation and measurable activity.
+There is no predefined team allocation.
 
-### Transparency expectations
-Published schedules, updates, and treasury actions should be visible to users.
+Developers are not granted a reserved token pool and operate under the same market conditions as the community.
 
-## Investor and player interpretation
-- Players should focus on how emissions impact competitive opportunities.
-- Investors should focus on whether release pace matches product growth.
+## Distribution principle
+
+The distribution model is built around fairness, transparency, and public access from day one.

@@ -1,15 +1,21 @@
 # Token Overview
 
-## Token role in MCG
-The MCG token layer is intended to support gameplay access, reward distribution, and ecosystem participation rather than function as a standalone speculative instrument.
+## Launch model
 
-## Relationship with game systems
-Token-linked mechanics connect to:
+MCG token launch follows a fair-launch approach via Bagsapp on Bags.fm.
 
-- Acquisition flows (packs and potential fees)
-- Tournament participation cycles
-- Reward emissions and reinvestment behavior
-- Marketplace and community-level activity
+Key points:
 
-## Key evaluation perspective
-A healthy token model should increase utility as product usage grows, not only through short-term price movement.
+- Public launch only
+- No private sale
+- No reserved allocation for the team
+
+## Why this matters
+
+This structure is designed for transparency and equal access.
+
+Everyone starts from the same baseline, and token ownership depends on open market participation rather than private rounds.
+
+## Project objective
+
+The token helps fund MCG growth and will become increasingly integrated into the game economy as the product matures.
