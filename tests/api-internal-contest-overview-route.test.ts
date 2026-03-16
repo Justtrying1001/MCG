@@ -48,4 +48,28 @@ describe("/api/internal/contest-runs/:contestId/overview", () => {
     expect(body.progress.scoringReady).toBe(true);
     expect(body.allowedTransitions).toEqual(["SETTLED", "CANCELED"]);
   });
+  it("marks scoring ready on settled contests even when breakdown rows were cleaned", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: true, actor: { id: "admin:a" } });
+    prismaMock.contest.findUnique.mockResolvedValue({
+      id: "c1",
+      code: "W1",
+      title: "Week 1",
+      status: "SETTLED",
+      liveAt: null,
+      lockAt: null,
+      endsAt: null,
+      _count: { entries: 10, scores: 10, rankings: 10, settlements: 1, tokenScores: 5 },
+    });
+
+    prismaMock.contestEntryScoreBreakdown.count.mockResolvedValue(0);
+
+    const response = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.progress.scoringReady).toBe(true);
+    expect(body.progress.rankingGenerated).toBe(true);
+    expect(body.progress.settlementDone).toBe(true);
+  });
+
 });

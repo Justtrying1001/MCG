@@ -1,8 +1,7 @@
 import { ContestStatus } from "@prisma/client";
 
-import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
-import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
-import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
+import { finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
+import { captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { prisma } from "@/lib/prisma";
 
 type ReconciliationStep = {
@@ -70,28 +69,7 @@ async function runAutomationBeforeTransition(contestId: string, target: ContestS
   }
 
   if (target === ContestStatus.SETTLED) {
-    try {
-      await captureEndSnapshot(contestId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[lifecycle] END snapshot failed for contest ${contestId} — continuing settlement: ${message}`);
-    }
-    try {
-      await computeContestScoresFromSnapshots(contestId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[lifecycle] Score computation failed for contest ${contestId} — continuing settlement: ${message}`);
-    }
-    await tryAutoSettle(contestId);
-  }
-}
-
-async function tryAutoSettle(contestId: string) {
-  try {
-    await executeAutoSettlementForContest(contestId);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`[auto-settle] Failed for contest ${contestId}: ${message}`);
+    await finalizeContestFromEndSnapshotTrigger(contestId);
   }
 }
 
