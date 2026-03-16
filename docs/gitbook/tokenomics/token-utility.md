@@ -1,21 +1,21 @@
 # Token Utility
 
-## Utility categories
-### In-game access utility
-Tokens can be used for game-related actions such as entry, purchases, or premium participation modes (depending on active configuration).
+MCG token utility will be introduced progressively.
 
-### Reward utility
-Rewards distributed in token-linked forms create a direct link between performance and economic output.
+## Planned utility directions
 
-### Ecosystem utility
-Utility may extend to marketplace functions, community incentives, and governance rights as features mature.
+### In-game currency
+The token is intended to power core game actions over time, including:
 
-## Utility design principles
-- Utility should be frequent and visible to active users.
-- Utility should reward engagement quality, not only activity volume.
-- Utility should reduce friction in core gameplay loops.
+- Pack purchases
+- Contest entry fees
+- Additional gameplay features released in future updates
 
-## What to monitor
-- Share of active users using token-linked features
-- Ratio of utility demand to emission supply
-- Retention impact of utility-enabled mechanics
+### Community governance (optional path)
+As the ecosystem evolves, token-based voting may be introduced for selected community decisions.
+
+## Rollout philosophy
+
+We are intentionally cautious about utility promises.
+
+The goal is to avoid unrealistic expectations and introduce concrete utility only when features are ready. The core principle remains unchanged: the token is built to provide long-term value to active players and support the MCG ecosystem.

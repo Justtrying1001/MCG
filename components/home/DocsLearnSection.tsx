@@ -10,7 +10,7 @@ export function DocsLearnSection() {
             scoring is in the docs.
           </p>
           <a
-            href="https://mcg-2.gitbook.io/untitled/"
+            href="https://mcg-2.gitbook.io/mcg/"
             target="_blank"
             rel="noopener noreferrer"
             className="home-docs-cta"

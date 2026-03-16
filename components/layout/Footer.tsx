@@ -16,7 +16,7 @@ export function Footer() {
         {/* Center: Links */}
         <nav className="mcg-footer-links" aria-label="Footer navigation">
           <a
-            href="https://mcg-2.gitbook.io/untitled/"
+            href="https://mcg-2.gitbook.io/mcg/"
             target="_blank"
             rel="noopener noreferrer"
             className="mcg-footer-link"

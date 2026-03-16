@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const DOCS_URL = "https://mcg-2.gitbook.io/untitled/";
+const DOCS_URL = "https://mcg-2.gitbook.io/mcg/";
 
 export default function DocsRedirectPage() {
   useEffect(() => {

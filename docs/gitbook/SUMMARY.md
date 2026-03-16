@@ -17,6 +17,7 @@
   * [Token Utility](tokenomics/token-utility.md)
   * [Token Distribution](tokenomics/token-distribution.md)
   * [Sustainability](tokenomics/sustainability.md)
+  * [Bags Hackathon](tokenomics/bags-hackathon.md)
 * [Ecosystem](ecosystem/README.md)
   * [Marketplace](ecosystem/marketplace.md)
   * [Community](ecosystem/community.md)
