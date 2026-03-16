@@ -30,6 +30,15 @@ describe("/api/internal/admin/reset-users", () => {
     process.env.ENABLE_USER_RESET = "true";
   });
 
+
+  it("returns auth error for standard unauthenticated user", async () => {
+    requireInternalAdminAccessMock.mockReturnValue({ ok: false, status: 403, error: "Forbidden" });
+
+    const response = await POST(new Request("http://localhost/api/internal/admin/reset-users", { method: "POST" }) as any);
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Forbidden" });
+  });
+
   it("returns 403 for insufficient role", async () => {
     requireInternalAdminAccessMock.mockReturnValue({
       ok: true,

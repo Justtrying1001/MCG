@@ -9,4 +9,11 @@ describe("admin reset users UI", () => {
     expect(source).toContain("confirmInput.trim() === RESET_KEYWORD");
     expect(source).toContain("disabled={!canConfirm || pending}");
   });
+
+  it("uses session username role resolution for supervisor gating", () => {
+    const source = readFileSync("app/admin/(protected)/maintenance/reset-users/page.tsx", "utf8");
+    expect(source).toContain("resolveSessionAdminRole(session?.username ?? null)");
+    expect(source).toContain("<ResetUsersPanel enabled={isSupervisor} />");
+  });
+
 });

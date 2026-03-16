@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ADMIN_ROLES, requireAdminRole } from "@/lib/admin-ops";
+import { ADMIN_ROLES, requireAdminRole, resolveSessionAdminRole } from "@/lib/admin-ops";
 
 describe("admin role checks", () => {
   it("allows supervisor for finance-protected rewards routes", () => {
@@ -39,4 +39,32 @@ describe("admin role checks", () => {
     expect(check.status).toBe(403);
     expect(check.error).toBe("Insufficient admin role");
   });
+  it("keeps non-supervisor admin blocked from supervisor-only checks", () => {
+    const check = requireAdminRole({
+      ok: true,
+      mode: "session",
+      actor: {
+        type: "admin_user",
+        id: "admin:ops",
+        label: "ops",
+        username: "ops",
+        authMode: "session",
+        role: ADMIN_ROLES.ADMIN_OPS,
+      },
+    }, [ADMIN_ROLES.ADMIN_SUPERVISOR]);
+
+    expect(check.ok).toBe(false);
+  });
+
+  it("resolves configured root admin username as supervisor", () => {
+    process.env.ADMIN_DEFAULT_ROLE = "ADMIN_OPS";
+    process.env.ROOT_ADMIN_X_USERNAME = "carlitoonchain";
+
+    expect(resolveSessionAdminRole("carlitoonchain")).toBe(ADMIN_ROLES.ADMIN_SUPERVISOR);
+    expect(resolveSessionAdminRole("other-admin")).toBe(ADMIN_ROLES.ADMIN_OPS);
+
+    delete process.env.ADMIN_DEFAULT_ROLE;
+    delete process.env.ROOT_ADMIN_X_USERNAME;
+  });
+
 });
