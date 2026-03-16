@@ -157,12 +157,21 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }
       }
 
-      if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
-      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
-      if (rewardPreviewRes.ok) {
-        const rp = (await rewardPreviewRes.json()) as RewardPreviewPayload;
-        if (rp.hasPolicyData) setRewardTiers(rp.tiers);
+      if (rankingRes.ok) {
+        setRanking((await rankingRes.json()) as RankingPayload);
+      } else {
+        setRanking({ rankings: [] });
       }
+
+      if (rewardsRes.ok) setMyRewards((await rewardsRes.json()) as MyRewardsPayload);
+
+      if (rewardPreviewRes.ok) {
+        const preview = (await rewardPreviewRes.json()) as RewardPreviewPayload;
+        setRewardTiers(preview.tiers ?? []);
+      } else {
+        setRewardTiers([]);
+      }
+
       if (optionsRes.ok) {
         const lp = (await optionsRes.json()) as { options: LineupOption[] };
         setOptions(lp.options ?? []);
@@ -192,13 +201,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const myRankingRow = ranking?.rankings?.find((r) => r.userId === me?.user.id) ?? null;
   const filledCount = selected.filter(Boolean).length;
 
+  const contest = detail?.contest;
+
   const countdownTarget = useMemo(() => {
     if (!detail) return null;
     const { status, lockAt, endsAt } = detail.contest;
     if (status === "OPEN" && lockAt) return new Date(lockAt).getTime();
     if ((status === "LOCKED" || status === "LIVE") && endsAt) return new Date(endsAt).getTime();
     return null;
-  }, [detail]);
+  }, [contest]);
 
   const toggle = (instanceId: string) => {
     if (!canManageLineup) return;
@@ -274,39 +285,40 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     );
   }
 
-  const contest = detail.contest;
-  const status = contest.status;
+  const status = contest?.status;
   const isOpen = status === "OPEN";
   const isLocked = status === "LOCKED";
   const isLive = status === "LIVE";
   const isSettled = status === "SETTLED";
 
-  const scheduleSteps = [
-    {
-      key: "open",
-      label: "Registration open",
-      date: contest.openAt ? fmtDate(contest.openAt) : "Contest open",
-      active: isOpen,
-      done: isLocked || isLive || isSettled,
-    },
-    {
-      key: "lock",
-      label: "Lineup lock",
-      date: fmtDate(contest.lockAt),
-      active: isLocked,
-      done: isLive || isSettled,
-    },
-    {
-      key: "end",
-      label: "End & snapshot",
-      date: fmtDate(contest.endsAt),
-      active: isLive,
-      done: isSettled,
-    },
-  ];
+  const scheduleSteps = contest
+    ? [
+        {
+          key: "open",
+          label: "Registration open",
+          date: contest.openAt ? fmtDate(contest.openAt) : "Contest open",
+          active: isOpen,
+          done: isLocked || isLive || isSettled,
+        },
+        {
+          key: "lock",
+          label: "Lineup lock",
+          date: fmtDate(contest.lockAt),
+          active: isLocked,
+          done: isLive || isSettled,
+        },
+        {
+          key: "end",
+          label: "End & snapshot",
+          date: fmtDate(contest.endsAt),
+          active: isLive,
+          done: isSettled,
+        },
+      ]
+    : [];
 
   const rewardPoints = Math.max(100, maxRosterSize * 40);
-  const fieldTier = contest._count.entries >= 100 ? "High" : contest._count.entries >= 30 ? "Mid" : "Early";
+  const fieldTier = (contest?._count.entries ?? 0) >= 100 ? "High" : (contest?._count.entries ?? 0) >= 30 ? "Mid" : "Early";
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -317,8 +329,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       <div className="cpd-topbar">
         <div className="cpd-topbar-left">
           {isOpen && <span className="cpd-dot-live" aria-hidden="true" />}
-          <span className="cpd-topbar-name">{contest.title}</span>
-          {contest.leagueTierRequired && (
+          <span className="cpd-topbar-name">{contest?.title}</span>
+          {contest?.leagueTierRequired && (
             <span className="cpd-league-badge">{contest.leagueTierRequired}</span>
           )}
         </div>
@@ -339,15 +351,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       {/* ── Hero ── */}
       <section className="cpd-hero">
         <div className="cpd-hero-left">
-          <p className="cpd-hero-eyebrow">{contest.seasonName ?? "Season"}</p>
-          <h1 className="cpd-hero-title">{contest.code.toUpperCase()}</h1>
-          <p className="cpd-hero-subtitle">{contest.title}</p>
+          <p className="cpd-hero-eyebrow">{contest?.seasonName ?? "Season"}</p>
+          <h1 className="cpd-hero-title">{contest?.code.toUpperCase()}</h1>
+          <p className="cpd-hero-subtitle">{contest?.title}</p>
         </div>
         <div className="cpd-hero-right">
           <div className="cpd-stat-pills">
             <div className="cpd-stat-pill">
               <span className="cpd-stat-label">Participants</span>
-              <strong className="cpd-stat-value">{contest._count.entries}</strong>
+              <strong className="cpd-stat-value">{contest?._count.entries}</strong>
             </div>
             <div className="cpd-stat-pill">
               <span className="cpd-stat-label">Your rank</span>
@@ -397,7 +409,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                     Build Lineup
                   </button>
                 )}
-                {canEnter && filledCount === maxRosterSize && !detail.userEntry && (
+                {canEnter && filledCount === maxRosterSize && !detail?.userEntry && (
                   <button
                     type="button"
                     className="cpd-btn-submit"
@@ -463,7 +475,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               ))}
             </div>
 
-            {detail.userEntry && (
+            {detail?.userEntry && (
               <p className="cpd-lineup-submitted">
                 ✓ Lineup submitted · Entry #{detail.userEntry.id.slice(-6).toUpperCase()}
               </p>
@@ -512,7 +524,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           <section className="cpd-block">
             <div className="cpd-block-header">
               <h2 className="cpd-block-title">Leaderboard</h2>
-              <span className="cpd-block-meta">{contest._count.entries} entries</span>
+              <span className="cpd-block-meta">{contest?._count.entries} entries</span>
             </div>
             {!ranking || ranking.rankings.length === 0 ? (
               <p className="cpd-empty-msg">No entries yet — be the first to join.</p>
@@ -580,9 +592,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             <dl className="cpd-info-grid">
               <dt>Lineup size</dt><dd>{maxRosterSize} cards</dd>
               <dt>Entry</dt><dd>Free</dd>
-              <dt>League</dt><dd>{contest.leagueTierRequired ?? "Open"}</dd>
+              <dt>League</dt><dd>{contest?.leagueTierRequired ?? "Open"}</dd>
               <dt>Field tier</dt><dd>{fieldTier}</dd>
-              <dt>Code</dt><dd className="cpd-mono">{contest.code}</dd>
+              <dt>Code</dt><dd className="cpd-mono">{contest?.code}</dd>
             </dl>
             <button type="button" className="cpd-btn-ghost" onClick={() => setRulesOpen(true)}>
               View rules
@@ -638,6 +650,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }}
         onClose={() => { setShowModal(false); setActiveSlot(null); }}
         canEnter={canEnter}
+        onToggle={(instanceId) => toggle(instanceId)}
       />
 
       {/* ── Rules drawer ── */}
