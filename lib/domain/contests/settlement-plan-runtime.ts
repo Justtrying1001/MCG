@@ -292,7 +292,6 @@ export async function executeSettlementPlan(planId: string) {
     await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
 
-    // Release all card locks for this contest now that it is settled
     await tx.rosterLock.deleteMany({
       where: { contestEntry: { contestId: plan.contestId } },
     });

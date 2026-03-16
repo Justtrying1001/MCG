@@ -16,6 +16,7 @@ import {
 } from "@/lib/admin/contest-reward-builder";
 
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
+type RewardPackDefinition = { id: string; code: string; source: "SALE" | "REWARD"; plannedPackCount: number | null };
 
 type RewardCapacityRow = {
   packDefinitionId: string;
@@ -54,6 +55,7 @@ export default function AdminContestBuilderPage() {
   const [message, setMessage] = useState("");
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
+  const [rewardPackDefinitions, setRewardPackDefinitions] = useState<RewardPackDefinition[]>([]);
   const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
 
   const [autoCode, setAutoCode] = useState(true);
@@ -84,6 +86,15 @@ export default function AdminContestBuilderPage() {
       if (!res.ok) return;
       const payload = (await res.json()) as { cardSets: CardSet[] };
       setCardSets(payload.cardSets ?? []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/internal/pack-definitions", { cache: "no-store" });
+      if (!res.ok) return;
+      const payload = (await res.json()) as { packDefinitions: RewardPackDefinition[] };
+      setRewardPackDefinitions(payload.packDefinitions ?? []);
     })();
   }, []);
 
@@ -126,8 +137,11 @@ export default function AdminContestBuilderPage() {
     return new Date(new Date(startsAt).getTime() + parsedDuration * 60 * 60 * 1000).toISOString();
   }, [durationHours, startsAt]);
 
+  const rewardPayload = useMemo(() => toContestRewardPayload(rules), [rules]);
+
+  const invalidRewardRulesById = useMemo(() => new Map(rewardPayload.invalidRules.map((rule) => [rule.id, rule.message])), [rewardPayload.invalidRules]);
+
   const payload = useMemo(() => {
-    const rewardPayload = toContestRewardPayload(rules);
     const parsedEntryFee = Number(entryFeeAmount);
     return {
       code: autoCode ? undefined : code.trim(),
@@ -154,7 +168,7 @@ export default function AdminContestBuilderPage() {
         coverImageUrl: coverImageUrl.trim() || null,
       },
     };
-  }, [autoCode, cardSetId, code, coverImageUrl, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, maxRosterSize, openAt, optionalClarifications, participationNotes, rules, rulesText, startsAt, title]);
+  }, [autoCode, cardSetId, code, coverImageUrl, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, maxRosterSize, openAt, optionalClarifications, participationNotes, rewardPayload.distributionRules, rewardPayload.rewardBundles, rulesText, startsAt, title]);
 
   const issues = useMemo(() => {
     const arr: string[] = [];
@@ -170,8 +184,9 @@ export default function AdminContestBuilderPage() {
     }
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set when eligibility is restricted.");
     if (payload.rewardBundles.length === 0) arr.push("Add at least one valid reward rule.");
-    return arr;
-  }, [autoCode, eligibilityMode, entryFeeEnabled, payload]);
+    for (const invalidRule of rewardPayload.invalidRules) arr.push(invalidRule.message);
+    return [...new Set(arr)];
+  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules]);
 
   const checklist = useMemo(() => {
     return [
@@ -378,6 +393,28 @@ export default function AdminContestBuilderPage() {
                     <select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Exact rank</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top %</option></select>
                     <input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} />
                   </div>
+                  {rule.rewardType === "PACK" ? (
+                    <div>
+                      <label className="contest-inline-note" htmlFor={`pack-definition-${rule.id}`}>Pack Definition ID</label>
+                      <select
+                        id={`pack-definition-${rule.id}`}
+                        className="input"
+                        value={rule.packDefinitionId}
+                        onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { packDefinitionId: e.target.value } })}
+                      >
+                        <option value="">Select reward pack</option>
+                        {rewardPackDefinitions.map((pack) => (
+                          <option key={pack.id} value={pack.id}>{pack.code}</option>
+                        ))}
+                      </select>
+                      <p className="contest-inline-note">
+                        {rewardPackDefinitions.length === 0
+                          ? "No reward packs available. Create a REWARD pack definition first."
+                          : "Only REWARD-type packs are available. Make sure the pack has a reward supply pool configured."}
+                      </p>
+                    </div>
+                  ) : null}
+                  {invalidRewardRulesById.has(rule.id) ? <p className="contest-error">{invalidRewardRulesById.get(rule.id)}</p> : null}
                   <p className="contest-inline-note">Player-facing: <strong>{rule.label}</strong> receives <strong>{rule.amount}</strong> {rule.rewardType === "PACK" ? "pack(s)" : rule.rewardType.toLowerCase()} for <strong>{describeRewardRule(rule)}</strong>.</p>
                 </article>
               ))}            </div>

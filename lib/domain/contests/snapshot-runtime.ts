@@ -28,7 +28,8 @@ async function captureSnapshot(contestId: string, phase: ContestSnapshotPhase): 
     : await resolveCanonicalTokensFromStart(contestId);
 
   if (tokens.length === 0) {
-    throw new ContestRuntimeError("No eligible tokens resolved for snapshot", 409);
+    console.warn(`[contest-snapshot] No eligible tokens for contest=${contestId} phase=${phase} — returning empty snapshot, LIVE transition will proceed`);
+    return { contestId, phase, tokenCount: 0, capturedCount: 0, missingCount: 0 };
   }
 
   const geckoIds = tokens.map((token) => token.coingeckoId).filter((id): id is string => Boolean(id));

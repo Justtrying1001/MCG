@@ -72,7 +72,7 @@ export default function ContestsPage() {
       }
 
       const payload = (await res.json().catch(() => null)) as ContestPayload | null;
-      const rows = Array.isArray(payload?.contests) ? payload.contests : [];
+      const rows = Array.isArray(payload?.contests) ? payload!.contests : [];
       setContests(rows);
     } catch {
       setError("Network issue while loading contests. Please check your connection and retry.");
