@@ -5,20 +5,19 @@ import { Chip } from "@/components/ui/Chip";
 
 type Props = {
   displayName: string;
-  mode: "guest" | "user";
   points: number;
   level: number;
   completionPct: number | null;
 };
 
-export function CollectorShowcase({ displayName, mode, points, level, completionPct }: Props) {
+export function CollectorShowcase({ displayName, points, level, completionPct }: Props) {
   return (
     <Surface className="profile-showcase" variant="raised">
       <div>
         <SectionHeader
           eyebrow="Collector identity"
           title={displayName}
-          subtitle={mode === "guest" ? "Guest collector preview" : "Your personal collector showcase"}
+          subtitle="Your personal collector showcase"
         />
         <div className="profile-showcase-chips">
           <Chip label={`Level ${level}`} />

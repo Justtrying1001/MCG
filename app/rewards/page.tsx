@@ -550,7 +550,7 @@ export default function RewardsPage() {
   };
 
   useEffect(() => {
-    if (loading || !me || me.mode === "guest") return;
+    if (loading || !me) return;
     void loadData();
   }, [loading, me]);
 
@@ -681,9 +681,9 @@ export default function RewardsPage() {
   }, [ledger, quests]);
 
   const totalCredits = ledger.filter((e) => e.entryType === "CREDIT").reduce((s, e) => s + e.amount, 0);
-  const currentPoints = me?.mode === "user" ? me.user.points : 0;
-  const friendsInvited = me?.mode === "user" ? me.user.invitedFriendsCount : 0;
-  const inviteCode = me?.mode === "user" ? me.user.inviteCode : "";
+  const currentPoints = me?.user.points ?? 0;
+  const friendsInvited = me?.user.invitedFriendsCount ?? 0;
+  const inviteCode = me?.user.inviteCode ?? "";
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -716,9 +716,7 @@ export default function RewardsPage() {
   return (
     <SiteShell>
       {loading || loadingData ? <EmptyState title="Loading rewards…" /> : null}
-      {!loading && me?.mode === "guest" ? <EmptyState title="Sign in to access rewards" /> : null}
-
-      {!loading && me?.mode === "user" ? (
+      {!loading && me ? (
         <div style={{ padding: "1.5rem 0" }}>
 
           {/* ── Page header ── */}

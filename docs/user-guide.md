@@ -39,7 +39,7 @@ La boucle de base :
 ### 2.2 APIs user
 - Auth : `/api/auth/x/start`, `/api/auth/x/callback`, `/api/auth/logout`
 - Session : `/api/me`
-- Packs : `/api/pack/config`, `/api/pack/open`, `/api/guest/pack/open`
+- Packs : `/api/pack/config`, `/api/pack/open`
 - Contests : `/api/contests`, `/api/contests/[contestId]`, `/api/contests/[contestId]/lineup-options`, `/api/contests/[contestId]/enter`, `/api/contests/[contestId]/ranking`
 - Quests/Rewards : `/api/quests`, `/api/quests/[questId]/submit`, `/api/rewards/ledger`
 
@@ -351,20 +351,6 @@ Impact direct user :
 - taille lineup,
 - contraintes d’éligibilité,
 - structure de récompenses.
-
----
-
-## 14) Mode invité (guest)
-
-## 14.1 Paramètres guest
-- 5 cartes/pack.
-- Coût pack = `GAME_CONFIG.PACK_COST`.
-- Rareté guest pondérée fixe : COMMON 40, UNCOMMON 30, RARE 20, EPIC 8, LEGENDARY 2.
-- Édition guest tirée uniformément dans `[BASE, REVERSE, BRILLANTE, HOLO, FULL_ART]`.
-
-## 14.2 Différences avec mode authentifié
-- Pas la même persistance complète que le mode auth.
-- Flux destiné à la découverte/test.
 
 ---
 

@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useSession } from "@/components/useSession";
 
 const HERO_CARDS = [
   {
@@ -39,8 +38,6 @@ const HERO_CARDS = [
 ];
 
 export function HomeHeroLanding() {
-  const { startGuest } = useSession();
-
   const connectWithX = () => {
     window.location.href = "/api/auth/x/start";
   };
@@ -79,9 +76,6 @@ export function HomeHeroLanding() {
               READ THE DOCS <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <button className="home-hero-guest-link" onClick={startGuest}>
-            Continue as guest →
-          </button>
         </div>
 
         {/* Right — real token cards */}
