@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { buildQuestCodeBase } from "@/lib/admin/quest-code";
+import { QUEST_PRESETS, type QuestPreset } from "@/lib/admin/quest-presets";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { QuestLivePreviewCard } from "@/components/quests/QuestLivePreviewCard";
@@ -35,6 +37,7 @@ export default function QuestBuilderPage() {
   const isEditMode = Boolean(questId);
 
   const [code, setCode] = useState("");
+  const [selectedPresetId, setSelectedPresetId] = useState<QuestPreset["id"] | "">("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [objectiveType, setObjectiveType] = useState<BuilderObjectiveType>(initialObjectiveType === "MILESTONE" || initialObjectiveType === "SOCIAL_ENGAGEMENT" || initialObjectiveType === "FOLLOW_X" ? initialObjectiveType : "FOLLOW_X");
@@ -43,7 +46,6 @@ export default function QuestBuilderPage() {
   const [targetValue, setTargetValue] = useState("3");
   const [targetUrl, setTargetUrl] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
-  const [instructions, setInstructions] = useState("");
   const [proofRequired, setProofRequired] = useState(true);
   const [rewardType, setRewardType] = useState<RewardType>("points");
   const [rewardPoints, setRewardPoints] = useState("100");
@@ -91,7 +93,6 @@ export default function QuestBuilderPage() {
       const config = (quest.config ?? {}) as Record<string, unknown>;
       if (typeof config.targetUrl === "string") setTargetUrl(config.targetUrl);
       if (typeof config.ctaLabel === "string") setCtaLabel(config.ctaLabel);
-      if (typeof config.instructions === "string") setInstructions(config.instructions);
       if (typeof config.proofRequired === "boolean") setProofRequired(config.proofRequired);
       if (typeof config.socialAction === "string") setSocialAction(config.socialAction as SocialAction);
       if (typeof config.milestoneType === "string") setMilestoneType(config.milestoneType as MilestoneType);
@@ -136,7 +137,6 @@ export default function QuestBuilderPage() {
       targetValue: Number(targetValue),
       targetUrl,
       ctaLabel,
-      instructions,
       proofRequired,
       rewardType,
       ...(includesPointsReward ? { rewardPoints: Number(rewardPoints) } : {}),
@@ -150,7 +150,29 @@ export default function QuestBuilderPage() {
       isActive,
       oneTime,
     };
-  }, [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardType, rewardPoints, rewardPackDefinitionId, rewardPackQuantity, validationMode, isActive, oneTime]);
+  }, [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, proofRequired, rewardType, rewardPoints, rewardPackDefinitionId, rewardPackQuantity, validationMode, isActive, oneTime]);
+
+
+  useEffect(() => {
+    if (isEditMode) return;
+    const presetTitle = selectedPresetId
+      ? (QUEST_PRESETS.find((preset) => preset.id === selectedPresetId)?.codeSeed ?? "")
+      : "";
+    const seed = title.trim() || presetTitle;
+    setCode(buildQuestCodeBase(seed));
+  }, [isEditMode, title, selectedPresetId]);
+
+  const applyPreset = (preset: QuestPreset) => {
+    setSelectedPresetId(preset.id);
+    setTitle(preset.title);
+    setObjectiveType(preset.objectiveType);
+    setSocialAction(preset.socialAction);
+    setRewardType("points");
+    setRewardPoints(String(preset.rewardPoints));
+    setValidationMode("AUTO");
+    setCtaLabel(preset.ctaLabel);
+    setProofRequired(true);
+  };
 
   const runValidate = async () => {
     setMessage("");
@@ -248,10 +270,26 @@ export default function QuestBuilderPage() {
           <div className="quest-builder-main">
             {loading ? <p className="contest-inline-note">Loading quest...</p> : null}
 
+
+            <section className="quest-form-section">
+              <h3 className="contest-section-title">Preset</h3>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {QUEST_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    variant={selectedPresetId === preset.id ? "primary" : "ghost"}
+                    onClick={() => applyPreset(preset)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </section>
+
             <section className="quest-form-section">
               <h3 className="contest-section-title">1. Identity</h3>
               <div className="admin-field-grid">
-                <input className="input" placeholder="Code (ex: Q_SOCIAL_FOLLOW)" value={code} onChange={(event) => setCode(event.target.value)} />
+                <input className="input" placeholder="Code auto-generated" value={code} disabled readOnly />
                 <input className="input" placeholder="Quest title" value={title} onChange={(event) => setTitle(event.target.value)} />
                 <input className="input" placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
               </div>
@@ -302,7 +340,6 @@ export default function QuestBuilderPage() {
                   <>
                     <input className="input" placeholder="target_url (https://x.com/username or .../status/123)" value={targetUrl} onChange={(event) => setTargetUrl(event.target.value)} />
                     <input className="input" placeholder="CTA label (optional, ex: Open on X)" value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} />
-                    <input className="input" placeholder="Operator instructions" value={instructions} onChange={(event) => setInstructions(event.target.value)} />
                     <label className="contest-inline-note" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={proofRequired} onChange={(event) => setProofRequired(event.target.checked)} /> proof required</label>
                   </>
                 ) : null}

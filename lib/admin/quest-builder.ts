@@ -21,7 +21,6 @@ export type QuestBuilderInput = {
   targetValue?: number;
   targetUrl?: string | null;
   ctaLabel?: string | null;
-  instructions?: string | null;
   proofRequired?: boolean;
   rewardType?: "points" | "pack" | "both";
   rewardPoints?: number;
@@ -48,7 +47,7 @@ export function validateQuestBuilderInput(input: QuestBuilderInput) {
   const code = String(input.code ?? "").trim();
   const title = String(input.title ?? "").trim();
 
-  if (!code) issues.push({ field: "code", severity: "ERROR", message: "code is required" });
+  if (!code) issues.push({ field: "code", severity: "ERROR", message: "code is missing" });
   if (!title) issues.push({ field: "title", severity: "ERROR", message: "title is required" });
 
   const objectiveType = input.objectiveType;
@@ -100,10 +99,6 @@ export function validateQuestBuilderInput(input: QuestBuilderInput) {
     socialAction: input.socialAction,
     targetUrl: input.targetUrl,
   }));
-
-  if ((objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT") && !String(input.instructions ?? "").trim()) {
-    issues.push({ field: "instructions", severity: "WARN", message: "operator instructions are recommended" });
-  }
 
   return {
     blocking: issues.some((issue) => issue.severity === "ERROR"),
@@ -163,7 +158,7 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
       proofRequired: input.proofRequired ?? true,
       targetUrl: sanitizeOptionalText(input.targetUrl),
       ctaLabel: sanitizeOptionalText(input.ctaLabel),
-      instructions: sanitizeOptionalText(input.instructions),
+      instructions: null,
       socialAction: input.socialAction ?? null,
     },
   };

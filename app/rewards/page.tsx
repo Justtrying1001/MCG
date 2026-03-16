@@ -554,7 +554,6 @@ export default function RewardsPage() {
     if (!quest.configSummary.targetUrl || autoTimerRef.current.has(quest.id) || submittingId === quest.id) return;
     window.open(quest.configSummary.targetUrl, "_blank", "noopener,noreferrer");
     const startedAt = Date.now();
-    setActionMsg("Action detected. Auto-validation runs in 60 seconds.");
     setAutoPendingByQuest((prev) => ({ ...prev, [quest.id]: startedAt }));
     const timeout = setTimeout(() => {
       autoTimerRef.current.delete(quest.id);
