@@ -19,11 +19,11 @@ const MVP_TOKEN_COUNT = 25;
 const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-25.json");
 
 const SUPPLY_MATRIX = {
-  COMMON: { BASE: 730, REVERSE: 130, BRILLANTE: 45, HOLO: 20, FULL_ART: 5 },
-  UNCOMMON: { BASE: 240, REVERSE: 50, BRILLANTE: 20, HOLO: 8, FULL_ART: 2 },
-  RARE: { BASE: 130, REVERSE: 30, BRILLANTE: 12, HOLO: 6, FULL_ART: 2 },
-  EPIC: { BASE: 80, REVERSE: 18, BRILLANTE: 7, HOLO: 4, FULL_ART: 1 },
-  LEGENDARY: { BASE: 45, REVERSE: 8, BRILLANTE: 3, HOLO: 3, FULL_ART: 1 },
+  COMMON: { BASE: 1460, REVERSE: 260, BRILLANTE: 90, HOLO: 40, FULL_ART: 10 },
+  UNCOMMON: { BASE: 480, REVERSE: 100, BRILLANTE: 40, HOLO: 16, FULL_ART: 4 },
+  RARE: { BASE: 260, REVERSE: 60, BRILLANTE: 24, HOLO: 12, FULL_ART: 4 },
+  EPIC: { BASE: 160, REVERSE: 36, BRILLANTE: 14, HOLO: 8, FULL_ART: 2 },
+  LEGENDARY: { BASE: 90, REVERSE: 16, BRILLANTE: 6, HOLO: 6, FULL_ART: 2 },
 };
 
 const RARITY_SEED = [
@@ -279,7 +279,7 @@ async function run() {
   }
 
   for (const pack of MVP_PACKS) {
-    await prisma.packDefinition.upsert({
+    const definition = await prisma.packDefinition.upsert({
       where: { code: pack.code },
       update: {
         displayName: pack.displayName,
@@ -298,7 +298,30 @@ async function run() {
         cardsPerPack: CARDS_PER_PACK,
         isActive: true,
       },
+      select: { id: true, code: true, source: true, plannedPackCount: true },
     });
+
+    if (definition.source === "REWARD") {
+      const attributed = await prisma.rewardGrant.count({
+        where: {
+          type: "PACK",
+          packDefinitionId: definition.id,
+        },
+      });
+
+      await prisma.rewardPackSupply.upsert({
+        where: { id: definition.code },
+        update: {
+          totalSupply: Math.max(definition.plannedPackCount, 0),
+          distributed: Math.min(attributed, Math.max(definition.plannedPackCount, 0)),
+        },
+        create: {
+          id: definition.code,
+          totalSupply: Math.max(definition.plannedPackCount, 0),
+          distributed: Math.min(attributed, Math.max(definition.plannedPackCount, 0)),
+        },
+      });
+    }
   }
 
   console.log("MVP controlled-emission bootstrap completed.");
