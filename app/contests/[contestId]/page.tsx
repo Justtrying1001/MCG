@@ -650,7 +650,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }}
         onClose={() => { setShowModal(false); setActiveSlot(null); }}
         canEnter={canEnter}
-        onToggle={(instanceId) => toggle(instanceId)}
       />
 
       {/* ── Rules drawer ── */}
