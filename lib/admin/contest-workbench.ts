@@ -52,11 +52,15 @@ export function summarizeSettlementTotals(rows: Array<{ type: "POINTS" | "PACK" 
   };
 }
 
-export function getContestOverviewProgress(input: { entries: number; rankings: number; settlements: number }) {
+export function getContestOverviewProgress(input: { entries: number; tokenScores: number; breakdownRows: number; scores: number; rankings: number; settlements: number }) {
+  const scoringReady = input.entries === 0
+    ? input.tokenScores > 0 || input.scores === 0
+    : input.tokenScores > 0 && input.scores >= input.entries && input.breakdownRows > 0;
+
   return {
     entries: input.entries,
-    scoringReady: input.entries > 0,
-    rankingGenerated: input.rankings > 0,
+    scoringReady,
+    rankingGenerated: input.rankings > 0 && input.rankings >= input.scores,
     settlementDone: input.settlements > 0,
   };
 }

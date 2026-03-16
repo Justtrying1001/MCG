@@ -183,8 +183,14 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     if (!response.ok) {
       setError(payload?.error ?? `Cannot capture ${phase} snapshot`);
     } else {
-      setMessage(`${phase} snapshot captured — ${payload?.capturedCount ?? 0}/${payload?.tokenCount ?? 0} tokens captured, ${payload?.missingCount ?? 0} missing.`);
+      if (phase === "END") {
+        setMessage(`Contest finalization pipeline executed from END snapshot trigger.`);
+      } else {
+        setMessage(`${phase} snapshot captured — ${payload?.capturedCount ?? 0}/${payload?.tokenCount ?? 0} tokens captured, ${payload?.missingCount ?? 0} missing.`);
+      }
       await loadSnapshots();
+      const overviewRes = await fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" });
+      if (overviewRes.ok) setData((await overviewRes.json()) as OverviewPayload);
     }
     setBusyCapture(null);
   };

@@ -4,6 +4,7 @@ const { requireInternalAdminAccessMock, prismaMock } = vi.hoisted(() => ({
   requireInternalAdminAccessMock: vi.fn(),
   prismaMock: {
     contest: { findUnique: vi.fn() },
+    contestEntryScoreBreakdown: { count: vi.fn() },
   },
 }));
 
@@ -19,6 +20,8 @@ describe("/api/internal/contest-runs/:contestId/overview", () => {
 
   it("returns 403 when unauthorized", async () => {
     requireInternalAdminAccessMock.mockReturnValue({ ok: false, status: 403, error: "Forbidden" });
+    prismaMock.contestEntryScoreBreakdown.count.mockResolvedValue(50);
+
     const response = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
     expect(response.status).toBe(403);
   });
@@ -33,8 +36,10 @@ describe("/api/internal/contest-runs/:contestId/overview", () => {
       liveAt: null,
       lockAt: null,
       endsAt: null,
-      _count: { entries: 10, scores: 10, rankings: 10, settlements: 0 },
+      _count: { entries: 10, scores: 10, rankings: 10, settlements: 0, tokenScores: 5 },
     });
+
+    prismaMock.contestEntryScoreBreakdown.count.mockResolvedValue(50);
 
     const response = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
     const body = await response.json();
