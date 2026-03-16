@@ -248,6 +248,22 @@ async function run() {
   }
   console.log(`[seed] coingeckoId patch done — ${patchCount} rows updated`);
 
+  // PROTECTION ANTI-PARASITES — désactiver tout TokenProject actif hors master MVP
+  // Couvre les tokens créés via tests, imports parasites ou anciens seeds hors-MVP.
+  const masterSlugsForCleanup = mvpTokens.map((t) => t.slug);
+  const deactivated = await prisma.tokenProject.updateMany({
+    where: {
+      isActive: true,
+      slug: { notIn: masterSlugsForCleanup },
+    },
+    data: { isActive: false },
+  });
+  if (deactivated.count > 0) {
+    console.log(`[seed] Deactivated ${deactivated.count} non-MVP token projects (parasites)`);
+  } else {
+    console.log(`[seed] No non-MVP token projects to deactivate — DB is clean`);
+  }
+
   for (const pack of MVP_PACKS) {
     await prisma.packDefinition.upsert({
       where: { code: pack.code },
