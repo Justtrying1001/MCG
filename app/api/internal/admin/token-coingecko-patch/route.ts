@@ -7,7 +7,7 @@ import { handleApiError } from "@/lib/api-error";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 import { prisma } from "@/lib/prisma";
 
-const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-50.json");
+const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-25.json");
 
 function loadTokenMaster(): Array<{ slug: string; coingeckoId: string | null; displayName: string }> {
   const payload = JSON.parse(readFileSync(TOKEN_MASTER_PATH, "utf8")) as {

@@ -107,11 +107,11 @@ Audit statique du code source. Aucune modification apportée.
   ```
   Confirmé dans les deux branches (`CARD_SET_ONLY` et `ANY`).
 
-### `data/token-master-50.json`
+### `data/token-master-25.json`
 
-- **[✓] 50/50 tokens avec `coingeckoId` non-null**
-  Audit précédent confirmé : `withGeckoId = 50`, `missing = 0`.
-  Stratégies : 49 depuis le CSV directement, 1 par `symbol+name` fallback.
+- **[✓] 25/25 tokens avec `coingeckoId` non-null**
+  Audit précédent confirmé : `withGeckoId = 25`, `missing = 0`.
+  Stratégies : 25 depuis le CSV directement.
 
 ### `prisma/seed-mvp-controlled-emission.mjs`
 
@@ -280,7 +280,7 @@ Audit statique du code source. Aucune modification apportée.
 
 **Condition** : seed n'a pas tourné, ou a échoué silencieusement sur un deploy précédent.
 
-**Impact** : `resolveEligibleTokensForContest` retourne 50 tokens avec `coingeckoId = null` → `geckoIds = []` → snapshot stocké avec `priceUsd = null` → scoring bloqué.
+**Impact** : `resolveEligibleTokensForContest` retourne 25 tokens avec `coingeckoId = null` → `geckoIds = []` → snapshot stocké avec `priceUsd = null` → scoring bloqué.
 
 **Mitigation** : endpoint `POST /api/internal/admin/token-coingecko-patch` créé pour patcher les nulls de façon idempotente. Voir `docs/data-architecture.md#troubleshooting`.
 

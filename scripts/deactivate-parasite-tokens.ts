@@ -1,5 +1,5 @@
 /**
- * Désactive les TokenProject actifs qui ne font pas partie du master MVP (token-master-50.json).
+ * Désactive les TokenProject actifs qui ne font pas partie du master Genesis (token-master-25.json).
  * NE supprime PAS les tokens — juste isActive: false pour préserver l'historique.
  *
  * Usage : npx tsx scripts/deactivate-parasite-tokens.ts [--dry-run]
@@ -13,7 +13,7 @@ async function main() {
   const dryRun = process.argv.includes("--dry-run");
 
   // Charger le master
-  const master = JSON.parse(readFileSync("data/token-master-50.json", "utf8"));
+  const master = JSON.parse(readFileSync("data/token-master-25.json", "utf8"));
   const masterSlugs = new Set<string>(master.tokens.map((t: any) => t.slug));
   const masterGeckoIds = new Set<string>(
     master.tokens.filter((t: any) => t.coingeckoId).map((t: any) => t.coingeckoId)

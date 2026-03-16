@@ -3,14 +3,14 @@ import { PrismaClient, PackSource, RarityTier, EditionType } from "@prisma/clien
 const allowExhausted = process.argv.includes("--allow-exhausted");
 
 const EXPECTED = {
-  cardSetCode: "MVP_SET_V1",
-  salePackCode: "mvp_sale_pack",
-  rewardPackCode: "mvp_reward_pack",
+  cardSetCode: "GENESIS_SET_V1",
+  salePackCode: "genesis_sale_pack",
+  rewardPackCode: "genesis_reward_pack",
   cardsPerPack: 5,
   salePlannedPackCount: 10_000,
   rewardPlannedPackCount: 6_000,
-  tokenProjects: 50,
-  templates: 1_250,
+  tokenProjects: 25,
+  templates: 625,
   rarities: Object.values(RarityTier),
   editions: Object.values(EditionType),
 };

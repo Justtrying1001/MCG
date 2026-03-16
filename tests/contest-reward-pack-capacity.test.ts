@@ -51,8 +51,8 @@ function baseContest() {
 describe("contest reward pack capacity", () => {
   it("returns OK when supply covers required packs", async () => {
     const tx = makeTx({
-      packs: [{ id: "p1", code: "mvp_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
-      pools: [{ id: "mvp_reward_pack", totalSupply: 6000 }],
+      packs: [{ id: "p1", code: "genesis_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
+      pools: [{ id: "genesis_reward_pack", totalSupply: 6000 }],
       attributedByPackId: { p1: 10 },
     });
 
@@ -65,8 +65,8 @@ describe("contest reward pack capacity", () => {
 
   it("returns INSUFFICIENT_SUPPLY when available is below required", async () => {
     const tx = makeTx({
-      packs: [{ id: "p1", code: "mvp_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
-      pools: [{ id: "mvp_reward_pack", totalSupply: 50 }],
+      packs: [{ id: "p1", code: "genesis_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
+      pools: [{ id: "genesis_reward_pack", totalSupply: 50 }],
       attributedByPackId: { p1: 46 },
     });
 
@@ -94,11 +94,11 @@ describe("contest reward pack capacity", () => {
 
     const tx = makeTx({
       packs: [
-        { id: "p1", code: "mvp_reward_pack", source: "REWARD", plannedPackCount: 6000 },
+        { id: "p1", code: "genesis_reward_pack", source: "REWARD", plannedPackCount: 6000 },
         { id: "p2", code: "alt_reward_pack", source: "REWARD", plannedPackCount: 100 },
       ],
       pools: [
-        { id: "mvp_reward_pack", totalSupply: 6000 },
+        { id: "genesis_reward_pack", totalSupply: 6000 },
         { id: "alt_reward_pack", totalSupply: 2 },
       ],
       attributedByPackId: { p1: 0, p2: 1 },
@@ -151,8 +151,8 @@ describe("contest reward pack capacity", () => {
     } as const;
 
     const tx = makeTx({
-      packs: [{ id: "p1", code: "mvp_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
-      pools: [{ id: "mvp_reward_pack", totalSupply: 6000 }],
+      packs: [{ id: "p1", code: "genesis_reward_pack", source: "REWARD", plannedPackCount: 6000 }],
+      pools: [{ id: "genesis_reward_pack", totalSupply: 6000 }],
     });
 
     const result = await evaluateContestRewardPackCapacity({ contest, tx });

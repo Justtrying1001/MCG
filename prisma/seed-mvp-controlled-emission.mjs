@@ -5,18 +5,18 @@ import path from "node:path";
 const prisma = new PrismaClient();
 
 const MVP_CARD_SET = {
-  code: "MVP_SET_V1",
-  displayName: "MCG MVP Set v1",
+  code: "GENESIS_SET_V1",
+  displayName: "MCG MVP Genesis",
 };
 
 const MVP_PACKS = [
-  { code: "mvp_sale_pack", displayName: "MCG MVP Sale Pack", source: "SALE", plannedPackCount: 10000 },
-  { code: "mvp_reward_pack", displayName: "MCG MVP Reward Pack", source: "REWARD", plannedPackCount: 6000 },
+  { code: "genesis_sale_pack", displayName: "MCG Genesis Sale Pack", source: "SALE", plannedPackCount: 10000 },
+  { code: "genesis_reward_pack", displayName: "MCG Genesis Reward Pack", source: "REWARD", plannedPackCount: 6000 },
 ];
 
 const CARDS_PER_PACK = 5;
-const MVP_TOKEN_COUNT = 50;
-const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-50.json");
+const MVP_TOKEN_COUNT = 25;
+const TOKEN_MASTER_PATH = path.join(process.cwd(), "data", "token-master-25.json");
 
 const SUPPLY_MATRIX = {
   COMMON: { BASE: 730, REVERSE: 130, BRILLANTE: 45, HOLO: 20, FULL_ART: 5 },

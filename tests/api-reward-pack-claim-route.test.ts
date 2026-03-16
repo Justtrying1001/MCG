@@ -38,7 +38,7 @@ describe("POST /api/rewards/packs/claim", () => {
     getSessionUserMock.mockResolvedValue({ id: "u1" });
     rewardGrantFindFirstMock.mockResolvedValue({ id: "rg_1" });
     claimRewardPackGrantDbNativeMock.mockResolvedValue({
-      packCode: "mvp_reward_pack",
+      packCode: "genesis_reward_pack",
       openingEventId: "evt_1",
       rewardGrantId: "rg_1",
       pulledCardsMvp: [{ templateId: "tpl_1" }],

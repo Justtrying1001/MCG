@@ -59,9 +59,9 @@ Conséquence pratique : un nouveau compte ayant reçu le welcome reward peut ouv
 ## 4) Packs — configuration précise
 
 ### 4.1 Packs officiels runtime
-Deux packs MVP sont semés côté runtime :
-- `mvp_sale_pack` (SALE), planned pack count = **10 000**.
-- `mvp_reward_pack` (REWARD), planned pack count = **6 000**.
+Deux packs Genesis sont semés côté runtime :
+- `genesis_sale_pack` (SALE), planned pack count = **10 000**.
+- `genesis_reward_pack` (REWARD), planned pack count = **6 000**.
 - Cartes par pack : **5**.
 
 ### 4.2 Capacité totale prévue
@@ -69,8 +69,8 @@ Deux packs MVP sont semés côté runtime :
 - Cartes totales issues des packs : 16 000 × 5 = **80 000 cartes**.
 
 ### 4.3 Set et dataset
-- Set MVP : `MVP_SET_V1`.
-- Dataset token master : 50 tokens (`token-master-50.json`).
+- Set Genesis : `GENESIS_SET_V1`.
+- Dataset token master : 25 tokens (`token-master-25.json`).
 
 ---
 
@@ -86,9 +86,9 @@ Matrice de supply seed :
 
 Total supply par token = **1 600**.
 
-### 5.2 Supply globale MVP
-- 50 tokens × 1 600 = **80 000** cartes planifiées.
-- Cette valeur matche exactement la capacité totale des packs (80 000).
+### 5.2 Supply globale MVP Genesis
+- 25 tokens × 1 600 = **40 000** cartes planifiées.
+- Les packs ont une capacité de 80 000 cartes (16 000 packs × 5) ; la supply planifiée est de 40 000.
 
 ### 5.3 Répartition globale par rareté (au seed initial)
 - COMMON : 930/1600 = **58.125%**

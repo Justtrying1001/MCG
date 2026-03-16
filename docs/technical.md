@@ -368,7 +368,7 @@ Source of truth : `prisma/schema.prisma`
 - `npm run bootstrap:mvp:cloud:deploy`
 
 ### 15.3 Scripts dataset
-- `npm run build:token-master-50`
+- `npm run build:token-master-25`
 - `scripts/simulate-genesis-pack-distribution.mjs`
 
 ### 15.4 Finalité

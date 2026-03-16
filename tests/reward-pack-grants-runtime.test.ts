@@ -35,7 +35,7 @@ describe("reward pack grants runtime", () => {
 
     grantRewardPackMvpDbNativeMock.mockResolvedValue({
       mode: "GRANT_AND_OPEN",
-      packCode: "mvp_reward_pack",
+      packCode: "genesis_reward_pack",
       pulledCardsMvp: [{ templateId: "tpl_1" }],
       rewardGrantId: "rg_1",
       openingEventId: "evt_1",

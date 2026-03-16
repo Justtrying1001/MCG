@@ -19,8 +19,8 @@ describe("GET /api/pack/config", () => {
     getSalePackRuntimeConfigMock.mockResolvedValue({
       exists: true,
       pack: {
-        code: "mvp_sale_pack",
-        displayName: "MCG MVP Sale Pack",
+        code: "genesis_sale_pack",
+        displayName: "MCG Genesis Sale Pack",
         cardsPerPack: 5,
         plannedPackCount: 10000,
         openedPackCount: 100,

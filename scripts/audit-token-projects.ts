@@ -12,7 +12,7 @@ async function main() {
   });
 
   // Tokens attendus depuis le master
-  const master = JSON.parse(readFileSync("data/token-master-50.json", "utf8"));
+  const master = JSON.parse(readFileSync("data/token-master-25.json", "utf8"));
   const masterSlugs = new Set(master.tokens.map((t: any) => t.slug));
   const masterGeckoIds = new Set(
     master.tokens.filter((t: any) => t.coingeckoId).map((t: any) => t.coingeckoId)
