@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { GAME_CONFIG } from "@/lib/game-config";
 
 const HERO_CARDS = [
   {
@@ -58,7 +59,7 @@ export function HomeHeroLanding() {
           </h1>
           <p className="home-hero-subline">
             MCG is a trading card game built on meme tokens.<br />
-            Pull cards, build rosters, let the market decide.
+            Collect across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, build rosters, let the market decide.
           </p>
           <div className="home-hero-ctas">
             <button className="home-hero-cta-primary" onClick={connectWithX}>
