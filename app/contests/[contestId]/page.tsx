@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-identity";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
@@ -101,6 +102,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [error, setError] = useState("");
   const [submitBusy, setSubmitBusy] = useState(false);
   const [builderFlash, setBuilderFlash] = useState("");
+  const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -258,6 +260,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     }
     setSubmitBusy(true);
     setError("");
+    setBuilderError("");
     const res = await fetch(`/api/contests/${params.contestId}/enter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -329,6 +332,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const handleRemoveSlot = (slotIndex: number) => {
     if (!canManageLineup) return;
+    setBuilderError("");
     setLineupSlots((prev) => {
       const next = [...prev];
       next[slotIndex] = null;
@@ -463,6 +467,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         </div>
 
         {error && <div className="cpd-banner cpd-banner-warn">{error}</div>}
+        {builderError && <div className="cpd-banner cpd-banner-warn">{builderError}</div>}
         {builderFlash && !showBuilder && (
           <div className="cpd-banner cpd-banner-success">{builderFlash}</div>
         )}
@@ -717,6 +722,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         selectedLogicalTokenKeys={selectedLogicalTokenKeys}
         busy={submitBusy}
         flashMessage={builderFlash}
+        errorMessage={builderError}
         onClose={() => setShowBuilder(false)}
         onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
         onSelectCard={handleSelectCard}

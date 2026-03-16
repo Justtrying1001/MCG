@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { lineupIdentityKey } from "@/lib/domain/contests/lineup-identity";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
@@ -23,6 +24,7 @@ type Props = {
   onSaveDraft: () => void;
   onSubmit: () => void;
   flashMessage?: string;
+  errorMessage?: string;
 };
 
 type SortMode = "rarity" | "name" | "project";
@@ -56,6 +58,7 @@ export function LineupBuilderModal({
   onSaveDraft,
   onSubmit,
   flashMessage,
+  errorMessage,
 }: Props) {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("rarity");
@@ -76,6 +79,12 @@ export function LineupBuilderModal({
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const optionById = useMemo(() => new Map(options.map((item) => [item.instanceId, item])), [options]);
+
+  const selectedIdentityKeysBySlot = useMemo(() => lineupSlots.map((instanceId) => {
+    if (!instanceId) return null;
+    const option = optionById.get(instanceId);
+    return option ? lineupIdentityKey(option) : instanceId;
+  }), [lineupSlots, optionById]);
 
   const rarityOptions  = useMemo(() => ["all", ...new Set(options.map((item) => item.rarityCode))], [options]);
   const editionOptions = useMemo(() => ["all", ...new Set(options.map((item) => item.editionCode))], [options]);
@@ -326,6 +335,10 @@ export function LineupBuilderModal({
                   {item.isLockedByActiveContest && (
                     <div className="bldr-card-locked-overlay">Locked</div>
                   )}
+
+                  {duplicateTokenInOtherSlot && !isSelected && (
+                    <div className="bldr-card-locked-overlay">Already used</div>
+                  )}
                 </div>
               );
             })}
@@ -337,9 +350,11 @@ export function LineupBuilderModal({
           <div className="bldr-footer-top">
             <div className="bldr-footer-info">
               <span className="bldr-footer-count">{selectedCount} / {rosterSize} selected</span>
-              {flashMessage
-                ? <span className="bldr-footer-flash">{flashMessage}</span>
-                : <span className="bldr-footer-validation">{validationText}</span>
+              {errorMessage
+                ? <span className="bldr-footer-validation">{errorMessage}</span>
+                : flashMessage
+                  ? <span className="bldr-footer-flash">{flashMessage}</span>
+                  : <span className="bldr-footer-validation">{validationText}</span>
               }
             </div>
           </div>
