@@ -435,12 +435,10 @@ export async function deleteContestDraft(contestId: string) {
     });
     if (!contest) throw new ContestRuntimeError("Contest not found", 404);
 
-    const hasOperations = contest._count.entries > 0 || contest._count.scores > 0 || contest._count.rankings > 0 || contest._count.settlements > 0;
-    const deletableBecauseCanceled = contest.status === ContestStatus.CANCELED;
-
-    if (hasOperations && !deletableBecauseCanceled) {
+    const deletableStatuses: ContestStatus[] = [ContestStatus.CANCELED, ContestStatus.SETTLED, ContestStatus.DRAFT];
+    if (!deletableStatuses.includes(contest.status)) {
       throw new ContestRuntimeError(
-        "Delete is blocked: this contest already has entries/scores/rankings/settlements. Cancel it first, then delete if you still need a full purge.",
+        `Cannot delete a ${contest.status} contest. Stop it first before deleting.`,
         409,
       );
     }

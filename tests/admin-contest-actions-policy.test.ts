@@ -11,15 +11,15 @@ describe("admin contest action policies", () => {
     });
   });
 
-  it("blocks delete on active contest with operations", () => {
+  it("blocks delete on active contest statuses", () => {
     const result = getDeleteActionState("LIVE", { entries: 2, scores: 0, rankings: 0, settlements: 0 });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/Cancel|cancel/);
+    expect(result.reason).toMatch(/Stop the contest first/);
   });
 
-  it("allows delete for canceled contest", () => {
-    const result = getDeleteActionState("CANCELED", { entries: 3, scores: 1, rankings: 1, settlements: 1 });
-    expect(result.allowed).toBe(true);
-    expect(result.reason).toContain("canceled contests");
+  it("allows delete for canceled, settled and draft contests", () => {
+    expect(getDeleteActionState("CANCELED", { entries: 3, scores: 1, rankings: 1, settlements: 1 }).allowed).toBe(true);
+    expect(getDeleteActionState("SETTLED", { entries: 3, scores: 1, rankings: 1, settlements: 1 }).allowed).toBe(true);
+    expect(getDeleteActionState("DRAFT", { entries: 0, scores: 0, rankings: 0, settlements: 0 }).allowed).toBe(true);
   });
 });
