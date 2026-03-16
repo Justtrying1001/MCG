@@ -7,7 +7,6 @@ import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
-import { ScoreBreakdownPanel, type BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
@@ -51,6 +50,22 @@ type RewardPayload = {
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
 };
 
+
+
+type ScoreBreakdownRow = {
+  id: string;
+  finalScore: number;
+  tokenProject: { displayName: string };
+  cardInstance: {
+    id?: string;
+    cardTemplate: {
+      name: string;
+      imageUrl: string | null;
+      rarity: { code: string } | null;
+      edition: { code: string } | null;
+    };
+  };
+};
 
 type SlotCardView = {
   card: LineupOption;
@@ -104,8 +119,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[] | null>(null);
 
   // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
   const slotsInitializedRef = useRef(false);
@@ -165,19 +179,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setOptions(Array.isArray(payload?.options) ? payload.options : []);
     }
 
-    const hasFinalScore = Boolean(rankingPayload?.rankings.some((row) => row.userId === me?.user.id));
-    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && (detailPayload.contest.status === "SETTLED" || hasFinalScore));
+    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && detailPayload.contest.status === "SETTLED");
     if (shouldLoadBreakdown) {
       const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
       if (breakdownRes.ok) {
-        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: BreakdownRow[] } | null;
+        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: ScoreBreakdownRow[] } | null;
         setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
       }
     } else {
       setScoreBreakdown(null);
-      setShowBreakdown(false);
     }
-  }, [params.contestId, me?.user.id]);
+  }, [params.contestId]);
 
   useEffect(() => {
     if (loading || !me) return;
@@ -547,8 +559,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                       {(isLocked || isLive) && (
                         <div className="cpd-slot-lock-overlay">🔒 Locked</div>
                       )}
-                      {isSettled && slotCard.finalScore !== null && (
-                        <div className="cpd-slot-final-score">{slotCard.finalScore.toFixed(2)}</div>
+                      {isSettled && (
+                        <div className="cpd-slot-final-score" aria-label="Final card score">
+                          <span className="cpd-slot-final-score-label">Score</span>
+                          <span className="cpd-slot-final-score-value">
+                            {slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—"}
+                          </span>
+                        </div>
                       )}
                     </div>
                   );
@@ -575,24 +592,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 <div className="cpd-lineup-submitted">✓ Lineup submitted</div>
               )}
             </div>
-
-
-
-            {(detail.userEntry && scoreBreakdown && scoreBreakdown.length > 0) ? (
-              <div className="cpd-block">
-                <div className="cpd-block-header">
-                  <h2 className="cpd-block-title">Score details</h2>
-                  <button
-                    type="button"
-                    className="cpd-btn-breakdown"
-                    onClick={() => setShowBreakdown((prev) => !prev)}
-                  >
-                    {showBreakdown ? "Hide details" : "Show details"}
-                  </button>
-                </div>
-                {showBreakdown ? <ScoreBreakdownPanel rows={scoreBreakdown} /> : null}
-              </div>
-            ) : null}
 
             {/* LEADERBOARD BLOCK */}
             <div className="cpd-block">
@@ -978,30 +977,36 @@ const CSS = `
     position: absolute;
     top: 8px;
     right: 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(200,168,75,0.6);
-    background: rgba(12,16,27,0.92);
+    border-radius: 10px;
+    border: 1px solid rgba(246,222,150,0.42);
+    background: linear-gradient(140deg, rgba(10,12,18,0.92), rgba(30,25,16,0.9));
     color: #f6de96;
+    padding: 6px 8px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .cpd-slot-final-score-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.68);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .cpd-slot-final-score-value {
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 4px 7px;
-    z-index: 2;
+    line-height: 1;
+    white-space: nowrap;
   }
   .cpd-lineup-submitted {
     margin: 14px 0 0; padding: 9px 14px; border-radius: 8px;
     background: rgba(45,181,110,0.08); border: 1px solid rgba(45,181,110,0.2);
     font-size: 0.8rem; color: var(--green); font-weight: 600;
-  }
-
-  .cpd-btn-breakdown {
-    border: 1px solid rgba(200,168,75,0.45);
-    background: rgba(200,168,75,0.12);
-    color: #f5e7b8;
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    cursor: pointer;
   }
 
   /* ── Leaderboard ── */
