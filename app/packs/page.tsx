@@ -347,21 +347,28 @@ export default function PacksPage() {
         <EmptyState title="Connect to open packs" description="Sign in with X to reveal cards." />
       ) : null}
 
-      <FeaturedPackStage
-        packImageSrc={officialPackImage}
-        packName={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
-        cardsPerPack={cardsPerPack}
-        remaining={packRemaining}
-        planned={packPlanned}
-        isOpening={isOpening}
-        openingPhase={openingPhase}
-        canOpen={Boolean(me) && !isOpening && openingPhase !== "tearing"}
-        onOpen={() => void openPack()}
-        onOpenOdds={() => setOddsOpen(true)}
-        rarityOdds={rarityOddsForDisplay}
-        editionOdds={editionOddsForDisplay}
-        userPoints={me?.user?.points}
-      />
+      <section className="packs-main-section">
+        <div className="packs-main-header">
+          <p className="packs-main-kicker">Pack store</p>
+          <h2>Main Pack</h2>
+        </div>
+
+        <FeaturedPackStage
+          packImageSrc={officialPackImage}
+          packName={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
+          cardsPerPack={cardsPerPack}
+          remaining={packRemaining}
+          planned={packPlanned}
+          isOpening={isOpening}
+          openingPhase={openingPhase}
+          canOpen={Boolean(me) && !isOpening && openingPhase !== "tearing"}
+          onOpen={() => void openPack()}
+          onOpenOdds={() => setOddsOpen(true)}
+          rarityOdds={rarityOddsForDisplay}
+          editionOdds={editionOddsForDisplay}
+          userPoints={me?.user?.points}
+        />
+      </section>
 
       <PackOddsDrawer
         open={oddsOpen}

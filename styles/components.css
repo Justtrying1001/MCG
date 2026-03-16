@@ -240,11 +240,48 @@
 .pack-reveal-head-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-1); margin-bottom: var(--space-1); }
 
 /* ===== Pack Store Redesign ===== */
+.packs-main-section {
+  margin-top: clamp(1rem, 2vw, 1.75rem);
+  border: 1px solid rgba(212, 168, 75, 0.22);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(212, 168, 75, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(17, 22, 29, 0.88), rgba(11, 15, 21, 0.95));
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+  display: grid;
+  gap: clamp(0.8rem, 1.8vw, 1.25rem);
+}
+
+.packs-main-header {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.packs-main-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #d4a84b;
+}
+
+.packs-main-header h2 {
+  margin: 0;
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .ps-layout {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  min-height: calc(100vh - var(--nav-h, 64px));
-  align-items: start;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  align-items: stretch;
+  border: 1px solid rgba(212, 168, 75, 0.16);
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(16, 20, 27, 0.82), rgba(11, 15, 21, 0.92));
 }
 
 /* ─ LEFT: Hero ─ */
@@ -252,8 +289,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  padding: 48px 32px;
-  min-height: 580px;
+  padding: clamp(1.4rem, 3.2vw, 2.4rem);
+  min-height: 480px;
   overflow: hidden;
 }
 
@@ -338,11 +375,8 @@
 .ps-panel {
   display: grid;
   align-content: start;
-  border-left: 1px solid var(--border, rgba(35, 38, 45, 0.72));
-  background: linear-gradient(180deg, rgba(18, 22, 28, 0.65), rgba(12, 16, 21, 0.85));
-  position: sticky;
-  top: var(--nav-h, 64px);
-  max-height: calc(100vh - var(--nav-h, 64px));
+  border-left: 1px solid rgba(212, 168, 75, 0.16);
+  background: linear-gradient(180deg, rgba(18, 22, 28, 0.68), rgba(12, 16, 21, 0.9));
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -546,29 +580,31 @@
 
 /* Responsive */
 @media (max-width: 860px) {
+  .packs-main-section {
+    border-radius: 18px;
+    padding: 0.9rem;
+  }
+
   .ps-layout {
     grid-template-columns: 1fr;
-    min-height: unset;
   }
 
   .ps-hero {
     min-height: 320px;
-    padding: 32px 24px;
+    padding: 28px 20px;
   }
 
   .ps-panel {
     border-left: none;
-    border-top: 1px solid var(--border, rgba(35, 38, 45, 0.72));
-    position: static;
-    max-height: none;
+    border-top: 1px solid rgba(212, 168, 75, 0.16);
     overflow-y: visible;
   }
 
   .ps-cta-block {
     position: sticky;
     bottom: 0;
-    background: var(--bg-base, #0B0B0D);
-    border-top: 1px solid var(--border, rgba(35, 38, 45, 0.72));
+    background: rgba(10, 14, 19, 0.96);
+    border-top: 1px solid rgba(212, 168, 75, 0.16);
     z-index: 10;
   }
 }
@@ -2512,13 +2548,13 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
 
 /* ===== Reward packs section ===== */
 .reward-packs-section {
-  margin-top: clamp(1.6rem, 3vw, 2.5rem);
+  margin-top: clamp(1.2rem, 3vw, 2.2rem);
   border: 1px solid rgba(212, 168, 75, 0.22);
-  border-radius: 18px;
+  border-radius: 22px;
   background:
-    radial-gradient(circle at top right, rgba(212, 168, 75, 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(18, 22, 28, 0.82), rgba(10, 13, 18, 0.92));
-  padding: clamp(1rem, 2.6vw, 1.8rem);
+    radial-gradient(circle at top left, rgba(196, 113, 90, 0.12), transparent 45%),
+    linear-gradient(180deg, rgba(17, 22, 29, 0.9), rgba(10, 14, 20, 0.94));
+  padding: clamp(1rem, 2.5vw, 1.6rem);
   display: grid;
   gap: 1rem;
 }
@@ -2526,7 +2562,7 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
 .reward-packs-header {
   display: grid;
   gap: 0.35rem;
-  max-width: 72ch;
+  max-width: 68ch;
 }
 
 .reward-packs-kicker {
@@ -2554,14 +2590,14 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
 
 .reward-pack-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.95rem;
 }
 
 .reward-pack-card {
   border: 1px solid rgba(138, 138, 132, 0.26);
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(22, 27, 34, 0.85), rgba(15, 19, 25, 0.9));
+  background: linear-gradient(180deg, rgba(23, 28, 35, 0.88), rgba(14, 19, 26, 0.94));
   padding: 0.9rem;
   display: grid;
   gap: 0.85rem;
@@ -2642,7 +2678,13 @@ button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
   justify-content: center;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1080px) {
+  .reward-pack-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
   .reward-packs-section {
     padding: 0.95rem;
     gap: 0.8rem;
