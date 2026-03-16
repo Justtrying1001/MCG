@@ -26,7 +26,7 @@ Global/system entities remain untouched, including (non-exhaustive):
 - API route: `POST /api/internal/admin/reset-users`
 - Requires internal admin auth and role check with minimum `ADMIN_SUPERVISOR`.
 - `ROOT_ADMIN_X_USERNAME` (or `OWNER_X_USERNAME`) can be set to force the owner account to resolve as `ADMIN_SUPERVISOR` even when `ADMIN_DEFAULT_ROLE` is lower.
-- Feature flag gate: action is blocked unless `ENABLE_USER_RESET=true`.
+- Feature flag gate: action is blocked unless `ENABLE_USER_RESET=true` (returns HTTP 403 with an explicit env message when disabled).
 - UI requires explicit typed confirmation: `RESET USERS`.
 
 ## Operational precautions
@@ -34,3 +34,17 @@ Global/system entities remain untouched, including (non-exhaustive):
 - Use only during controlled maintenance windows.
 - Communicate planned downtime and irreversible impact.
 - Verify environment variables before enabling in production.
+
+
+## Environment checklist (including Vercel)
+
+Set these variables in Vercel for the production deployment where you need this action:
+
+- `ENABLE_USER_RESET=true` (required to enable the endpoint).
+- `ROOT_ADMIN_X_USERNAME=<your_x_handle>` (recommended so the owner always resolves as `ADMIN_SUPERVISOR`).
+- `ADMIN_DEFAULT_ROLE=ADMIN_SUPERVISOR` (optional fallback for non-owner admin sessions).
+
+If `ENABLE_USER_RESET` is missing or not `true`, the API returns:
+
+- `403`
+- `error: "User reset is disabled because ENABLE_USER_RESET must be 'true' (...)."`

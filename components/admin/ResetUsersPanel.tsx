@@ -12,9 +12,15 @@ type ResetResponse = {
   resetRewardPackSupplyRows?: number;
 };
 
+type ResetAvailability = {
+  enabled: boolean;
+  reasonCode: "insufficient_role" | "feature_flag_disabled" | null;
+  reason: string | null;
+};
+
 const RESET_KEYWORD = "RESET USERS";
 
-export function ResetUsersPanel({ enabled }: { enabled: boolean }) {
+export function ResetUsersPanel({ availability }: { availability: ResetAvailability }) {
   const [open, setOpen] = useState(false);
   const [confirmInput, setConfirmInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -40,13 +46,13 @@ export function ResetUsersPanel({ enabled }: { enabled: boolean }) {
     }
   };
 
-  if (!enabled) {
+  if (!availability.enabled) {
     return (
       <AdminPanel>
         <p className="admin-v2-section-title">Danger zone</p>
         <AdminEmptyState
-          title="Reset user data is restricted to ADMIN_SUPERVISOR"
-          description="Ask a supervisor account to execute this irreversible maintenance action."
+          title="User reset is unavailable"
+          description={availability.reason ?? "User reset is currently unavailable."}
         />
       </AdminPanel>
     );

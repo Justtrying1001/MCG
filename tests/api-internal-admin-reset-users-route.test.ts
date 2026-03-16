@@ -57,6 +57,30 @@ describe("/api/internal/admin/reset-users", () => {
     expect(response.status).toBe(403);
   });
 
+
+  it("returns explicit 403 reason when feature flag is disabled", async () => {
+    process.env.ENABLE_USER_RESET = "false";
+    requireInternalAdminAccessMock.mockReturnValue({
+      ok: true,
+      mode: "session",
+      actor: {
+        type: "admin_user",
+        id: "admin:supervisor",
+        label: "supervisor",
+        username: "supervisor",
+        authMode: "session",
+        role: "ADMIN_SUPERVISOR",
+      },
+    });
+
+    const response = await POST(new Request("http://localhost/api/internal/admin/reset-users", { method: "POST" }) as any);
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      error: "User reset is disabled because ENABLE_USER_RESET must be 'true' (current value: 'false').",
+    });
+  });
+
   it("resets user data and keeps operation summary", async () => {
     requireInternalAdminAccessMock.mockReturnValue({
       ok: true,
