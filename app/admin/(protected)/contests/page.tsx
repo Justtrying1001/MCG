@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -38,6 +38,10 @@ type AdminContest = {
 
 const STATUS_OPTIONS: Array<ContestStatus | "ALL"> = ["ALL", "DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
 
+function newIdempotencyKey(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export default function AdminContestsLibraryPage() {
   const params = useSearchParams();
   const [contests, setContests] = useState<AdminContest[]>([]);
@@ -47,6 +51,7 @@ export default function AdminContestsLibraryPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContestStatus | "ALL">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -68,6 +73,14 @@ export default function AdminContestsLibraryPage() {
     void load();
   }, []);
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handler = () => setOpenMenuId(null);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [openMenuId]);
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return contests.filter((contest) => {
@@ -77,6 +90,41 @@ export default function AdminContestsLibraryPage() {
     });
   }, [contests, query, statusFilter]);
 
+  const stopContest = async (contestId: string) => {
+    if (!window.confirm("Stop this contest? It will be moved to CANCELED status.")) return;
+    setBusyId(contestId);
+    setMessage("");
+    setError("");
+
+    // Step 1: validate transition
+    const validateRes = await fetch(`/api/internal/contest-runs/${contestId}/transitions/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetPhase: "CANCELED", reasonCode: "LIFECYCLE_CONTROL" }),
+    });
+    const validatePayload = (await validateRes.json().catch(() => null)) as { validationToken?: string; blocking?: boolean; error?: string } | null;
+    if (!validateRes.ok || !validatePayload?.validationToken || validatePayload.blocking) {
+      setError(validatePayload?.error ?? "Cannot stop contest: validation failed");
+      setBusyId(null);
+      return;
+    }
+
+    // Step 2: execute transition
+    const execRes = await fetch(`/api/internal/contests/${contestId}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey("stop-contest") },
+      body: JSON.stringify({ status: "CANCELED", reasonCode: "LIFECYCLE_CONTROL", validationToken: validatePayload.validationToken }),
+    });
+    const execPayload = (await execRes.json().catch(() => null)) as { error?: string } | null;
+    if (!execRes.ok) {
+      setError(execPayload?.error ?? "Cannot stop contest");
+    } else {
+      setMessage("Contest stopped successfully.");
+      await load();
+    }
+    setBusyId(null);
+  };
+
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
     if (action === "delete" && !window.confirm("Delete this contest? This action is permanent.")) {
       return;
@@ -85,6 +133,7 @@ export default function AdminContestsLibraryPage() {
     setBusyId(contestId);
     setMessage("");
     setError("");
+    setOpenMenuId(null);
 
     let response: Response;
     if (action === "publish") {
@@ -149,8 +198,12 @@ export default function AdminContestsLibraryPage() {
       {!loading ? (
         <section className="contest-library-grid">
           {rows.map((contest) => {
-            const publishable = contest.status === "DRAFT";
+            const isBusy = busyId === contest.id;
+            const isStoppable = contest.status === "OPEN" || contest.status === "LOCKED" || contest.status === "LIVE";
+            const isDeletable = contest.status === "CANCELED";
+            const deleteBlocked = contest.status !== "CANCELED" && contest._count.entries > 0;
             const unpublishable = Boolean(contest.configPublishedAt) && contest._count.entries === 0;
+            const isMenuOpen = openMenuId === contest.id;
 
             return (
               <article key={contest.id} className="contest-library-card">
@@ -176,14 +229,99 @@ export default function AdminContestsLibraryPage() {
 
                 {snapshotIndicator(contest)}
 
-                <div className="contest-console-actions">
-                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit builder</Link>
-                  <Link href={`/admin/contests/${contest.id}/operator`} className="admin-v2-link-chip">Operations</Link>
+                <div className="contest-console-actions" style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
+                  {/* Primary actions */}
+                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
                   <Link href={`/admin/contests/${contest.id}`} className="admin-v2-link-chip">Overview</Link>
-                  <button className="admin-v2-link-chip" disabled={!publishable || busyId === contest.id} onClick={() => void runAction(contest.id, "publish")}>Publish</button>
-                  <button className="admin-v2-link-chip" disabled={!unpublishable || busyId === contest.id} onClick={() => void runAction(contest.id, "unpublish")}>Unpublish</button>
-                  <button className="admin-v2-link-chip" disabled={contest.status === "CANCELED" || busyId === contest.id} onClick={() => void runAction(contest.id, "archive")}>Archive</button>
-                  <button className="admin-v2-link-chip contest-danger-chip" disabled={busyId === contest.id} onClick={() => void runAction(contest.id, "delete")}>Delete</button>
+
+                  {/* Contextual primary action */}
+                  {contest.status === "DRAFT" ? (
+                    <button
+                      className="admin-v2-link-chip"
+                      style={{ color: "#27ae60", borderColor: "#27ae60" }}
+                      disabled={isBusy}
+                      onClick={() => void runAction(contest.id, "publish")}
+                    >
+                      Publish
+                    </button>
+                  ) : null}
+                  {isStoppable ? (
+                    <button
+                      className="admin-v2-link-chip"
+                      style={{ color: "#e67e22", borderColor: "#e67e22" }}
+                      disabled={isBusy}
+                      onClick={() => void stopContest(contest.id)}
+                    >
+                      {isBusy ? "Stopping…" : "Stop"}
+                    </button>
+                  ) : null}
+                  {contest.status === "CANCELED" ? (
+                    <button
+                      className="admin-v2-link-chip contest-danger-chip"
+                      disabled={isBusy}
+                      onClick={() => void runAction(contest.id, "delete")}
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+
+                  {/* Secondary menu */}
+                  <div style={{ position: "relative", marginLeft: "auto" }}>
+                    <button
+                      className="admin-v2-link-chip"
+                      style={{ fontWeight: 700, letterSpacing: "0.05em" }}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        setOpenMenuId(isMenuOpen ? null : contest.id);
+                      }}
+                      aria-label="More actions"
+                    >
+                      ···
+                    </button>
+                    {isMenuOpen ? (
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: 0,
+                          top: "calc(100% + 4px)",
+                          background: "#fff",
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "6px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+                          minWidth: "160px",
+                          zIndex: 100,
+                          display: "grid",
+                        }}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      >
+                        {unpublishable ? (
+                          <button
+                            className="contest-menu-item"
+                            disabled={isBusy}
+                            onClick={() => void runAction(contest.id, "unpublish")}
+                          >
+                            Unpublish
+                          </button>
+                        ) : null}
+                        <button
+                          className="contest-menu-item"
+                          disabled={isBusy || contest.status === "CANCELED"}
+                          onClick={() => void runAction(contest.id, "archive")}
+                        >
+                          Archive
+                        </button>
+                        <button
+                          className="contest-menu-item contest-menu-item--danger"
+                          disabled={isBusy || deleteBlocked}
+                          title={deleteBlocked ? "Cancel the contest first before deleting" : undefined}
+                          onClick={() => void runAction(contest.id, "delete")}
+                        >
+                          Delete
+                          {deleteBlocked ? <span style={{ display: "block", fontSize: "0.7rem", color: "#999", fontWeight: 400 }}>Cancel first</span> : null}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             );
