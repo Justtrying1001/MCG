@@ -36,6 +36,16 @@ type PackConfigPayload = {
   }>;
 };
 
+type RewardPackGrant = {
+  id: string;
+  createdAt: string;
+  packDefinition: {
+    code: string;
+    displayName: string;
+    description?: string | null;
+  };
+};
+
 export default function PacksPage() {
   const { me, refresh } = useSession();
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
@@ -45,6 +55,9 @@ export default function PacksPage() {
   const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
   const [zoomedCard, setZoomedCard] = useState<MvpCardView | null>(null);
   const [oddsOpen, setOddsOpen] = useState(false);
+  const [rewardGrants, setRewardGrants] = useState<RewardPackGrant[]>([]);
+  const [loadingRewardGrants, setLoadingRewardGrants] = useState(false);
+  const [openingRewardGrantId, setOpeningRewardGrantId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +73,45 @@ export default function PacksPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!me) {
+      setRewardGrants([]);
+      setLoadingRewardGrants(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingRewardGrants(true);
+    fetch("/api/rewards/packs", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json().catch(() => null)) as { grants?: RewardPackGrant[] } | null;
+      })
+      .then((payload) => {
+        if (!active) return;
+        const grants = Array.isArray(payload?.grants)
+          ? payload.grants.map((grant) => ({
+              ...grant,
+              packDefinition: {
+                ...grant.packDefinition,
+                description: grant.packDefinition.description ?? null,
+              },
+            }))
+          : [];
+        setRewardGrants(grants);
+        setLoadingRewardGrants(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRewardGrants([]);
+        setLoadingRewardGrants(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [me]);
 
   const revealSize = resultMvp.length;
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
@@ -104,6 +156,59 @@ export default function PacksPage() {
     }, 900);
 
     await refresh();
+  };
+
+  const openRewardPack = async (grantId: string) => {
+    if (!me) return;
+    try {
+      setOpeningRewardGrantId(grantId);
+      setIsOpening(true);
+      setOpeningPhase("tearing");
+      setResultMvp([]);
+      setRevealed([]);
+
+      const res = await fetch("/api/rewards/packs/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grantId }),
+      });
+
+      if (!res.ok) {
+        alert(await res.text());
+        setOpeningRewardGrantId(null);
+        setIsOpening(false);
+        setOpeningPhase("idle");
+        return;
+      }
+
+      const payload = (await res.json()) as { pulledCardsMvp?: MvpCardView[] };
+      const pulledMvp = payload.pulledCardsMvp ?? [];
+
+      if (pulledMvp.length === 0) {
+        alert("Reward pack opened but MVP reveal payload is missing. Please refresh and retry.");
+        setOpeningRewardGrantId(null);
+        setIsOpening(false);
+        setOpeningPhase("idle");
+        await refresh();
+        return;
+      }
+
+      setRewardGrants((prev) => prev.filter((grant) => grant.id !== grantId));
+      setTimeout(() => {
+        setResultMvp(pulledMvp);
+        setRevealed(new Array(pulledMvp.length).fill(false));
+        setOpeningPhase("revealing");
+        setIsOpening(false);
+        setOpeningRewardGrantId(null);
+      }, 900);
+
+      await refresh();
+    } catch {
+      alert("Unable to open reward pack. Please try again.");
+      setOpeningRewardGrantId(null);
+      setIsOpening(false);
+      setOpeningPhase("idle");
+    }
   };
 
   const handleReveal = (index: number) => {
@@ -210,6 +315,46 @@ export default function PacksPage() {
         remaining={packRemaining}
         planned={packPlanned}
       />
+
+      {me ? (
+        <section className="mcg-surface" style={{ display: "grid", gap: "0.8rem" }}>
+          <h2 style={{ margin: 0 }}>Your reward packs</h2>
+          <p className="mcg-muted" style={{ margin: 0 }}>Open the packs you won in contests or quests.</p>
+
+          {loadingRewardGrants ? <p className="mcg-muted" style={{ margin: 0 }}>Loading reward packs…</p> : null}
+
+          {!loadingRewardGrants && rewardGrants.length === 0 ? (
+            <p className="mcg-muted" style={{ margin: 0 }}>You have no reward packs to open right now.</p>
+          ) : null}
+
+          {rewardGrants.map((grant) => (
+            <article
+              key={grant.id}
+              className="mcg-surface-raised"
+              style={{
+                padding: "1rem",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0 }}>{grant.packDefinition.displayName}</h3>
+                <p className="mcg-muted" style={{ margin: "0.35rem 0 0" }}>
+                  {grant.packDefinition.description ?? "Reward pack won from a contest."}
+                </p>
+              </div>
+              <Button
+                disabled={isOpening || openingRewardGrantId === grant.id || openingPhase === "tearing"}
+                onClick={() => void openRewardPack(grant.id)}
+              >
+                {openingRewardGrantId === grant.id ? "Opening…" : "Open"}
+              </Button>
+            </article>
+          ))}
+        </section>
+      ) : null}
 
       <Modal
         title={allRevealed ? "Pack complete — all cards revealed" : "Pack reveal — flip cards in order"}
