@@ -15,11 +15,15 @@ describe("internal-auth actor normalization", () => {
     delete process.env.INTERNAL_ADMIN_KEY_ID;
     delete process.env.INTERNAL_ADMIN_KEY_ROLE;
     delete process.env.ADMIN_DEFAULT_ROLE;
+    delete process.env.ROOT_ADMIN_X_USERNAME;
+    delete process.env.OWNER_X_USERNAME;
   });
 
   it("returns nominative admin session actor with default role", () => {
     getAdminSessionFromRequestMock.mockReturnValue({ username: "alice" });
     delete process.env.ADMIN_DEFAULT_ROLE;
+    delete process.env.ROOT_ADMIN_X_USERNAME;
+    delete process.env.OWNER_X_USERNAME;
 
     const result = requireInternalAdminAccess({} as any);
     expect(result.ok).toBe(true);
@@ -52,6 +56,17 @@ describe("internal-auth actor normalization", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.actor.role).toBe("ADMIN_OPS");
+  });
+
+  it("elevates configured root admin username to supervisor", () => {
+    getAdminSessionFromRequestMock.mockReturnValue({ username: "carlitoonchain" });
+    process.env.ADMIN_DEFAULT_ROLE = "ADMIN_OPS";
+    process.env.ROOT_ADMIN_X_USERNAME = "carlitoonchain";
+
+    const result = requireInternalAdminAccess({} as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.actor.role).toBe("ADMIN_SUPERVISOR");
   });
 
 });

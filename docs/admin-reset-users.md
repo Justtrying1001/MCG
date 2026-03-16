@@ -25,6 +25,7 @@ Global/system entities remain untouched, including (non-exhaustive):
 
 - API route: `POST /api/internal/admin/reset-users`
 - Requires internal admin auth and role check with minimum `ADMIN_SUPERVISOR`.
+- `ROOT_ADMIN_X_USERNAME` (or `OWNER_X_USERNAME`) can be set to force the owner account to resolve as `ADMIN_SUPERVISOR` even when `ADMIN_DEFAULT_ROLE` is lower.
 - Feature flag gate: action is blocked unless `ENABLE_USER_RESET=true`.
 - UI requires explicit typed confirmation: `RESET USERS`.
 
