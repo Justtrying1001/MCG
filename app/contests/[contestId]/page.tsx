@@ -166,15 +166,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       if (optionsRes.ok) {
         const lp = (await optionsRes.json()) as { options: LineupOption[] };
         setOptions(lp.options ?? []);
-      } else if (me?.mode === "guest") {
-        setOptions(mapGuestCollectionToOptions(me.mvpCollection));
       }
     })();
   }, [loading, me, params.contestId]);
 
   const rule = detail?.contest.rules[0];
   const maxRosterSize = rule?.maxRosterSize ?? 5;
-  const isGuest = !loading && me?.mode === "guest";
+  const isGuest = false;
   const canManageLineup = detail?.contest.status === "OPEN";
   const canEnter = Boolean(canManageLineup) && !isGuest;
 
