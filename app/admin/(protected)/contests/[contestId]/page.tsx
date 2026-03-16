@@ -74,6 +74,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
   const [busyDelete, setBusyDelete] = useState(false);
   const [busyStop, setBusyStop] = useState(false);
   const [busyCapture, setBusyCapture] = useState<"START" | "END" | null>(null);
+  const [busyRebuildRankings, setBusyRebuildRankings] = useState(false);
   const [message, setMessage] = useState("");
   const [showStartDetail, setShowStartDetail] = useState(false);
   const [showEndDetail, setShowEndDetail] = useState(false);
@@ -186,6 +187,26 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
       await loadSnapshots();
     }
     setBusyCapture(null);
+  };
+
+  const rebuildRankings = async () => {
+    if (!window.confirm("Rebuild rankings now? This will recompute all scores and regenerate rankings.")) return;
+    setBusyRebuildRankings(true);
+    setMessage("");
+    setError("");
+    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/scoring/compute`, {
+      method: "POST",
+      headers: { "Idempotency-Key": newIdempotencyKey("rebuild-rankings") },
+    });
+    const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; rankingsCount?: number; userScoresCount?: number } | null;
+    if (!response.ok) {
+      setError(payload?.error ?? "Cannot rebuild rankings");
+    } else {
+      setMessage(`Rankings rebuilt — ${payload?.rankingsCount ?? 0} rankings generated for ${payload?.userScoresCount ?? 0} users.`);
+      const overviewRes = await fetch(`/api/internal/contest-runs/${params.contestId}/overview`, { cache: "no-store" });
+      if (overviewRes.ok) setData((await overviewRes.json()) as OverviewPayload);
+    }
+    setBusyRebuildRankings(false);
   };
 
   return (
@@ -306,6 +327,22 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                   <Button variant="ghost" onClick={() => void captureSnapshot("END")} disabled={busyCapture !== null}>
                     {busyCapture === "END" ? "Capturing…" : "Capture END snapshot now"}
                   </Button>
+                ) : null}
+
+                {data.contest._count.scores > 0 && !data.progress.rankingGenerated ? (
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => void rebuildRankings()}
+                      disabled={busyRebuildRankings}
+                      style={{ color: "#e67e22", borderColor: "#e67e22" }}
+                    >
+                      {busyRebuildRankings ? "Rebuilding…" : "⚠ Rebuild rankings"}
+                    </Button>
+                    <p className="contest-inline-note" style={{ color: "#e67e22" }}>
+                      Scores computed ({data.contest._count.scores}) but no rankings generated — use this button to fix.
+                    </p>
+                  </div>
                 ) : null}
               </>
             ) : (
