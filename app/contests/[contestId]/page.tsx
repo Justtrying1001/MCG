@@ -8,6 +8,7 @@ import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import { ScoreBreakdownPanel, type BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
+import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 
 type ContestDetail = {
@@ -202,47 +203,59 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
 
   const optionById = useMemo(() => new Map(options.map((item) => [item.instanceId, item])), [options]);
-
-  const selectedIdentityKeyBySlot = useMemo(() => lineupSlots.map((id) => {
-    if (!id) return null;
-    const item = optionById.get(id);
-    return item?.tokenProjectId ?? item?.cardTemplateId ?? id;
-  }), [lineupSlots, optionById]);
+  const selectedLogicalTokenKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const instanceId of lineupSlots) {
+      if (!instanceId) continue;
+      const item = optionById.get(instanceId);
+      if (!item) continue;
+      keys.add(getLogicalTokenKey({ tokenProjectId: item.tokenProjectId, cardTemplateId: item.cardTemplateId }));
+    }
+    return keys;
+  }, [lineupSlots, optionById]);
 
   const myRanking = useMemo(() => {
     if (!me || !ranking) return null;
     return ranking.rankings.find((r) => r.userId === me.user.id) ?? null;
   }, [ranking, me]);
 
-  const scoreByInstanceId = useMemo(() => {
-    if (!scoreBreakdown || scoreBreakdown.length === 0) return new Map<string, number>();
-    return new Map(
-      scoreBreakdown
-        .filter((row) => typeof row.cardInstance.id === "string")
-        .map((row) => [row.cardInstance.id as string, row.finalScore]),
-    );
-  }, [scoreBreakdown]);
+  const slotCards = useMemo(() => {
+    const breakdownByInstanceId = new Map((scoreBreakdown ?? []).map((row) => [row.cardInstance.id, row]));
 
-  const slotCards = useMemo<Array<SlotCardView | null>>(() => lineupSlots.map((id) => {
-    if (!id) return null;
-    const card = optionById.get(id);
-    if (!card) return null;
-    return {
-      card,
-      finalScore: scoreByInstanceId.get(id) ?? null,
-    };
-  }), [lineupSlots, optionById, scoreByInstanceId]);
+    return lineupSlots.map<SlotCardView | null>((id) => {
+      if (!id) return null;
+      const optionCard = optionById.get(id);
+      if (optionCard) {
+        const row = breakdownByInstanceId.get(id);
+        return { card: optionCard, finalScore: row?.finalScore ?? null };
+      }
+
+      const row = breakdownByInstanceId.get(id);
+      if (!row) return null;
+
+      const fallback: LineupOption = {
+        instanceId: id,
+        cardTemplateId: id,
+        isLockedByActiveContest: false,
+        cardSetId: "settled",
+        cardSetCode: "SETTLED",
+        cardSetName: "Settled lineup",
+        rarityCode: row.cardInstance.cardTemplate.rarity?.code ?? "COMMON",
+        editionCode: row.cardInstance.cardTemplate.edition?.code ?? "BASE",
+        name: row.cardInstance.cardTemplate.name,
+        imageUrl: row.cardInstance.cardTemplate.imageUrl,
+        tokenProjectName: row.tokenProject.displayName,
+        tokenProjectId: null,
+      };
+
+      return { card: fallback, finalScore: row.finalScore };
+    });
+  }, [lineupSlots, optionById, scoreBreakdown]);
 
   const submitLineup = async (isDraft = false) => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
-    const selectedItems = selectedIds.map((id) => optionById.get(id)).filter(Boolean);
-    const duplicateIdentityKeys = findDuplicateLineupIdentityKeys(selectedItems.map((item) => ({
-      tokenProjectId: item?.tokenProjectId ?? null,
-      cardTemplateId: item?.cardTemplateId ?? null,
-      instanceId: item?.instanceId ?? null,
-    })));
-    if (duplicateIdentityKeys.length > 0) {
-      setBuilderError("This token is already used in your lineup.");
+    if (selectedLogicalTokenKeys.size !== selectedIds.length) {
+      setError("This token is already used in your lineup.");
       return;
     }
     setSubmitBusy(true);
@@ -268,24 +281,32 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
     if (!canManageLineup) return;
-    const nextItem = optionById.get(instanceId);
-    if (!nextItem) return;
+    setError("");
+    const option = optionById.get(instanceId);
+    if (!option) return;
 
-    const identityKey = nextItem.tokenProjectId ?? nextItem.cardTemplateId ?? nextItem.instanceId;
-    if (!identityKey) return;
+    const incomingTokenKey = getLogicalTokenKey({ tokenProjectId: option.tokenProjectId, cardTemplateId: option.cardTemplateId });
 
-    const targetIndex = targetSlotIndex ?? activeBuilderSlot;
-    const duplicateIndex = selectedIdentityKeyBySlot.findIndex((key, idx) => key === identityKey && idx !== targetIndex);
-    if (duplicateIndex >= 0) {
-      setBuilderError("This token is already used in your lineup.");
-      return;
-    }
-
-    setBuilderError("");
     setLineupSlots((prev) => {
       const next = [...(prev.length === rosterSize ? prev : toSlots(prev.filter(Boolean) as string[], rosterSize))];
-      const existingIndex = next.findIndex((value) => value === instanceId);
       const targetIndex = targetSlotIndex ?? activeBuilderSlot;
+      const duplicateTokenIndex = next.findIndex((value, index) => {
+        if (!value || index === targetIndex) return false;
+        const selectedOption = optionById.get(value);
+        if (!selectedOption) return false;
+        const selectedTokenKey = getLogicalTokenKey({
+          tokenProjectId: selectedOption.tokenProjectId,
+          cardTemplateId: selectedOption.cardTemplateId,
+        });
+        return selectedTokenKey === incomingTokenKey;
+      });
+
+      if (duplicateTokenIndex >= 0) {
+        setError("This token is already used in your lineup.");
+        return next;
+      }
+
+      const existingIndex = next.findIndex((value) => value === instanceId);
 
       if (existingIndex >= 0 && existingIndex === targetIndex) {
         next[existingIndex] = null;
@@ -698,6 +719,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         rule={rule}
         lineupSlots={lineupSlots.length === rosterSize ? lineupSlots : toSlots(selectedIds, rosterSize)}
         options={options}
+        selectedLogicalTokenKeys={selectedLogicalTokenKeys}
         busy={submitBusy}
         flashMessage={builderFlash}
         errorMessage={builderError}
@@ -744,13 +766,14 @@ const CSS = `
   /* ── Topbar ── */
   .cpd-topbar {
     position: sticky;
-    top: calc(var(--nav-h) + 2px);
-    z-index: 80;
+    top: var(--nav-h);
+    z-index: 90;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 0;
     margin-bottom: 4px;
+    isolation: isolate;
     background: rgba(12,12,18,0.97);
     backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);

@@ -33,16 +33,16 @@ function createStatefulTx() {
       cardSetId: null as string | null,
     },
     ownedCardInstances: [
-      { id: "i1", userId: "u1", cardTemplateId: "t1" },
-      { id: "i2", userId: "u1", cardTemplateId: "t2" },
-      { id: "i3", userId: "u1", cardTemplateId: "t3" },
-      { id: "i4", userId: "u1", cardTemplateId: "t4" },
-      { id: "i5", userId: "u1", cardTemplateId: "t5" },
-      { id: "j1", userId: "u2", cardTemplateId: "t1" },
-      { id: "j2", userId: "u2", cardTemplateId: "t2" },
-      { id: "j3", userId: "u2", cardTemplateId: "t3" },
-      { id: "j4", userId: "u2", cardTemplateId: "t4" },
-      { id: "j5", userId: "u2", cardTemplateId: "t5" },
+      { id: "i1", userId: "u1", cardTemplateId: "t1", tokenProjectId: "p1" },
+      { id: "i2", userId: "u1", cardTemplateId: "t2", tokenProjectId: "p2" },
+      { id: "i3", userId: "u1", cardTemplateId: "t3", tokenProjectId: "p3" },
+      { id: "i4", userId: "u1", cardTemplateId: "t4", tokenProjectId: "p4" },
+      { id: "i5", userId: "u1", cardTemplateId: "t5", tokenProjectId: "p5" },
+      { id: "j1", userId: "u2", cardTemplateId: "t1", tokenProjectId: "p1" },
+      { id: "j2", userId: "u2", cardTemplateId: "t2", tokenProjectId: "p2" },
+      { id: "j3", userId: "u2", cardTemplateId: "t3", tokenProjectId: "p3" },
+      { id: "j4", userId: "u2", cardTemplateId: "t4", tokenProjectId: "p4" },
+      { id: "j5", userId: "u2", cardTemplateId: "t5", tokenProjectId: "p5" },
     ],
     entries: [] as Array<{ id: string; contestId: string; userId: string; status: string }>,
     rosterLocks: [] as Array<{ contestEntryId: string; ownedCardInstanceId: string; contestId: string }>,
@@ -107,7 +107,7 @@ function createStatefulTx() {
       findMany: vi.fn(async ({ where }: any) => {
         return state.ownedCardInstances
           .filter((row) => where.id.in.includes(row.id) && row.userId === where.userId)
-          .map((row) => ({ id: row.id, cardTemplateId: row.cardTemplateId }));
+          .map((row) => ({ id: row.id, cardTemplateId: row.cardTemplateId, cardTemplate: { tokenProjectId: row.tokenProjectId } }));
       }),
       update: vi.fn(async ({ where, data }: any) => {
         const entry = state.entries.find((row) => row.id === where.id);
@@ -229,6 +229,21 @@ describe("contest runtime stateful flow", () => {
     ).rejects.toThrow(/not owned by the user/i);
 
     expect(state.entries).toHaveLength(1);
+  });
+
+
+  it("rejects duplicate logical tokens across owned copies", async () => {
+    const { tx, state } = createStatefulTx();
+    state.ownedCardInstances.push({ id: "i1_copy", userId: "u1", cardTemplateId: "t1_alt", tokenProjectId: "p1" });
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    await expect(
+      enterContestMvp({
+        contestId: "contest_1",
+        userId: "u1",
+        lineupInstanceIds: ["i1", "i1_copy", "i2", "i3", "i4"],
+      })
+    ).rejects.toThrow(/same token twice/i);
   });
 
   it("regenerates ranking on score re-import and enforces status checks", async () => {

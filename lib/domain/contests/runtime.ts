@@ -11,7 +11,7 @@ import {
 import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
-import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-identity";
+import { hasDuplicateLogicalTokens } from "@/lib/domain/contests/lineup-token";
 
 const DEFAULT_LINEUP_SIZE = 5;
 const TEAM_SIZE_MODE_EXACT = "EXACT";
@@ -241,11 +241,7 @@ export async function enterContestMvp(params: {
       select: {
         id: true,
         cardTemplateId: true,
-        cardTemplate: {
-          select: {
-            tokenProjectId: true,
-          },
-        },
+        cardTemplate: { select: { tokenProjectId: true } },
       },
     });
 
@@ -256,15 +252,11 @@ export async function enterContestMvp(params: {
       );
     }
 
-    const duplicateTokenKeys = findDuplicateLineupIdentityKeys(
-      ownedInstances.map((instance) => ({
-        tokenProjectId: instance.cardTemplate.tokenProjectId,
-        cardTemplateId: instance.cardTemplateId,
-        instanceId: instance.id,
-      }))
-    );
-    if (duplicateTokenKeys.length > 0) {
-      throw new ContestRuntimeError("Lineup cannot contain duplicate tokens", 400);
+    if (hasDuplicateLogicalTokens(ownedInstances.map((instance) => ({
+      tokenProjectId: instance.cardTemplate.tokenProjectId,
+      cardTemplateId: instance.cardTemplateId,
+    })))) {
+      throw new ContestRuntimeError("Lineup cannot contain the same token twice", 400);
     }
 
     const effectiveEligibilityMode = rule?.eligibilityMode ?? "ANY";

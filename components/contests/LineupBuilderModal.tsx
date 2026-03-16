@@ -3,6 +3,7 @@ import { lineupIdentityKey } from "@/lib/domain/contests/lineup-identity";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
+import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 
 type Props = {
   open: boolean;
@@ -14,6 +15,7 @@ type Props = {
   rule?: ContestRule;
   lineupSlots: Array<string | null>;
   options: LineupOption[];
+  selectedLogicalTokenKeys: Set<string>;
   busy?: boolean;
   onClose: () => void;
   onSelectCard: (instanceId: string, targetSlotIndex: number | null) => void;
@@ -47,6 +49,7 @@ export function LineupBuilderModal({
   rule,
   lineupSlots,
   options,
+  selectedLogicalTokenKeys,
   busy,
   onClose,
   onSelectCard,
@@ -300,9 +303,9 @@ export function LineupBuilderModal({
               const slotIndex = lineupSlots.findIndex((v) => v === item.instanceId);
               const isSelected = slotIndex >= 0;
               const hasNoCapacity = selectedCount >= rosterSize && !isSelected;
-              const itemIdentityKey = lineupIdentityKey(item);
-              const duplicateTokenInOtherSlot = selectedIdentityKeysBySlot.some((key, idx) => key === itemIdentityKey && idx !== activeSlot);
-              const isDisabled = !canEdit || hasNoCapacity || item.isLockedByActiveContest || duplicateTokenInOtherSlot;
+              const tokenKey = getLogicalTokenKey({ tokenProjectId: item.tokenProjectId, cardTemplateId: item.cardTemplateId });
+              const tokenAlreadyUsed = selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
+              const isDisabled = !canEdit || hasNoCapacity || item.isLockedByActiveContest || tokenAlreadyUsed;
 
               return (
                 <div
@@ -314,7 +317,7 @@ export function LineupBuilderModal({
                   }}
                   role="button"
                   tabIndex={isDisabled ? -1 : 0}
-                  aria-label={`${item.name} — ${item.rarityCode}`}
+                  aria-label={`${item.name} — ${item.rarityCode}${tokenAlreadyUsed ? " — already used" : ""}`}
                   aria-pressed={isSelected}
                 >
                   <MvpCardTile card={toMvpCardView(item)} variant="compact" interactive={false} />
@@ -322,6 +325,10 @@ export function LineupBuilderModal({
                   {/* Selected overlay */}
                   {isSelected && (
                     <div className="bldr-card-check-overlay">✓</div>
+                  )}
+
+                  {tokenAlreadyUsed && (
+                    <div className="bldr-card-locked-overlay">Already used</div>
                   )}
 
                   {/* Locked overlay */}
