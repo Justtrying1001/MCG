@@ -72,10 +72,23 @@ export function describeRewardRule(rule: RewardRuleDraft) {
 }
 
 export function toContestRewardPayload(rules: RewardRuleDraft[]) {
+  const invalidRules: Array<{ id: string; message: string }> = [];
   const validRules = rules.filter((rule) => {
-    if (!Number.isInteger(rule.amount) || rule.amount <= 0) return false;
-    if (!Number.isInteger(rule.distributionValue) || rule.distributionValue <= 0) return false;
-    if (rule.rewardType === "PACK" && !rule.packDefinitionId.trim()) return false;
+    if (!Number.isInteger(rule.amount) || rule.amount <= 0) {
+      invalidRules.push({ id: rule.id, message: "Reward amount must be a positive integer." });
+      return false;
+    }
+
+    if (!Number.isInteger(rule.distributionValue) || rule.distributionValue <= 0) {
+      invalidRules.push({ id: rule.id, message: "Distribution value must be a positive integer." });
+      return false;
+    }
+
+    if (rule.rewardType === "PACK" && !rule.packDefinitionId.trim()) {
+      invalidRules.push({ id: rule.id, message: "Select a pack definition for PACK rewards." });
+      return false;
+    }
+
     return true;
   });
 
@@ -105,5 +118,5 @@ export function toContestRewardPayload(rules: RewardRuleDraft[]) {
     return { priority: index + 1, ruleType: "TOP_PERCENT" as const, bundleRef, topPercent: rule.distributionValue };
   });
 
-  return { rewardBundles, distributionRules };
+  return { rewardBundles, distributionRules, invalidRules };
 }
