@@ -32,6 +32,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
         tokenProject: { select: { displayName: true, slug: true } },
         cardInstance: {
           select: {
+            id: true,
             cardTemplate: {
               select: { name: true, imageUrl: true, rarity: { select: { code: true } }, edition: { select: { code: true } } },
             },

@@ -8,7 +8,7 @@ export type BreakdownRow = {
   finalScore: number;
   dataQuality: string;
   tokenProject: { displayName: string; slug: string };
-  cardInstance: { cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
+  cardInstance: { id?: string; cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
 };
 
 export function ScoreBreakdownPanel({ rows }: { rows: BreakdownRow[] }) {
