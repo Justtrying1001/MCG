@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, describeUserResetFlagState, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
-import { getUserResetFeatureDisabledReason } from "@/lib/admin-reset-users";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -30,11 +29,13 @@ export async function POST(request: NextRequest) {
       const invites = await tx.userInvite.deleteMany();
       const users = await tx.user.deleteMany();
       const rewardPackSupply = await tx.rewardPackSupply.updateMany({ data: { distributed: 0 } });
+      const packDefinitions = await tx.packDefinition.updateMany({ data: { openedPackCount: 0 } });
 
       return {
         deletedInvites: invites.count,
         deletedUsers: users.count,
         resetRewardPackSupplyRows: rewardPackSupply.count,
+        resetPackDefinitionsCount: packDefinitions.count,
       };
     });
 

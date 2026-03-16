@@ -101,7 +101,7 @@ describe("/api/internal/admin/reset-users", () => {
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
       ok: false,
-      error: "User reset is disabled because ENABLE_USER_RESET must be 'true' (current value: 'false').",
+      error: "User reset is disabled because ENABLE_USER_RESET must be \"true\" (current value: false).",
     });
   });
 
@@ -123,6 +123,7 @@ describe("/api/internal/admin/reset-users", () => {
       userInvite: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
       user: { deleteMany: vi.fn().mockResolvedValue({ count: 4 }) },
       rewardPackSupply: { updateMany: vi.fn().mockResolvedValue({ count: 3 }) },
+      packDefinition: { updateMany: vi.fn().mockResolvedValue({ count: 2 }) },
     };
 
     prismaMock.$transaction.mockImplementation(async (callback: (arg: typeof tx) => unknown) => callback(tx));
@@ -134,14 +135,16 @@ describe("/api/internal/admin/reset-users", () => {
     expect(body.deletedUsers).toBe(4);
     expect(body.deletedInvites).toBe(2);
     expect(body.resetRewardPackSupplyRows).toBe(3);
+    expect(body.resetPackDefinitionsCount).toBe(2);
     expect(tx.user.deleteMany).toHaveBeenCalledTimes(1);
     expect(tx.userInvite.deleteMany).toHaveBeenCalledTimes(1);
     expect(tx.rewardPackSupply.updateMany).toHaveBeenCalledWith({ data: { distributed: 0 } });
+    expect(tx.packDefinition.updateMany).toHaveBeenCalledWith({ data: { openedPackCount: 0 } });
     expect(safeLogAdminActionMock).toHaveBeenCalledWith(expect.objectContaining({
       actionType: "RESET_USERS",
       module: "admin.resetUsers",
       status: "EXECUTED",
-      effectSummary: expect.objectContaining({ deletedUsers: 4 }),
+      effectSummary: expect.objectContaining({ deletedUsers: 4, resetPackDefinitionsCount: 2 }),
     }));
   });
 

@@ -14,7 +14,7 @@ export default function AdminResetUsersPage() {
     <div className="admin-page admin-v2-page">
       <AdminPageHeader
         title="Maintenance / Reset Users"
-        subtitle="Irreversible operation that wipes user-owned data while keeping system catalog entities intact."
+        subtitle="Irreversible operation that wipes user-owned data and resets pack distribution counters while keeping system catalog entities intact."
       />
       <ResetUsersPanel
         enabled={isSupervisor && resetFlag.enabled}
