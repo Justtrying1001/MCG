@@ -13,7 +13,10 @@ function loadTokenMaster(): Array<{ slug: string; coingeckoId: string | null; di
   const payload = JSON.parse(readFileSync(TOKEN_MASTER_PATH, "utf8")) as {
     tokens: Array<{ slug: string; coingeckoId?: string | null; displayName: string }>;
   };
-  return payload.tokens ?? [];
+  return (payload.tokens ?? []).map((token) => ({
+    ...token,
+    coingeckoId: token.coingeckoId ?? null,
+  }));
 }
 
 /** GET — diagnostic: compare token master vs DB */
