@@ -3,11 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
+import { getUserResetFeatureDisabledReason } from "@/lib/admin-reset-users";
 import { prisma } from "@/lib/prisma";
-
-function isResetEnabled() {
-  return (process.env.ENABLE_USER_RESET ?? "false").trim().toLowerCase() === "true";
-}
 
 export async function GET() {
   return NextResponse.json({ ok: false, error: "Method not allowed" }, { status: 405 });
@@ -20,8 +17,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: roleCheck.error }, { status: roleCheck.status });
   }
 
-  if (!isResetEnabled()) {
-    return NextResponse.json({ ok: false, error: "User reset is disabled" }, { status: 403 });
+  const disabledReason = getUserResetFeatureDisabledReason();
+  if (disabledReason) {
+    return NextResponse.json({ ok: false, error: disabledReason }, { status: 403 });
   }
 
   try {

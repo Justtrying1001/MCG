@@ -10,10 +10,15 @@ describe("admin reset users UI", () => {
     expect(source).toContain("disabled={!canConfirm || pending}");
   });
 
-  it("uses session username role resolution for supervisor gating", () => {
-    const source = readFileSync("app/admin/(protected)/maintenance/reset-users/page.tsx", "utf8");
-    expect(source).toContain("resolveSessionAdminRole(session?.username ?? null)");
-    expect(source).toContain("<ResetUsersPanel enabled={isSupervisor} />");
+  it("shows explicit unavailable reason when reset is disabled", () => {
+    const source = readFileSync("components/admin/ResetUsersPanel.tsx", "utf8");
+    expect(source).toContain("User reset is unavailable");
+    expect(source).toContain("availability.reason");
   });
 
+  it("uses shared availability resolver so page and API stay consistent", () => {
+    const source = readFileSync("app/admin/(protected)/maintenance/reset-users/page.tsx", "utf8");
+    expect(source).toContain("getUserResetAvailability");
+    expect(source).toContain("<ResetUsersPanel availability={availability} />");
+  });
 });
