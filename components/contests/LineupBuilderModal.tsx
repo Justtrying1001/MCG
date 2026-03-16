@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
-import { LineupCardTile } from "@/components/contests/LineupCardTile";
 
 type Props = {
   open: boolean;
@@ -26,16 +25,13 @@ type SortMode = "rarity" | "name" | "project";
 
 const RARITY_ORDER = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
-function formatCountdown(lockAt: string | null, nowTs: number) {
-  if (!lockAt) return "No lock set";
-  const diff = new Date(lockAt).getTime() - nowTs;
-  if (diff <= 0) return "Team lock reached";
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor((diff % 86_400_000) / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  if (d > 0) return `${d}d ${h}h`;
-  return `${h}h ${m}m`;
-}
+const RARITY_COLOR: Record<string, string> = {
+  LEGENDARY: "#c8a84b",
+  EPIC: "#a855f7",
+  RARE: "#3b82f6",
+  UNCOMMON: "#22c55e",
+  COMMON: "#6b7280",
+};
 
 export function LineupBuilderModal({
   open,
@@ -59,29 +55,25 @@ export function LineupBuilderModal({
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("rarity");
   const [rarityFilter, setRarityFilter] = useState("all");
+  const [editionFilter, setEditionFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-  const [activeSlot, setActiveSlot] = useState<number | null>(0);
-  const [nowTs, setNowTs] = useState(() => Date.now());
+  const [activeSlot, setActiveSlot] = useState<number>(0);
 
   const canEdit = contestStatus === "OPEN";
   const selectedCount = lineupSlots.filter(Boolean).length;
   const readyToSubmit = selectedCount === rosterSize;
 
+  // Init active slot to first empty on open
   useEffect(() => {
     if (!open) return;
     const firstEmpty = lineupSlots.findIndex((slot) => slot === null);
     setActiveSlot(firstEmpty >= 0 ? firstEmpty : 0);
-  }, [open, lineupSlots]);
-
-  useEffect(() => {
-    if (!open) return;
-    const id = window.setInterval(() => setNowTs(Date.now()), 30_000);
-    return () => window.clearInterval(id);
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const optionById = useMemo(() => new Map(options.map((item) => [item.instanceId, item])), [options]);
 
-  const rarityOptions = useMemo(() => ["all", ...new Set(options.map((item) => item.rarityCode))], [options]);
+  const rarityOptions  = useMemo(() => ["all", ...new Set(options.map((item) => item.rarityCode))], [options]);
+  const editionOptions = useMemo(() => ["all", ...new Set(options.map((item) => item.editionCode))], [options]);
   const projectOptions = useMemo(() => ["all", ...new Set(options.map((item) => item.tokenProjectName))], [options]);
 
   const filtered = useMemo(() => {
@@ -92,9 +84,10 @@ export function LineupBuilderModal({
         item.name.toLowerCase().includes(normalizedQuery) ||
         item.cardSetCode.toLowerCase().includes(normalizedQuery) ||
         item.tokenProjectName.toLowerCase().includes(normalizedQuery);
-      const byRarity = rarityFilter === "all" || item.rarityCode === rarityFilter;
-      const byProject = projectFilter === "all" || item.tokenProjectName === projectFilter;
-      return byQuery && byRarity && byProject;
+      const byRarity   = rarityFilter  === "all" || item.rarityCode  === rarityFilter;
+      const byEdition  = editionFilter === "all" || item.editionCode === editionFilter;
+      const byProject  = projectFilter === "all" || item.tokenProjectName === projectFilter;
+      return byQuery && byRarity && byEdition && byProject;
     });
 
     rows.sort((a, b) => {
@@ -112,167 +105,260 @@ export function LineupBuilderModal({
     });
 
     return rows;
-  }, [options, query, rarityFilter, projectFilter, sortMode]);
+  }, [options, query, rarityFilter, editionFilter, projectFilter, sortMode]);
+
+  // Auto-advance to next empty slot after selecting a card
+  const prevSlotsRef = useRef(lineupSlots);
+  useEffect(() => {
+    const prev = prevSlotsRef.current;
+    const curr = lineupSlots;
+    // Find the slot that was just filled
+    for (let i = 0; i < curr.length; i++) {
+      if (!prev[i] && curr[i]) {
+        // Find next empty slot after i
+        let nextEmpty = -1;
+        for (let j = i + 1; j < curr.length; j++) {
+          if (!curr[j]) { nextEmpty = j; break; }
+        }
+        if (nextEmpty < 0) {
+          for (let j = 0; j < i; j++) {
+            if (!curr[j]) { nextEmpty = j; break; }
+          }
+        }
+        if (nextEmpty >= 0) {
+          setActiveSlot(nextEmpty);
+          onSelectSlot(nextEmpty);
+        }
+        break;
+      }
+    }
+    prevSlotsRef.current = curr;
+  }, [lineupSlots, onSelectSlot]);
 
   const validationText = !canEdit
-    ? "Team lock prevents changes"
+    ? "Lineup is locked — no changes allowed"
     : readyToSubmit
-      ? "Ready to submit"
-      : `Lineup incomplete · select ${rosterSize - selectedCount} more`;
+      ? "Ready to submit ✓"
+      : `Select ${rosterSize - selectedCount} more card${rosterSize - selectedCount !== 1 ? "s" : ""}`;
 
   if (!open) return null;
 
   return (
-    <div className="contest-modal-overlay" role="presentation" onClick={onClose}>
-      <div className="contest-lineup-builder-modal" role="dialog" aria-modal="true" aria-label="Lineup builder" onClick={(event) => event.stopPropagation()}>
-        <header className="contest-lineup-builder-head">
-          <div>
-            <p className="mcg-eyebrow">{contestStatus === "OPEN" ? "Build your lineup" : "Lineup locked"}</p>
-            <h3>{contestTitle}</h3>
-            <p className="contest-inline-note">
-              {lineupSlots.some(Boolean) ? "Edit your lineup before submissions close" : `Build your ${rosterSize}-card lineup before team lock`} · Entry {entryFeeLabel}
-            </p>
+    <div className="bldr-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="bldr-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Lineup builder"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── HEADER ──────────────────────────────────────────────────── */}
+        <div className="bldr-head">
+          <div className="bldr-head-left">
+            <span className="bldr-head-title">LINEUP BUILDER</span>
+            <span className="bldr-head-contest">{contestTitle}</span>
           </div>
-          <div className="contest-lineup-builder-head-meta">
-            <p><b>Status</b>{contestStatus}</p>
-            <p><b>Time before lock</b>{formatCountdown(lockAt, nowTs)}</p>
-            <button type="button" className="mcg-btn mcg-btn-ghost" onClick={onClose}>Close</button>
+          <div className="bldr-head-right">
+            <span className="bldr-slot-count">{selectedCount}/{rosterSize} slots filled</span>
+            <button type="button" className="bldr-close" onClick={onClose} aria-label="Close">✕</button>
           </div>
-        </header>
-
-        <div className="contest-lineup-builder-layout">
-          <section className="contest-lineup-selected-zone">
-            <div>
-              <h4>Selected Lineup</h4>
-              <p className="contest-inline-note">Pick a slot, then choose a card from the pool.</p>
-              <p className="contest-inline-note">{selectedCount}/{rosterSize} selected</p>
-            </div>
-
-            <div className="contest-lineup-slots">
-              {Array.from({ length: rosterSize }).map((_, index) => {
-                const instanceId = lineupSlots[index];
-                const card = instanceId ? optionById.get(instanceId) : null;
-                const isActive = activeSlot === index;
-
-                return (
-                  <article key={index} className={`contest-lineup-slot ${isActive ? "is-active" : ""}`}>
-                    <div className="contest-lineup-slot-top">
-                      <p>Slot {index + 1}</p>
-                      <button
-                        type="button"
-                        className="contest-slot-select-btn"
-                        onClick={() => {
-                          setActiveSlot(index);
-                          onSelectSlot(index);
-                        }}
-                      >
-                        {isActive ? "Target slot" : "Select slot"}
-                      </button>
-                    </div>
-
-                    {!card ? (
-                      <button
-                        type="button"
-                        className="contest-lineup-empty-slot"
-                        onClick={() => {
-                          setActiveSlot(index);
-                          onSelectSlot(index);
-                        }}
-                      >
-                        Empty slot · choose a card
-                      </button>
-                    ) : (
-                      <div className="contest-lineup-filled-slot">
-                        <LineupCardTile option={card} selected onClick={() => onSelectCard(card.instanceId, index)} />
-                        <div className="contest-lineup-slot-actions">
-                          {canEdit ? (
-                            <button type="button" className="mcg-btn mcg-btn-ghost" onClick={() => onRemoveSlot(index)}>
-                              Remove
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="contest-lineup-rule-hint">
-              <p><b>Lineup size:</b> {rosterSize} cards exact</p>
-              <p><b>Eligibility:</b> {rule?.cardSetId ? "Restricted card set" : "Any eligible owned cards"}</p>
-            </div>
-          </section>
-
-          <section className="contest-lineup-pool-zone">
-            <div className="contest-lineup-pool-controls">
-              <input
-                className="collection-search-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by card, set or project"
-              />
-              <select className="collection-select" value={rarityFilter} onChange={(event) => setRarityFilter(event.target.value)}>
-                {rarityOptions.map((value) => <option key={value} value={value}>{value === "all" ? "All rarities" : value}</option>)}
-              </select>
-              <select className="collection-select" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}>
-                {projectOptions.map((value) => <option key={value} value={value}>{value === "all" ? "All projects" : value}</option>)}
-              </select>
-              <select className="collection-select" value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
-                <option value="rarity">Sort by rarity</option>
-                <option value="name">Sort by name</option>
-                <option value="project">Sort by project</option>
-              </select>
-            </div>
-
-            {options.length === 0 ? <p className="contest-inline-note">No eligible cards available for this contest.</p> : null}
-            {options.length > 0 && filtered.length === 0 ? <p className="contest-inline-note">No cards match current search and filters.</p> : null}
-
-            <div className="contest-lineup-pool-grid" aria-live="polite">
-              {filtered.map((item) => {
-                const slotIndex = lineupSlots.findIndex((value) => value === item.instanceId);
-                const isSelected = slotIndex >= 0;
-                const hasNoCapacity = selectedCount >= rosterSize && !isSelected;
-                const isDisabled = !canEdit || hasNoCapacity || item.isLockedByActiveContest;
-                const stateLabel = item.isLockedByActiveContest
-                  ? "Locked in another contest"
-                  : isSelected
-                    ? `In slot ${slotIndex + 1}`
-                    : hasNoCapacity
-                      ? "Lineup full"
-                      : "Selectable";
-
-                return (
-                  <article key={item.instanceId} className={`contest-pool-card-wrap ${isSelected ? "is-selected" : ""}`}>
-                    <LineupCardTile
-                      option={item}
-                      selected={isSelected}
-                      disabled={isDisabled}
-                      onClick={() => onSelectCard(item.instanceId, activeSlot)}
-                    />
-                    <div className="contest-pool-card-meta">
-                      <span>{stateLabel}</span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
         </div>
 
-        <footer className="contest-lineup-builder-footer">
-          <div>
-            <p>{selectedCount} / {rosterSize} selected</p>
-            <p className="contest-inline-note">{validationText}</p>
-            {flashMessage ? <p className="contest-lineup-flash">{flashMessage}</p> : null}
+        {/* ── SLOT PILLS ─────────────────────────────────────────────── */}
+        <div className="bldr-pills-row">
+          {Array.from({ length: rosterSize }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`bldr-pill ${activeSlot === i ? "bldr-pill-active" : ""} ${lineupSlots[i] ? "bldr-pill-filled" : ""}`}
+              onClick={() => { setActiveSlot(i); onSelectSlot(i); }}
+              aria-label={`Slot ${i + 1}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <span className="bldr-pills-count">{selectedCount}/{rosterSize} filled</span>
+        </div>
+
+        {/* ── SELECTED SLOTS ROW ─────────────────────────────────────── */}
+        <div className="bldr-slots-row">
+          {Array.from({ length: rosterSize }).map((_, i) => {
+            const instanceId = lineupSlots[i];
+            const card = instanceId ? optionById.get(instanceId) : null;
+            const isActive = activeSlot === i;
+
+            return (
+              <div
+                key={i}
+                className={`bldr-slot ${card ? "bldr-slot-filled-bg" : "bldr-slot-empty"} ${isActive ? (card ? "bldr-slot-active" : "bldr-slot-active") : ""}`}
+                style={card?.imageUrl ? { backgroundImage: `url(${card.imageUrl})` } : undefined}
+                onClick={() => { setActiveSlot(i); onSelectSlot(i); }}
+                role="button"
+                tabIndex={0}
+                aria-label={card ? `Slot ${i + 1}: ${card.name}` : `Slot ${i + 1}: empty`}
+              >
+                {card ? (
+                  <>
+                    <div className="bldr-slot-inner-overlay">
+                      <span className="bldr-slot-inner-name">{card.name}</span>
+                    </div>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className="bldr-slot-remove-btn"
+                        onClick={(e) => { e.stopPropagation(); onRemoveSlot(i); }}
+                        aria-label={`Remove ${card.name}`}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <span className="bldr-slot-num">{i + 1}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── CARD POOL ──────────────────────────────────────────────── */}
+        <div className="bldr-pool-section">
+
+          {/* Controls */}
+          <div className="bldr-controls">
+            <input
+              className="bldr-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search cards…"
+            />
+            <select
+              className="bldr-select"
+              value={rarityFilter}
+              onChange={(e) => setRarityFilter(e.target.value)}
+            >
+              {rarityOptions.map((v) => (
+                <option key={v} value={v}>{v === "all" ? "All rarities" : v}</option>
+              ))}
+            </select>
+            <select
+              className="bldr-select"
+              value={editionFilter}
+              onChange={(e) => setEditionFilter(e.target.value)}
+            >
+              {editionOptions.map((v) => (
+                <option key={v} value={v}>{v === "all" ? "All editions" : v}</option>
+              ))}
+            </select>
+            <select
+              className="bldr-select"
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+            >
+              {projectOptions.map((v) => (
+                <option key={v} value={v}>{v === "all" ? "All tokens" : v}</option>
+              ))}
+            </select>
+            <select
+              className="bldr-select"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+            >
+              <option value="rarity">Sort: Rarity</option>
+              <option value="name">Sort: Name</option>
+              <option value="project">Sort: Token</option>
+            </select>
           </div>
-          <div className="contest-lineup-builder-actions">
-            <button type="button" className="mcg-btn mcg-btn-ghost" onClick={onSaveDraft} disabled={!canEdit || busy}>Save draft</button>
-            <button type="button" className="mcg-btn" onClick={onSubmit} disabled={!canEdit || !readyToSubmit || busy}>
-              {busy ? "Submitting…" : "Submit lineup"}
+
+          {options.length === 0 && (
+            <p className="bldr-pool-empty">No eligible cards available for this contest.</p>
+          )}
+          {options.length > 0 && filtered.length === 0 && (
+            <p className="bldr-pool-empty">No cards match these filters.</p>
+          )}
+
+          {/* Card grid */}
+          <div className="bldr-pool-grid" aria-live="polite">
+            {filtered.map((item) => {
+              const slotIndex = lineupSlots.findIndex((v) => v === item.instanceId);
+              const isSelected = slotIndex >= 0;
+              const hasNoCapacity = selectedCount >= rosterSize && !isSelected;
+              const isDisabled = !canEdit || hasNoCapacity || item.isLockedByActiveContest;
+              const rarityColor = RARITY_COLOR[item.rarityCode.toUpperCase()] ?? "rgba(255,255,255,0.5)";
+
+              return (
+                <div
+                  key={item.instanceId}
+                  className={`bldr-card ${isSelected ? "bldr-card-selected" : ""} ${isDisabled ? "bldr-card-disabled" : ""}`}
+                  style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    onSelectCard(item.instanceId, activeSlot);
+                  }}
+                  role="button"
+                  tabIndex={isDisabled ? -1 : 0}
+                  aria-label={`${item.name} — ${item.rarityCode}`}
+                  aria-pressed={isSelected}
+                >
+                  {/* Edition badge top-left */}
+                  <span className="bldr-card-edition-badge">{item.editionCode}</span>
+
+                  {/* Rarity badge top-right (only if not selected) */}
+                  {!isSelected && (
+                    <span
+                      className="bldr-card-rarity-badge"
+                      style={{ color: rarityColor }}
+                    >
+                      {item.rarityCode}
+                    </span>
+                  )}
+
+                  {/* Card name footer */}
+                  <div className="bldr-card-footer">
+                    <span className="bldr-card-name">{item.name}</span>
+                  </div>
+
+                  {/* Selected checkmark */}
+                  {isSelected && (
+                    <div className="bldr-card-selected-check">✓</div>
+                  )}
+
+                  {/* Locked overlay */}
+                  {item.isLockedByActiveContest && (
+                    <div className="bldr-card-locked-badge">Locked</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── FOOTER ──────────────────────────────────────────────────── */}
+        <div className="bldr-footer">
+          <div className="bldr-footer-info">
+            <span className="bldr-footer-count">{selectedCount} / {rosterSize} selected</span>
+            <span className="bldr-footer-validation">{validationText}</span>
+            {flashMessage && <span className="bldr-footer-flash">{flashMessage}</span>}
+          </div>
+          <div className="bldr-footer-actions">
+            <button
+              type="button"
+              className="bldr-btn-ghost"
+              onClick={onSaveDraft}
+              disabled={!canEdit || busy}
+            >
+              Save draft
+            </button>
+            <button
+              type="button"
+              className="bldr-btn-submit"
+              onClick={onSubmit}
+              disabled={!canEdit || !readyToSubmit || busy}
+            >
+              {busy ? "Submitting…" : "Submit Lineup"}
             </button>
           </div>
-        </footer>
+        </div>
       </div>
     </div>
   );
