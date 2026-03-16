@@ -67,6 +67,19 @@ type MilestoneConfigSummary = {
 type QuestLifecycleStatus = "ACTIVE" | "ARCHIVED" | "DELETED";
 
 
+async function ensureUniqueQuestCode(code: string) {
+  let candidate = code;
+  let suffix = 2;
+
+  while (await prisma.questDefinition.findUnique({ where: { code: candidate }, select: { id: true } })) {
+    candidate = `${code}_${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+}
+
+
 export type InternalQuestAnalytics = {
   progressCount: number;
   completedCount: number;
@@ -925,12 +938,14 @@ export async function createQuestDefinitionMvp(input: {
   endAt?: unknown;
   config?: unknown;
 }) {
-  const code = String(input.code ?? "").trim();
+  const rawCode = String(input.code ?? "").trim();
   const title = String(input.title ?? "").trim();
 
-  if (!code || !title) {
+  if (!rawCode || !title) {
     throw new QuestRuntimeError("code and title are required", 400);
   }
+
+  const code = await ensureUniqueQuestCode(rawCode);
 
   const type = Object.values(QuestType).includes(input.type as QuestType)
     ? input.type as QuestType

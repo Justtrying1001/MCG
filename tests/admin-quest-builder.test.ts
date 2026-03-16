@@ -9,7 +9,6 @@ describe("quest builder", () => {
       title: "Follow MCG",
       objectiveType: "FOLLOW_X" as const,
       targetUrl: "https://x.com/memecardgame",
-      instructions: "Follow account",
       proofRequired: true,
       rewardPoints: 100,
     };
@@ -96,6 +95,31 @@ describe("quest builder", () => {
 
     expect(mismatch.blocking).toBe(false);
     expect(mismatch.issues.some((issue) => issue.message.includes("tweet URL"))).toBe(true);
+  });
+
+
+  it("does not require operator instructions", () => {
+    const validation = validateQuestBuilderInput({
+      code: "Q_SOCIAL_LIKE",
+      title: "Like tweet",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: "https://x.com/memecardgame/status/1",
+      rewardPoints: 100,
+    });
+
+    expect(validation.issues.some((issue) => issue.field === "instructions")).toBe(false);
+
+    const payload = toQuestRuntimePayload({
+      code: "Q_SOCIAL_LIKE",
+      title: "Like tweet",
+      objectiveType: "SOCIAL_ENGAGEMENT",
+      socialAction: "LIKE",
+      targetUrl: "https://x.com/memecardgame/status/1",
+      rewardPoints: 100,
+    });
+
+    expect(payload.config.instructions).toBeNull();
   });
 
   it("builds CTA fallback preview when no custom label", () => {
