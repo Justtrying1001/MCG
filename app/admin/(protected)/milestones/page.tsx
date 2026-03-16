@@ -13,6 +13,9 @@ type MilestoneRow = {
   title: string;
   validationMode: string;
   rewardPoints: number;
+  rewardPackDefinitionId: string | null;
+  rewardPackDefinitionCode: string | null;
+  rewardPackQuantity: number | null;
   isActive: boolean;
   lifecycleStatus?: LifecycleStatus;
   analytics?: { completedCount?: number; progressCount?: number; totalPointsDistributed?: number };
@@ -27,6 +30,13 @@ const MATERIALS = [
   { label: "Emerald", color: "#2ecc71", glow: "rgba(46,204,113,0.42)" },
   { label: "Diamond", color: "#60a5fa", glow: "rgba(96,165,250,0.45)" },
 ] as const;
+
+
+function getPackRewardCopy(row: Pick<MilestoneRow, "rewardPackDefinitionCode" | "rewardPackDefinitionId" | "rewardPackQuantity">) {
+  const packCode = row.rewardPackDefinitionCode ?? row.rewardPackDefinitionId;
+  if (!packCode) return "—";
+  return `${packCode} × ${row.rewardPackQuantity ?? 1}`;
+}
 
 const METRIC_ICONS: Record<string, string> = {
   PACK_OPEN_COUNT: "📦",
@@ -125,7 +135,7 @@ export default function MilestoneLibraryPage() {
       <section className="admin-page-header">
         <div>
           <h1 className="admin-title">Milestones</h1>
-          <p className="admin-subtitle">Icon-first milestone library. Click a milestone to open details and actions.</p>
+          <p className="admin-subtitle">Icon-first milestone library with points and pack rewards. Click a milestone to open details and actions.</p>
           {message ? <p className="contest-inline-note">{message}</p> : null}
         </div>
         <div className="admin-actions-row">
@@ -159,6 +169,8 @@ export default function MilestoneLibraryPage() {
             >
               <span className="milestone-chip-icon" style={{ background: `${tier.color}22`, color: tier.color }}>{icon}</span>
               <span className="milestone-chip-name">{row.title}</span>
+              <span className="contest-inline-note">Points: {row.rewardPoints}</span>
+              <span className="contest-inline-note">Pack: {getPackRewardCopy(row)}</span>
             </button>
           );
         })}
@@ -177,7 +189,8 @@ export default function MilestoneLibraryPage() {
             </div>
             <div style={{ display: "grid", gap: "0.35rem" }}>
               <p className="contest-inline-note">Lifecycle: {selected.lifecycleStatus ?? "ACTIVE"}</p>
-              <p className="contest-inline-note">Reward: {selected.rewardPoints} pts</p>
+              <p className="contest-inline-note">Reward points: {selected.rewardPoints} pts</p>
+              <p className="contest-inline-note">Pack reward: {getPackRewardCopy(selected)}</p>
               <p className="contest-inline-note">Completed users: {selected.analytics?.completedCount ?? 0}</p>
               <p className="contest-inline-note">Progress rows: {selected.analytics?.progressCount ?? 0}</p>
               <p className="contest-inline-note">Distributed points: {selected.analytics?.totalPointsDistributed ?? 0}</p>

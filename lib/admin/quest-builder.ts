@@ -23,7 +23,10 @@ export type QuestBuilderInput = {
   ctaLabel?: string | null;
   instructions?: string | null;
   proofRequired?: boolean;
+  rewardType?: "points" | "pack" | "both";
   rewardPoints?: number;
+  rewardPackDefinitionId?: string;
+  rewardPackQuantity?: number;
   milestoneThreshold?: number;
   validationMode?: "AUTO" | "SUBMIT" | "MANUAL_REVIEW";
   isActive?: boolean;
@@ -31,6 +34,14 @@ export type QuestBuilderInput = {
   startAt?: string | null;
   endAt?: string | null;
 };
+
+function resolveRewardType(input: QuestBuilderInput): "points" | "pack" | "both" {
+  if (input.rewardType === "points" || input.rewardType === "pack" || input.rewardType === "both") {
+    return input.rewardType;
+  }
+
+  return "points";
+}
 
 export function validateQuestBuilderInput(input: QuestBuilderInput) {
   const issues: Array<{ field: string; severity: "ERROR" | "WARN"; message: string }> = [];
@@ -45,9 +56,28 @@ export function validateQuestBuilderInput(input: QuestBuilderInput) {
     issues.push({ field: "objectiveType", severity: "ERROR", message: "objective type is required" });
   }
 
-  const rewardPoints = Number(input.rewardPoints ?? 0);
-  if (!Number.isInteger(rewardPoints) || rewardPoints < 0) {
-    issues.push({ field: "rewardPoints", severity: "ERROR", message: "rewardPoints must be a non-negative integer" });
+  const rewardType = resolveRewardType(input);
+  if (rewardType === "points" || rewardType === "both") {
+    if (input.rewardPoints === undefined) {
+      issues.push({ field: "rewardPoints", severity: "ERROR", message: "rewardPoints is required for points rewards" });
+    } else {
+      const rewardPoints = Number(input.rewardPoints);
+      if (!Number.isInteger(rewardPoints) || rewardPoints < 0) {
+        issues.push({ field: "rewardPoints", severity: "ERROR", message: "rewardPoints must be a non-negative integer" });
+      }
+    }
+  }
+
+  if (rewardType === "pack" || rewardType === "both") {
+    if (!String(input.rewardPackDefinitionId ?? "").trim()) {
+      issues.push({ field: "rewardPackDefinitionId", severity: "ERROR", message: "rewardPackDefinitionId is required for pack rewards" });
+    }
+
+    const rewardPackQuantity = input.rewardPackQuantity ?? 1;
+    const normalizedPackQuantity = Number(rewardPackQuantity);
+    if (!Number.isInteger(normalizedPackQuantity) || normalizedPackQuantity <= 0) {
+      issues.push({ field: "rewardPackQuantity", severity: "ERROR", message: "rewardPackQuantity must be a positive integer" });
+    }
   }
 
   if (objectiveType === "MILESTONE") {
@@ -91,13 +121,23 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
 
   const validationMode = input.validationMode ?? (objectiveType === "MILESTONE" ? "AUTO" : "MANUAL_REVIEW");
 
+  const rewardType = resolveRewardType(input);
+  const includesPointsReward = rewardType === "points" || rewardType === "both";
+  const includesPackReward = rewardType === "pack" || rewardType === "both";
+
   const base = {
     code: String(input.code ?? "").trim(),
     title: String(input.title ?? "").trim(),
     description: sanitizeOptionalText(input.description),
     type,
     validationMode,
-    rewardPoints: Number(input.rewardPoints ?? 0),
+    ...(includesPointsReward ? { rewardPoints: Number(input.rewardPoints ?? 0) } : {}),
+    ...(includesPackReward
+      ? {
+          rewardPackDefinitionId: String(input.rewardPackDefinitionId ?? "").trim(),
+          rewardPackQuantity: Number(input.rewardPackQuantity ?? 1),
+        }
+      : {}),
     oneTime: input.oneTime ?? true,
     isActive: input.isActive ?? true,
     startAt: input.startAt || null,
@@ -132,6 +172,18 @@ export function toQuestRuntimePayload(input: QuestBuilderInput) {
 export function buildQuestUserPreview(input: QuestBuilderInput) {
   const objectiveType = input.objectiveType ?? "FOLLOW_X";
   const hasTarget = Boolean(sanitizeOptionalText(input.targetUrl));
+  const rewardType = resolveRewardType(input);
+  const rewardParts: string[] = [];
+
+  if (rewardType === "points" || rewardType === "both") {
+    rewardParts.push(`${Number(input.rewardPoints ?? 0)} points`);
+  }
+
+  if (rewardType === "pack" || rewardType === "both") {
+    const quantity = Number(input.rewardPackQuantity ?? 1);
+    const packLabel = String(input.rewardPackDefinitionId ?? "").trim() || "reward pack";
+    rewardParts.push(`${quantity} ${packLabel}`);
+  }
 
   return {
     title: String(input.title ?? "").trim() || "Untitled quest",
@@ -142,7 +194,7 @@ export function buildQuestUserPreview(input: QuestBuilderInput) {
       milestoneType: input.milestoneType,
       milestoneTargetValue: Number(input.targetValue ?? input.milestoneThreshold ?? 0),
     }),
-    rewardCopy: `Reward: ${Number(input.rewardPoints ?? 0)} points`,
+    rewardCopy: `Reward: ${rewardParts.join(" + ") || "none"}`,
     proofCopy: (objectiveType === "FOLLOW_X" || objectiveType === "SOCIAL_ENGAGEMENT")
       ? `Proof required: ${input.proofRequired ?? true ? "Yes" : "No"}`
       : "Proof required: No",

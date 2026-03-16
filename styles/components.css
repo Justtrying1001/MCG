@@ -1014,8 +1014,23 @@
 .profile-achievements-wrap,
 .profile-results-wrap { padding: var(--space-2); display: grid; gap: var(--space-2); }
 
-.profile-featured-cards-strip { display: flex; gap: var(--space-2); overflow-x: auto; }
-.profile-featured-card-item { min-width: 170px; }
+.profile-featured-cards-strip {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+.profile-featured-card-item {
+  flex: 0 0 120px;
+  max-width: 120px;
+}
+
+@media (min-width: 768px) {
+  .profile-featured-card-item {
+    flex: 0 0 148px;
+    max-width: 148px;
+  }
+}
 
 .profile-set-completion-grid {
   display: grid;
