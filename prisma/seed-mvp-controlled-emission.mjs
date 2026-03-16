@@ -230,6 +230,24 @@ async function run() {
     }
   }
 
+  // PATCH DE SÉCURITÉ — re-appliquer les coingeckoId depuis le master (idempotent)
+  // Couvre le cas où les TokenProject existent déjà en DB mais ont coingeckoId null
+  // (ex: seed précédent sans coingeckoId, ou migration depuis un ancien schéma)
+  console.log("[seed] Patching coingeckoId on existing TokenProjects from master...");
+  let patchCount = 0;
+  for (const token of mvpTokens) {
+    if (!token.coingeckoId) continue;
+    const result = await prisma.tokenProject.updateMany({
+      where: { slug: token.slug, coingeckoId: null },
+      data: { coingeckoId: token.coingeckoId },
+    });
+    if (result.count > 0) {
+      console.log(`[seed] Patched coingeckoId for slug=${token.slug} → ${token.coingeckoId}`);
+      patchCount += result.count;
+    }
+  }
+  console.log(`[seed] coingeckoId patch done — ${patchCount} rows updated`);
+
   for (const pack of MVP_PACKS) {
     await prisma.packDefinition.upsert({
       where: { code: pack.code },

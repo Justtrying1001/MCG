@@ -133,4 +133,82 @@ node prisma/seed-mvp-controlled-emission.mjs --dry-run
 # Diagnostic coingeckoId en DB (nécessite l'app déployée)
 GET /api/internal/debug/token-coingecko-coverage
 GET /api/internal/debug/snapshot-health
+
+# Diagnostic + patch coingeckoId directement depuis l'app admin
+GET  /api/internal/admin/token-coingecko-patch   # état DB vs token master
+POST /api/internal/admin/token-coingecko-patch   # patch les nulls (idempotent)
 ```
+
+---
+
+## Troubleshooting — coingeckoId null en DB
+
+**Symptôme :** snapshots capturés avec `capturedCount = 0` ou `priceUsd = null` partout.
+
+**Cause probable :** `TokenProject.coingeckoId` est null en DB — le seed n'a pas tournéou a échoué silencieusement lors d'un deploy précédent.
+
+**Procédure de vérification et correction :**
+
+### Étape 1 — Diagnostic
+
+```
+GET /api/internal/admin/token-coingecko-patch
+```
+
+Réponse attendue en état sain :
+```json
+{
+  "ok": true,
+  "db": { "withId": 50, "withoutId": 0 },
+  "master": { "total": 50, "withCoingeckoId": 50, "patchable": 0 }
+}
+```
+
+Si `withoutId > 0` ou `patchable > 0` → passer à l'étape 2.
+
+### Étape 2 — Patch
+
+```
+POST /api/internal/admin/token-coingecko-patch
+```
+
+Réponse attendue :
+```json
+{
+  "ok": true,
+  "patched": 50,
+  "skipped": 0,
+  "errors": [],
+  "after": { "withId": 50, "withoutId": 0 }
+}
+```
+
+Le POST est **idempotent** : peut être appelé plusieurs fois sans risque. Il ne modifie que les lignes où `coingeckoId IS NULL`.
+
+### Étape 3 — Confirmer
+
+Rappeler le GET pour confirmer `withoutId === 0`.
+
+### Étape 4 — Re-capturer le snapshot
+
+Dans la page admin du contest LIVE (`/admin/contests/[id]`), dans la section **Pipeline status** :
+- Si `hasStartSnapshot = false` → bouton **"Capture START snapshot now"**
+- Si `hasStartSnapshot = true` mais `capturedWithPrice = 0` → bouton **"⚠ Re-capture START snapshot"**
+
+Après capture, vérifier que `capturedWithPrice > 0` dans la réponse.
+
+### Causes racines connues
+
+| Cause | Détection | Fix |
+|-------|-----------|-----|
+| `DATABASE_URL` absent au moment du deploy | `GET /token-coingecko-patch` → `withId = 0` | Re-déclencher le seed ou utiliser le POST patch |
+| Seed exécuté avant les migrations Prisma | Erreur dans les logs deploy | S'assurer que `prisma:deploy:schema` précède le seed dans `vercel-build` |
+| TokenProject créé par un autre chemin sans coingeckoId | `patchable > 0` avec slugs inconnus | POST patch couvre ce cas aussi |
+
+### Garanties après correction
+
+Le seed (`seed-mvp-controlled-emission.mjs`) contient maintenant **3 niveaux de protection** :
+
+1. **Niveau 1** — `tokenProject.upsert` inclut `coingeckoId` dans `create` ET `update`
+2. **Niveau 2** — Patch post-upsert depuis `cardTemplate.metadata.tokenIdentity.coingeckoId`
+3. **Niveau 3** — Patch de sécurité depuis `mvpTokens` (token-master-50.json en mémoire) pour tout slug encore null
