@@ -13,9 +13,16 @@ describe("admin reset users UI", () => {
   it("shows explicit env-lock message and activation instructions", () => {
     const source = readFileSync("components/admin/ResetUsersPanel.tsx", "utf8");
     expect(source).toContain("User reset is unavailable.");
-    expect(source).toContain('ENABLE_USER_RESET must be \"true\"');
+    expect(source).toContain("ENABLE_USER_RESET must be <code>true</code>");
     expect(source).toContain("Set <code>ENABLE_USER_RESET=true</code> in Vercel Project Settings");
     expect(source).toContain("Environment locked");
+  });
+
+
+  it("shows pack definition reset count in success summary", () => {
+    const source = readFileSync("components/admin/ResetUsersPanel.tsx", "utf8");
+    expect(source).toContain("pack definitions reset");
+    expect(source).toContain("resetPackDefinitionsCount");
   });
 
   it("uses session role and env flag to derive API/UI access", () => {

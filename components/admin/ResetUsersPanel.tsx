@@ -11,6 +11,7 @@ type ResetResponse = {
   deletedUsers?: number;
   deletedInvites?: number;
   resetRewardPackSupplyRows?: number;
+  resetPackDefinitionsCount?: number;
 };
 
 const RESET_KEYWORD = "RESET USERS";
@@ -113,7 +114,7 @@ export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlag
               <AdminStatusBadge tone="success" label="SUCCESS" />
               <p>
                 Deleted users: <strong>{result.deletedUsers ?? 0}</strong> · deleted invites: <strong>{result.deletedInvites ?? 0}</strong> ·
-                reset reward pack rows: <strong>{result.resetRewardPackSupplyRows ?? 0}</strong>
+                reset reward pack rows: <strong>{result.resetRewardPackSupplyRows ?? 0}</strong> · pack definitions reset: <strong>{result.resetPackDefinitionsCount ?? 0}</strong>
               </p>
             </>
           ) : (
