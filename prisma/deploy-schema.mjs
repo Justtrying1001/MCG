@@ -153,6 +153,15 @@ async function main() {
       return;
     }
 
+    // ── P1002 advisory lock timeout after all retries: avoid failing
+    // concurrent cloud builds when another deploy currently owns the lock.
+    if (isAdvisoryLockTimeout(migrate.output)) {
+      console.warn(
+        "[deploy-schema] Advisory lock timeout persisted after retries. Continuing build to avoid failing concurrent deploys."
+      );
+      return;
+    }
+
     // ── P3009: failed migration blocking deploy ───────────────────────────
     if (migrate.output.includes("P3009")) {
       const failedName = parseP3009FailedMigration(migrate.output);
