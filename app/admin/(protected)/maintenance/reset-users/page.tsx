@@ -1,13 +1,14 @@
+import React from "react";
 import { AdminPageHeader } from "@/components/admin/AdminUi";
 import { ResetUsersPanel } from "@/components/admin/ResetUsersPanel";
 import { getAdminSessionFromCookies } from "@/lib/admin-auth";
-import { resolveSessionAdminRole } from "@/lib/admin-ops";
-import { getUserResetAvailability } from "@/lib/admin-reset-users";
+import { ADMIN_ROLES, describeUserResetFlagState, isRootAdminUsername, resolveSessionAdminRole } from "@/lib/admin-ops";
 
 export default function AdminResetUsersPage() {
   const session = getAdminSessionFromCookies();
   const role = resolveSessionAdminRole(session?.username ?? null);
-  const availability = getUserResetAvailability(role, Boolean(session));
+  const isSupervisor = Boolean(session) && role === ADMIN_ROLES.ADMIN_SUPERVISOR;
+  const resetFlag = describeUserResetFlagState();
 
   return (
     <div className="admin-page admin-v2-page">
@@ -15,7 +16,14 @@ export default function AdminResetUsersPage() {
         title="Maintenance / Reset Users"
         subtitle="Irreversible operation that wipes user-owned data while keeping system catalog entities intact."
       />
-      <ResetUsersPanel availability={availability} />
+      <ResetUsersPanel
+        enabled={isSupervisor && resetFlag.enabled}
+        isSupervisor={isSupervisor}
+        resetEnabled={resetFlag.enabled}
+        resetFlagValue={resetFlag.displayValue}
+        role={role}
+        isRootAdmin={isRootAdminUsername(session?.username ?? null)}
+      />
     </div>
   );
 }

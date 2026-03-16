@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { AdminEmptyState, AdminPanel, AdminStatusBadge } from "@/components/admin/AdminUi";
+import type { AdminRole } from "@/lib/admin-ops";
 
 type ResetResponse = {
   ok: boolean;
@@ -12,15 +13,18 @@ type ResetResponse = {
   resetRewardPackSupplyRows?: number;
 };
 
-type ResetAvailability = {
-  enabled: boolean;
-  reasonCode: "insufficient_role" | "feature_flag_disabled" | null;
-  reason: string | null;
-};
-
 const RESET_KEYWORD = "RESET USERS";
 
-export function ResetUsersPanel({ availability }: { availability: ResetAvailability }) {
+type ResetUsersPanelProps = {
+  enabled: boolean;
+  isSupervisor: boolean;
+  resetEnabled: boolean;
+  resetFlagValue: string;
+  role: AdminRole;
+  isRootAdmin: boolean;
+};
+
+export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlagValue, role, isRootAdmin }: ResetUsersPanelProps) {
   const [open, setOpen] = useState(false);
   const [confirmInput, setConfirmInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -46,13 +50,13 @@ export function ResetUsersPanel({ availability }: { availability: ResetAvailabil
     }
   };
 
-  if (!availability.enabled) {
+  if (!isSupervisor) {
     return (
       <AdminPanel>
         <p className="admin-v2-section-title">Danger zone</p>
         <AdminEmptyState
           title="User reset is unavailable"
-          description={availability.reason ?? "User reset is currently unavailable."}
+          description="Only supervisors can reset users."
         />
       </AdminPanel>
     );
@@ -61,10 +65,25 @@ export function ResetUsersPanel({ availability }: { availability: ResetAvailabil
   return (
     <AdminPanel>
       <p className="admin-v2-section-title">Danger zone</p>
+      {!resetEnabled ? (
+        <div className="admin-v2-callout" style={{ marginBottom: 12 }}>
+          <AdminStatusBadge tone="warn" label="Environment locked" />
+          <p><strong>User reset is unavailable.</strong></p>
+          <p>
+            User reset is disabled because ENABLE_USER_RESET must be <code>true</code> (current value: {resetFlagValue}).
+          </p>
+          <p>
+            Set <code>ENABLE_USER_RESET=true</code> in Vercel Project Settings → Environment Variables, then redeploy.
+          </p>
+        </div>
+      ) : null}
       <p className="contest-inline-note">This action permanently deletes all user-related data.</p>
-      <button type="button" className="button warn" disabled={pending} onClick={() => setOpen(true)}>
+      <button type="button" className="button warn" disabled={pending || !enabled} onClick={() => setOpen(true)}>
         Reset user data
       </button>
+      <div className="contest-inline-note" style={{ marginTop: 12 }}>
+        <strong>Diagnostics:</strong> Current user role: {role} · Root admin: {isRootAdmin ? "yes" : "no"} · ENABLE_USER_RESET: {resetFlagValue} · API access: {enabled ? "allowed" : "blocked"}
+      </div>
 
       {open ? (
         <div className="contest-modal-overlay" role="presentation" onClick={() => !pending && setOpen(false)}>

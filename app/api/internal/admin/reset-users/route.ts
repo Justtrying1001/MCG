@@ -1,7 +1,7 @@
 import { AdminActionStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-import { ADMIN_ROLES, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
+import { ADMIN_ROLES, describeUserResetFlagState, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 import { getUserResetFeatureDisabledReason } from "@/lib/admin-reset-users";
 import { prisma } from "@/lib/prisma";
@@ -17,9 +17,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: roleCheck.error }, { status: roleCheck.status });
   }
 
-  const disabledReason = getUserResetFeatureDisabledReason();
-  if (disabledReason) {
-    return NextResponse.json({ ok: false, error: disabledReason }, { status: 403 });
+  const resetFlag = describeUserResetFlagState();
+  if (!resetFlag.enabled) {
+    return NextResponse.json({
+      ok: false,
+      error: `User reset is disabled because ENABLE_USER_RESET must be "true" (current value: ${resetFlag.displayValue}).`,
+    }, { status: 403 });
   }
 
   try {
