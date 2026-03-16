@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 
 import type { AdminAccessContext } from "@/lib/admin-ops";
-import { parseAdminRole } from "@/lib/admin-ops";
+import { parseAdminRole, resolveSessionAdminRole } from "@/lib/admin-ops";
 import { getAdminSessionFromRequest } from "@/lib/admin-auth";
 
 function secureStringEqual(a: string, b: string): boolean {
@@ -42,7 +42,7 @@ export function requireInternalAdminAccess(request: NextRequest): AdminAccessCon
         label: username,
         username,
         authMode: "session",
-        role: parseAdminRole(process.env.ADMIN_DEFAULT_ROLE ?? "ADMIN_SUPERVISOR"),
+        role: resolveSessionAdminRole(username),
       },
     };
   }

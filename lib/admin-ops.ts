@@ -79,6 +79,47 @@ export function parseAdminRole(raw: string | null | undefined): AdminRole {
   return ADMIN_ROLES.ADMIN_OPS;
 }
 
+function normalizeUsername(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+export function getRootAdminUsername() {
+  return normalizeUsername(process.env.ROOT_ADMIN_X_USERNAME ?? process.env.OWNER_X_USERNAME);
+}
+
+export function isRootAdminUsername(username: string | null | undefined) {
+  const normalizedUsername = normalizeUsername(username);
+  const rootUsername = getRootAdminUsername();
+  return Boolean(normalizedUsername) && Boolean(rootUsername) && normalizedUsername === rootUsername;
+}
+
+export function resolveSessionAdminRole(username: string | null | undefined): AdminRole {
+  if (isRootAdminUsername(username)) {
+    return ADMIN_ROLES.ADMIN_SUPERVISOR;
+  }
+
+  return parseAdminRole(process.env.ADMIN_DEFAULT_ROLE ?? "ADMIN_SUPERVISOR");
+}
+
+export function getUserResetFlagRaw() {
+  const raw = process.env.ENABLE_USER_RESET;
+  return typeof raw === "string" ? raw : null;
+}
+
+export function isUserResetEnabled() {
+  const raw = getUserResetFlagRaw();
+  return (raw ?? "false").trim().toLowerCase() === "true";
+}
+
+export function describeUserResetFlagState() {
+  const raw = getUserResetFlagRaw();
+  return {
+    enabled: isUserResetEnabled(),
+    raw,
+    displayValue: raw === null ? "not set" : raw,
+  };
+}
+
 export function hasAnyRole(actor: AdminActor, allowed: AdminRole[]) {
   return allowed.includes(actor.role) || actor.role === ADMIN_ROLES.ADMIN_SUPERVISOR;
 }
