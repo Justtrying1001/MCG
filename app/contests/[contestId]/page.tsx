@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
@@ -15,16 +15,13 @@ type ContestDetail = {
     status: ContestStatus;
     liveAt: string | null;
     lockAt: string | null;
-    liveAt: string | null;
     endsAt: string | null;
     openAt?: string | null;
     rules: ContestRule[];
     seasonName?: string | null;
-    leagueTierRequired?: string | null;
-    _count: { entries: number };
-    seasonName?: string | null;
     seasonId?: string | null;
     leagueTierRequired?: string | null;
+    _count: { entries: number };
   };
   userEntry: {
     id: string;
@@ -78,29 +75,6 @@ function fmtDate(iso: string | null | undefined): string {
   });
 }
 
-function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
-  const list: LineupOption[] = [];
-  for (const row of collection) {
-    const total = Math.max(1, row.instanceCount);
-    for (let i = 0; i < total; i += 1) {
-      list.push({
-        instanceId: `guest-${row.templateId}-${i + 1}`,
-        cardTemplateId: row.templateId,
-        isLockedByActiveContest: false,
-        cardSetId: row.card.setCode ?? "guest-set",
-        cardSetCode: row.card.setCode ?? "SET",
-        cardSetName: row.card.setEditionLabel ?? "Guest Collection",
-        rarityCode: row.card.rarity,
-        editionCode: row.card.edition,
-        name: row.card.displayName,
-        imageUrl: row.card.imageUrl,
-        tokenProjectName: row.card.symbol || row.card.displayName,
-      });
-    }
-  }
-  return list;
-}
-
 const RARITY_COLOR: Record<string, string> = {
   LEGENDARY: "#c8a84b",
   EPIC: "#a855f7",
@@ -125,8 +99,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [submitBusy, setSubmitBusy] = useState(false);
   const [builderFlash, setBuilderFlash] = useState("");
 
-  const contest = detail?.contest;
-  const rule = contest?.rules[0];
+  const contestData = detail?.contest;
+  const rule = contestData?.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
 
   const loadAll = useCallback(async () => {
@@ -169,7 +143,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, [builderFlash]);
 
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const canManageLineup = contest?.status === "OPEN";
+  const canManageLineup = contestData?.status === "OPEN";
   const hasEntry = Boolean(detail?.userEntry);
 
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
@@ -179,24 +153,24 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, [selectedIds, options]);
 
   const userStatus = useMemo(() => {
-    if (!contest) return "No team selected";
+    if (!contestData) return "No team selected";
     if (!detail?.userEntry) return selectedIds.length > 0 ? "Team drafted" : "No team selected";
-    if (contest.status === "OPEN") return "Team submitted";
-    if (contest.status === "LOCKED") return "Team locked";
-    if (contest.status === "LIVE") return "Contest live";
+    if (contestData.status === "OPEN") return "Team submitted";
+    if (contestData.status === "LOCKED") return "Team locked";
+    if (contestData.status === "LIVE") return "Contest live";
     return "Results available";
-  }, [contest, detail?.userEntry, selectedIds.length]);
+  }, [contestData, detail?.userEntry, selectedIds.length]);
 
   const primaryCtaLabel = useMemo(() => {
-    if (!contest) return "Build lineup";
-    if (contest.status === "SETTLED") return "View results";
-    if (contest.status === "LIVE") return "Track contest";
+    if (!contestData) return "Build lineup";
+    if (contestData.status === "SETTLED") return "View results";
+    if (contestData.status === "LIVE") return "Track contest";
     if (hasEntry) return canManageLineup ? "Edit lineup" : "View my entry";
     return "Build lineup";
-  }, [contest, hasEntry, canManageLineup]);
+  }, [contestData, hasEntry, canManageLineup]);
 
   const submitLineup = async () => {
-    if (!contest || selectedIds.length !== rosterSize || contest.status !== "OPEN") return;
+    if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
     setSubmitBusy(true);
     setError("");
     const res = await fetch(`/api/contests/${params.contestId}/enter`, {
@@ -207,7 +181,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     if (!res.ok) {
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
       setError(payload?.error ?? "Contest entry failed");
-      setSubmitState("idle");
+      setSubmitBusy(false);
       return;
     }
     await loadAll();
@@ -273,7 +247,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }
 
   const contest = detail.contest;
-
   const status = contest.status;
   const isOpen = status === "OPEN";
   const isLocked = status === "LOCKED";
@@ -304,7 +277,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     },
   ];
 
-  const rewardPoints = Math.max(100, maxRosterSize * 40);
+  const rewardPoints = Math.max(100, rosterSize * 40);
   const fieldTier = contest._count.entries >= 100 ? "High" : contest._count.entries >= 30 ? "Mid" : "Early";
 
   // ── Render ──────────────────────────────────────────────────────────────────
