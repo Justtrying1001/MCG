@@ -8,6 +8,8 @@ import { QuestLivePreviewCard } from "@/components/quests/QuestLivePreviewCard";
 import { Button } from "@/components/ui/Button";
 import type { BuilderObjectiveType, MilestoneType, SocialAction } from "@/lib/domain/quests/social";
 
+type RewardType = "points" | "pack" | "both";
+
 type PreviewPayload = {
   title: string;
   description: string;
@@ -43,6 +45,7 @@ export default function QuestBuilderPage() {
   const [ctaLabel, setCtaLabel] = useState("");
   const [instructions, setInstructions] = useState("");
   const [proofRequired, setProofRequired] = useState(true);
+  const [rewardType, setRewardType] = useState<RewardType>("points");
   const [rewardPoints, setRewardPoints] = useState("100");
   const [rewardPackDefinitionId, setRewardPackDefinitionId] = useState("");
   const [rewardPackQuantity, setRewardPackQuantity] = useState("1");
@@ -94,7 +97,13 @@ export default function QuestBuilderPage() {
       if (typeof config.milestoneType === "string") setMilestoneType(config.milestoneType as MilestoneType);
       if (typeof config.targetValue === "number") setTargetValue(String(config.targetValue));
       if (typeof config.threshold === "number" && !(typeof config.targetValue === "number")) setTargetValue(String(config.threshold));
-      if (typeof quest.rewardPackDefinitionId === "string" && quest.rewardPackDefinitionId) setRewardPackDefinitionId(quest.rewardPackDefinitionId);
+      const hasPackReward = typeof quest.rewardPackDefinitionId === "string" && quest.rewardPackDefinitionId.length > 0;
+      const hasPointsReward = Number(quest.rewardPoints ?? 0) > 0;
+      if (hasPointsReward && hasPackReward) setRewardType("both");
+      else if (hasPackReward) setRewardType("pack");
+      else setRewardType("points");
+
+      if (hasPackReward) setRewardPackDefinitionId(quest.rewardPackDefinitionId);
       if (typeof quest.rewardPackQuantity === "number") setRewardPackQuantity(String(quest.rewardPackQuantity));
       setLoading(false);
     };
@@ -113,25 +122,35 @@ export default function QuestBuilderPage() {
     void loadPacks();
   }, []);
 
-  const builderInput = useMemo(() => ({
-    code,
-    title,
-    description,
-    objectiveType,
-    socialAction,
-    milestoneType,
-    targetValue: Number(targetValue),
-    targetUrl,
-    ctaLabel,
-    instructions,
-    proofRequired,
-    rewardPoints: Number(rewardPoints),
-    rewardPackDefinitionId: rewardPackDefinitionId || null,
-    rewardPackQuantity: Number(rewardPackQuantity) || 1,
-    validationMode,
-    isActive,
-    oneTime,
-  }), [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardPoints, rewardPackDefinitionId, rewardPackQuantity, validationMode, isActive, oneTime]);
+  const builderInput = useMemo(() => {
+    const includesPointsReward = rewardType === "points" || rewardType === "both";
+    const includesPackReward = rewardType === "pack" || rewardType === "both";
+
+    return {
+      code,
+      title,
+      description,
+      objectiveType,
+      socialAction,
+      milestoneType,
+      targetValue: Number(targetValue),
+      targetUrl,
+      ctaLabel,
+      instructions,
+      proofRequired,
+      rewardType,
+      ...(includesPointsReward ? { rewardPoints: Number(rewardPoints) } : {}),
+      ...(includesPackReward
+        ? {
+            rewardPackDefinitionId: rewardPackDefinitionId || undefined,
+            rewardPackQuantity: Number(rewardPackQuantity) || 1,
+          }
+        : {}),
+      validationMode,
+      isActive,
+      oneTime,
+    };
+  }, [code, title, description, objectiveType, socialAction, milestoneType, targetValue, targetUrl, ctaLabel, instructions, proofRequired, rewardType, rewardPoints, rewardPackDefinitionId, rewardPackQuantity, validationMode, isActive, oneTime]);
 
   const runValidate = async () => {
     setMessage("");
@@ -293,15 +312,27 @@ export default function QuestBuilderPage() {
             <section className="quest-form-section">
               <h3 className="contest-section-title">3. Reward & Policy</h3>
               <div className="admin-field-grid">
-                <input className="input" type="number" min={0} placeholder="Reward points" value={rewardPoints} onChange={(event) => setRewardPoints(event.target.value)} />
-                <select className="input" value={rewardPackDefinitionId} onChange={(event) => setRewardPackDefinitionId(event.target.value)}>
-                  <option value="">Reward pack (optional)</option>
-                  {packDefinitions.map((pack) => (
-                    <option key={pack.id} value={pack.id}>{pack.code} ({pack.plannedPackCount} supply)</option>
-                  ))}
-                </select>
-                {rewardPackDefinitionId ? (
-                  <input className="input" type="number" min={1} placeholder="Pack quantity" value={rewardPackQuantity} onChange={(event) => setRewardPackQuantity(event.target.value)} />
+                <label className="contest-inline-note" style={{ display: "grid", gap: "0.35rem" }}>
+                  <span>Reward type</span>
+                  <select className="input" value={rewardType} onChange={(event) => setRewardType(event.target.value as RewardType)}>
+                    <option value="points">Points</option>
+                    <option value="pack">Pack</option>
+                    <option value="both">Both</option>
+                  </select>
+                </label>
+                {rewardType === "points" || rewardType === "both" ? (
+                  <input className="input" type="number" min={0} placeholder="Reward points" value={rewardPoints} onChange={(event) => setRewardPoints(event.target.value)} />
+                ) : null}
+                {rewardType === "pack" || rewardType === "both" ? (
+                  <>
+                    <select className="input" value={rewardPackDefinitionId} onChange={(event) => setRewardPackDefinitionId(event.target.value)}>
+                      <option value="">Reward pack</option>
+                      {packDefinitions.map((pack) => (
+                        <option key={pack.id} value={pack.id}>{pack.code} ({pack.plannedPackCount} supply)</option>
+                      ))}
+                    </select>
+                    <input className="input" type="number" min={1} placeholder="Pack quantity" value={rewardPackQuantity} onChange={(event) => setRewardPackQuantity(event.target.value)} />
+                  </>
                 ) : null}
                 <select className="input" value={validationMode} onChange={(event) => setValidationMode(event.target.value as "AUTO" | "SUBMIT" | "MANUAL_REVIEW")}>
                   <option value="AUTO">AUTO</option>
@@ -336,7 +367,7 @@ export default function QuestBuilderPage() {
             description={description}
             objectiveType={objectiveType}
             socialAction={objectiveType === "SOCIAL_ENGAGEMENT" ? socialAction : undefined}
-            rewardPoints={Number(rewardPoints) || 0}
+            rewardPoints={rewardType === "points" || rewardType === "both" ? Number(rewardPoints) || 0 : 0}
             statusLabel={isActive ? "AVAILABLE" : "INACTIVE"}
             targetUrl={targetUrl}
             ctaLabel={ctaLabel}

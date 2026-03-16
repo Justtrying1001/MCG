@@ -831,6 +831,9 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
 
 export async function listInternalQuestsMvp() {
   const quests = await prisma.questDefinition.findMany({
+    include: {
+      rewardPackDefinition: { select: { code: true } },
+    },
     orderBy: [{ createdAt: "desc" }],
     take: 300,
   });
@@ -903,6 +906,7 @@ export async function listInternalQuestsMvp() {
       rejectedSubmissionCount: submissionMap.get(quest.id)?.rejectedSubmissionCount ?? 0,
       totalPointsDistributed: pointsMap.get(quest.id) ?? 0,
     },
+    rewardPackDefinitionCode: quest.rewardPackDefinition?.code ?? null,
   }));
 }
 
