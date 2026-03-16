@@ -201,15 +201,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const myRankingRow = ranking?.rankings?.find((r) => r.userId === me?.user.id) ?? null;
   const filledCount = selected.filter(Boolean).length;
 
-  const contest = detail?.contest;
-
   const countdownTarget = useMemo(() => {
     if (!detail) return null;
     const { status, lockAt, endsAt } = detail.contest;
     if (status === "OPEN" && lockAt) return new Date(lockAt).getTime();
     if ((status === "LOCKED" || status === "LIVE") && endsAt) return new Date(endsAt).getTime();
     return null;
-  }, [contest]);
+  }, [detail]);
 
   const toggle = (instanceId: string) => {
     if (!canManageLineup) return;
@@ -285,40 +283,40 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     );
   }
 
-  const status = contest?.status;
+  const contest = detail.contest;
+
+  const status = contest.status;
   const isOpen = status === "OPEN";
   const isLocked = status === "LOCKED";
   const isLive = status === "LIVE";
   const isSettled = status === "SETTLED";
 
-  const scheduleSteps = contest
-    ? [
-        {
-          key: "open",
-          label: "Registration open",
-          date: contest.openAt ? fmtDate(contest.openAt) : "Contest open",
-          active: isOpen,
-          done: isLocked || isLive || isSettled,
-        },
-        {
-          key: "lock",
-          label: "Lineup lock",
-          date: fmtDate(contest.lockAt),
-          active: isLocked,
-          done: isLive || isSettled,
-        },
-        {
-          key: "end",
-          label: "End & snapshot",
-          date: fmtDate(contest.endsAt),
-          active: isLive,
-          done: isSettled,
-        },
-      ]
-    : [];
+  const scheduleSteps = [
+    {
+      key: "open",
+      label: "Registration open",
+      date: contest.openAt ? fmtDate(contest.openAt) : "Contest open",
+      active: isOpen,
+      done: isLocked || isLive || isSettled,
+    },
+    {
+      key: "lock",
+      label: "Lineup lock",
+      date: fmtDate(contest.lockAt),
+      active: isLocked,
+      done: isLive || isSettled,
+    },
+    {
+      key: "end",
+      label: "End & snapshot",
+      date: fmtDate(contest.endsAt),
+      active: isLive,
+      done: isSettled,
+    },
+  ];
 
   const rewardPoints = Math.max(100, maxRosterSize * 40);
-  const fieldTier = (contest?._count.entries ?? 0) >= 100 ? "High" : (contest?._count.entries ?? 0) >= 30 ? "Mid" : "Early";
+  const fieldTier = contest._count.entries >= 100 ? "High" : contest._count.entries >= 30 ? "Mid" : "Early";
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
