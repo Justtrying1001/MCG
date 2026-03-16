@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
+function newIdempotencyKey(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 
 type OverviewPayload = {
@@ -68,6 +72,7 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
   const [snapshotsLoading, setSnapshotsLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyDelete, setBusyDelete] = useState(false);
+  const [busyStop, setBusyStop] = useState(false);
   const [busyCapture, setBusyCapture] = useState<"START" | "END" | null>(null);
   const [message, setMessage] = useState("");
   const [showStartDetail, setShowStartDetail] = useState(false);
@@ -106,6 +111,40 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.contestId]);
+
+  const stopContest = async () => {
+    if (!data) return;
+    if (!window.confirm("Stop this contest? It will be moved to CANCELED status.")) return;
+    setBusyStop(true);
+    setMessage("");
+    setError("");
+
+    const validateRes = await fetch(`/api/internal/contest-runs/${params.contestId}/transitions/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetPhase: "CANCELED", reasonCode: "LIFECYCLE_CONTROL" }),
+    });
+    const validatePayload = (await validateRes.json().catch(() => null)) as { validationToken?: string; blocking?: boolean; error?: string } | null;
+    if (!validateRes.ok || !validatePayload?.validationToken || validatePayload.blocking) {
+      setError(validatePayload?.error ?? "Cannot stop contest: validation failed");
+      setBusyStop(false);
+      return;
+    }
+
+    const execRes = await fetch(`/api/internal/contests/${params.contestId}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey("stop-contest") },
+      body: JSON.stringify({ status: "CANCELED", reasonCode: "LIFECYCLE_CONTROL", validationToken: validatePayload.validationToken }),
+    });
+    const execPayload = (await execRes.json().catch(() => null)) as { error?: string; contest?: { status: ContestStatus } } | null;
+    if (!execRes.ok) {
+      setError(execPayload?.error ?? "Cannot stop contest");
+    } else {
+      setMessage("Contest stopped successfully.");
+      setData((prev: OverviewPayload | null) => prev ? { ...prev, contest: { ...prev.contest, status: execPayload?.contest?.status ?? "CANCELED" } } : prev);
+    }
+    setBusyStop(false);
+  };
 
   const deleteContest = async () => {
     const confirmed = window.confirm("Delete this contest? This action is permanent. CANCELED contests will be fully purged with their linked entries/rankings/scores/settlements.");
@@ -287,11 +326,15 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
             <p className="contest-inline-note">End: {formatDate(data.contest.endsAt)}</p>
           </section>
 
-          <section className="contest-section" style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap" }}>
-            <Link href={`/admin/contests/${params.contestId}/lifecycle`} className="contest-inline-note">Lifecycle control panel</Link>
-            <Link href={`/admin/contests/${params.contestId}/scoring`} className="contest-inline-note">Scoring workbench</Link>
-            <Link href={`/admin/contests/${params.contestId}/settlement`} className="contest-inline-note">Settlement workbench</Link>
-            <Link href={`/admin/contests/${params.contestId}/audit`} className="contest-inline-note">Contest audit timeline</Link>
+          <section className="contest-section" style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", alignItems: "center" }}>
+            <Link href={`/admin/contests/${params.contestId}/lifecycle`} className="contest-inline-note">Manage lifecycle</Link>
+            <Link href={`/admin/contests/${params.contestId}/scoring`} className="contest-inline-note">Scoring &amp; Settlement</Link>
+            <Link href={`/admin/contests/${params.contestId}/audit`} className="contest-inline-note">Audit log</Link>
+            {(data.contest.status === "OPEN" || data.contest.status === "LOCKED" || data.contest.status === "LIVE") ? (
+              <Button variant="ghost" onClick={() => void stopContest()} disabled={busyStop} style={{ color: "#e67e22", borderColor: "#e67e22" }}>
+                {busyStop ? "Stopping…" : "Stop contest"}
+              </Button>
+            ) : null}
             {(data.contest.status === "CANCELED" || (data.contest._count.entries === 0 && data.contest._count.scores === 0 && data.contest._count.rankings === 0 && data.contest._count.settlements === 0)) ? (
               <Button variant="ghost" onClick={() => void deleteContest()} disabled={busyDelete}>Delete contest</Button>
             ) : null}
