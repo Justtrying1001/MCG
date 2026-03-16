@@ -13,12 +13,6 @@ type ResetResponse = {
   resetRewardPackSupplyRows?: number;
 };
 
-type ResetAvailability = {
-  enabled: boolean;
-  reasonCode: "insufficient_role" | "feature_flag_disabled" | null;
-  reason: string | null;
-};
-
 const RESET_KEYWORD = "RESET USERS";
 
 type ResetUsersPanelProps = {
@@ -62,7 +56,7 @@ export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlag
         <p className="admin-v2-section-title">Danger zone</p>
         <AdminEmptyState
           title="User reset is unavailable"
-          description={availability.reason ?? "User reset is currently unavailable."}
+          description="Only supervisors can reset users."
         />
       </AdminPanel>
     );
@@ -73,7 +67,7 @@ export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlag
       <p className="admin-v2-section-title">Danger zone</p>
       {!resetEnabled ? (
         <div className="admin-v2-callout" style={{ marginBottom: 12 }}>
-          <AdminStatusBadge tone="warning" label="Environment locked" />
+          <AdminStatusBadge tone="warn" label="Environment locked" />
           <p><strong>User reset is unavailable.</strong></p>
           <p>
             User reset is disabled because ENABLE_USER_RESET must be <code>true</code> (current value: {resetFlagValue}).
