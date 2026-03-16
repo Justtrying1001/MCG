@@ -214,7 +214,24 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return ranking.rankings.find((r) => r.userId === me.user.id) ?? null;
   }, [ranking, me]);
 
-  const slotCards = useMemo(() => lineupSlots.map((id) => (id ? (optionById.get(id) ?? null) : null)), [lineupSlots, optionById]);
+  const scoreByInstanceId = useMemo(() => {
+    if (!scoreBreakdown || scoreBreakdown.length === 0) return new Map<string, number>();
+    return new Map(
+      scoreBreakdown
+        .filter((row) => typeof row.cardInstance.id === "string")
+        .map((row) => [row.cardInstance.id as string, row.finalScore]),
+    );
+  }, [scoreBreakdown]);
+
+  const slotCards = useMemo<Array<SlotCardView | null>>(() => lineupSlots.map((id) => {
+    if (!id) return null;
+    const card = optionById.get(id);
+    if (!card) return null;
+    return {
+      card,
+      finalScore: scoreByInstanceId.get(id) ?? null,
+    };
+  }), [lineupSlots, optionById, scoreByInstanceId]);
 
   const submitLineup = async (isDraft = false) => {
     if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
