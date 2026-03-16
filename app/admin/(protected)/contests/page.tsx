@@ -201,7 +201,8 @@ export default function AdminContestsLibraryPage() {
             const isBusy = busyId === contest.id;
             const isStoppable = contest.status === "OPEN" || contest.status === "LOCKED" || contest.status === "LIVE";
             const isDeletable = contest.status === "CANCELED";
-            const deleteBlocked = contest.status !== "CANCELED" && contest._count.entries > 0;
+            const canDeleteDirectly = ["CANCELED", "SETTLED", "DRAFT"].includes(contest.status);
+            const deleteBlocked = !canDeleteDirectly;
             const unpublishable = Boolean(contest.configPublishedAt) && contest._count.entries === 0;
             const isMenuOpen = openMenuId === contest.id;
 
@@ -313,11 +314,11 @@ export default function AdminContestsLibraryPage() {
                         <button
                           className="contest-menu-item contest-menu-item--danger"
                           disabled={isBusy || deleteBlocked}
-                          title={deleteBlocked ? "Cancel the contest first before deleting" : undefined}
+                          title={deleteBlocked ? "Stop the contest first before deleting" : undefined}
                           onClick={() => void runAction(contest.id, "delete")}
                         >
                           Delete
-                          {deleteBlocked ? <span style={{ display: "block", fontSize: "0.7rem", color: "#999", fontWeight: 400 }}>Cancel first</span> : null}
+                          {deleteBlocked ? <span style={{ display: "block", fontSize: "0.7rem", color: "#999", fontWeight: 400 }}>Stop first</span> : null}
                         </button>
                       </div>
                     ) : null}

@@ -24,11 +24,11 @@ export function getStopActionState(status: ContestStatus) {
 export function getDeleteActionState(status: ContestStatus, counts: ContestOperationCounts) {
   const operations = hasOperations(counts);
 
-  if (status === "CANCELED") {
+  if (status === "CANCELED" || status === "SETTLED" || status === "DRAFT") {
     return {
       allowed: true,
       reason: operations
-        ? "Allowed: canceled contests can be permanently deleted, including linked operations."
+        ? "Allowed: contests in this status can be permanently deleted, including linked operations."
         : "Allowed: no operations found.",
     };
   }
@@ -39,6 +39,6 @@ export function getDeleteActionState(status: ContestStatus, counts: ContestOpera
 
   return {
     allowed: false,
-    reason: "Delete is blocked because this contest already has operations. Stop/Cancel first, then delete if needed.",
+    reason: "Delete is blocked for active contests. Stop the contest first, then delete if needed.",
   };
 }
