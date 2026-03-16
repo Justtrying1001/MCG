@@ -17,14 +17,20 @@ type ContestDetail = {
     title: string;
     code: string;
     status: ContestStatus;
+    liveAt: string | null;
     lockAt: string | null;
     endsAt: string | null;
+    openAt?: string | null;
     rules: ContestRule[];
     _count: { entries: number };
+    seasonName?: string | null;
+    seasonId?: string | null;
+    leagueTierRequired?: string | null;
   };
   userEntry: {
     id: string;
-    rosterLocks: Array<{ ownedCardInstanceId: string }>;
+    status: string;
+    rosterLocks: Array<{ id: string; ownedCardInstanceId: string }>;
   } | null;
   rewardGrants?: Array<{
     id: string;
@@ -60,6 +66,46 @@ function fmtCountdown(targetMs: number | null, nowMs: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "TBD";
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function mapGuestCollectionToOptions(collection: MvpCollectionItem[]): LineupOption[] {
+  const list: LineupOption[] = [];
+  for (const row of collection) {
+    const total = Math.max(1, row.instanceCount);
+    for (let i = 0; i < total; i += 1) {
+      list.push({
+        instanceId: `guest-${row.templateId}-${i + 1}`,
+        cardTemplateId: row.templateId,
+        isLockedByActiveContest: false,
+        cardSetId: row.card.setCode ?? "guest-set",
+        cardSetCode: row.card.setCode ?? "SET",
+        cardSetName: row.card.setEditionLabel ?? "Guest Collection",
+        rarityCode: row.card.rarity,
+        editionCode: row.card.edition,
+        name: row.card.displayName,
+        imageUrl: row.card.imageUrl,
+        tokenProjectName: row.card.symbol || row.card.displayName,
+      });
+    }
+  }
+  return list;
+}
+
+const RARITY_COLOR: Record<string, string> = {
+  LEGENDARY: "#c8a84b",
+  EPIC: "#a855f7",
+  RARE: "#3b82f6",
+  UNCOMMON: "#22c55e",
+  COMMON: "#6b7280",
+};
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
   const { me, loading } = useSession();
   const [detail, setDetail] = useState<ContestDetail | null>(null);
@@ -81,13 +127,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return () => window.clearInterval(id);
   }, []);
 
-    if (rankingRes.ok) setRanking((await rankingRes.json()) as RankingPayload);
-    if (optionsRes.ok) {
-      const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
-      setOptions(Array.isArray(payload?.options) ? payload.options : []);
-    }
-  }, [params.contestId]);
-
+  // Data fetch
   useEffect(() => {
     if (loading) return;
     void (async () => {
@@ -143,9 +183,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     [options, rule?.cardSetId],
   );
 
-  const contest = detail?.contest;
-  const rule = contest?.rules[0];
-  const rosterSize = rule?.maxRosterSize ?? 5;
   const selectedCards = useMemo(
     () =>
       Array.from({ length: maxRosterSize }).map((_, i) =>
@@ -158,9 +195,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const filledCount = selected.filter(Boolean).length;
 
   const countdownTarget = useMemo(() => {
-    if (!contest) return null;
-    if (contest.status === "OPEN" && contest.lockAt) return new Date(contest.lockAt).getTime();
-    if ((contest.status === "LOCKED" || contest.status === "LIVE") && contest.endsAt) return new Date(contest.endsAt).getTime();
+    if (!detail) return null;
+    const { status, lockAt, endsAt } = detail.contest;
+    if (status === "OPEN" && lockAt) return new Date(lockAt).getTime();
+    if ((status === "LOCKED" || status === "LIVE") && endsAt) return new Date(endsAt).getTime();
     return null;
   }, [detail]);
 
@@ -221,10 +259,19 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     setSubmitState("idle");
   };
 
-  if (!me && !loading) {
+  // ── Skeleton ────────────────────────────────────────────────────────────────
+  if (!detail) {
     return (
       <SiteShell>
-        <p className="mcg-eyebrow">Connect with X to access contest details.</p>
+        <style>{CSS}</style>
+        <div className="cpd-skeleton">
+          <div className="cpd-skeleton-topbar" />
+          <div className="cpd-skeleton-hero" />
+          <div className="cpd-skeleton-body">
+            <div className="cpd-skeleton-main" />
+            <div className="cpd-skeleton-side" />
+          </div>
+        </div>
       </SiteShell>
     );
   }
@@ -576,38 +623,32 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             </div>
           </section>
 
-      <section className="mcg-surface" style={{ display: "grid", gap: "0.75rem" }}>
-        <h2>Leaderboard</h2>
-        <ol>
-          {(ranking?.rankings ?? []).slice(0, 10).map((row) => (
-            <li key={row.id}>#{row.rank} · {row.user.displayName} · {row.score.toFixed(2)}</li>
-          ))}
-        </ol>
-      </section>
+        </aside>
+      </div>
 
+      {/* ── Card picker modal ── */}
       <CardSelectorModal
         open={showModal}
-        onClose={() => setShowModal(false)}
-        options={options}
+        options={filteredOptions}
         selectedIds={selected}
-        canEnter={Boolean(canManageLineup)}
         onToggle={(instanceId) => {
-          setSelected((prev) => {
-            if (prev.includes(instanceId)) return prev.filter((id) => id !== instanceId);
-            if (prev.length >= rosterSize) return prev;
-            return [...prev, instanceId];
-          });
+          toggle(instanceId);
+          if (activeSlot !== null) {
+            setActiveSlot(null);
+            setShowModal(false);
+          }
         }}
         onClose={() => { setShowModal(false); setActiveSlot(null); }}
         canEnter={canEnter}
       />
 
+      {/* ── Rules drawer ── */}
       <RulesDrawer
-        open={false}
-        onClose={() => undefined}
-        rosterSize={rosterSize}
+        open={rulesOpen}
+        onClose={() => setRulesOpen(false)}
+        rosterSize={maxRosterSize}
         restrictedSet={Boolean(rule?.cardSetId)}
-        status={contest?.status ?? "OPEN"}
+        status={contest.status}
       />
     </SiteShell>
   );
