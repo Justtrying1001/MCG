@@ -1263,6 +1263,25 @@ button.admin-v2-link-chip { cursor: pointer; }
 .admin-v2-list-row { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); padding: .5rem; background: rgba(184,196,204,.04); display: flex; justify-content: space-between; gap: .5rem; align-items: center; }
 button.admin-v2-list-row.action { text-align: left; width: 100%; cursor: pointer; }
 button.admin-v2-list-row.action:hover { background: rgba(184,196,204,.09); }
+button.admin-v2-list-row.action.is-active {
+  border-color: color-mix(in srgb, var(--clay) 55%, var(--color-border-subtle));
+  background: rgba(203,161,107,.14);
+}
+
+.admin-v2-split .admin-users-browser-panel,
+.admin-v2-split .admin-users-context-panel {
+  min-height: 70vh;
+}
+
+.admin-users-browser-list {
+  max-height: calc(70vh - 78px);
+  overflow-y: auto;
+  align-content: start;
+}
+
+.admin-users-context-panel {
+  overflow-y: auto;
+}
 
 .admin-v2-quick-grid { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0,1fr)); }
 .admin-v2-quick-card { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); padding: .65rem; text-decoration: none; color: var(--chalk); background: rgba(184,196,204,.04); }
