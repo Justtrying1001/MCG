@@ -18,7 +18,7 @@ describe("admin navigation", () => {
 
   it("keeps critical workflows marked in nav", () => {
     const critical = ADMIN_NAV_GROUPS.flatMap((group) => group.items).filter((item) => item.critical).map((item) => item.href);
-    expect(critical).toEqual(["/admin/moderation", "/admin/rewards"]);
+    expect(critical).toEqual(["/admin/moderation", "/admin/rewards", "/admin/maintenance/reset-users"]);
   });
 
   it("computes active routes consistently", () => {

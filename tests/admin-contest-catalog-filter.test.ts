@@ -29,7 +29,6 @@ describe("contest catalog filtering", () => {
     expect(links.scoring).toBe("/admin/contests/contest_1/scoring");
     expect(links.settlement).toBe("/admin/contests/contest_1/settlement");
     expect(links.audit).toBe("/admin/contests/contest_1/audit");
-    expect(links.legacy).toBe("/admin/contests/legacy/contest_1");
   });
 
   it("builds routing links for quest and moderation phase-4 surfaces", () => {

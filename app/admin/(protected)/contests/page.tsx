@@ -163,11 +163,10 @@ export default function AdminContestsLibraryPage() {
     <div className="admin-v2-page contest-library-page">
       <AdminPageHeader
         title="Contest Library"
-        subtitle="Create, edit and publish contests from a clear product-focused library. Technical operations stay in a separate console."
+        subtitle="Create, edit and publish contests from a clear product-focused library."
         actions={
           <div className="admin-v2-action-row">
             <Link href="/admin/contests/create" className="contest-console-cta">Create Contest</Link>
-            <Link href="/admin/contests/legacy" className="admin-v2-link-chip">Legacy console</Link>
             <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
           </div>
         }

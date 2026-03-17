@@ -25,7 +25,6 @@ export function buildContestSurfaceLinks(contestId: string) {
     scoring: `/admin/contests/${contestId}/scoring`,
     settlement: `/admin/contests/${contestId}/settlement`,
     audit: `/admin/contests/${contestId}/audit`,
-    legacy: `/admin/contests/legacy/${contestId}`,
   };
 }
 
