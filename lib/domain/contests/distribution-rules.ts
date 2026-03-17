@@ -14,6 +14,8 @@ export type DistributionRuleLike = {
   rankTo: number | null;
   topN: number | null;
   topPercent: number | null;
+  bundleId: string;
+  poolAmount?: number | null;
 };
 
 export function matchesDistributionRule(rule: Omit<DistributionRuleLike, "id">, rank: number, rankingSize: number) {
