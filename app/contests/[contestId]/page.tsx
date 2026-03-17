@@ -530,7 +530,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                       disabled={!isOpen}
                       aria-label={`Slot ${index + 1} ${slotCard.card.name}`}
                     >
-                      <MvpCardTile card={toMvpCardView(slotCard.card)} variant="compact" interactive={false} />
+                      {(() => {
+                        const cardView = toMvpCardView(slotCard.card);
+                        if (!cardView) return <span className="contest-command-slot-missing">Card preview unavailable</span>;
+                        return <MvpCardTile card={cardView} variant="canonical" interactive={false} />;
+                      })()}
                       {(isLocked || isLive) ? <span className="contest-command-slot-overlay">Locked</span> : null}
                       {isSettled ? <span className="contest-command-score-chip">{slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—"}</span> : null}
                     </button>

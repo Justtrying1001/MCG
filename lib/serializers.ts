@@ -1,7 +1,7 @@
 import type { OwnedCardInstance, User } from "@prisma/client";
 import type { MvpCollectionItem } from "@/types/cards";
 
-import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
+import { buildCanonicalCardViewOrThrow } from "@/lib/domain/cards/canonical-card-builder";
 
 type OwnedInstanceWithTemplate = OwnedCardInstance & {
   cardTemplate: {
@@ -47,15 +47,16 @@ export function buildUserPayload(params: {
 
   const mvpCollection: MvpCollectionItem[] = Array.from(mvpTemplateAgg.entries())
     .map(([templateId, aggregate]) => {
-      if (!aggregate.tokenProjectSlug) return null;
-      const token = findTokenMasterBySlug(aggregate.tokenProjectSlug);
-      if (!token) return null;
+      if (!aggregate.tokenProjectSlug) {
+        throw new Error(`[me-serializer] missing tokenProject.slug for template=${templateId}`);
+      }
 
       return {
         templateId,
         instanceCount: aggregate.count,
-        card: toMvpCardViewFromTokenMasterRow({
-          token,
+        card: buildCanonicalCardViewOrThrow({
+          source: "me-serializer",
+          tokenSlug: aggregate.tokenProjectSlug,
           templateId,
           rarityCode: aggregate.rarityCode,
           editionCode: aggregate.editionCode,
@@ -64,8 +65,7 @@ export function buildUserPayload(params: {
           instanceCount: aggregate.count,
         }),
       };
-    })
-    .filter((row): row is MvpCollectionItem => Boolean(row));
+    });
 
   return {
     mode: "user" as const,

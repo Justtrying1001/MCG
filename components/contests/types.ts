@@ -46,5 +46,5 @@ export type LineupOption = {
   imageUrl: string | null;
   tokenProjectName: string;
   tokenProjectId?: string | null;
-  cardView?: MvpCardView | null;
+  cardView: MvpCardView;
 };

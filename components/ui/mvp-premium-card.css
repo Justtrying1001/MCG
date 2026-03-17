@@ -2,9 +2,14 @@
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  border-radius: var(--card-radius);
   overflow: hidden;
   cursor: pointer;
+
+  --card-radius: 10px;
+  --card-header-height: 50px;
+  --card-textbox-height: 38px;
+  --card-footer-height: 34px;
 
   --accent: #3d4a5c;
   --glow-col: rgba(61, 74, 92, 0);
@@ -23,16 +28,11 @@
   outline: 1px solid color-mix(in oklab, var(--border-out) 82%, #fff 18%);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 52px var(--glow-col);
   display: grid;
-  grid-template-rows: 50px 1fr 38px 34px;
+  grid-template-rows: var(--card-header-height) 1fr var(--card-textbox-height) var(--card-footer-height);
   transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.32s ease;
 }
 
-.mvp-premium-card.variant-collection:hover {
-  transform: translateY(-8px) scale(1.025);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 82px var(--glow-col), 0 0 138px var(--glow-col);
-}
-
-.mvp-premium-card.variant-reveal:hover {
+.mvp-premium-card.variant-canonical:hover {
   transform: translateY(-8px) scale(1.025);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 30px 72px rgba(0, 0, 0, 0.9), 0 0 82px var(--glow-col), 0 0 138px var(--glow-col);
 }
@@ -56,23 +56,10 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%), 0 18px 50px rgba(0, 0, 0, 0.8), 0 0 52px var(--glow-col);
 }
 
-.mvp-premium-card.variant-compact {
-  border-radius: 9px;
-  grid-template-rows: 46px 1fr 34px 30px;
-}
-
-.mvp-premium-card.variant-compact .mvp-card-name {
-  font-size: 13px;
-}
-
-.mvp-premium-card.variant-compact .mvp-card-textbox p {
-  -webkit-line-clamp: 1;
-}
-
 .mvp-card-grain {
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--card-radius);
   z-index: 50;
   pointer-events: none;
   opacity: 0.3;
@@ -334,7 +321,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 10px;
+  border-radius: var(--card-radius);
 }
 
 .mvp-reverse-foil {
@@ -420,7 +407,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--card-radius);
   z-index: 46;
   pointer-events: none;
   background: linear-gradient(125deg, rgba(255,80,80,0.5), rgba(255,200,60,0.4), rgba(60,220,100,0.4), rgba(60,180,255,0.5), rgba(180,60,255,0.4), rgba(255,80,160,0.4));

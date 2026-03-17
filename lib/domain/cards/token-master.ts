@@ -139,10 +139,10 @@ export function toMvpCardViewFromTokenMasterRow(input: {
     remainingSupply,
     owned: (input.instanceCount ?? 0) > 0,
     instanceCount: input.instanceCount ?? 0,
-    cardText: input.token.editorial?.flavorText ?? null,
+    cardText: input.token.editorial?.flavorText ?? "No flavor text available in token-master.",
     cardNumber: deriveCardNumber(input.token),
-    setCode: input.token.editorial?.collectionCode ?? input.token.editorial?.setCode ?? null,
-    setEditionLabel: input.token.editorial?.editionLabel ?? null,
+    setCode: input.token.editorial?.collectionCode ?? input.token.editorial?.setCode ?? "GENESIS",
+    setEditionLabel: input.token.editorial?.editionLabel ?? "Edition 1",
     setOrder: input.token.setOrder ?? null,
     editionNumber: input.editionNumber ?? null,
   };

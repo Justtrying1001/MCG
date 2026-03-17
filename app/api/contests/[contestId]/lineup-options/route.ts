@@ -3,12 +3,41 @@ import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
-import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
+import { buildCanonicalCardViewOrThrow } from "@/lib/domain/cards/canonical-card-builder";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 const ACTIVE_LOCK_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE];
+
+function assertTemplateFields(instance: {
+  id: string;
+  cardTemplateId: string;
+  cardTemplate: {
+    name: string;
+    cardSet: { code: string; displayName: string };
+    rarity?: { code?: string | null } | null;
+    edition?: { code?: string | null } | null;
+    tokenProject?: { id: string; slug: string; displayName: string } | null;
+    plannedSupply: number;
+    issuedSupply: number;
+  };
+}) {
+  const missing: string[] = [];
+  if (!instance.cardTemplate.tokenProject?.slug) missing.push("tokenProject.slug");
+  if (!instance.cardTemplate.tokenProject?.id) missing.push("tokenProject.id");
+  if (!instance.cardTemplate.rarity?.code) missing.push("rarity.code");
+  if (!instance.cardTemplate.edition?.code) missing.push("edition.code");
+  if (!Number.isFinite(instance.cardTemplate.plannedSupply)) missing.push("plannedSupply");
+  if (!Number.isFinite(instance.cardTemplate.issuedSupply)) missing.push("issuedSupply");
+
+  if (missing.length > 0) {
+    throw new ContestRuntimeError(
+      `Lineup option is missing canonical card dependencies for instance=${instance.id}, template=${instance.cardTemplateId}: ${missing.join(", ")}`,
+      500,
+    );
+  }
+}
 
 export async function GET(_request: Request, { params }: { params: { contestId: string } }) {
   try {
@@ -55,21 +84,28 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
     const options = instances
       .filter((instance) => !rule?.cardSetId || instance.cardTemplate.cardSetId === rule.cardSetId)
       .map((instance) => {
+        assertTemplateFields(instance);
+
         const lockedInContestId = activeLockByInstance.get(instance.id);
-        const token = instance.cardTemplate.tokenProject?.slug
-          ? findTokenMasterBySlug(instance.cardTemplate.tokenProject.slug)
-          : null;
-        const cardView = token
-          ? toMvpCardViewFromTokenMasterRow({
-              token,
-              templateId: instance.cardTemplateId,
-              rarityCode: instance.cardTemplate.rarity.code,
-              editionCode: instance.cardTemplate.edition.code,
-              plannedSupply: instance.cardTemplate.plannedSupply,
-              issuedSupply: instance.cardTemplate.issuedSupply,
-              instanceCount: 1,
-            })
-          : null;
+        let cardView;
+        try {
+          cardView = buildCanonicalCardViewOrThrow({
+            source: "contest-lineup-options",
+            tokenSlug: instance.cardTemplate.tokenProject!.slug,
+            templateId: instance.cardTemplateId,
+            rarityCode: instance.cardTemplate.rarity!.code,
+            editionCode: instance.cardTemplate.edition!.code,
+            plannedSupply: instance.cardTemplate.plannedSupply,
+            issuedSupply: instance.cardTemplate.issuedSupply,
+            instanceCount: 1,
+          });
+        } catch (error) {
+          throw new ContestRuntimeError(
+            `Invalid canonical cardView for instance=${instance.id}, template=${instance.cardTemplateId}: ${error instanceof Error ? error.message : "unknown canonical cardView error"}`,
+            500,
+          );
+        }
+
         return {
           instanceId: instance.id,
           cardTemplateId: instance.cardTemplateId,
@@ -77,12 +113,12 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           cardSetId: instance.cardTemplate.cardSetId,
           cardSetCode: instance.cardTemplate.cardSet.code,
           cardSetName: instance.cardTemplate.cardSet.displayName,
-          rarityCode: instance.cardTemplate.rarity.code,
-          editionCode: instance.cardTemplate.edition.code,
+          rarityCode: instance.cardTemplate.rarity!.code,
+          editionCode: instance.cardTemplate.edition!.code,
           name: instance.cardTemplate.name,
           imageUrl: instance.cardTemplate.imageUrl,
-          tokenProjectName: instance.cardTemplate.tokenProject?.displayName ?? "Unknown project",
-          tokenProjectId: instance.cardTemplate.tokenProject?.id ?? null,
+          tokenProjectName: instance.cardTemplate.tokenProject!.displayName,
+          tokenProjectId: instance.cardTemplate.tokenProject!.id,
           cardView,
         };
       });

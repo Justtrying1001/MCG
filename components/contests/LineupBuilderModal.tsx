@@ -177,6 +177,7 @@ export function LineupBuilderModal({
             const instanceId = lineupSlots[index];
             const card = instanceId ? optionById.get(instanceId) : null;
             const isActive = index === activeSlot;
+            const cardView = card ? toMvpCardView(card) : null;
             return (
               <button
                 key={index}
@@ -188,7 +189,7 @@ export function LineupBuilderModal({
                 }}
               >
                 <span className="bldr-tray-slot-label">Slot {index + 1}</span>
-                {card ? <MvpCardTile card={toMvpCardView(card)} variant="compact" interactive={false} /> : <strong>Add card</strong>}
+                {card ? (cardView ? <MvpCardTile card={cardView} variant="canonical" interactive={false} /> : <strong>Card unavailable</strong>) : <strong>Add card</strong>}
                 {card && canEdit ? (
                   <span
                     className="bldr-slot-remove"
@@ -241,7 +242,8 @@ export function LineupBuilderModal({
             const atCapacity = selectedCount >= rosterSize && !isSelected;
             const tokenKey = getLogicalTokenKey({ tokenProjectId: item.tokenProjectId, cardTemplateId: item.cardTemplateId });
             const tokenConflict = selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
-            const isUnavailable = !canEdit || atCapacity || item.isLockedByActiveContest || tokenConflict;
+            const cardView = toMvpCardView(item);
+            const isUnavailable = !canEdit || atCapacity || item.isLockedByActiveContest || tokenConflict || !cardView;
 
             return (
               <article key={item.instanceId} className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}>
@@ -254,7 +256,7 @@ export function LineupBuilderModal({
                   }}
                   disabled={isUnavailable}
                 >
-                  <MvpCardTile card={toMvpCardView(item)} variant="compact" interactive={false} />
+                  {cardView ? <MvpCardTile card={cardView} variant="canonical" interactive={false} /> : <div className="bldr-card-missing">Card preview unavailable</div>}
                 </button>
                 <div className="bldr-card-meta">
                   <strong>{item.name}</strong>
@@ -268,6 +270,7 @@ export function LineupBuilderModal({
                 {isSelected ? <span className="bldr-chip selected">Selected · Slot {slotIndex + 1}</span> : null}
                 {item.isLockedByActiveContest ? <span className="bldr-chip warn">Unavailable: locked in active contest</span> : null}
                 {tokenConflict ? <span className="bldr-chip warn">Unavailable: duplicate logical token</span> : null}
+                {!cardView ? <span className="bldr-chip warn">Unavailable: missing canonical card data</span> : null}
               </article>
             );
           })}

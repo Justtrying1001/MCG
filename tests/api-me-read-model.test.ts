@@ -5,6 +5,7 @@ const {
   prismaMock,
   buildCollectionProjectionV2Mock,
   buildProgressionSummariesV2Mock,
+  buildCanonicalCardViewOrThrowMock,
 } = vi.hoisted(() => ({
   getSessionUserMock: vi.fn(),
   prismaMock: {
@@ -15,12 +16,14 @@ const {
   },
   buildCollectionProjectionV2Mock: vi.fn(),
   buildProgressionSummariesV2Mock: vi.fn(),
+  buildCanonicalCardViewOrThrowMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/domain/projections/collection", () => ({ buildCollectionProjectionV2: buildCollectionProjectionV2Mock }));
 vi.mock("@/lib/domain/progression/profile-summary", () => ({ buildProgressionSummariesV2: buildProgressionSummariesV2Mock }));
+vi.mock("@/lib/domain/cards/canonical-card-builder", () => ({ buildCanonicalCardViewOrThrow: buildCanonicalCardViewOrThrowMock }));
 
 import { GET } from "@/app/api/me/route";
 
@@ -56,6 +59,27 @@ describe("/api/me MVP read model", () => {
       byRarity: [],
       byEdition: [],
     });
+    buildCanonicalCardViewOrThrowMock.mockReturnValue({
+      templateId: "tpl_1",
+      tokenId: "tok_doge",
+      displayName: "Dogecoin",
+      symbol: "DOGE",
+      slug: "dogecoin",
+      imageUrl: null,
+      primaryChain: null,
+      faction: null,
+      rarity: "COMMON",
+      edition: "BASE",
+      plannedSupply: 120,
+      issuedSupply: 10,
+      remainingSupply: 110,
+      owned: true,
+      instanceCount: 1,
+      cardText: "Flavor",
+      cardNumber: "S01-001",
+      setCode: "GENESIS",
+      setEditionLabel: "Edition 1",
+    });
     buildProgressionSummariesV2Mock.mockResolvedValue({
       accountProgression: { level: 1, xp: 300, levelXpFloor: 0, levelXpCeil: 100, progressPct: 0, nextMilestoneLevel: 2, pointsBalance: 300 },
       collectionProgression: { totalOwnedInstances: 2, ownedTemplateCount: 1, missingTemplateCount: 1249, completionPct: 0.08, topRarityCode: null, topEditionCode: null },
@@ -69,6 +93,29 @@ describe("/api/me MVP read model", () => {
     expect(body.openingsCount).toBe(2);
     expect(Array.isArray(body.mvpCollection)).toBe(true);
     expect(Array.isArray(body.collection)).toBe(false);
+  });
+
+  it("fails explicitly when canonical card dependencies are missing", async () => {
+    getSessionUserMock.mockResolvedValue({ id: "u1" });
+    prismaMock.$transaction.mockResolvedValue([
+      { id: "u1", xUserId: "x1", xUsername: "user", displayName: "User", avatarUrl: null, authProvider: "x", points: 300, packsOpened: 3 },
+      [
+        {
+          cardTemplate: {
+            id: "tpl_1",
+            plannedSupply: 120,
+            issuedSupply: 10,
+            rarity: { code: "COMMON" },
+            edition: { code: "BASE" },
+            tokenProject: undefined,
+          },
+        },
+      ],
+      2,
+    ]);
+
+    const response = await GET();
+    expect(response.status).toBe(500);
   });
 
   it("returns 401 for missing session", async () => {

@@ -7,22 +7,30 @@ export function LineupCardTile({
   selected,
   disabled,
   onClick,
-  variant = "compact",
 }: {
   option: LineupOption;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
-  variant?: "collection" | "compact";
 }) {
+  const cardView = toMvpCardView(option);
+
   return (
     <button
       type="button"
       className={`lineup-card-tile${selected ? " selected" : ""}${disabled ? " disabled" : ""}`}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || !cardView}
     >
-      <MvpCardTile card={toMvpCardView(option)} variant={variant} interactive={false} />
+      <div className="lineup-card-visual">
+        {cardView ? (
+          <MvpCardTile card={cardView} variant="canonical" interactive={false} />
+        ) : (
+          <div className="lineup-card-missing" role="status" aria-live="polite">
+            Card preview unavailable
+          </div>
+        )}
+      </div>
       <div className="lineup-card-tile-footer">
         <strong>{option.name}</strong>
         <span>{option.rarityCode} · {option.editionCode} · {option.cardSetCode}</span>
