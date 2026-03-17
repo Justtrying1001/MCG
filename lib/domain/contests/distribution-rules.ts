@@ -7,18 +7,21 @@ export const DISTRIBUTION_RULE_TYPES = {
 
 export type DistributionRuleType = (typeof DISTRIBUTION_RULE_TYPES)[keyof typeof DISTRIBUTION_RULE_TYPES];
 
-export type DistributionRuleLike = {
-  id: string;
+export type DistributionRuleMatcherLike = {
   ruleType: DistributionRuleType;
   rankFrom: number | null;
   rankTo: number | null;
   topN: number | null;
   topPercent: number | null;
-  bundleId: string;
   poolAmount?: number | null;
 };
 
-export function matchesDistributionRule(rule: Omit<DistributionRuleLike, "id">, rank: number, rankingSize: number) {
+export type DistributionRuleLike = DistributionRuleMatcherLike & {
+  id: string;
+  bundleId: string;
+};
+
+export function matchesDistributionRule(rule: DistributionRuleMatcherLike, rank: number, rankingSize: number) {
   if (rule.ruleType === DISTRIBUTION_RULE_TYPES.FIXED_RANKS) {
     if (!rule.rankFrom || !rule.rankTo) return false;
     return rank >= rule.rankFrom && rank <= rule.rankTo;
@@ -37,7 +40,7 @@ export function matchesDistributionRule(rule: Omit<DistributionRuleLike, "id">, 
   return false;
 }
 
-export function findMatchingDistributionRulesForRank<T extends DistributionRuleLike>(rules: T[], rank: number, rankingSize: number): T[] {
+export function findMatchingDistributionRulesForRank<T extends DistributionRuleMatcherLike>(rules: T[], rank: number, rankingSize: number): T[] {
   return rules.filter((rule) => matchesDistributionRule(rule, rank, rankingSize));
 }
 
