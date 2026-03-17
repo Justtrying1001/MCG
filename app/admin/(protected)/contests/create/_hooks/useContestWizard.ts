@@ -48,6 +48,16 @@ function toIso(value: string) {
   return new Date(value).toISOString();
 }
 
+
+export function generateContestCodeFromTitle(title: string) {
+  return title
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export function useContestWizard(initialContestId: string) {
   const [contestId, setContestId] = useState(initialContestId);
   const [stepIndex, setStepIndex] = useState(0);
@@ -113,10 +123,16 @@ export function useContestWizard(initialContestId: string) {
     })();
   }, [contestId]);
 
+
+  useEffect(() => {
+    const generatedCode = generateContestCodeFromTitle(form.title);
+    setForm((prev) => (prev.code === generatedCode ? prev : { ...prev, code: generatedCode }));
+  }, [form.title]);
+
   const payload = useMemo(() => {
     const parsedEntryFee = Number(form.entryFeeAmount);
     const parsedRosterSize = Number(form.maxRosterSize);
-    const normalizedCode = form.code.trim().toUpperCase();
+    const normalizedCode = generateContestCodeFromTitle(form.title) || form.code.trim().toUpperCase();
     return {
       code: normalizedCode,
       autoGenerateCode: false,
@@ -269,13 +285,14 @@ export function useContestWizard(initialContestId: string) {
       const formData = new FormData();
       formData.append("file", file);
       const response = await fetch("/api/internal/uploads/contest-cover", { method: "POST", body: formData });
-      const body = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+      const body = (await response.json().catch(() => null)) as { url?: string; error?: string; detail?: string; warning?: string } | null;
       if (!response.ok || !body?.url) {
-        setMessage(body?.error ?? "Image upload failed");
+        const detail = body?.detail ? ` (${body.detail})` : "";
+        setMessage(body?.error ? `${body.error}${detail}` : `Image upload failed (HTTP ${response.status})`);
         return;
       }
       setForm((prev) => ({ ...prev, coverImageUrl: body.url! }));
-      setMessage("Cover image uploaded.");
+      setMessage(body.warning ?? "Cover image uploaded.");
     } finally {
       setUploadBusy(false);
     }

@@ -2490,15 +2490,30 @@ button.admin-v2-list-row.action.is-active {
   gap: .8rem;
 }
 
-.contest-builder-v2-page { gap: var(--space-2); }
+.contest-builder-v2-page {
+  --wizard-bg: #0f1115;
+  --wizard-surface: #151821;
+  --wizard-surface-hover: #1c2230;
+  --wizard-card: #1a1f2b;
+  --wizard-border: #2a2f3a;
+  --wizard-text-primary: #e6e6e6;
+  --wizard-text-secondary: #9ca3af;
+  --wizard-text-muted: #6b7280;
+  --wizard-accent: #7c8fbf;
+  --wizard-accent-soft: rgba(124, 143, 191, 0.18);
+  --wizard-error: #f87171;
+  --wizard-error-soft: rgba(248, 113, 113, 0.14);
+  gap: var(--space-3);
+  color: var(--wizard-text-primary);
+}
 .contest-builder-v2-header {
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--wizard-border);
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, rgba(184,196,204,.08), rgba(203,161,107,.08));
-  padding: var(--space-2);
+  background: linear-gradient(150deg, #151821, #121621);
+  padding: var(--space-3);
   display: flex;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--space-2);
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -2512,32 +2527,32 @@ button.admin-v2-list-row.action.is-active {
 .contest-builder-v2-stepper {
   display: flex;
   flex-wrap: wrap;
-  gap: .5rem;
+  gap: .6rem;
 }
 .contest-builder-v2-step-pill {
   text-decoration: none;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--wizard-border);
   border-radius: 999px;
-  padding: .4rem .75rem;
-  color: var(--chalk);
-  background: rgba(184,196,204,.06);
+  padding: .45rem .8rem;
+  color: var(--wizard-text-secondary);
+  background: rgba(26, 31, 43, 0.92);
   font-size: .78rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: .45rem;
 }
-.contest-builder-v2-step-pill:hover { background: rgba(184,196,204,.15); }
+.contest-builder-v2-step-pill:hover { background: var(--wizard-surface-hover); }
 .contest-builder-v2-step-pill.is-active {
-  border-color: #c48bff;
-  color: #fff;
-  background: rgba(196,139,255,.18);
+  border-color: color-mix(in srgb, var(--wizard-accent) 60%, var(--wizard-border));
+  color: var(--wizard-text-primary);
+  background: var(--wizard-accent-soft);
 }
 .contest-builder-v2-step-pill.has-issue {
-  border-color: #ff6b6b;
+  border-color: color-mix(in srgb, var(--wizard-error) 60%, var(--wizard-border));
 }
 .contest-builder-v2-step-pill.is-complete {
-  border-color: rgba(74, 222, 128, .46);
+  border-color: var(--wizard-border);
 }
 .contest-builder-v2-step-pill-badge {
   min-width: 1.1rem;
@@ -2548,12 +2563,14 @@ button.admin-v2-list-row.action.is-active {
   font-size: .67rem;
   line-height: 1;
   font-weight: 700;
-  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 60%, #fff);
-  background: rgba(184,196,204,.12);
+  border: 1px solid var(--wizard-border);
+  background: rgba(26, 31, 43, 0.98);
+  color: var(--wizard-text-secondary);
 }
 .contest-builder-v2-step-pill-badge.ok {
-  border-color: rgba(74, 222, 128, .5);
-  background: rgba(74, 222, 128, .16);
+  border-color: var(--wizard-border);
+  background: rgba(156, 163, 175, 0.14);
+  color: #d1d5db;
 }
 
 .contest-builder-v2-layout {
@@ -2564,35 +2581,92 @@ button.admin-v2-list-row.action.is-active {
 }
 .contest-builder-v2-main {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
-.contest-builder-v2-section { gap: .85rem; scroll-margin-top: 90px; }
+.contest-builder-v2-section {
+  gap: 1rem;
+  scroll-margin-top: 90px;
+  margin-bottom: .5rem;
+}
+
+.contest-builder-v2-page .admin-panel {
+  border-color: var(--wizard-border);
+  background: linear-gradient(160deg, rgba(21, 24, 33, 0.95), rgba(17, 21, 31, 0.96));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+}
+
+.contest-builder-v2-page .admin-callout {
+  border-color: var(--wizard-border);
+  background: rgba(26, 31, 43, 0.76);
+  padding: .9rem;
+}
+
+.contest-builder-v2-page .admin-section-title {
+  color: var(--wizard-text-primary);
+  text-transform: none;
+  letter-spacing: .01em;
+  font-size: .95rem;
+}
+
+.contest-builder-v2-page .admin-subtitle,
+.contest-builder-v2-page .contest-inline-note {
+  color: var(--wizard-text-secondary);
+}
+
+.contest-builder-v2-page .contest-inline-note strong {
+  color: var(--wizard-text-primary);
+}
+
+.contest-builder-v2-page .contest-error {
+  color: var(--wizard-error);
+  border: 0;
+  background: var(--wizard-error-soft);
+  border-radius: var(--radius-sm);
+  padding: .55rem .65rem;
+}
+
+.contest-builder-v2-page .input,
+.contest-builder-v2-page select,
+.contest-builder-v2-page textarea {
+  background: #111827;
+  border-color: var(--wizard-border);
+  color: var(--wizard-text-primary);
+  padding: .65rem .72rem;
+}
+
+.contest-builder-v2-page .input:focus,
+.contest-builder-v2-page select:focus,
+.contest-builder-v2-page textarea:focus {
+  border-color: color-mix(in srgb, var(--wizard-accent) 66%, var(--wizard-border));
+  box-shadow: 0 0 0 2px rgba(124, 143, 191, 0.18);
+}
 
 .contest-builder-v2-schedule-grid,
 .contest-builder-v2-entry-grid {
   display: grid;
-  gap: .7rem;
+  gap: .9rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .contest-builder-v2-schedule-card,
 .contest-builder-v2-entry-card,
 .contest-builder-v2-reward-card {
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--wizard-border);
   border-radius: var(--radius-sm);
-  background: rgba(184,196,204,.03);
-  padding: .75rem;
+  background: var(--wizard-surface);
+  padding: .9rem;
   display: grid;
-  gap: .45rem;
+  gap: .55rem;
 }
 .contest-builder-v2-schedule-card.is-result {
-  background: rgba(203,161,107,.11);
-  border-color: color-mix(in srgb, var(--clay) 50%, var(--color-border-subtle));
+  background: var(--wizard-card);
+  border-color: var(--wizard-border);
 }
 .contest-builder-v2-schedule-title {
-  font-size: .8rem;
+  font-size: .78rem;
   text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--color-text-muted);
+  letter-spacing: .05em;
+  color: var(--wizard-text-muted);
   font-weight: 700;
 }
 .contest-builder-v2-end-value { font-size: .95rem; font-weight: 700; }
@@ -2610,32 +2684,32 @@ button.admin-v2-list-row.action.is-active {
 }
 
 .contest-builder-v2-reward-tier-chip {
-  border: 1px solid color-mix(in srgb, var(--clay) 55%, var(--color-border-subtle));
+  border: 1px solid var(--wizard-border);
   border-radius: 999px;
   padding: .28rem .62rem;
   font-size: .72rem;
   font-weight: 700;
-  background: rgba(203,161,107,.13);
-  color: var(--chalk);
+  background: rgba(107, 114, 128, 0.2);
+  color: var(--wizard-text-secondary);
 }
 
 .admin-callout.success {
-  border-color: rgba(74, 222, 128, .42);
-  background: rgba(74, 222, 128, .08);
+  border-color: color-mix(in srgb, var(--wizard-accent) 40%, var(--wizard-border));
+  background: rgba(124, 143, 191, 0.12);
 }
 .contest-builder-v2-reward-target {
   margin: 0;
   font-size: .83rem;
-  color: var(--chalk);
+  color: var(--wizard-text-primary);
   font-weight: 600;
 }
 
 .contest-builder-v2-review {
-  border-color: color-mix(in srgb, var(--clay) 60%, var(--color-border-subtle));
+  border-color: var(--wizard-border);
 }
 .contest-builder-v2-review-grid {
   display: grid;
-  gap: .7rem;
+  gap: .9rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -2646,15 +2720,26 @@ button.admin-v2-list-row.action.is-active {
   gap: .7rem;
 }
 .contest-builder-v2-summary-card {
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--wizard-border);
   border-radius: var(--radius-sm);
-  background: rgba(184,196,204,.05);
-  padding: .75rem;
+  background: rgba(21, 24, 33, 0.95);
+  padding: .9rem;
   display: grid;
-  gap: .4rem;
+  gap: .5rem;
 }
 .contest-builder-v2-summary-card h3 { margin: 0; font-size: .9rem; }
-.contest-builder-v2-actions { display: grid; gap: .45rem; }
+.contest-builder-v2-actions { display: grid; gap: .6rem; }
+
+.contest-builder-v2-page .admin-v2-link-chip {
+  border-color: var(--wizard-border);
+  color: var(--wizard-text-secondary);
+  background: rgba(26, 31, 43, 0.7);
+}
+
+.contest-builder-v2-page .admin-v2-link-chip:hover {
+  background: var(--wizard-surface-hover);
+  color: var(--wizard-text-primary);
+}
 
 @media (max-width: 1180px) {
   .contest-builder-v2-layout { grid-template-columns: 1fr; }

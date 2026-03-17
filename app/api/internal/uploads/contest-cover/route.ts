@@ -13,6 +13,17 @@ export const runtime = "nodejs";
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const MAX_BYTES = 5 * 1024 * 1024;
 
+function toDataUrl(blob: Blob) {
+  const mimeType = blob.type || "application/octet-stream";
+  return blob.arrayBuffer().then((buffer) => `data:${mimeType};base64,${Buffer.from(buffer).toString("base64")}`);
+}
+
+function isReadOnlyStorageError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const code = "code" in error ? String((error as NodeJS.ErrnoException).code ?? "") : "";
+  return code === "EROFS" || code === "EPERM" || code === "EACCES";
+}
+
 export async function POST(request: Request) {
   try {
     const admin = getAdminSessionFromCookies();
@@ -25,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json({ error: "Unsupported image format" }, { status: 400 });
+      return NextResponse.json({ error: "Unsupported image format", detail: "Use PNG, JPEG, WEBP, or GIF." }, { status: 400 });
     }
 
     if (file.size > MAX_BYTES) {
@@ -37,11 +48,26 @@ export async function POST(request: Request) {
     const relativePath = `/uploads/contests/${fileName}`;
     const outputDir = path.join(process.cwd(), "public", "uploads", "contests");
 
-    await mkdir(outputDir, { recursive: true });
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(outputDir, fileName), buffer);
+    try {
+      await mkdir(outputDir, { recursive: true });
+      const buffer = Buffer.from(await file.arrayBuffer());
+      await writeFile(path.join(outputDir, fileName), buffer);
+      return NextResponse.json({ url: relativePath });
+    } catch (storageError) {
+      if (isReadOnlyStorageError(storageError)) {
+        const inlineDataUrl = await toDataUrl(file);
+        return NextResponse.json({
+          url: inlineDataUrl,
+          warning: "Cover image uploaded using inline fallback storage (filesystem is read-only in this environment).",
+        });
+      }
 
-    return NextResponse.json({ url: relativePath });
+      if (storageError instanceof Error) {
+        return NextResponse.json({ error: "Image upload failed", detail: storageError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ error: "Image upload failed" }, { status: 500 });
+    }
   } catch (error) {
     return handleApiError(error, "Image upload failed");
   }

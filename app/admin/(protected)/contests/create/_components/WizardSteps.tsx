@@ -24,7 +24,15 @@ export function ContestIdentityStep(props: {
           </label>
           <label style={{ display: "grid", gap: "0.35rem" }}>
             <span className="contest-inline-note"><strong>Contest code</strong></span>
-            <input className="input" placeholder="e.g. WEEKLY-GENESIS-01" value={form.code} onChange={(e) => setField("code", e.target.value.toUpperCase().replace(/\s+/g, "-"))} />
+            <input
+              className="input"
+              placeholder="Auto-generated from contest name"
+              value={form.code}
+              readOnly
+              disabled
+              aria-readonly="true"
+            />
+            <span className="contest-inline-note">Automatically generated from the contest name.</span>
           </label>
         </div>
       </article>
@@ -49,7 +57,7 @@ export function ContestIdentityStep(props: {
       <article className="admin-callout" style={{ display: "grid", gap: "0.35rem" }}>
         <p className="contest-inline-note"><strong>Guidance</strong></p>
         <p className="contest-inline-note">• Keep names concise and unique.</p>
-        <p className="contest-inline-note">• Use uppercase code format with dashes (example: WEEKLY-GENESIS-01).</p>
+        <p className="contest-inline-note">• Contest code is auto-generated in uppercase with dashes.</p>
         <p className="contest-inline-note">• Schedule, entry rules, and rewards are configured in the next steps.</p>
       </article>
     </section>
