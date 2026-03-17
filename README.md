@@ -6,6 +6,7 @@ MCG est une plateforme Next.js de collection de cartes + contests + rewards, ave
 
 - **GitBook documentation (product + tokenomics + ecosystem)**: `docs/gitbook/`
 - **Technical reference (repository/runtime)**: `docs/technical.md`
+- **Database migrations guide (audit + squash)**: `docs/db-migrations.md`
 
 ## Démarrage rapide
 

@@ -12,6 +12,7 @@ const MAX_P3009_RETRIES = 5;
 
 const FAILED_MIGRATION_CODE = "P3009";
 const FAILED_MIGRATION_NAME_PATTERN = /The `([^`]+)` migration[^\n]*failed/i;
+const MIGRATION_NAME_PATTERN = /Migration name:\s*([\w]+)/i;
 
 function runPrisma(args) {
   const command = process.platform === "win32" ? "npx.cmd" : "npx";
@@ -77,6 +78,15 @@ function isAdvisoryLockTimeout(output) {
 function parseP3009FailedMigration(output) {
   const match = output.match(/The `([\w]+)` migration started at/);
   return match ? match[1] : null;
+}
+
+function parseMigrationNameFromP3018(output) {
+  const match = output.match(MIGRATION_NAME_PATTERN);
+  return match?.[1] ?? null;
+}
+
+function isDuplicateObjectError(output) {
+  return output.includes('already exists') || output.includes('duplicate key value');
 }
 
 /**
@@ -180,6 +190,30 @@ async function main() {
       }
       console.log(`[deploy-schema] Marked ${failedName} as rolled-back — retrying deploy`);
       continue; // retry the outer loop
+    }
+
+    // ── P3018 duplicate-object on existing pre-provisioned DB ─────────────
+    if (migrate.output.includes("P3018") && isDuplicateObjectError(migrate.output)) {
+      const failedName = parseMigrationNameFromP3018(migrate.output);
+      const migrations = getMigrationDirectories();
+
+      // Safe auto-baseline only when a single migration exists (squashed init)
+      // and the target database already has schema objects.
+      if (failedName && migrations.length === 1 && failedName === migrations[0]) {
+        console.warn(
+          `[deploy-schema] P3018 duplicate-object on single init migration (${failedName}). Marking as applied for pre-provisioned database, then retrying deploy.`
+        );
+
+        markApplied(failedName);
+        const redeploy = await deployWithLockRetry();
+        if (!redeploy.ok) {
+          process.stderr.write(redeploy.output);
+          process.exit(redeploy.status);
+        }
+
+        console.log("Prisma migrate deploy succeeded after P3018 baseline recovery.");
+        return;
+      }
     }
 
     // ── P3005: fresh DB with no migration history — baseline all but last ─
