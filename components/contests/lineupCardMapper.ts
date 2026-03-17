@@ -1,29 +1,47 @@
 import type { LineupOption } from "@/components/contests/types";
 import type { MvpCardView } from "@/types/cards";
 
-export function toMvpCardView(option: LineupOption): MvpCardView {
-  if (option.cardView) return option.cardView;
-  // Fallback for cases where the API didn't return enriched data
-  return {
-    templateId: option.cardTemplateId,
-    tokenId: option.cardTemplateId,
-    displayName: option.name,
-    symbol: option.tokenProjectName.slice(0, 8).toUpperCase(),
-    slug: option.name.toLowerCase().replace(/\s+/g, "-"),
-    imageUrl: option.imageUrl,
-    primaryChain: null,
-    faction: null,
-    rarity: option.rarityCode,
-    edition: option.editionCode,
-    plannedSupply: 0,
-    issuedSupply: 0,
-    remainingSupply: 0,
-    owned: true,
-    instanceCount: 1,
-    cardText: `${option.rarityCode} • ${option.editionCode}`,
-    flavorText: `${option.tokenProjectName} · ${option.cardSetCode}`,
-    cardNumber: option.instanceId.slice(-8).toUpperCase(),
-    setCode: option.cardSetCode,
-    setEditionLabel: option.cardSetName,
+const missingCardViewLogged = new Set<string>();
+
+const requiredCardViewFields: Array<keyof MvpCardView> = [
+  "templateId",
+  "tokenId",
+  "displayName",
+  "symbol",
+  "rarity",
+  "edition",
+];
+
+function hasCompleteCardView(option: LineupOption): option is LineupOption & { cardView: MvpCardView } {
+  if (!option.cardView) return false;
+
+  for (const field of requiredCardViewFields) {
+    const value = option.cardView[field];
+    if (typeof value === "string" && value.trim().length === 0) return false;
+    if (value === null || value === undefined) return false;
+  }
+
+  return true;
+}
+
+function logCardViewIssue(option: LineupOption) {
+  const context = {
+    instanceId: option.instanceId,
+    cardTemplateId: option.cardTemplateId,
+    name: option.name,
+    rarityCode: option.rarityCode,
+    editionCode: option.editionCode,
+    hasCardView: Boolean(option.cardView),
   };
+
+  const key = `${option.instanceId}:${option.cardTemplateId}`;
+  if (missingCardViewLogged.has(key)) return;
+  missingCardViewLogged.add(key);
+  console.error("[contests] Missing or incomplete cardView; canonical card render disabled for this option.", context);
+}
+
+export function toMvpCardView(option: LineupOption): MvpCardView | null {
+  if (hasCompleteCardView(option)) return option.cardView;
+  logCardViewIssue(option);
+  return null;
 }

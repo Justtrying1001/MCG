@@ -239,7 +239,7 @@ export default function PacksPage() {
     () =>
       resultMvp.map((card, i) => ({
         key: `${card.templateId}_${i}`,
-        render: <MvpCardTile card={card} quantity={1} variant="reveal" />,
+        render: <MvpCardTile card={card} quantity={1} variant="canonical" imageLoading="eager" />,
       })),
     [resultMvp],
   );

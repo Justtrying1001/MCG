@@ -3,13 +3,14 @@ import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { getEditionTheme, getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
 
-type CardVariant = "collection" | "reveal" | "compact" | "zoom";
+type CardVariant = "canonical" | "zoom";
 
 type Props = {
   card: MvpCardView;
   quantity?: number;
   variant?: CardVariant;
   interactive?: boolean;
+  imageLoading?: "lazy" | "eager";
 };
 
 const DEFAULT_SET_NAME = "GENESIS";
@@ -51,7 +52,7 @@ function Corner({ stroke, detail, dot }: { stroke: string; detail: boolean; dot:
   );
 }
 
-export function MvpCardTile({ card, quantity, variant = "collection", interactive = true }: Props) {
+export function MvpCardTile({ card, quantity, variant = "canonical", interactive = true, imageLoading = "lazy" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
   const cardNumber = getPrintedCardNumber(card);
@@ -136,7 +137,7 @@ export function MvpCardTile({ card, quantity, variant = "collection", interactiv
             alt={card.displayName}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            loading={variant === "reveal" ? "eager" : "lazy"}
+            loading={imageLoading}
           />
         ) : (
           <div className="mvp-card-art-placeholder">MCG</div>

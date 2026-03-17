@@ -23,7 +23,7 @@ export function CardGrid({ items, onOpenCard }: CardGridProps) {
           onClick={() => onOpenCard(item.card, item.instanceCount)}
           title={`${item.card.displayName} · ×${item.instanceCount}`}
         >
-          <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
+          <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
         </button>
       ))}
     </div>

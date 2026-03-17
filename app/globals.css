@@ -4847,21 +4847,6 @@ a { color: inherit; text-decoration: none; }
 .contest-modal-grid.visual {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
-.lineup-card-tile {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  overflow: hidden;
-  text-align: left;
-}
-.lineup-card-tile.selected { border-color: rgba(134,239,172,0.6); box-shadow: 0 0 0 1px rgba(134,239,172,0.4); }
-.lineup-card-tile.disabled { opacity: 0.55; }
-.lineup-card-art { aspect-ratio: 0.75; background: rgba(255,255,255,0.04); display: grid; place-items: center; }
-.lineup-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.lineup-card-body { padding: 0.55rem; display: grid; gap: 0.18rem; }
-.lineup-card-body strong { font-size: 0.84rem; }
-.lineup-card-body span { font-size: 0.68rem; color: var(--text-2); }
-
 .lineup-slot-v2-art {
   width: 100%;
   max-height: 120px;
@@ -4933,11 +4918,23 @@ a { color: inherit; text-decoration: none; }
   display: grid;
   gap: 0.4rem;
 }
-.lineup-card-tile .mvp-premium-card { width: 100%; }
-.lineup-card-tile.selected .mvp-premium-card {
-  box-shadow: 0 0 0 2px rgba(134,239,172,0.6), 0 0 22px rgba(134,239,172,0.35);
-}
+.lineup-card-visual { width: 100%; }
+.lineup-card-visual .mvp-premium-card { width: 100%; }
 .lineup-card-tile.disabled { opacity: 0.45; }
+.lineup-card-tile.selected {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(134,239,172,0.45);
+}
+.lineup-card-missing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 1px dashed rgba(255,255,255,0.25);
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+}
 .lineup-card-tile-footer {
   display: grid;
   gap: 0.14rem;
@@ -5129,9 +5126,6 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(180deg, rgba(14,16,26,0.98), rgba(9,10,17,0.99));
   border: 1px solid rgba(123,97,255,0.35);
 }
-.contest-modal-grid.visual .lineup-card-tile.selected .mvp-premium-card {
-  box-shadow: 0 0 0 2px rgba(123,97,255,0.7), 0 0 24px rgba(123,97,255,0.36);
-}
 
 @media (max-width: 1100px) {
   .contest-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -5320,9 +5314,6 @@ a { color: inherit; text-decoration: none; }
 }
 .contest-eligible-grid.visual {
   gap: 0.9rem;
-}
-.lineup-card-tile:hover .mvp-premium-card {
-  box-shadow: 0 0 0 1px rgba(134,239,172,0.42), 0 8px 20px rgba(0,0,0,0.35);
 }
 .contest-live-panel .contest-live-grid {
   margin-top: .75rem;
@@ -6440,4 +6431,26 @@ a { color: inherit; text-decoration: none; }
 @keyframes contestGridEnter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.contest-command-slot-missing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 1px dashed rgba(255,255,255,0.24);
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+}
+
+.bldr-card-missing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 1px dashed rgba(255,255,255,0.24);
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
 }

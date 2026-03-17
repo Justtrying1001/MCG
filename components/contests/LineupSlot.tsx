@@ -29,7 +29,7 @@ export function LineupSlot({
       </div>
 
       {card ? (
-        <LineupCardTile option={card} variant="collection" onClick={canEdit ? onOpenPicker : undefined} />
+        <LineupCardTile option={card} onClick={canEdit ? onOpenPicker : undefined} />
       ) : (
         <button type="button" className="lineup-slot-v2-empty" onClick={onOpenPicker} disabled={!canEdit}>
           <strong>Add card</strong>

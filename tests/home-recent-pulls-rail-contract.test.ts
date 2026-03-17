@@ -7,7 +7,7 @@ describe("RecentPullsRail contract", () => {
 
   it("uses real MCG card tile renderer", () => {
     expect(source).toContain("MvpCardTile");
-    expect(source).toContain('variant="compact"');
+    expect(source).toContain('variant="canonical"');
   });
 
   it("keeps live feed metadata and empty state", () => {

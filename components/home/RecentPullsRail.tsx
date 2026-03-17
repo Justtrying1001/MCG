@@ -40,7 +40,7 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
             {pulls.map((pull) => (
               <article key={pull.id} className="mcg-recent-pull-item">
                 <div className="mcg-recent-pull-card-wrap">
-                  <MvpCardTile card={pull.card} variant="compact" interactive={false} />
+                  <MvpCardTile card={pull.card} variant="canonical" interactive={false} />
                 </div>
                 <div className="mcg-recent-pull-meta">
                   <strong>{pull.card.displayName}</strong>

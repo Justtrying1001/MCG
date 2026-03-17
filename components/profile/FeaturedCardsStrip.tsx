@@ -15,7 +15,7 @@ export function FeaturedCardsStrip({ cards }: { cards: MvpCollectionItem[] }) {
         <div className="profile-featured-cards-strip">
           {cards.map((item) => (
             <div key={item.templateId} className="profile-featured-card-item">
-              <MvpCardTile card={item.card} quantity={item.instanceCount} variant="collection" />
+              <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
             </div>
           ))}
         </div>
