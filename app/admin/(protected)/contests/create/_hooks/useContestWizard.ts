@@ -12,6 +12,10 @@ export const WIZARD_STEPS: ContestWizardStep[] = [
   { id: "review", title: "Review" },
 ];
 
+export const BUILT_IN_CONTEST_COVERS = [
+  { label: "Default contest cover", url: "/Contest.png" },
+] as const;
+
 const INITIAL_FORM: ContestFormState = {
   code: "",
   title: "",
@@ -66,7 +70,6 @@ export function useContestWizard(initialContestId: string) {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
   const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
-  const [uploadBusy, setUploadBusy] = useState(false);
 
   const derivedSchedule = useMemo(() => {
     const lockDate = form.lockAt ? new Date(form.lockAt) : null;
@@ -299,27 +302,6 @@ export function useContestWizard(initialContestId: string) {
     return true;
   };
 
-  const uploadCoverImage = async (file: File | null) => {
-    if (!file) return;
-    setUploadBusy(true);
-    setMessage("");
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/internal/uploads/contest-cover", { method: "POST", body: formData });
-      const body = (await response.json().catch(() => null)) as { url?: string; error?: string; detail?: string; warning?: string } | null;
-      if (!response.ok || !body?.url) {
-        const detail = body?.detail ? ` (${body.detail})` : "";
-        setMessage(body?.error ? `${body.error}${detail}` : `Image upload failed (HTTP ${response.status})`);
-        return;
-      }
-      setForm((prev) => ({ ...prev, coverImageUrl: body.url! }));
-      setMessage(body.warning ?? "Cover image uploaded.");
-    } finally {
-      setUploadBusy(false);
-    }
-  };
-
   const setField = <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -347,9 +329,8 @@ export function useContestWizard(initialContestId: string) {
     setMessage,
     publishSuccess,
     rewardCapacityCheck,
-    uploadBusy,
+    builtInContestCovers: BUILT_IN_CONTEST_COVERS,
     saveDraft,
     publishContest,
-    uploadCoverImage,
   };
 }

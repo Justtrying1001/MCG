@@ -3,10 +3,11 @@ import type { CardSet, ContestFormState, RewardCapacityCheck } from "../_hooks/t
 export function ContestIdentityStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
-  uploadBusy: boolean;
-  uploadCoverImage: (file: File | null) => Promise<void>;
+  builtInContestCovers: readonly { label: string; url: string }[];
 }) {
-  const { form, setField, uploadBusy, uploadCoverImage } = props;
+  const { form, setField, builtInContestCovers } = props;
+  const selectedBuiltInCover = builtInContestCovers.find((cover) => cover.url === form.coverImageUrl)?.url ?? "";
+  const coverPreviewUrl = form.coverImageUrl.trim();
   return (
     <section className="admin-panel contest-builder-v2-section">
       <header>
@@ -45,13 +46,25 @@ export function ContestIdentityStep(props: {
           <textarea className="input" placeholder="One or two lines that explain the contest positioning." value={form.description} onChange={(e) => setField("description", e.target.value)} />
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span className="contest-inline-note"><strong>Cover image (optional)</strong></span>
-          <input className="input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={uploadBusy} onChange={(e) => void uploadCoverImage(e.target.files?.[0] ?? null)} />
+          <span className="contest-inline-note"><strong>Built-in cover image</strong></span>
+          <select className="input" value={selectedBuiltInCover} onChange={(e) => setField("coverImageUrl", e.target.value)}>
+            <option value="">No built-in cover</option>
+            {builtInContestCovers.map((cover) => <option key={cover.url} value={cover.url}>{cover.label} ({cover.url})</option>)}
+          </select>
+          <span className="contest-inline-note">Select an existing static image from <code>/public</code>. This stores a public path like <code>/Contest.png</code>.</span>
         </label>
         <label style={{ display: "grid", gap: "0.35rem" }}>
-          <span className="contest-inline-note"><strong>Cover image URL</strong></span>
+          <span className="contest-inline-note"><strong>Custom cover URL</strong></span>
           <input className="input" placeholder="https://..." value={form.coverImageUrl} onChange={(e) => setField("coverImageUrl", e.target.value)} />
+          <span className="contest-inline-note">Paste an external URL to override the built-in selection.</span>
         </label>
+        {coverPreviewUrl ? (
+          <div style={{ display: "grid", gap: "0.35rem" }}>
+            <span className="contest-inline-note"><strong>Cover preview</strong></span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coverPreviewUrl} alt="Contest cover preview" style={{ width: "100%", maxWidth: "360px", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: "0.6rem" }} />
+          </div>
+        ) : null}
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.35rem" }}>
