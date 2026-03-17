@@ -10,9 +10,8 @@ import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/
 export async function GET(_request: Request, { params }: { params: { contestId: string } }) {
   try {
     const user = await getSessionUser();
-    if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    const detail = await getContestDetailMvp(params.contestId, user.id);
+    const detail = await getContestDetailMvp(params.contestId, user?.id);
     const contestMeta = await prisma.contest.findUnique({
       where: { id: params.contestId },
       select: { leagueTierRequired: true, season: { select: { name: true, id: true } } },

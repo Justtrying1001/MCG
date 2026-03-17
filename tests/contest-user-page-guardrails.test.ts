@@ -39,4 +39,24 @@ describe("contest user page sticky + lineup duplicate guardrails", () => {
     expect(source).toContain('<span className="cpd-stat-label">Your score</span>');
   });
 
+  it("loads contest data without requiring an authenticated session", () => {
+    const source = readFileSync("app/contests/[contestId]/page.tsx", "utf8");
+    expect(source).toContain("if (loading) return;");
+    expect(source).toContain("void loadAll();");
+    expect(source).toContain("Connectez-vous pour créer et soumettre votre lineup.");
+    expect(source).toContain("Contest inaccessible ou en cours de préparation");
+  });
+
+  it("keeps detail/ranking/reward APIs publicly readable while lineup endpoints stay protected", () => {
+    const detailRoute = readFileSync("app/api/contests/[contestId]/route.ts", "utf8");
+    const rankingRoute = readFileSync("app/api/contests/[contestId]/ranking/route.ts", "utf8");
+    const rewardRoute = readFileSync("app/api/contests/[contestId]/reward-preview/route.ts", "utf8");
+    const optionsRoute = readFileSync("app/api/contests/[contestId]/lineup-options/route.ts", "utf8");
+
+    expect(detailRoute).toContain("getContestDetailMvp(params.contestId, user?.id)");
+    expect(rankingRoute).not.toContain('new NextResponse("Unauthorized"');
+    expect(rewardRoute).not.toContain('new NextResponse("Unauthorized"');
+    expect(optionsRoute).toContain('new NextResponse("Unauthorized", { status: 401 })');
+  });
+
 });
