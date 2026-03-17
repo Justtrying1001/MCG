@@ -168,7 +168,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }
       } else {
         const payload = (await detailRes.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error ?? "Contest inaccessible ou en cours de préparation.");
+        setError(payload?.error ?? "Contest is unavailable or still being prepared.");
         setDetail(null);
         setRanking(null);
         setOptions([]);
@@ -221,7 +221,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setRewards(null);
       setOptions([]);
       setScoreBreakdown(null);
-      setError("Contest inaccessible ou en cours de préparation.");
+      setError("Contest is unavailable or still being prepared.");
     } finally {
       setIsLoadingPage(false);
     }
@@ -421,8 +421,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       <SiteShell>
         <style>{CSS}</style>
         <div className="cpd-empty-state">
-          <h1>Contest inaccessible ou en cours de préparation</h1>
-          <p>Ce contest n&apos;est pas disponible pour le moment. Réessayez dans quelques instants.</p>
+          <h1>Contest unavailable or still being prepared</h1>
+          <p>This contest is currently unavailable. Please try again in a few moments.</p>
         </div>
       </SiteShell>
     );
@@ -636,7 +636,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               )}
 
               {!me && isOpen && (
-                <p className="cpd-lineup-locked-note">Connectez-vous pour créer et soumettre votre lineup.</p>
+                <p className="cpd-lineup-locked-note">Sign in to build and submit your lineup.</p>
               )}
 
               {detail.userEntry?.status === "SUBMITTED" && !builderFlash && (

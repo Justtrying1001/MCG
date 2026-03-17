@@ -42,4 +42,16 @@ describe("contest reward distribution builder", () => {
     expect(payload.distributionRules[0]).toMatchObject({ ruleType: "FIXED_RANKS", rankFrom: 1, rankTo: 1 });
     expect(payload.distributionRules[1]).toMatchObject({ ruleType: "TOP_PERCENT", topPercent: 25 });
   });
+
+  it("detects overlapping reward distribution rules", () => {
+    const payload = toContestRewardPayload([
+      createRewardRuleDraft({ id: "r1", rewardType: "POINTS", amount: 1000, distributionType: "FIXED_RANKS", distributionValue: 1 }),
+      createRewardRuleDraft({ id: "r2", rewardType: "XP", amount: 100, distributionType: "TOP_N", distributionValue: 1 }),
+    ]);
+
+    expect(payload.overlapIssues).toHaveLength(1);
+    expect(payload.overlapIssues[0].message).toContain("rank 1");
+    expect(payload.overlapIssues[0].conflictingRuleIds).toEqual(["r1", "r2"]);
+  });
+
 });

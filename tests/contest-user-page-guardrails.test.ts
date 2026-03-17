@@ -43,8 +43,8 @@ describe("contest user page sticky + lineup duplicate guardrails", () => {
     const source = readFileSync("app/contests/[contestId]/page.tsx", "utf8");
     expect(source).toContain("if (loading) return;");
     expect(source).toContain("void loadAll();");
-    expect(source).toContain("Connectez-vous pour créer et soumettre votre lineup.");
-    expect(source).toContain("Contest inaccessible ou en cours de préparation");
+    expect(source).toContain("Sign in to build and submit your lineup.");
+    expect(source).toContain("Contest unavailable or still being prepared");
   });
 
   it("keeps detail/ranking/reward APIs publicly readable while lineup endpoints stay protected", () => {
