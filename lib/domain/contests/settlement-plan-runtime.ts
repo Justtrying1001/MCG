@@ -1,22 +1,15 @@
 import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/client";
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
+import { findDistributionRuleOverlapIssues, matchesDistributionRule } from "@/lib/domain/contests/distribution-rules";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
-
-const DISTRIBUTION_RULE_TYPES = {
-  FIXED_RANKS: "FIXED_RANKS",
-  TOP_N: "TOP_N",
-  TOP_PERCENT: "TOP_PERCENT",
-} as const;
 
 const SETTLEMENT_PLAN_STATUS = {
   DRAFT: "DRAFT",
   EXECUTED: "EXECUTED",
   CANCELED: "CANCELED",
 } as const;
-
-type DistributionRuleType = (typeof DISTRIBUTION_RULE_TYPES)[keyof typeof DISTRIBUTION_RULE_TYPES];
 
 type ResolvedComponent =
   | { type: "POINTS"; amount: number }
@@ -56,7 +49,7 @@ export async function generateSettlementPlan(contestId: string) {
 
     const bundleById = new Map(bundles.map((bundle) => [bundle.id, bundle]));
 
-    const overlapErrors = findRuleOverlapIssues(rules, contest.rankings.length);
+    const overlapErrors = findDistributionRuleOverlapIssues(rules, contest.rankings.length);
     if (overlapErrors.length > 0) {
       throw new ContestRuntimeError(`Distribution rules overlap ambiguously: ${overlapErrors.join("; ")}`, 409);
     }
@@ -74,7 +67,7 @@ export async function generateSettlementPlan(contestId: string) {
     }> = [];
 
     for (const ranking of contest.rankings) {
-      const matchedRule = rules.find((rule) => matchesRule(rule, ranking.rank, contest.rankings.length));
+      const matchedRule = rules.find((rule) => matchesDistributionRule(rule, ranking.rank, contest.rankings.length));
       if (!matchedRule) continue;
 
       const bundle = bundleById.get(matchedRule.bundleId);
@@ -358,59 +351,6 @@ function resolveBundleComponents(
   }
 
   return resolved;
-}
-
-function findRuleOverlapIssues(
-  rules: Array<{
-    id: string;
-    ruleType: DistributionRuleType;
-    rankFrom: number | null;
-    rankTo: number | null;
-    topN: number | null;
-    topPercent: number | null;
-  }>,
-  rankingSize: number
-) {
-  const issues: string[] = [];
-
-  for (let rank = 1; rank <= rankingSize; rank += 1) {
-    const matches = rules.filter((rule) => matchesRule(rule, rank, rankingSize));
-    if (matches.length > 1) {
-      issues.push(`rank ${rank} matches multiple rules (${matches.map((rule) => rule.id).join(", ")})`);
-      if (issues.length >= 5) break;
-    }
-  }
-
-  return issues;
-}
-
-function matchesRule(
-  rule: {
-    ruleType: DistributionRuleType;
-    rankFrom: number | null;
-    rankTo: number | null;
-    topN: number | null;
-    topPercent: number | null;
-  },
-  rank: number,
-  rankingSize: number
-) {
-  if (rule.ruleType === DISTRIBUTION_RULE_TYPES.FIXED_RANKS) {
-    if (!rule.rankFrom || !rule.rankTo) return false;
-    return rank >= rule.rankFrom && rank <= rule.rankTo;
-  }
-
-  if (rule.ruleType === DISTRIBUTION_RULE_TYPES.TOP_N) {
-    return !!rule.topN && rank <= rule.topN;
-  }
-
-  if (rule.ruleType === DISTRIBUTION_RULE_TYPES.TOP_PERCENT) {
-    if (!rule.topPercent || rankingSize <= 0) return false;
-    const winnerCount = Math.ceil((rankingSize * rule.topPercent) / 100);
-    return rank <= Math.max(1, winnerCount);
-  }
-
-  return false;
 }
 
 function summarizePlanItems(items: Array<{ pointsTotal: number; xpTotal: number; packsTotal: number }>) {

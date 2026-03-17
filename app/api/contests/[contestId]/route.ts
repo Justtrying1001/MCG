@@ -27,6 +27,26 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
     });
   } catch (error) {
     if (error instanceof ContestRuntimeError) {
+      const fallbackContest = await prisma.contest.findUnique({
+        where: { id: params.contestId },
+        include: { rules: true, _count: { select: { entries: true } }, season: { select: { name: true, id: true } } },
+      });
+
+      if (fallbackContest?.configPublishedAt && ["OPEN", "LOCKED", "LIVE", "SETTLED"].includes(fallbackContest.status)) {
+        return NextResponse.json({
+          contest: {
+            ...fallbackContest,
+            seasonName: fallbackContest.season?.name ?? null,
+            seasonId: fallbackContest.season?.id ?? null,
+            leagueTierRequired: fallbackContest.leagueTierRequired ?? null,
+          },
+          userEntry: null,
+          rewardGrants: [],
+          scoreBreakdown: [],
+          warning: `Contest detail fallback mode: ${error.message}`,
+        });
+      }
+
       return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
     }
 

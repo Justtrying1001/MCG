@@ -140,6 +140,7 @@ export default function AdminContestBuilderPage() {
   const rewardPayload = useMemo(() => toContestRewardPayload(rules), [rules]);
 
   const invalidRewardRulesById = useMemo(() => new Map(rewardPayload.invalidRules.map((rule) => [rule.id, rule.message])), [rewardPayload.invalidRules]);
+  const overlappingRuleIds = useMemo(() => new Set(rewardPayload.overlapIssues.flatMap((issue) => issue.conflictingRuleIds)), [rewardPayload.overlapIssues]);
 
   const payload = useMemo(() => {
     const parsedEntryFee = Number(entryFeeAmount);
@@ -185,8 +186,9 @@ export default function AdminContestBuilderPage() {
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set when eligibility is restricted.");
     if (payload.rewardBundles.length === 0) arr.push("Add at least one valid reward rule.");
     for (const invalidRule of rewardPayload.invalidRules) arr.push(invalidRule.message);
+    for (const overlapIssue of rewardPayload.overlapIssues) arr.push(overlapIssue.message);
     return [...new Set(arr)];
-  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules]);
+  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules, rewardPayload.overlapIssues]);
 
   const checklist = useMemo(() => {
     return [
@@ -375,11 +377,21 @@ export default function AdminContestBuilderPage() {
             <header>
               <h2 className="admin-section-title">4. Rewards</h2>
               <p className="contest-inline-note">Build an easy-to-scan reward distribution by rank or ranges.</p>
+              {rewardPayload.overlapIssues.length > 0 ? (
+                <div className="admin-callout danger">
+                  <p className="contest-inline-note"><strong>Reward distribution rules overlap.</strong> A rank can only match exactly one rule. Resolve conflicts before saving or publishing.</p>
+                  <ul className="contest-inline-list">
+                    {rewardPayload.overlapIssues.map((issue) => (
+                      <li key={issue.message}>{issue.message} (rules: {issue.conflictingRuleIds.join(", ")})</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </header>
 
             <div className="contest-builder-v2-rewards-stack">
               {rules.map((rule) => (
-                <article key={rule.id} className="contest-builder-v2-reward-card">
+                <article key={rule.id} className="contest-builder-v2-reward-card" data-conflict={overlappingRuleIds.has(rule.id) ? "true" : "false"}>
                   <div className="contest-builder-v2-reward-top">
                     <div>
                       <input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} />
@@ -490,8 +502,8 @@ export default function AdminContestBuilderPage() {
             <h3>Actions</h3>
             {message ? <p className="contest-inline-note">{message}</p> : <p className="contest-inline-note">Save draft any time, then publish when checklist is green.</p>}
             <div className="contest-builder-v2-actions">
-              <Button variant="ghost" onClick={() => void saveDraft()}>Save draft</Button>
-              <Button onClick={() => void launch()} disabled={issues.length > 0}>Publish contest</Button>
+              <Button variant="ghost" disabled={issues.length > 0} onClick={() => void saveDraft()}>Save draft</Button>
+              <Button onClick={() => void launch()} disabled={publishSuccess || issues.length > 0}>Publish contest</Button>
             </div>
           </div>
         </aside>
