@@ -8,6 +8,7 @@ import { handleApiError } from "@/lib/api-error";
 import { getAdminSessionFromCookies } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
-    if (!(file instanceof File)) {
+    if (!(file instanceof Blob)) {
       return NextResponse.json({ error: "Image file is required" }, { status: 400 });
     }
 

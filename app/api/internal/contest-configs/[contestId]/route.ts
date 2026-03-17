@@ -44,10 +44,13 @@ const patchSchema = z.object({
     poolAmount: z.number().int().optional(),
   })).optional(),
   rewardConfig: z.object({
-    pointsPool: z.number().int().positive(),
-    packPool: z.number().int().positive(),
+    pointsPool: z.number().int().min(0),
+    packPool: z.number().int().min(0),
     rewardedTopPercent: z.number().min(1).max(100),
     distributionProfile: z.enum(["balanced", "top-heavy", "very-top-heavy"]),
+  }).refine((value) => value.pointsPool > 0 || value.packPool > 0, {
+    message: "At least one reward pool must be greater than zero",
+    path: ["pointsPool"],
   }).optional(),
 }).refine((value) => Object.keys(value).length > 0, { message: "Patch payload cannot be empty" }).superRefine((value, ctx) => {
   const asDate = (raw: string | null | undefined) => {
