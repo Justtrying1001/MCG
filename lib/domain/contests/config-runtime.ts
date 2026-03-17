@@ -547,6 +547,7 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
   const overlapIssues = findDistributionRuleOverlapIssues(
     rules.map((rule, index) => ({
       id: `distributionRules[${index}]`,
+      bundleId: rule.bundleId,
       ruleType: rule.ruleType,
       rankFrom: rule.rankFrom ?? null,
       rankTo: rule.rankTo ?? null,

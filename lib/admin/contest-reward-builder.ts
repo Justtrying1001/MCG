@@ -157,9 +157,12 @@ export function toContestRewardPayload(rules: RewardRuleDraft[]) {
     return { priority: index + 1, ruleType: "TOP_PERCENT" as const, bundleRef, topPercent: rule.distributionValue };
   });
 
+  const overlapIssues: Array<{ message: string; ranks: string[]; conflictingRuleIds: string[] }> = [];
+
   const overlapErrors = findDistributionRuleOverlapIssues(
     validRules.map((rule) => ({
       id: rule.id,
+      bundleId: `rule_bundle_${rule.id}`,
       ruleType: rule.distributionType,
       rankFrom: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,
       rankTo: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,

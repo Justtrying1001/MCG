@@ -40,3 +40,23 @@ export function matchesDistributionRule(rule: Omit<DistributionRuleLike, "id">, 
 export function findMatchingDistributionRulesForRank<T extends DistributionRuleLike>(rules: T[], rank: number, rankingSize: number): T[] {
   return rules.filter((rule) => matchesDistributionRule(rule, rank, rankingSize));
 }
+
+export function findDistributionRuleOverlapIssues<T extends Pick<DistributionRuleLike, "id" | "ruleType" | "rankFrom" | "rankTo" | "topN" | "topPercent"> & { bundleId?: string | null }>(
+  rules: T[],
+  rankingSize: number
+): string[] {
+  const issues: string[] = [];
+
+  for (let rank = 1; rank <= rankingSize; rank += 1) {
+    const matched = findMatchingDistributionRulesForRank(rules as DistributionRuleLike[], rank, rankingSize);
+    if (matched.length <= 1) continue;
+
+    const bundleIds = new Set(matched.map((rule) => rule.bundleId).filter((bundleId): bundleId is string => !!bundleId));
+    if (bundleIds.size <= 1) continue;
+
+    const conflictingRuleIds = matched.map((rule) => rule.id).sort((a, b) => a.localeCompare(b));
+    issues.push(`rank ${rank} matches multiple rules (${conflictingRuleIds.join(", ")})`);
+  }
+
+  return issues;
+}
