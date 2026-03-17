@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 
 function newIdempotencyKey(prefix: string) {
@@ -283,92 +283,83 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
   };
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <Link href="/admin/contests" className="contest-inline-note">← Back to contest catalog</Link>
+    <div className="admin-v2-page contest-admin-overview-page">
+      <section className="contest-admin-overview-back">
+        <Link href="/admin/contests" className="admin-v2-link-chip">← Back to contest catalog</Link>
       </section>
 
-      {loading ? <section className="contest-section"><p className="contest-inline-note">Loading overview…</p></section> : null}
-      {message ? <section className="contest-section"><p className="contest-inline-note">{message}</p></section> : null}
-      {error ? <section className="contest-section"><p className="contest-error">{error}</p></section> : null}
+      {loading ? <section className="admin-v2-panel"><p className="contest-admin-muted">Loading overview…</p></section> : null}
+      {message ? <section className="admin-v2-panel"><p className="contest-admin-muted">{message}</p></section> : null}
+      {error ? <section className="admin-v2-panel"><p className="contest-error">{error}</p></section> : null}
 
       {data ? (
         <>
-          <section className="contest-section">
-            <div className="contest-card-top">
-              <p className="contest-code">{data.contest.code}</p>
-              <span className={`contest-status status-${data.contest.status.toLowerCase()}`}>{data.contest.status}</span>
+          <section className="admin-v2-panel contest-admin-hero">
+            <div>
+              <p className="contest-admin-code">{data.contest.code}</p>
+              <h1 className="contest-admin-title">{data.contest.title}</h1>
             </div>
-            <h1 className="page-title">{data.contest.title}</h1>
-            <div className="contest-meta-grid">
+            <div className="contest-admin-hero-actions">
+              <span className={`contest-admin-status is-${data.contest.status.toLowerCase()}`}>{data.contest.status}</span>
+              {(data.contest.status === "OPEN" || data.contest.status === "LOCKED" || data.contest.status === "LIVE") ? (
+                <Button variant="ghost" onClick={() => void stopContest()} disabled={busyStop} className="contest-admin-stop-btn">
+                  {busyStop ? "Stopping…" : "Stop contest"}
+                </Button>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="admin-v2-panel">
+            <h2 className="contest-admin-section-title">Status summary</h2>
+            <div className="contest-admin-summary-grid">
               <Meta label="Entries" value={String(data.contest._count.entries)} />
-              <Meta label="Scores" value={String(data.contest._count.scores)} />
               <Meta label="Rankings" value={String(data.contest._count.rankings)} />
+              <Meta label="Scores" value={String(data.contest._count.scores)} />
               <Meta label="Settlements" value={String(data.contest._count.settlements)} />
-              <Meta label="Goes Live" value={formatDate(data.contest.liveAt)} />
-              <Meta label="Lock" value={formatDate(data.contest.lockAt)} />
-              <Meta label="Ends" value={formatDate(data.contest.endsAt)} />
+              <Meta label="Lock time" value={formatDate(data.contest.lockAt)} />
+              <Meta label="End time" value={formatDate(data.contest.endsAt)} />
+              <Meta label="Scoring readiness" value={data.progress.scoringReady ? "Ready" : "Blocked"} />
+              <Meta label="Settlement status" value={data.progress.settlementDone ? "Done" : "Pending"} />
             </div>
           </section>
 
-          <section className="contest-section">
-            <h2 className="contest-section-title">Operational progress</h2>
-            <div className="contest-meta-grid">
-              <Meta label="Entries collected" value={String(data.progress.entries)} />
-              <Meta label="Scoring readiness" value={data.progress.scoringReady ? "READY" : "BLOCKED"} />
-              <Meta label="Ranking generated" value={data.progress.rankingGenerated ? "YES" : "NO"} />
-              <Meta label="Settlement status" value={data.progress.settlementDone ? "DONE" : "PENDING"} />
-            </div>
-          </section>
-
-          <section className="contest-section" style={{ display: "grid", gap: "0.75rem" }}>
-            <h2 className="contest-section-title">Pipeline status</h2>
+          <section className="admin-v2-panel">
+            <h2 className="contest-admin-section-title">Pipeline status</h2>
 
             {snapshotsLoading ? (
-              <p className="contest-inline-note">Loading snapshot data…</p>
+              <p className="contest-admin-muted">Loading snapshot data…</p>
             ) : snapshots ? (
               <>
-                <div style={{ display: "grid", gap: "0.4rem" }}>
+                <div className="contest-admin-pipeline-list">
                   <PipelineRow
-                    label="START Snapshot"
+                    label="START snapshot"
                     ok={snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice > 0}
                     warn={snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice === 0}
-                    detail={
-                      snapshots.hasStartSnapshot
-                        ? `${snapshots.start.tokenCount} tokens captured, ${snapshots.start.capturedWithPrice} with price${snapshots.start.capturedAt ? ` — at ${formatDate(snapshots.start.capturedAt)}` : ""}`
-                        : "Not captured — will trigger automatically on LIVE transition"
-                    }
+                    status={snapshots.hasStartSnapshot ? "OK" : "Missing"}
+                    detail={`${snapshots.start.capturedWithPrice}/${snapshots.start.tokenCount} tokens with price`}
+                    subDetail={snapshots.start.capturedAt ? `Captured ${formatDate(snapshots.start.capturedAt)}` : "Capture expected on LIVE transition"}
                     expandable={snapshots.start.tokens.length > 0}
                     expanded={showStartDetail}
                     onToggle={() => setShowStartDetail((v) => !v)}
                   />
-                  {snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice < snapshots.start.tokenCount && snapshots.start.tokenCount > 0 ? (
-                    <p className="contest-inline-note" style={{ color: "#c0392b", paddingLeft: "1.8rem" }}>
-                      ⚠ {snapshots.start.tokenCount - snapshots.start.capturedWithPrice} token{snapshots.start.tokenCount - snapshots.start.capturedWithPrice > 1 ? "s" : ""} captured but {snapshots.start.capturedWithPrice === 0 ? "none have" : "some have no"} price data — missing coingeckoId mapping or CoinGecko fetch failed
-                    </p>
-                  ) : null}
+
                   <PipelineRow
-                    label="END Snapshot"
+                    label="END snapshot"
                     ok={snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice > 0}
                     warn={snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice === 0}
-                    detail={
-                      snapshots.hasEndSnapshot
-                        ? `${snapshots.end.tokenCount} tokens captured, ${snapshots.end.capturedWithPrice} with price${snapshots.end.capturedAt ? ` — at ${formatDate(snapshots.end.capturedAt)}` : ""}`
-                        : "Not captured yet"
-                    }
+                    status={snapshots.hasEndSnapshot ? "OK" : "Pending"}
+                    detail={`${snapshots.end.capturedWithPrice}/${snapshots.end.tokenCount} tokens with price`}
+                    subDetail={snapshots.end.capturedAt ? `Captured ${formatDate(snapshots.end.capturedAt)}` : "Not captured yet"}
                     expandable={snapshots.end.tokens.length > 0}
                     expanded={showEndDetail}
                     onToggle={() => setShowEndDetail((v) => !v)}
                   />
-                  {snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice < snapshots.end.tokenCount && snapshots.end.tokenCount > 0 ? (
-                    <p className="contest-inline-note" style={{ color: "#c0392b", paddingLeft: "1.8rem" }}>
-                      ⚠ {snapshots.end.tokenCount - snapshots.end.capturedWithPrice} token{snapshots.end.tokenCount - snapshots.end.capturedWithPrice > 1 ? "s" : ""} have no price data
-                    </p>
-                  ) : null}
+
                   <PipelineRow
                     label="Scoring"
                     ok={data.progress.scoringReady}
-                    detail={data.progress.scoringReady ? "Calculated" : "Pending"}
+                    status={data.progress.scoringReady ? "OK" : "Pending"}
+                    detail={data.progress.scoringReady ? "Calculated" : "Awaiting valid snapshots"}
                     expandable={data.progress.scoringReady}
                     expanded={showScoringDetail}
                     onToggle={() => {
@@ -379,9 +370,16 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                       });
                     }}
                   />
-                  <PipelineRow label="Ranking" ok={data.progress.rankingGenerated} detail={data.progress.rankingGenerated ? "Generated" : "Pending"} />
-                  <PipelineRow label="Settlement" ok={data.progress.settlementDone} detail={data.progress.settlementDone ? "Done" : "Pending"} />
+                  <PipelineRow label="Ranking" ok={data.progress.rankingGenerated} status={data.progress.rankingGenerated ? "OK" : "Pending"} detail={data.progress.rankingGenerated ? "Generated" : "Awaiting scoring run"} />
+                  <PipelineRow label="Settlement" ok={data.progress.settlementDone} status={data.progress.settlementDone ? "OK" : "Pending"} detail={data.progress.settlementDone ? "Completed" : "Awaiting finalization"} />
                 </div>
+
+                {snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice < snapshots.start.tokenCount && snapshots.start.tokenCount > 0 ? (
+                  <div className="contest-admin-warning-inline">{snapshots.start.tokenCount - snapshots.start.capturedWithPrice} START token(s) have no price data.</div>
+                ) : null}
+                {snapshots.hasEndSnapshot && snapshots.end.capturedWithPrice < snapshots.end.tokenCount && snapshots.end.tokenCount > 0 ? (
+                  <div className="contest-admin-warning-inline">{snapshots.end.tokenCount - snapshots.end.capturedWithPrice} END token(s) have no price data.</div>
+                ) : null}
 
                 {showStartDetail && snapshots.start.tokens.length > 0 ? (
                   <SnapshotTable phase="START" tokens={snapshots.start.tokens} />
@@ -395,75 +393,76 @@ export default function ContestOverviewPage({ params }: { params: { contestId: s
                   <ScoringDetailPanel payload={scoringDetail} loading={scoringDetailLoading} error={scoringDetailError} />
                 ) : null}
 
-                {data.contest.status === "LIVE" && !snapshots.hasStartSnapshot ? (
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <div className="contest-admin-pipeline-actions">
+                  {data.contest.status === "LIVE" && !snapshots.hasStartSnapshot ? (
                     <Button variant="ghost" onClick={() => void captureSnapshot("START")} disabled={busyCapture !== null}>
-                      {busyCapture === "START" ? "Capturing…" : "Capture START snapshot now"}
+                      {busyCapture === "START" ? "Capturing…" : "Capture START snapshot"}
                     </Button>
-                    <p className="contest-inline-note" style={{ color: "#c0392b" }}>Contest is LIVE but START snapshot is missing — action required.</p>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {data.contest.status === "LIVE" && snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice === 0 ? (
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <Button variant="ghost" onClick={() => void captureSnapshot("START", true)} disabled={busyCapture !== null} style={{ color: "#c0392b", borderColor: "#c0392b" }}>
-                      {busyCapture === "START" ? "Capturing…" : "⚠ Re-capture START snapshot"}
+                  {data.contest.status === "LIVE" && snapshots.hasStartSnapshot && snapshots.start.capturedWithPrice === 0 ? (
+                    <Button variant="ghost" onClick={() => void captureSnapshot("START", true)} disabled={busyCapture !== null} className="contest-admin-danger-btn">
+                      {busyCapture === "START" ? "Capturing…" : "Re-capture START snapshot"}
                     </Button>
-                    <p className="contest-inline-note" style={{ color: "#c0392b" }}>START snapshot exists but has 0 prices — scoring will produce all zeros.</p>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {data.contest.status === "LIVE" && snapshots.hasStartSnapshot && !snapshots.hasEndSnapshot ? (
-                  <Button variant="ghost" onClick={() => void captureSnapshot("END")} disabled={busyCapture !== null}>
-                    {busyCapture === "END" ? "Capturing…" : "Capture END snapshot now"}
-                  </Button>
-                ) : null}
-
-                {data.contest._count.scores > 0 && !data.progress.rankingGenerated ? (
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <Button
-                      variant="ghost"
-                      onClick={() => void rebuildRankings()}
-                      disabled={busyRebuildRankings}
-                      style={{ color: "#e67e22", borderColor: "#e67e22" }}
-                    >
-                      {busyRebuildRankings ? "Rebuilding…" : "⚠ Rebuild rankings"}
+                  {data.contest.status === "LIVE" && snapshots.hasStartSnapshot && !snapshots.hasEndSnapshot ? (
+                    <Button variant="ghost" onClick={() => void captureSnapshot("END")} disabled={busyCapture !== null}>
+                      {busyCapture === "END" ? "Capturing…" : "Capture END snapshot"}
                     </Button>
-                    <p className="contest-inline-note" style={{ color: "#e67e22" }}>
-                      Scores computed ({data.contest._count.scores}) but no rankings generated — use this button to fix.
-                    </p>
-                  </div>
-                ) : null}
+                  ) : null}
+
+                  {data.contest._count.scores > 0 && !data.progress.rankingGenerated ? (
+                    <Button variant="ghost" onClick={() => void rebuildRankings()} disabled={busyRebuildRankings} className="contest-admin-warning-btn">
+                      {busyRebuildRankings ? "Rebuilding…" : "Rebuild rankings"}
+                    </Button>
+                  ) : null}
+                </div>
               </>
             ) : (
               <p className="contest-error">Could not load snapshot data.</p>
             )}
           </section>
 
-          <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
-            <h2 className="contest-section-title">Blocking issues / warnings</h2>
-            {data.blockers.length > 0 ? data.blockers.map((item) => <p key={item} className="contest-error">{item}</p>) : <p className="contest-inline-note">No blockers currently detected.</p>}
-            <p className="contest-inline-note">Allowed next transitions: {data.allowedTransitions.length > 0 ? data.allowedTransitions.join(", ") : "none"}</p>
+          <section className="admin-v2-panel">
+            <h2 className="contest-admin-section-title">Blocking issues</h2>
+            {data.blockers.length > 0 ? (
+              <div className="contest-admin-blocker-list">
+                {data.blockers.map((item) => (
+                  <div key={item} className="contest-admin-blocker-item">
+                    <span aria-hidden>⚠</span>
+                    <p>{item}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="contest-admin-muted">No blockers currently detected.</p>
+            )}
+            <p className="contest-admin-muted">Allowed next transitions: {data.allowedTransitions.length > 0 ? data.allowedTransitions.join(", ") : "none"}</p>
           </section>
 
-          <section className="contest-section" style={{ display: "grid", gap: "0.4rem" }}>
-            <h2 className="contest-section-title">Milestones</h2>
-            <p className="contest-inline-note">Goes Live: {formatDate(data.contest.liveAt)}</p>
-            <p className="contest-inline-note">Lock: {formatDate(data.contest.lockAt)}</p>
-            <p className="contest-inline-note">End: {formatDate(data.contest.endsAt)}</p>
+          <section className="admin-v2-panel">
+            <h2 className="contest-admin-section-title">Milestones</h2>
+            <div className="contest-admin-milestones-grid">
+              <Meta label="Goes live" value={formatDate(data.contest.liveAt)} />
+              <Meta label="Lock" value={formatDate(data.contest.lockAt)} />
+              <Meta label="End" value={formatDate(data.contest.endsAt)} />
+            </div>
           </section>
 
-          <section className="contest-section" style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", alignItems: "center" }}>
-            <Link href={`/admin/contests/${params.contestId}/lifecycle`} className="contest-inline-note">Manage lifecycle</Link>
-            <Link href={`/admin/contests/${params.contestId}/scoring`} className="contest-inline-note">Scoring &amp; Settlement</Link>
-            <Link href={`/admin/contests/${params.contestId}/audit`} className="contest-inline-note">Audit log</Link>
+          <section className="admin-v2-panel contest-admin-footer-actions">
             {(data.contest.status === "OPEN" || data.contest.status === "LOCKED" || data.contest.status === "LIVE") ? (
-              <Button variant="ghost" onClick={() => void stopContest()} disabled={busyStop} style={{ color: "#e67e22", borderColor: "#e67e22" }}>
+              <Button onClick={() => void stopContest()} disabled={busyStop} className="contest-admin-stop-btn">
                 {busyStop ? "Stopping…" : "Stop contest"}
               </Button>
             ) : null}
+            <Link href={`/admin/contests/${params.contestId}/lifecycle`} className="admin-v2-link-chip">Manage lifecycle</Link>
+            <Link href={`/admin/contests/${params.contestId}/scoring`} className="admin-v2-link-chip">Scoring &amp; Settlement</Link>
+            <Link href={`/admin/contests/${params.contestId}/settlement`} className="admin-v2-link-chip">Settlement workbench</Link>
+            <Link href={`/admin/contests/${params.contestId}/operator`} className="admin-v2-link-chip">Operator console</Link>
+            <Link href={`/admin/contests/${params.contestId}/audit`} className="admin-v2-link-chip">Audit log</Link>
             {(data.contest.status === "CANCELED" || (data.contest._count.entries === 0 && data.contest._count.scores === 0 && data.contest._count.rankings === 0 && data.contest._count.settlements === 0)) ? (
-              <Button variant="ghost" onClick={() => void deleteContest()} disabled={busyDelete}>Delete contest</Button>
+              <Button variant="ghost" onClick={() => void deleteContest()} disabled={busyDelete} className="contest-admin-danger-btn">Delete contest</Button>
             ) : null}
           </section>
         </>
@@ -476,7 +475,9 @@ function PipelineRow({
   label,
   ok,
   warn,
+  status,
   detail,
+  subDetail,
   expandable,
   expanded,
   onToggle,
@@ -484,38 +485,38 @@ function PipelineRow({
   label: string;
   ok: boolean;
   warn?: boolean;
+  status: string;
   detail: string;
+  subDetail?: string;
   expandable?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
 }) {
   const icon = ok ? "✓" : warn ? "⚠" : "✗";
-  const color = ok ? "#27ae60" : warn ? "#e67e22" : "#c0392b";
+  const toneClass = ok ? "ok" : warn ? "warn" : "danger";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-      <span style={{ fontSize: "1rem", color, minWidth: "1.2rem" }}>{icon}</span>
-      <span className="contest-meta-label" style={{ minWidth: "9rem" }}>{label}</span>
-      <span className="contest-inline-note" style={{ flex: 1 }}>{detail}</span>
-      {expandable && onToggle ? (
-        <button
-          onClick={onToggle}
-          className="contest-inline-note"
-          style={{ background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}
-        >
-          {expanded ? "Hide details" : "Show details"}
-        </button>
-      ) : null}
+    <div className="contest-admin-pipeline-row">
+      <span className={`contest-admin-pipeline-icon ${toneClass}`} aria-hidden>{icon}</span>
+      <div className="contest-admin-pipeline-main">
+        <div className="contest-admin-pipeline-head">
+          <span className="contest-admin-pipeline-label">{label}</span>
+          <span className={`contest-admin-pipeline-state ${toneClass}`}>{status}</span>
+        </div>
+        <p className="contest-admin-muted">{detail}</p>
+        {subDetail ? <p className="contest-admin-subtle">{subDetail}</p> : null}
+      </div>
+      {expandable && onToggle ? <button onClick={onToggle} className="contest-admin-inline-action">{expanded ? "Hide details" : "Show details"}</button> : null}
     </div>
   );
 }
 
 function SnapshotTable({ phase, tokens }: { phase: "START" | "END"; tokens: SnapshotToken[] }) {
   return (
-    <div style={{ overflowX: "auto", marginTop: "0.5rem" }}>
-      <p className="contest-meta-label" style={{ marginBottom: "0.4rem" }}>{phase} Snapshot detail ({tokens.length} tokens)</p>
-      <table style={{ borderCollapse: "collapse", fontSize: "0.8rem", width: "100%" }}>
+    <div className="contest-admin-data-table-wrap">
+      <p className="contest-admin-subtle">{phase} snapshot detail ({tokens.length} tokens)</p>
+      <table className="contest-admin-data-table">
         <thead>
-          <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+          <tr>
             <Th>Token</Th>
             <Th>CoinGecko ID</Th>
             <Th>Price USD</Th>
@@ -527,7 +528,7 @@ function SnapshotTable({ phase, tokens }: { phase: "START" | "END"; tokens: Snap
         </thead>
         <tbody>
           {tokens.map((token) => (
-            <tr key={token.geckoId} style={{ borderBottom: "1px solid #f0f0f0" }}>
+            <tr key={token.geckoId}>
               <Td>{token.displayName || token.slug}</Td>
               <Td>{token.geckoId}</Td>
               <Td>{token.priceUsd !== null ? formatUsd(token.priceUsd, 6) : "—"}</Td>
@@ -545,7 +546,7 @@ function SnapshotTable({ phase, tokens }: { phase: "START" | "END"; tokens: Snap
 
 
 function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetailPayload | null; loading: boolean; error: string }) {
-  if (loading) return <p className="contest-inline-note">Loading scoring details…</p>;
+  if (loading) return <p className="contest-admin-muted">Loading scoring details…</p>;
   if (error) return <p className="contest-error">{error}</p>;
   if (!payload) return null;
 
@@ -559,12 +560,12 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
   }, {});
 
   return (
-    <div style={{ display: "grid", gap: "0.8rem", marginTop: "0.5rem" }}>
-      <div style={{ overflowX: "auto" }}>
-        <p className="contest-meta-label" style={{ marginBottom: "0.4rem" }}>Token scores ({payload.tokenScores.length})</p>
-        <table style={{ borderCollapse: "collapse", fontSize: "0.8rem", width: "100%" }}>
+    <div className="contest-admin-score-panel">
+      <div className="contest-admin-data-table-wrap">
+        <p className="contest-admin-subtle">Token scores ({payload.tokenScores.length})</p>
+        <table className="contest-admin-data-table">
           <thead>
-            <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+            <tr>
               <Th>Token</Th>
               <Th>Base score</Th>
               <Th>Multiplier</Th>
@@ -576,7 +577,7 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
           </thead>
           <tbody>
             {payload.tokenScores.map((row) => (
-              <tr key={row.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+              <tr key={row.id}>
                 <Td>{row.tokenProject.displayName || row.tokenProject.slug}</Td>
                 <Td>{row.baseScore.toFixed(2)}</Td>
                 <Td>×{row.rankMultiplier.toFixed(3)}</Td>
@@ -590,13 +591,13 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
         </table>
       </div>
 
-      <div style={{ display: "grid", gap: "0.6rem" }}>
-        <p className="contest-meta-label">Entry breakdowns ({payload.breakdownRows.length})</p>
+      <div className="contest-admin-breakdown-grid">
+        <p className="contest-admin-subtle">Entry breakdowns ({payload.breakdownRows.length})</p>
         {Object.entries(groupedRows).map(([userId, group]) => (
-          <div key={userId} style={{ border: "1px solid #eee", borderRadius: 10, padding: "0.5rem" }}>
-            <p className="contest-meta-label" style={{ marginBottom: "0.3rem" }}>{group.label}</p>
+          <div key={userId} className="contest-admin-breakdown-card">
+            <p className="contest-admin-subtle">{group.label}</p>
             {group.rows.map((row) => (
-              <div key={row.id} style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.8rem", padding: "0.2rem 0" }}>
+              <div key={row.id} className="contest-admin-breakdown-row">
                 <span>
                   {row.cardInstance.cardTemplate.name} · {row.tokenProject.displayName} ({row.cardInstance.cardTemplate.rarity?.code ?? "-"}/{row.cardInstance.cardTemplate.edition?.code ?? "-"})
                 </span>
@@ -612,19 +613,19 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return <th style={{ padding: "0.3rem 0.6rem", textAlign: "left", fontWeight: 600, color: "#666" }}>{children}</th>;
+function Th({ children }: { children: ReactNode }) {
+  return <th>{children}</th>;
 }
 
-function Td({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: "0.3rem 0.6rem", color: "#333" }}>{children}</td>;
+function Td({ children }: { children: ReactNode }) {
+  return <td>{children}</td>;
 }
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="contest-meta-label">{label}</p>
-      <p className="contest-meta-value">{value}</p>
+    <div className="contest-admin-meta-item">
+      <p className="contest-admin-meta-label">{label}</p>
+      <p className="contest-admin-meta-value">{value}</p>
     </div>
   );
 }
