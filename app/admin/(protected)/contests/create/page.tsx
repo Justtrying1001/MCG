@@ -37,10 +37,9 @@ export default function AdminContestBuilderPage() {
     setMessage,
     publishSuccess,
     rewardCapacityCheck,
-    uploadBusy,
+    builtInContestCovers,
     saveDraft,
     publishContest,
-    uploadCoverImage,
   } = useContestWizard(params.get("contestId") ?? "");
 
   const goNext = () => {
@@ -105,7 +104,7 @@ export default function AdminContestBuilderPage() {
 
       {publishSuccess ? <div className="admin-callout success"><p className="contest-inline-note"><strong>Contest published successfully.</strong> Redirecting to Contest Library…</p></div> : null}
 
-      {stepIndex === 0 ? <ContestIdentityStep form={form} setField={setField} uploadBusy={uploadBusy} uploadCoverImage={uploadCoverImage} /> : null}
+      {stepIndex === 0 ? <ContestIdentityStep form={form} setField={setField} builtInContestCovers={builtInContestCovers} /> : null}
       {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} computedEndAtInput={computedEndAtInput} /> : null}
       {stepIndex === 2 ? <ContestEntryRulesStep form={form} cardSets={cardSets} setField={setField} /> : null}
       {stepIndex === 3 ? <ContestRewardsStep form={form} setField={setField} generatedPreview={generatedPreview} rewardIssues={issuesByStep.rewards} rewardCapacityCheck={rewardCapacityCheck} /> : null}
