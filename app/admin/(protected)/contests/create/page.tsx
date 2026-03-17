@@ -30,6 +30,28 @@ type RewardCapacityCheck = {
   rows: RewardCapacityRow[];
 };
 
+type ContestRewardComponentDto = {
+  type: "POINTS" | "PACK" | "XP";
+  pointsAmount?: number | null;
+  packDefinitionId?: string | null;
+  packQuantity?: number | null;
+};
+
+type ContestRewardBundleDto = {
+  id: string;
+  components: ContestRewardComponentDto[];
+};
+
+type ContestDistributionRuleDto = {
+  ruleType: string;
+  rankFrom: number | null;
+  rankTo: number | null;
+  topN: number | null;
+  topPercent: number | null;
+  poolAmount?: number | null;
+  bundleId: string;
+};
+
 const BUILDER_STEPS = [
   { id: "identity", label: "Identity" },
   { id: "schedule", label: "Schedule" },
@@ -128,11 +150,11 @@ export default function AdminContestBuilderPage() {
       setParticipationNotes(participation);
       setOptionalClarifications(clarifications);
 
-      const distributionRules = contest.rewardPolicy?.distributionRules ?? [];
-      const bundles = contest.rewardPolicy?.bundles ?? [];
-      const bundleById = new Map(bundles.map((bundle: any) => [bundle.id, bundle]));
+      const distributionRules = (contest.rewardPolicy?.distributionRules ?? []) as ContestDistributionRuleDto[];
+      const bundles = (contest.rewardPolicy?.bundles ?? []) as ContestRewardBundleDto[];
+      const bundleById = new Map<string, ContestRewardBundleDto>(bundles.map((bundle) => [bundle.id, bundle]));
 
-      const poolRule = distributionRules.find((item: any) => item.ruleType === "POINTS_POOL_TOP_PERCENT");
+      const poolRule = distributionRules.find((item) => item.ruleType === "POINTS_POOL_TOP_PERCENT");
       if (poolRule) {
         setPointsPoolEnabled(true);
         setPointsPoolTopPercent(String(Math.floor(poolRule.topPercent ?? 25)));
@@ -140,25 +162,28 @@ export default function AdminContestBuilderPage() {
       }
 
       const packRows: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+      let derivedPackDefinitionId = "";
       for (const distRule of distributionRules) {
         if (distRule.ruleType !== "FIXED_RANKS" || distRule.rankFrom !== distRule.rankTo) continue;
         const bundle = bundleById.get(distRule.bundleId);
-        const packComponent = bundle?.components?.find((component: any) => component.type === "PACK");
+        const packComponent = bundle?.components?.find((component) => component.type === "PACK");
         if (!packComponent) continue;
-        if ([1, 2, 3].includes(distRule.rankFrom)) {
+        if (distRule.rankFrom !== null && [1, 2, 3].includes(distRule.rankFrom)) {
           packRows[distRule.rankFrom] = packComponent.packQuantity ?? 0;
-          if (!packDefinitionId) setPackDefinitionId(packComponent.packDefinitionId ?? "");
+          if (!derivedPackDefinitionId) derivedPackDefinitionId = packComponent.packDefinitionId ?? "";
         }
       }
+
+      if (derivedPackDefinitionId) setPackDefinitionId(derivedPackDefinitionId);
 
       if (packRows[1] > 0) setRank1PackQty(String(packRows[1]));
       if (packRows[2] > 0) setRank2PackQty(String(packRows[2]));
       if (packRows[3] > 0) setRank3PackQty(String(packRows[3]));
 
-      const bonusRule = distributionRules.find((item: any) => item.ruleType === "TOP_N" && item.topN);
+      const bonusRule = distributionRules.find((item) => item.ruleType === "TOP_N" && item.topN);
       if (bonusRule) {
         const bundle = bundleById.get(bonusRule.bundleId);
-        const pointsComponent = bundle?.components?.find((component: any) => component.type === "POINTS");
+        const pointsComponent = bundle?.components?.find((component) => component.type === "POINTS");
         if (pointsComponent?.pointsAmount) {
           setBonusTopN(String(bonusRule.topN));
           setBonusPoints(String(pointsComponent.pointsAmount));

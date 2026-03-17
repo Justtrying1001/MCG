@@ -1,7 +1,7 @@
 import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/client";
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
-import { DISTRIBUTION_RULE_TYPES, findMatchingDistributionRulesForRank } from "@/lib/domain/contests/distribution-rules";
+import { DISTRIBUTION_RULE_TYPES, DistributionRuleType, findMatchingDistributionRulesForRank } from "@/lib/domain/contests/distribution-rules";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 
@@ -19,7 +19,7 @@ type ResolvedComponent =
 type RuleLike = {
   id: string;
   priority: number;
-  ruleType: string;
+  ruleType: DistributionRuleType;
   rankFrom: number | null;
   rankTo: number | null;
   topN: number | null;

@@ -15,15 +15,15 @@ type CapacityTx = Prisma.TransactionClient | typeof prisma;
 type ContestDraftForCapacity = {
   id: string;
   rewardPolicy: {
-    bundles: Array<{
+    bundles: ReadonlyArray<{
       id: string;
-      components: Array<{
+      components: ReadonlyArray<{
         type: ContestRewardType;
         packDefinitionId: string | null;
         packQuantity: number | null;
       }>;
     }>;
-    distributionRules: Array<{
+    distributionRules: ReadonlyArray<{
       id: string;
       bundleId: string;
       priority: number;
