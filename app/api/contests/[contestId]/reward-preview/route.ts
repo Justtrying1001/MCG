@@ -2,15 +2,11 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_request: Request, { params }: { params: { contestId: string } }) {
   try {
-    const user = await getSessionUser();
-    if (!user) return new NextResponse("Unauthorized", { status: 401 });
-
     const policy = await prisma.contestRewardPolicy.findUnique({
       where: { contestId: params.contestId },
       include: {

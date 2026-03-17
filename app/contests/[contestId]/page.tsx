@@ -120,6 +120,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[] | null>(null);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
   // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
   const slotsInitializedRef = useRef(false);
@@ -129,73 +131,106 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const rosterSize = rule?.maxRosterSize ?? 5;
 
   const loadAll = useCallback(async () => {
-    const [detailRes, rankingRes, optionsRes, rewardsRes] = await Promise.all([
-      fetch(`/api/contests/${params.contestId}`, { cache: "no-store" }),
-      fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" }),
-      fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }),
-      fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" }),
-    ]);
+    setIsLoadingPage(true);
+    setHasAttemptedLoad(true);
+    setError("");
 
-    let detailPayload: ContestDetail | null = null;
-    let rankingPayload: RankingPayload | null = null;
+    try {
+      const detailRes = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
 
-    if (detailRes.ok) {
-      detailPayload = (await detailRes.json()) as ContestDetail;
-      setDetail(detailPayload);
-      // Only initialize slots once per page mount — never overwrite user's in-progress selection
-      if (!slotsInitializedRef.current) {
-        slotsInitializedRef.current = true;
-        const nextRosterSize = detailPayload.contest.rules?.[0]?.maxRosterSize ?? 5;
-        const roster = detailPayload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
-        if (roster.length > 0) {
-          setLineupSlots(toSlots(roster, nextRosterSize));
-          try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
-        } else {
-          try {
-            const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
-            if (localDraft) {
-              const parsed = JSON.parse(localDraft) as Array<string | null>;
-              setLineupSlots(toSlots(parsed.filter(Boolean) as string[], nextRosterSize));
-            } else {
+      let detailPayload: ContestDetail | null = null;
+      let rankingPayload: RankingPayload | null = null;
+
+      if (detailRes.ok) {
+        detailPayload = (await detailRes.json()) as ContestDetail;
+        setDetail(detailPayload);
+        // Only initialize slots once per page mount — never overwrite user's in-progress selection
+        if (!slotsInitializedRef.current) {
+          slotsInitializedRef.current = true;
+          const nextRosterSize = detailPayload.contest.rules?.[0]?.maxRosterSize ?? 5;
+          const roster = detailPayload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
+          if (roster.length > 0) {
+            setLineupSlots(toSlots(roster, nextRosterSize));
+            try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
+          } else {
+            try {
+              const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
+              if (localDraft) {
+                const parsed = JSON.parse(localDraft) as Array<string | null>;
+                setLineupSlots(toSlots(parsed.filter(Boolean) as string[], nextRosterSize));
+              } else {
+                setLineupSlots(toSlots([], nextRosterSize));
+              }
+            } catch {
               setLineupSlots(toSlots([], nextRosterSize));
             }
-          } catch {
-            setLineupSlots(toSlots([], nextRosterSize));
           }
         }
+      } else {
+        const payload = (await detailRes.json().catch(() => null)) as { error?: string } | null;
+        setError(payload?.error ?? "Contest inaccessible ou en cours de préparation.");
+        setDetail(null);
+        setRanking(null);
+        setOptions([]);
+        setRewards(null);
+        setScoreBreakdown(null);
+        return;
       }
-    } else {
-      setError("Unable to load contest details.");
+
+      const rankingReq = fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" });
+      const rewardsReq = fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" });
+      const optionsReq = me
+        ? fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" })
+        : Promise.resolve<Response | null>(null);
+
+      const [rankingRes, rewardsRes, optionsRes] = await Promise.all([rankingReq, rewardsReq, optionsReq]);
+
+      if (rankingRes.ok) {
+        rankingPayload = (await rankingRes.json()) as RankingPayload;
+        setRanking(rankingPayload);
+      } else {
+        setRanking(null);
+      }
+      if (rewardsRes.ok) {
+        setRewards((await rewardsRes.json()) as RewardPayload);
+      } else {
+        setRewards(null);
+      }
+      if (optionsRes?.ok) {
+        const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
+        setOptions(Array.isArray(payload?.options) ? payload.options : []);
+      } else {
+        setOptions([]);
+      }
+
+      const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && detailPayload.contest.status === "SETTLED" && me);
+      if (shouldLoadBreakdown) {
+        const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
+        if (breakdownRes.ok) {
+          const payload = (await breakdownRes.json().catch(() => null)) as { rows?: ScoreBreakdownRow[] } | null;
+          setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
+        } else {
+          setScoreBreakdown([]);
+        }
+      } else {
+        setScoreBreakdown(null);
+      }
+    } catch {
       setDetail(null);
-    }
-
-    if (rankingRes.ok) {
-      rankingPayload = (await rankingRes.json()) as RankingPayload;
-      setRanking(rankingPayload);
-    }
-    if (rewardsRes.ok) setRewards((await rewardsRes.json()) as RewardPayload);
-    if (optionsRes.ok) {
-      const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
-      setOptions(Array.isArray(payload?.options) ? payload.options : []);
-    }
-
-    const shouldLoadBreakdown = Boolean(detailPayload?.userEntry && detailPayload.contest.status === "SETTLED");
-    if (shouldLoadBreakdown) {
-      const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
-      if (breakdownRes.ok) {
-        const payload = (await breakdownRes.json().catch(() => null)) as { rows?: ScoreBreakdownRow[] } | null;
-        setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
-      }
-    } else {
+      setRanking(null);
+      setRewards(null);
+      setOptions([]);
       setScoreBreakdown(null);
+      setError("Contest inaccessible ou en cours de préparation.");
+    } finally {
+      setIsLoadingPage(false);
     }
-  }, [params.contestId]);
+  }, [me, params.contestId]);
 
   useEffect(() => {
-    if (loading || !me) return;
-    setError("");
+    if (loading) return;
     void loadAll();
-  }, [loading, me, loadAll]);
+  }, [loading, loadAll]);
 
   useEffect(() => {
     if (!builderFlash) return;
@@ -221,7 +256,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, []);
 
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const canManageLineup = contestData?.status === "OPEN";
+  const canManageLineup = contestData?.status === "OPEN" && Boolean(me);
   const hasEntry = Boolean(detail?.userEntry);
 
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
@@ -365,7 +400,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   };
 
   // ── Skeleton ────────────────────────────────────────────────────────────────
-  if (!detail) {
+  if (!hasAttemptedLoad || isLoadingPage || (loading && !detail)) {
     return (
       <SiteShell>
         <style>{CSS}</style>
@@ -376,6 +411,18 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             <div className="cpd-skeleton-main" />
             <div className="cpd-skeleton-side" />
           </div>
+        </div>
+      </SiteShell>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <SiteShell>
+        <style>{CSS}</style>
+        <div className="cpd-empty-state">
+          <h1>Contest inaccessible ou en cours de préparation</h1>
+          <p>Ce contest n&apos;est pas disponible pour le moment. Réessayez dans quelques instants.</p>
         </div>
       </SiteShell>
     );
@@ -513,7 +560,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 </div>
                 <div className="cpd-lineup-actions">
                   <span className="cpd-block-meta">{selectedIds.length}/{rosterSize} slots filled</span>
-                  {isOpen && (
+                  {isOpen && me && (
                     <button
                       type="button"
                       className="cpd-btn-gold"
@@ -586,6 +633,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
               {(isLocked || isLive) && (
                 <p className="cpd-lineup-locked-note">🔒 Lineup locked — no changes allowed</p>
+              )}
+
+              {!me && isOpen && (
+                <p className="cpd-lineup-locked-note">Connectez-vous pour créer et soumettre votre lineup.</p>
               )}
 
               {detail.userEntry?.status === "SUBMITTED" && !builderFlash && (
