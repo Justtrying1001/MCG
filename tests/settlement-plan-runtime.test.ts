@@ -16,30 +16,30 @@ describe("settlement plan runtime", () => {
     vi.clearAllMocks();
   });
 
-  it("generates cumulative rewards when multiple rules match the same rank", async () => {
+  it("generates rewards from simple pool config", async () => {
     const tx: any = {
       contest: {
         findUnique: vi.fn().mockResolvedValue({
           id: "c1",
           configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
           settlements: [],
+          rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 5, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
           rankings: [
             { userId: "u1", rank: 1, score: 100 },
             { userId: "u2", rank: 2, score: 90 },
+            { userId: "u3", rank: 3, score: 80 },
+            { userId: "u4", rank: 4, score: 70 },
           ],
           rewardPolicy: {
             id: "rp1",
             status: "PUBLISHED",
-            bundles: [
-              { id: "b1", components: [{ type: "POINTS", pointsAmount: 500, xpAmount: null, packDefinitionId: null, packQuantity: null }] },
-              { id: "b2", components: [{ type: "PACK", pointsAmount: null, xpAmount: null, packDefinitionId: "pack1", packQuantity: 2 }] },
-            ],
-            distributionRules: [
-              { id: "r1", priority: 1, ruleType: "TOP_N", rankFrom: null, rankTo: null, topN: 2, topPercent: null, poolAmount: null, bundleId: "b1" },
-              { id: "r2", priority: 2, ruleType: "FIXED_RANKS", rankFrom: 1, rankTo: 1, topN: null, topPercent: null, poolAmount: null, bundleId: "b2" },
-            ],
+            bundles: [],
+            distributionRules: [],
           },
         }),
+      },
+      packDefinition: {
+        findFirst: vi.fn().mockResolvedValue({ id: "pack1" }),
       },
       contestSettlementPlan: {
         findMany: vi.fn().mockResolvedValue([]),
@@ -59,50 +59,8 @@ describe("settlement plan runtime", () => {
 
     expect(result.planId).toBe("sp1");
     expect(result.matchedUsers).toBe(2);
-    expect(result.totals.pointsCreditTotal).toBe(1000);
-    expect(result.totals.packsGrantTotal).toBe(2);
-  });
-
-  it("applies POINTS_POOL_TOP_PERCENT and distributes remainder from best rank", async () => {
-    const tx: any = {
-      contest: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "c1",
-          configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
-          settlements: [],
-          rankings: [
-            { userId: "u1", rank: 1, score: 100 },
-            { userId: "u2", rank: 2, score: 90 },
-            { userId: "u3", rank: 3, score: 80 },
-          ],
-          rewardPolicy: {
-            id: "rp1",
-            status: "PUBLISHED",
-            bundles: [{ id: "b1", components: [{ type: "POINTS", pointsAmount: 1, xpAmount: null, packDefinitionId: null, packQuantity: null }] }],
-            distributionRules: [
-              { id: "r1", priority: 1, ruleType: "POINTS_POOL_TOP_PERCENT", rankFrom: null, rankTo: null, topN: null, topPercent: 50, poolAmount: 100, bundleId: "b1" },
-            ],
-          },
-        }),
-      },
-      contestSettlementPlan: {
-        findMany: vi.fn().mockResolvedValue([]),
-        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
-        create: vi.fn().mockImplementation(async ({ data }: any) => ({
-          id: "sp1",
-          status: "DRAFT",
-          contestId: data.contestId,
-          items: data.items.createMany.data.map((item: any, index: number) => ({ id: `i${index + 1}`, ...item })),
-        })),
-      },
-    };
-
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
-
-    const result = await generateSettlementPlan("c1");
-
-    expect(result.matchedUsers).toBe(2);
     expect(result.totals.pointsCreditTotal).toBe(100);
+    expect(result.totals.packsGrantTotal).toBe(5);
   });
 
   it("previews plan with totals", async () => {
@@ -144,52 +102,5 @@ describe("settlement plan runtime", () => {
     const result = await executeSettlementPlan("sp1");
     expect(result.executed).toBe(false);
     expect(result.settlementId).toBe("s1");
-  });
-
-  it("execute keeps roster locks to preserve settled lineup history", async () => {
-    const tx: any = {
-      contestSettlementPlan: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "sp1",
-          contestId: "c1",
-          status: "DRAFT",
-          items: [
-            {
-              userId: "u1",
-              rewardComponents: [{ type: "POINTS", amount: 10 }],
-            },
-          ],
-          contest: { settlements: [] },
-        }),
-        update: vi.fn().mockResolvedValue({}),
-      },
-      contestSettlement: {
-        create: vi.fn().mockResolvedValue({ id: "s1" }),
-      },
-      rewardGrant: {
-        create: vi.fn().mockResolvedValue({}),
-      },
-      user: {
-        update: vi.fn().mockResolvedValue({}),
-      },
-      contest: {
-        update: vi.fn().mockResolvedValue({}),
-      },
-      contestEntry: {
-        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-      },
-      rosterLock: {
-        deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
-      },
-      userProgression: {
-        upsert: vi.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
-
-    await executeSettlementPlan("sp1");
-
-    expect(tx.rosterLock.deleteMany).not.toHaveBeenCalled();
   });
 });

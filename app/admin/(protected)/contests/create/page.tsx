@@ -5,16 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
-import {
-  createRewardRuleDraft,
-  describeRewardRule,
-  toContestRewardPayload,
-  type RewardRuleDraft,
-} from "@/lib/admin/contest-reward-builder";
 
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
-type RewardPackDefinition = { id: string; code: string; source: "SALE" | "REWARD"; plannedPackCount: number | null };
-
 type RewardCapacityRow = {
   packDefinitionId: string;
   packCode: string | null;
@@ -28,28 +20,6 @@ type RewardCapacityCheck = {
   verdict: "OK" | "INSUFFICIENT_SUPPLY" | "INVALID_REWARD_CONFIG" | "UNKNOWN_PACK" | "REWARD_POOL_MISSING";
   isPublishable: boolean;
   rows: RewardCapacityRow[];
-};
-
-type ContestRewardComponentDto = {
-  type: "POINTS" | "PACK" | "XP";
-  pointsAmount?: number | null;
-  packDefinitionId?: string | null;
-  packQuantity?: number | null;
-};
-
-type ContestRewardBundleDto = {
-  id: string;
-  components: ContestRewardComponentDto[];
-};
-
-type ContestDistributionRuleDto = {
-  ruleType: string;
-  rankFrom: number | null;
-  rankTo: number | null;
-  topN: number | null;
-  topPercent: number | null;
-  poolAmount?: number | null;
-  bundleId: string;
 };
 
 const BUILDER_STEPS = [
@@ -68,7 +38,6 @@ export default function AdminContestBuilderPage() {
   const [message, setMessage] = useState("");
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
-  const [rewardPackDefinitions, setRewardPackDefinitions] = useState<RewardPackDefinition[]>([]);
   const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
 
   const [autoCode, setAutoCode] = useState(true);
@@ -91,17 +60,10 @@ export default function AdminContestBuilderPage() {
   const [participationNotes, setParticipationNotes] = useState("");
   const [optionalClarifications, setOptionalClarifications] = useState("");
 
-  const [pointsPoolEnabled, setPointsPoolEnabled] = useState(true);
-  const [pointsPoolTopPercent, setPointsPoolTopPercent] = useState("25");
   const [pointsPoolAmount, setPointsPoolAmount] = useState("15000");
-
-  const [packDefinitionId, setPackDefinitionId] = useState("");
-  const [rank1PackQty, setRank1PackQty] = useState("3");
-  const [rank2PackQty, setRank2PackQty] = useState("2");
-  const [rank3PackQty, setRank3PackQty] = useState("1");
-
-  const [bonusTopN, setBonusTopN] = useState("10");
-  const [bonusPoints, setBonusPoints] = useState("500");
+  const [packPoolAmount, setPackPoolAmount] = useState("100");
+  const [rewardedTopPercent, setRewardedTopPercent] = useState("25");
+  const [distributionProfile, setDistributionProfile] = useState<"balanced" | "top-heavy" | "very-top-heavy">("balanced");
 
   useEffect(() => {
     void (async () => {
@@ -112,14 +74,6 @@ export default function AdminContestBuilderPage() {
     })();
   }, []);
 
-  useEffect(() => {
-    void (async () => {
-      const res = await fetch("/api/internal/pack-definitions", { cache: "no-store" });
-      if (!res.ok) return;
-      const payload = (await res.json()) as { packDefinitions: RewardPackDefinition[] };
-      setRewardPackDefinitions(payload.packDefinitions ?? []);
-    })();
-  }, []);
 
   useEffect(() => {
     if (!contestId) return;
@@ -150,44 +104,12 @@ export default function AdminContestBuilderPage() {
       setParticipationNotes(participation);
       setOptionalClarifications(clarifications);
 
-      const distributionRules = (contest.rewardPolicy?.distributionRules ?? []) as ContestDistributionRuleDto[];
-      const bundles = (contest.rewardPolicy?.bundles ?? []) as ContestRewardBundleDto[];
-      const bundleById = new Map<string, ContestRewardBundleDto>(bundles.map((bundle) => [bundle.id, bundle]));
-
-      const poolRule = distributionRules.find((item) => item.ruleType === "POINTS_POOL_TOP_PERCENT");
-      if (poolRule) {
-        setPointsPoolEnabled(true);
-        setPointsPoolTopPercent(String(Math.floor(poolRule.topPercent ?? 25)));
-        setPointsPoolAmount(String(Math.floor(poolRule.poolAmount ?? 15000)));
-      }
-
-      const packRows: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
-      let derivedPackDefinitionId = "";
-      for (const distRule of distributionRules) {
-        if (distRule.ruleType !== "FIXED_RANKS" || distRule.rankFrom !== distRule.rankTo) continue;
-        const bundle = bundleById.get(distRule.bundleId);
-        const packComponent = bundle?.components?.find((component) => component.type === "PACK");
-        if (!packComponent) continue;
-        if (distRule.rankFrom !== null && [1, 2, 3].includes(distRule.rankFrom)) {
-          packRows[distRule.rankFrom] = packComponent.packQuantity ?? 0;
-          if (!derivedPackDefinitionId) derivedPackDefinitionId = packComponent.packDefinitionId ?? "";
-        }
-      }
-
-      if (derivedPackDefinitionId) setPackDefinitionId(derivedPackDefinitionId);
-
-      if (packRows[1] > 0) setRank1PackQty(String(packRows[1]));
-      if (packRows[2] > 0) setRank2PackQty(String(packRows[2]));
-      if (packRows[3] > 0) setRank3PackQty(String(packRows[3]));
-
-      const bonusRule = distributionRules.find((item) => item.ruleType === "TOP_N" && item.topN);
-      if (bonusRule) {
-        const bundle = bundleById.get(bonusRule.bundleId);
-        const pointsComponent = bundle?.components?.find((component) => component.type === "POINTS");
-        if (pointsComponent?.pointsAmount) {
-          setBonusTopN(String(bonusRule.topN));
-          setBonusPoints(String(pointsComponent.pointsAmount));
-        }
+      const rewardConfig = ruleConfig?.rewardConfig;
+      if (rewardConfig && typeof rewardConfig === "object") {
+        setPointsPoolAmount(String((rewardConfig as any).pointsPool ?? 15000));
+        setPackPoolAmount(String((rewardConfig as any).packPool ?? 100));
+        setRewardedTopPercent(String((rewardConfig as any).rewardedTopPercent ?? 25));
+        setDistributionProfile(((rewardConfig as any).distributionProfile as "balanced" | "top-heavy" | "very-top-heavy") ?? "balanced");
       }
 
       setAutoCode(false);
@@ -201,61 +123,6 @@ export default function AdminContestBuilderPage() {
     return new Date(new Date(startsAt).getTime() + parsedDuration * 60 * 60 * 1000).toISOString();
   }, [durationHours, startsAt]);
 
-  const rewardDraftRules = useMemo<RewardRuleDraft[]>(() => {
-    const generated: RewardRuleDraft[] = [];
-
-    const poolPercent = Number(pointsPoolTopPercent);
-    const poolAmount = Number(pointsPoolAmount);
-    if (pointsPoolEnabled && Number.isFinite(poolPercent) && Number.isFinite(poolAmount) && poolPercent > 0 && poolAmount > 0) {
-      generated.push(createRewardRuleDraft({
-        id: "pool-top-percent",
-        label: "Points pool",
-        rewardType: "POINTS",
-        mode: "POOL",
-        distributionType: "TOP_PERCENT",
-        distributionValue: Math.floor(poolPercent),
-        poolAmount: Math.floor(poolAmount),
-      }));
-    }
-
-    const packRanks = [
-      { rank: 1, qty: Number(rank1PackQty) },
-      { rank: 2, qty: Number(rank2PackQty) },
-      { rank: 3, qty: Number(rank3PackQty) },
-    ];
-
-    for (const row of packRanks) {
-      if (!packDefinitionId || !Number.isFinite(row.qty) || row.qty <= 0) continue;
-      generated.push(createRewardRuleDraft({
-        id: `pack-rank-${row.rank}`,
-        label: `Rank ${row.rank} packs`,
-        rewardType: "PACK",
-        mode: "FIXED",
-        amount: Math.floor(row.qty),
-        packDefinitionId,
-        distributionType: "FIXED_RANKS",
-        distributionValue: row.rank,
-      }));
-    }
-
-    const bonusN = Number(bonusTopN);
-    const bonus = Number(bonusPoints);
-    if (Number.isFinite(bonusN) && Number.isFinite(bonus) && bonusN > 0 && bonus > 0) {
-      generated.push(createRewardRuleDraft({
-        id: "bonus-top-n",
-        label: `Top ${Math.floor(bonusN)} bonus`,
-        rewardType: "POINTS",
-        mode: "FIXED",
-        amount: Math.floor(bonus),
-        distributionType: "TOP_N",
-        distributionValue: Math.floor(bonusN),
-      }));
-    }
-
-    return generated;
-  }, [bonusPoints, bonusTopN, packDefinitionId, pointsPoolAmount, pointsPoolEnabled, pointsPoolTopPercent, rank1PackQty, rank2PackQty, rank3PackQty]);
-
-  const rewardPayload = useMemo(() => toContestRewardPayload(rewardDraftRules), [rewardDraftRules]);
 
   const payload = useMemo(() => {
     const parsedEntryFee = Number(entryFeeAmount);
@@ -276,15 +143,21 @@ export default function AdminContestBuilderPage() {
       entryFeeEnabled,
       entryFeeCurrency: "POINTS",
       entryFeeAmount: entryFeeEnabled && Number.isInteger(parsedEntryFee) ? parsedEntryFee : null,
-      rewardBundles: rewardPayload.rewardBundles,
-      distributionRules: rewardPayload.distributionRules,
+      rewardConfig: {
+        pointsPool: Number(pointsPoolAmount) || 0,
+        packPool: Number(packPoolAmount) || 0,
+        rewardedTopPercent: Number(rewardedTopPercent) || 0,
+        distributionProfile,
+      },
+      rewardBundles: [],
+      distributionRules: [],
       ruleConfig: {
         rulesText: rulesText.trim() || null,
         infoNotes: [participationNotes.trim(), optionalClarifications.trim()].filter(Boolean).join("\n\n---\n\n") || null,
         coverImageUrl: coverImageUrl.trim() || null,
       },
     };
-  }, [autoCode, cardSetId, code, coverImageUrl, description, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, maxRosterSize, openAt, optionalClarifications, participationNotes, rewardPayload.distributionRules, rewardPayload.rewardBundles, rulesText, startsAt, title]);
+  }, [autoCode, cardSetId, code, coverImageUrl, description, distributionProfile, eligibilityMode, endsAt, entryFeeAmount, entryFeeEnabled, maxRosterSize, openAt, optionalClarifications, packPoolAmount, participationNotes, pointsPoolAmount, rewardedTopPercent, rulesText, startsAt, title]);
 
   const issues = useMemo(() => {
     const arr: string[] = [];
@@ -299,18 +172,18 @@ export default function AdminContestBuilderPage() {
       arr.push("Entry fee amount must be a positive integer when enabled.");
     }
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set when eligibility is restricted.");
-    if (payload.rewardBundles.length === 0) arr.push("Add at least one valid reward rule.");
-    for (const invalidRule of rewardPayload.invalidRules) arr.push(invalidRule.message);
-    for (const overlapIssue of rewardPayload.overlapIssues) arr.push(overlapIssue.message);
+    if (!Number.isInteger(payload.rewardConfig.pointsPool) || payload.rewardConfig.pointsPool <= 0) arr.push("Points pool must be a positive integer.");
+    if (!Number.isInteger(payload.rewardConfig.packPool) || payload.rewardConfig.packPool <= 0) arr.push("Pack pool must be a positive integer.");
+    if (payload.rewardConfig.rewardedTopPercent < 1 || payload.rewardConfig.rewardedTopPercent > 100) arr.push("Rewarded top % must be between 1 and 100.");
     return [...new Set(arr)];
-  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules, rewardPayload.overlapIssues]);
+  }, [autoCode, eligibilityMode, entryFeeEnabled, payload]);
 
   const checklist = useMemo(() => {
     return [
       { label: "Contest name", done: Boolean(payload.title) },
       { label: "Schedule complete", done: Boolean(payload.openAt && payload.liveAt && payload.endsAt) },
       { label: "Entry rules valid", done: !(entryFeeEnabled && issues.some((issue) => issue.includes("Entry fee"))) },
-      { label: "Rewards configured", done: payload.rewardBundles.length > 0 },
+      { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 && payload.rewardConfig.packPool > 0 },
       { label: "No blocking issue", done: issues.length === 0 },
     ];
   }, [entryFeeEnabled, issues, payload]);
@@ -496,44 +369,24 @@ export default function AdminContestBuilderPage() {
 
             <div className="contest-builder-v2-entry-grid">
               <article className="contest-builder-v2-entry-card">
-                <p className="contest-builder-v2-schedule-title">Points Pool</p>
-                <label className="contest-inline-note"><input type="checkbox" checked={pointsPoolEnabled} onChange={(e) => setPointsPoolEnabled(e.target.checked)} /> Enable points pool</label>
-                <input className="input" type="number" min={1} disabled={!pointsPoolEnabled} value={pointsPoolTopPercent} onChange={(e) => setPointsPoolTopPercent(e.target.value)} placeholder="Top % to share" />
-                <input className="input" type="number" min={1} disabled={!pointsPoolEnabled} value={pointsPoolAmount} onChange={(e) => setPointsPoolAmount(e.target.value)} placeholder="Pool amount" />
-                <p className="contest-inline-note">Top % winners share the pool. Remainder points are assigned from best rank downward.</p>
+                <p className="contest-builder-v2-schedule-title">Points pool</p>
+                <input className="input" type="number" min={1} value={pointsPoolAmount} onChange={(e) => setPointsPoolAmount(e.target.value)} placeholder="Total points" />
               </article>
 
               <article className="contest-builder-v2-entry-card">
-                <p className="contest-builder-v2-schedule-title">Pack Rewards (Top 1/2/3)</p>
-                <select className="input" value={packDefinitionId} onChange={(e) => setPackDefinitionId(e.target.value)}>
-                  <option value="">Select reward pack</option>
-                  {rewardPackDefinitions.map((pack) => <option key={pack.id} value={pack.id}>{pack.code}</option>)}
+                <p className="contest-builder-v2-schedule-title">Pack pool</p>
+                <input className="input" type="number" min={1} value={packPoolAmount} onChange={(e) => setPackPoolAmount(e.target.value)} placeholder="Total packs" />
+              </article>
+
+              <article className="contest-builder-v2-entry-card">
+                <p className="contest-builder-v2-schedule-title">Rewarded top %</p>
+                <input className="input" type="number" min={1} max={100} value={rewardedTopPercent} onChange={(e) => setRewardedTopPercent(e.target.value)} placeholder="1-100" />
+                <select className="input" value={distributionProfile} onChange={(e) => setDistributionProfile(e.target.value as "balanced" | "top-heavy" | "very-top-heavy") }>
+                  <option value="balanced">Balanced</option>
+                  <option value="top-heavy">Top-heavy</option>
+                  <option value="very-top-heavy">Very top-heavy</option>
                 </select>
-                <input className="input" type="number" min={0} value={rank1PackQty} onChange={(e) => setRank1PackQty(e.target.value)} placeholder="Rank 1 packs" />
-                <input className="input" type="number" min={0} value={rank2PackQty} onChange={(e) => setRank2PackQty(e.target.value)} placeholder="Rank 2 packs" />
-                <input className="input" type="number" min={0} value={rank3PackQty} onChange={(e) => setRank3PackQty(e.target.value)} placeholder="Rank 3 packs" />
               </article>
-
-              <article className="contest-builder-v2-entry-card">
-                <p className="contest-builder-v2-schedule-title">Points Bonus</p>
-                <input className="input" type="number" min={1} value={bonusTopN} onChange={(e) => setBonusTopN(e.target.value)} placeholder="Top N" />
-                <input className="input" type="number" min={1} value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="Bonus points per winner" />
-                <p className="contest-inline-note">Each qualifying rank receives the same bonus points.</p>
-              </article>
-            </div>
-
-            {rewardPayload.invalidRules.length > 0 ? (
-              <div className="admin-callout danger">
-                <p className="contest-inline-note"><strong>Reward configuration issues</strong></p>
-                {rewardPayload.invalidRules.map((rule) => <p key={rule.id} className="contest-inline-note">• {rule.message}</p>)}
-              </div>
-            ) : null}
-
-            <div className="admin-callout">
-              <p className="contest-inline-note"><strong>Generated rules preview</strong></p>
-              {rewardDraftRules.length === 0
-                ? <p className="contest-inline-note">No generated reward rule yet.</p>
-                : rewardDraftRules.map((rule) => <p key={rule.id} className="contest-inline-note">• {describeRewardRule(rule)}</p>)}
             </div>
           </section>
 
@@ -558,7 +411,7 @@ export default function AdminContestBuilderPage() {
                 <p className="contest-inline-note"><strong>Name:</strong> {payload.title || "—"}</p>
                 <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Start/Lock {payload.liveAt || "—"} · End {payload.endsAt || "—"}</p>
                 <p className="contest-inline-note"><strong>Entry:</strong> Team size {payload.maxRosterSize} · Entry fee {entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Disabled"}</p>
-                <p className="contest-inline-note"><strong>Rewards rules:</strong> {payload.rewardBundles.length}</p>
+                <p className="contest-inline-note"><strong>Rewards model:</strong> Simple pool</p>
               </div>
 
               {issues.length > 0 ? (
@@ -591,7 +444,7 @@ export default function AdminContestBuilderPage() {
             <p className="contest-inline-note"><strong>End:</strong> {payload.endsAt ? new Date(payload.endsAt).toLocaleString() : "—"}</p>
             <p className="contest-inline-note"><strong>Team size:</strong> {payload.maxRosterSize}</p>
             <p className="contest-inline-note"><strong>Entry fee:</strong> {entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Disabled"}</p>
-            <p className="contest-inline-note"><strong>Rewards rules:</strong> {payload.rewardBundles.length}</p>
+            <p className="contest-inline-note"><strong>Rewards model:</strong> Simple pool</p>
           </div>
 
           <div className="contest-builder-v2-summary-card">

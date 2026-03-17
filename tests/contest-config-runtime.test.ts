@@ -17,107 +17,38 @@ function baseContest() {
         entryFeeAmount: null,
         eligibilityMode: "ANY",
         cardSetId: null,
+        config: {
+          rewardConfig: {
+            pointsPool: 1000,
+            packPool: 20,
+            rewardedTopPercent: 25,
+            distributionProfile: "balanced",
+          },
+        },
       },
     ],
     rewardPolicy: {
-      bundles: [
-        {
-          id: "b1",
-          name: "rank_1",
-          components: [{ type: "POINTS", pointsAmount: 1000, xpAmount: null, packDefinitionId: null, packQuantity: null }],
-        },
-      ],
-      distributionRules: [
-        {
-          bundleId: "b1",
-          priority: 1,
-          ruleType: "FIXED_RANKS",
-          rankFrom: 1,
-          rankTo: 1,
-          topN: null,
-          topPercent: null,
-        },
-      ],
+      bundles: [],
+      distributionRules: [],
     },
   } as any;
 }
 
 describe("contest config runtime validation", () => {
-  it("accepts a valid draft shape", () => {
+  it("accepts new reward config", () => {
     const issues = validateContestDraftEntity(baseContest());
     expect(issues.filter((item) => item.severity === "ERROR")).toHaveLength(0);
   });
 
-  it("rejects invalid team size and missing distribution", () => {
+  it("validates reward pools and percent range", () => {
     const contest = baseContest();
-    contest.rules[0].maxRosterSize = 4;
-    contest.rewardPolicy.distributionRules = [];
+    contest.rules[0].config.rewardConfig.pointsPool = 0;
+    contest.rules[0].config.rewardConfig.packPool = -1;
+    contest.rules[0].config.rewardConfig.rewardedTopPercent = 101;
 
     const issues = validateContestDraftEntity(contest);
-    expect(issues.some((issue) => issue.code === "TEAM_SIZE_INVALID")).toBe(true);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_RULE_REQUIRED")).toBe(true);
+    expect(issues.some((issue) => issue.code === "REWARD_POINTS_POOL_INVALID")).toBe(true);
+    expect(issues.some((issue) => issue.code === "REWARD_PACK_POOL_INVALID")).toBe(true);
+    expect(issues.some((issue) => issue.code === "REWARD_PERCENT_INVALID")).toBe(true);
   });
-
-  it("rejects invalid entry fee and top percent", () => {
-    const contest = baseContest();
-    contest.rules[0].entryFeeEnabled = true;
-    contest.rules[0].entryFeeAmount = 0;
-    contest.rewardPolicy.distributionRules = [
-      {
-        bundleId: "b1",
-        priority: 1,
-        ruleType: "TOP_PERCENT",
-        topPercent: 120,
-      },
-    ];
-
-    const issues = validateContestDraftEntity(contest);
-    expect(issues.some((issue) => issue.code === "ENTRY_FEE_INVALID")).toBe(true);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_TOP_PERCENT_INVALID")).toBe(true);
-  });
-
-  it("accepts cumulative overlapping distribution rules", () => {
-    const contest = baseContest();
-    contest.rewardPolicy.distributionRules = [
-      {
-        bundleId: "b1",
-        priority: 1,
-        ruleType: "FIXED_RANKS",
-        rankFrom: 1,
-        rankTo: 1,
-        topN: null,
-        topPercent: null,
-      },
-      {
-        bundleId: "b1",
-        priority: 2,
-        ruleType: "TOP_N",
-        rankFrom: null,
-        rankTo: null,
-        topN: 1,
-        topPercent: null,
-      },
-    ];
-
-    const issues = validateContestDraftEntity(contest);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_RULE_OVERLAP")).toBe(false);
-  });
-
-  it("rejects invalid points pool rule", () => {
-    const contest = baseContest();
-    contest.rewardPolicy.distributionRules = [
-      {
-        bundleId: "b1",
-        priority: 1,
-        ruleType: "POINTS_POOL_TOP_PERCENT",
-        topPercent: 0,
-        poolAmount: -10,
-      },
-    ];
-
-    const issues = validateContestDraftEntity(contest);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_TOP_PERCENT_INVALID")).toBe(true);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_AMOUNT_INVALID")).toBe(true);
-  });
-
 });

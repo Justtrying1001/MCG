@@ -43,6 +43,12 @@ const patchSchema = z.object({
     topPercent: z.number().optional(),
     poolAmount: z.number().int().optional(),
   })).optional(),
+  rewardConfig: z.object({
+    pointsPool: z.number().int().positive(),
+    packPool: z.number().int().positive(),
+    rewardedTopPercent: z.number().min(1).max(100),
+    distributionProfile: z.enum(["balanced", "top-heavy", "very-top-heavy"]),
+  }).optional(),
 }).refine((value) => Object.keys(value).length > 0, { message: "Patch payload cannot be empty" }).superRefine((value, ctx) => {
   const asDate = (raw: string | null | undefined) => {
     if (!raw) return null;
