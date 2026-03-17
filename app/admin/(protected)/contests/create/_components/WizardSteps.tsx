@@ -123,37 +123,74 @@ export function ContestEntryRulesStep(props: {
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
 }) {
   const { form, cardSets, setField } = props;
+  const selectedCardSet = cardSets.find((set) => set.id === form.cardSetId);
+
   return (
     <section className="admin-panel contest-builder-v2-section">
-      <header><h2 className="admin-section-title">Step 3 — Entry & Rules</h2></header>
-      <div className="contest-builder-v2-entry-grid">
-        <article className="contest-builder-v2-entry-card">
-          <p className="contest-builder-v2-schedule-title">Entry fee</p>
-          <label className="contest-inline-note"><input type="checkbox" checked={form.entryFeeEnabled} onChange={(e) => setField("entryFeeEnabled", e.target.checked)} /> Enable entry fee</label>
-          <input className="input" type="number" min={1} disabled={!form.entryFeeEnabled} value={form.entryFeeAmount} onChange={(e) => setField("entryFeeAmount", e.target.value)} />
-        </article>
-        <article className="contest-builder-v2-entry-card">
-          <p className="contest-builder-v2-schedule-title">Roster size</p>
-          <select className="input" value={form.maxRosterSize} onChange={(e) => setField("maxRosterSize", e.target.value)}>
-            <option value="3">3 cards</option><option value="5">5 cards</option><option value="7">7 cards</option>
-          </select>
-        </article>
-        <article className="contest-builder-v2-entry-card">
-          <p className="contest-builder-v2-schedule-title">Eligibility</p>
-          <select className="input" value={form.eligibilityMode} onChange={(e) => setField("eligibilityMode", e.target.value as ContestFormState["eligibilityMode"])}>
-            <option value="ANY">Any eligible card</option><option value="CARD_SET_ONLY">Specific card set only</option>
-          </select>
-          {form.eligibilityMode === "CARD_SET_ONLY" ? (
-            <select className="input" value={form.cardSetId} onChange={(e) => setField("cardSetId", e.target.value)}>
-              <option value="">Select card set</option>
-              {cardSets.map((set) => <option key={set.id} value={set.id}>{set.displayName} ({set.code})</option>)}
+      <header>
+        <h2 className="admin-section-title">Step 3 — Entry & Rules</h2>
+        <p className="contest-inline-note">Define who can enter, what lineup they must submit, and which participation rules players will see.</p>
+      </header>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>A. Lineup requirements</strong></p>
+        <div className="contest-builder-v2-entry-grid" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Roster size</p>
+            <p className="contest-inline-note">Choose how many cards every lineup must include.</p>
+            <select className="input" value={form.maxRosterSize} onChange={(e) => setField("maxRosterSize", e.target.value)}>
+              <option value="3">3 cards</option><option value="5">5 cards</option><option value="7">7 cards</option>
             </select>
-          ) : null}
-        </article>
-      </div>
-      <textarea className="input" placeholder="Rules shown to players" value={form.rulesText} onChange={(e) => setField("rulesText", e.target.value)} />
-      <textarea className="input" placeholder="Participation notes" value={form.participationNotes} onChange={(e) => setField("participationNotes", e.target.value)} />
-      <textarea className="input" placeholder="Optional clarifications" value={form.optionalClarifications} onChange={(e) => setField("optionalClarifications", e.target.value)} />
+          </article>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>B. Entry settings</strong></p>
+        <div className="contest-builder-v2-entry-grid" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Entry fee</p>
+            <label className="contest-inline-note"><input type="checkbox" checked={form.entryFeeEnabled} onChange={(e) => setField("entryFeeEnabled", e.target.checked)} /> Paid entry (POINTS)</label>
+            <input className="input" type="number" min={1} placeholder="e.g. 10" disabled={!form.entryFeeEnabled} value={form.entryFeeAmount} onChange={(e) => setField("entryFeeAmount", e.target.value)} />
+            <p className="contest-inline-note">{form.entryFeeEnabled ? "Players pay this amount when submitting an entry." : "Free entry: no points are debited on submit."}</p>
+          </article>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>C. Eligibility</strong></p>
+        <div className="contest-builder-v2-entry-grid" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Eligible cards</p>
+            <select className="input" value={form.eligibilityMode} onChange={(e) => setField("eligibilityMode", e.target.value as ContestFormState["eligibilityMode"])}>
+              <option value="ANY">Any eligible card in inventory</option>
+              <option value="CARD_SET_ONLY">Restrict to one card set</option>
+            </select>
+            {form.eligibilityMode === "CARD_SET_ONLY" ? (
+              <>
+                <select className="input" value={form.cardSetId} onChange={(e) => setField("cardSetId", e.target.value)}>
+                  <option value="">Select card set</option>
+                  {cardSets.map((set) => <option key={set.id} value={set.id}>{set.displayName} ({set.code})</option>)}
+                </select>
+                <p className="contest-inline-note">{selectedCardSet ? `Only cards from ${selectedCardSet.displayName} are allowed.` : "Select a card set to enforce eligibility."}</p>
+              </>
+            ) : <p className="contest-inline-note">Players can use any card that passes ownership and duplicate-token checks.</p>}
+          </article>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>D. Access / participation constraints</strong></p>
+        <p className="contest-inline-note">No additional league-tier or access-gate field is currently exposed in create flow. Participation constraints here are driven by entry fee and eligibility mode.</p>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
+        <p className="contest-inline-note"><strong>E. Player-facing rules copy</strong></p>
+        <textarea className="input" placeholder="Rules shown to players" value={form.rulesText} onChange={(e) => setField("rulesText", e.target.value)} />
+        <textarea className="input" placeholder="Participation notes" value={form.participationNotes} onChange={(e) => setField("participationNotes", e.target.value)} />
+        <textarea className="input" placeholder="Optional clarifications" value={form.optionalClarifications} onChange={(e) => setField("optionalClarifications", e.target.value)} />
+        <p className="contest-inline-note">Guidance: keep these notes concise and actionable so players understand entry constraints before submitting.</p>
+      </article>
     </section>
   );
 }

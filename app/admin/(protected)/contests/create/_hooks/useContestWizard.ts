@@ -115,6 +115,7 @@ export function useContestWizard(initialContestId: string) {
 
   const payload = useMemo(() => {
     const parsedEntryFee = Number(form.entryFeeAmount);
+    const parsedRosterSize = Number(form.maxRosterSize);
     const normalizedCode = form.code.trim().toUpperCase();
     return {
       code: normalizedCode,
@@ -127,7 +128,7 @@ export function useContestWizard(initialContestId: string) {
       lockAt: toIso(form.lockAt),
       endsAt: toIso(form.endsAt),
       teamSizeMode: "EXACT",
-      maxRosterSize: Number(form.maxRosterSize) || 5,
+      maxRosterSize: Number.isInteger(parsedRosterSize) ? parsedRosterSize : 0,
       eligibilityMode: form.eligibilityMode,
       cardSetId: form.eligibilityMode === "CARD_SET_ONLY" ? (form.cardSetId || null) : null,
       entryFeeEnabled: form.entryFeeEnabled,
@@ -162,6 +163,7 @@ export function useContestWizard(initialContestId: string) {
     if (payload.lockAt && payload.liveAt && payload.lockAt > payload.liveAt) arr.push("Lineup lock date must be before or equal to contest start.");
     if (payload.openAt && payload.liveAt && payload.openAt > payload.liveAt) arr.push("Registration open date must be before or equal to contest start.");
     if (payload.liveAt && payload.endsAt && payload.liveAt >= payload.endsAt) arr.push("Contest end must be after start.");
+    if (!Number.isInteger(payload.maxRosterSize) || payload.maxRosterSize <= 0) arr.push("Roster size must be a positive integer.");
     if (form.entryFeeEnabled && (!Number.isInteger(payload.entryFeeAmount) || (payload.entryFeeAmount ?? 0) <= 0)) {
       arr.push("Entry fee amount must be a positive integer when enabled.");
     }
@@ -176,7 +178,7 @@ export function useContestWizard(initialContestId: string) {
   const issuesByStep = useMemo(() => ({
     identity: allIssues.filter((issue) => issue.includes("code") || issue.includes("name") || issue.includes("title")),
     schedule: allIssues.filter((issue) => issue.includes("date") || issue.includes("end") || issue.includes("start") || issue.includes("lock")),
-    "entry-rules": allIssues.filter((issue) => issue.includes("Entry fee") || issue.includes("card set")),
+    "entry-rules": allIssues.filter((issue) => issue.includes("Entry fee") || issue.includes("card set") || issue.includes("Roster size") || issue.includes("eligibility")),
     rewards: allIssues.filter((issue) => issue.includes("pool") || issue.includes("Rewarded top")),
     review: allIssues,
   }), [allIssues]);
@@ -196,10 +198,10 @@ export function useContestWizard(initialContestId: string) {
   const checklist = useMemo(() => [
     { label: "Contest name", done: Boolean(payload.title) },
     { label: "Schedule complete", done: Boolean(payload.openAt && payload.lockAt && payload.liveAt && payload.endsAt) },
-    { label: "Entry rules valid", done: !(form.entryFeeEnabled && allIssues.some((issue) => issue.includes("Entry fee"))) },
+    { label: "Entry rules valid", done: !allIssues.some((issue) => issue.includes("Entry fee") || issue.includes("card set") || issue.includes("Roster size") || issue.includes("eligibility")) },
     { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 || payload.rewardConfig.packPool > 0 },
     { label: "No blocking issue", done: allIssues.length === 0 },
-  ], [allIssues, form.entryFeeEnabled, payload]);
+  ], [allIssues, payload]);
 
   const formatApiError = (body: unknown, fallback: string) => {
     const raw = body as { error?: string; issues?: Array<{ message?: string }> } | null;
