@@ -29,8 +29,8 @@ export type ContestFormState = {
   coverImageUrl: string;
   openAt: string;
   lockAt: string;
-  startsAt: string;
-  endsAt: string;
+  durationValue: string;
+  durationUnit: "HOURS" | "DAYS";
   entryFeeEnabled: boolean;
   entryFeeAmount: string;
   maxRosterSize: string;
