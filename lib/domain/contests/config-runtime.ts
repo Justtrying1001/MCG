@@ -20,6 +20,7 @@ const REWARD_TYPE_XP = "XP" as const;
 const DISTRIBUTION_RULE_FIXED_RANKS = "FIXED_RANKS" as const;
 const DISTRIBUTION_RULE_TOP_N = "TOP_N" as const;
 const DISTRIBUTION_RULE_TOP_PERCENT = "TOP_PERCENT" as const;
+const DISTRIBUTION_RULE_POINTS_POOL_TOP_PERCENT = "POINTS_POOL_TOP_PERCENT" as const;
 
 type RewardComponentInput = {
   type: "POINTS" | "PACK" | "XP";
@@ -37,12 +38,13 @@ type RewardBundleInput = {
 
 type DistributionRuleInput = {
   priority: number;
-  ruleType: "FIXED_RANKS" | "TOP_N" | "TOP_PERCENT";
+  ruleType: "FIXED_RANKS" | "TOP_N" | "TOP_PERCENT" | "POINTS_POOL_TOP_PERCENT";
   bundleRef: string;
   rankFrom?: number;
   rankTo?: number;
   topN?: number;
   topPercent?: number;
+  poolAmount?: number;
 };
 
 export type ContestConfigInput = {
@@ -178,6 +180,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
       rankTo: rule.rankTo ?? undefined,
       topN: rule.topN ?? undefined,
       topPercent: rule.topPercent ?? undefined,
+      poolAmount: (rule as any).poolAmount ?? undefined,
     })) ?? [],
   });
 
@@ -586,6 +589,15 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
     if (rule.ruleType === DISTRIBUTION_RULE_TOP_PERCENT && (typeof rule.topPercent !== "number" || rule.topPercent <= 0 || rule.topPercent > 100)) {
       issues.push({ code: "DISTRIBUTION_TOP_PERCENT_INVALID", severity: "ERROR", field: `distributionRules[${index}].topPercent`, message: "TOP_PERCENT requires topPercent > 0 and <= 100" });
     }
+
+    if (rule.ruleType === DISTRIBUTION_RULE_POINTS_POOL_TOP_PERCENT) {
+      if (typeof rule.topPercent !== "number" || rule.topPercent <= 0 || rule.topPercent > 100) {
+        issues.push({ code: "DISTRIBUTION_POOL_TOP_PERCENT_INVALID", severity: "ERROR", field: `distributionRules[${index}].topPercent`, message: "POINTS_POOL_TOP_PERCENT requires topPercent > 0 and <= 100" });
+      }
+      if (!Number.isInteger((rule as any).poolAmount) || ((rule as any).poolAmount ?? 0) <= 0) {
+        issues.push({ code: "DISTRIBUTION_POOL_AMOUNT_INVALID", severity: "ERROR", field: `distributionRules[${index}].poolAmount`, message: "POINTS_POOL_TOP_PERCENT requires positive integer poolAmount" });
+      }
+    }
   }
 
   return issues;
@@ -755,6 +767,7 @@ async function replaceRewardPolicyTx(
         rankTo: rule.rankTo ?? null,
         topN: rule.topN ?? null,
         topPercent: rule.topPercent ?? null,
+        poolAmount: (rule as any).poolAmount ?? null,
       },
     });
   }

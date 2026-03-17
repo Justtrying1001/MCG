@@ -76,7 +76,7 @@ describe("contest config runtime validation", () => {
     expect(issues.some((issue) => issue.code === "DISTRIBUTION_TOP_PERCENT_INVALID")).toBe(true);
   });
 
-  it("rejects overlapping distribution rules", () => {
+  it("accepts cumulative overlapping distribution rules", () => {
     const contest = baseContest();
     contest.rewardPolicy.distributionRules = [
       {
@@ -100,8 +100,24 @@ describe("contest config runtime validation", () => {
     ];
 
     const issues = validateContestDraftEntity(contest);
-    expect(issues.some((issue) => issue.code === "DISTRIBUTION_RULE_OVERLAP")).toBe(true);
-    expect(issues.some((issue) => issue.message.includes("rank 1"))).toBe(true);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_RULE_OVERLAP")).toBe(false);
+  });
+
+  it("rejects invalid points pool rule", () => {
+    const contest = baseContest();
+    contest.rewardPolicy.distributionRules = [
+      {
+        bundleId: "b1",
+        priority: 1,
+        ruleType: "POINTS_POOL_TOP_PERCENT",
+        topPercent: 0,
+        poolAmount: -10,
+      },
+    ];
+
+    const issues = validateContestDraftEntity(contest);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_TOP_PERCENT_INVALID")).toBe(true);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_AMOUNT_INVALID")).toBe(true);
   });
 
 });

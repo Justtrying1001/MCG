@@ -35,12 +35,13 @@ const patchSchema = z.object({
   })).optional(),
   distributionRules: z.array(z.object({
     priority: z.number().int(),
-    ruleType: z.enum(["FIXED_RANKS", "TOP_N", "TOP_PERCENT"]),
+    ruleType: z.enum(["FIXED_RANKS", "TOP_N", "TOP_PERCENT", "POINTS_POOL_TOP_PERCENT"]),
     bundleRef: z.string(),
     rankFrom: z.number().int().optional(),
     rankTo: z.number().int().optional(),
     topN: z.number().int().optional(),
     topPercent: z.number().optional(),
+    poolAmount: z.number().int().optional(),
   })).optional(),
 }).refine((value) => Object.keys(value).length > 0, { message: "Patch payload cannot be empty" }).superRefine((value, ctx) => {
   const asDate = (raw: string | null | undefined) => {

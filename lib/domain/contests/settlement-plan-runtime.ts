@@ -1,7 +1,7 @@
 import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/client";
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
-import { findDistributionRuleOverlapIssues, matchesDistributionRule } from "@/lib/domain/contests/distribution-rules";
+import { DISTRIBUTION_RULE_TYPES, DistributionRuleType, findMatchingDistributionRulesForRank } from "@/lib/domain/contests/distribution-rules";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 
@@ -15,6 +15,18 @@ type ResolvedComponent =
   | { type: "POINTS"; amount: number }
   | { type: "XP"; amount: number }
   | { type: "PACK"; packDefinitionId: string; quantity: number };
+
+type RuleLike = {
+  id: string;
+  priority: number;
+  ruleType: DistributionRuleType;
+  rankFrom: number | null;
+  rankTo: number | null;
+  topN: number | null;
+  topPercent: number | null;
+  poolAmount: number | null;
+  bundleId: string;
+};
 
 export async function generateSettlementPlan(contestId: string) {
   return prisma.$transaction(async (tx) => {
@@ -41,25 +53,21 @@ export async function generateSettlementPlan(contestId: string) {
       throw new ContestRuntimeError("Published reward policy is required for auto settlement plan", 409);
     }
 
-    const rules = policy.distributionRules;
+    const rules = policy.distributionRules as unknown as RuleLike[];
     const bundles = policy.bundles;
     if (rules.length === 0 || bundles.length === 0) {
       throw new ContestRuntimeError("Reward policy must include bundles and distribution rules", 409);
     }
 
     const bundleById = new Map(bundles.map((bundle) => [bundle.id, bundle]));
-
-    const overlapErrors = findDistributionRuleOverlapIssues(rules, contest.rankings.length);
-    if (overlapErrors.length > 0) {
-      throw new ContestRuntimeError(`Distribution rules overlap ambiguously: ${overlapErrors.join("; ")}`, 409);
-    }
+    const rankingSize = contest.rankings.length;
 
     const items: Array<{
       userId: string;
       rank: number;
-      sourceRuleId: string;
-      sourceRuleType: string;
-      sourceBundleId: string;
+      sourceRuleId: string | null;
+      sourceRuleType: string | null;
+      sourceBundleId: string | null;
       rewardComponents: ResolvedComponent[];
       pointsTotal: number;
       xpTotal: number;
@@ -67,26 +75,52 @@ export async function generateSettlementPlan(contestId: string) {
     }> = [];
 
     for (const ranking of contest.rankings) {
-      const matchedRule = rules.find((rule) => matchesDistributionRule(rule, ranking.rank, contest.rankings.length));
-      if (!matchedRule) continue;
+      const matchedRules = findMatchingDistributionRulesForRank(rules as any, ranking.rank, rankingSize);
+      if (matchedRules.length === 0) continue;
 
-      const bundle = bundleById.get(matchedRule.bundleId);
-      if (!bundle) {
-        throw new ContestRuntimeError(`Rule ${matchedRule.id} references an unknown bundle`, 500);
+      const aggregatedComponents: ResolvedComponent[] = [];
+      const ruleIds: string[] = [];
+      const bundleIds: string[] = [];
+
+      for (const matchedRule of matchedRules) {
+        const bundle = bundleById.get(matchedRule.bundleId);
+        if (!bundle) {
+          throw new ContestRuntimeError(`Rule ${matchedRule.id} references an unknown bundle`, 500);
+        }
+
+        ruleIds.push(matchedRule.id);
+        bundleIds.push(bundle.id);
+
+        if (matchedRule.ruleType === DISTRIBUTION_RULE_TYPES.POINTS_POOL_TOP_PERCENT) {
+          const topPercent = matchedRule.topPercent ?? 0;
+          const poolAmount = matchedRule.poolAmount ?? 0;
+          if (topPercent <= 0 || topPercent > 100 || !Number.isInteger(poolAmount) || poolAmount <= 0) {
+            throw new ContestRuntimeError(`Invalid POINTS_POOL_TOP_PERCENT rule ${matchedRule.id}`, 409);
+          }
+
+          const winnerCount = Math.max(1, Math.ceil((rankingSize * topPercent) / 100));
+          const baseShare = Math.floor(poolAmount / winnerCount);
+          const remainder = poolAmount % winnerCount;
+          const bonus = ranking.rank <= remainder ? 1 : 0;
+          const amount = baseShare + bonus;
+          if (amount > 0) aggregatedComponents.push({ type: "POINTS", amount });
+          continue;
+        }
+
+        aggregatedComponents.push(...resolveBundleComponents(bundle.components));
       }
 
-      const rewardComponents = resolveBundleComponents(bundle.components);
-      const pointsTotal = rewardComponents.reduce((sum, component) => sum + (component.type === "POINTS" ? component.amount : 0), 0);
-      const xpTotal = rewardComponents.reduce((sum, component) => sum + (component.type === "XP" ? component.amount : 0), 0);
-      const packsTotal = rewardComponents.reduce((sum, component) => sum + (component.type === "PACK" ? component.quantity : 0), 0);
+      const pointsTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "POINTS" ? component.amount : 0), 0);
+      const xpTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "XP" ? component.amount : 0), 0);
+      const packsTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "PACK" ? component.quantity : 0), 0);
 
       items.push({
         userId: ranking.userId,
         rank: ranking.rank,
-        sourceRuleId: matchedRule.id,
-        sourceRuleType: matchedRule.ruleType,
-        sourceBundleId: bundle.id,
-        rewardComponents,
+        sourceRuleId: ruleIds.join(",") || null,
+        sourceRuleType: matchedRules.length > 1 ? "MULTI_RULE" : matchedRules[0]?.ruleType ?? null,
+        sourceBundleId: [...new Set(bundleIds)].join(",") || null,
+        rewardComponents: aggregatedComponents,
         pointsTotal,
         xpTotal,
         packsTotal,
@@ -121,10 +155,11 @@ export async function generateSettlementPlan(contestId: string) {
             rankTo: rule.rankTo,
             topN: rule.topN,
             topPercent: rule.topPercent,
+            poolAmount: rule.poolAmount ?? null,
             bundleId: rule.bundleId,
           })),
         },
-        rankingSnapshotSize: contest.rankings.length,
+        rankingSnapshotSize: rankingSize,
         items: {
           createMany: {
             data: items.map((item) => ({
@@ -151,7 +186,7 @@ export async function generateSettlementPlan(contestId: string) {
       contestId,
       status: plan.status,
       totals: summarizePlanItems(plan.items),
-      rankingSize: contest.rankings.length,
+      rankingSize,
       matchedUsers: plan.items.length,
     };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

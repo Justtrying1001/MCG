@@ -15,15 +15,15 @@ type CapacityTx = Prisma.TransactionClient | typeof prisma;
 type ContestDraftForCapacity = {
   id: string;
   rewardPolicy: {
-    bundles: Array<{
+    bundles: ReadonlyArray<{
       id: string;
-      components: Array<{
+      components: ReadonlyArray<{
         type: ContestRewardType;
         packDefinitionId: string | null;
         packQuantity: number | null;
       }>;
     }>;
-    distributionRules: Array<{
+    distributionRules: ReadonlyArray<{
       id: string;
       bundleId: string;
       priority: number;
@@ -121,6 +121,29 @@ export async function evaluateContestRewardPackCapacity(params: {
 
   const sortedRules = [...params.contest.rewardPolicy.distributionRules].sort((a, b) => a.priority - b.priority);
   for (const rule of sortedRules) {
+
+    if (rule.ruleType === "POINTS_POOL_TOP_PERCENT") {
+      const bundle = bundleById.get(rule.bundleId);
+      if (!bundle) {
+        issues.push({
+          verdict: "INVALID_REWARD_CONFIG",
+          field: `distributionRules.${rule.id}.bundleId`,
+          message: "Distribution rule references an unknown bundle",
+        });
+        continue;
+      }
+
+      const hasPackComponent = bundle.components.some((component) => component.type === ContestRewardType.PACK);
+      if (hasPackComponent) {
+        issues.push({
+          verdict: "INVALID_REWARD_CONFIG",
+          field: `distributionRules.${rule.id}`,
+          message: "POINTS_POOL_TOP_PERCENT cannot be used with PACK bundle components",
+        });
+      }
+      continue;
+    }
+
     if (rule.ruleType === ContestRewardDistributionRuleType.TOP_PERCENT) {
       issues.push({
         verdict: "INVALID_REWARD_CONFIG",
