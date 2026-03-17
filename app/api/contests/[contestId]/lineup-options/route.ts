@@ -3,8 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { ContestRuntimeError, getContestDetailMvp } from "@/lib/domain/contests/runtime";
 import { prisma } from "@/lib/prisma";
-import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
-import { validateCanonicalCardView } from "@/lib/domain/cards/canonical-card-view";
+import { buildCanonicalCardViewOrThrow } from "@/lib/domain/cards/canonical-card-builder";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -88,29 +87,21 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
         assertTemplateFields(instance);
 
         const lockedInContestId = activeLockByInstance.get(instance.id);
-        const token = findTokenMasterBySlug(instance.cardTemplate.tokenProject!.slug);
-
-        if (!token) {
+        let cardView;
+        try {
+          cardView = buildCanonicalCardViewOrThrow({
+            source: "contest-lineup-options",
+            tokenSlug: instance.cardTemplate.tokenProject!.slug,
+            templateId: instance.cardTemplateId,
+            rarityCode: instance.cardTemplate.rarity!.code,
+            editionCode: instance.cardTemplate.edition!.code,
+            plannedSupply: instance.cardTemplate.plannedSupply,
+            issuedSupply: instance.cardTemplate.issuedSupply,
+            instanceCount: 1,
+          });
+        } catch (error) {
           throw new ContestRuntimeError(
-            `Token master row not found for slug='${instance.cardTemplate.tokenProject!.slug}' (instance=${instance.id}, template=${instance.cardTemplateId}).`,
-            500,
-          );
-        }
-
-        const cardView = toMvpCardViewFromTokenMasterRow({
-          token,
-          templateId: instance.cardTemplateId,
-          rarityCode: instance.cardTemplate.rarity!.code,
-          editionCode: instance.cardTemplate.edition!.code,
-          plannedSupply: instance.cardTemplate.plannedSupply,
-          issuedSupply: instance.cardTemplate.issuedSupply,
-          instanceCount: 1,
-        });
-
-        const validCardView = validateCanonicalCardView(cardView);
-        if (!validCardView.ok) {
-          throw new ContestRuntimeError(
-            `Invalid canonical cardView for instance=${instance.id}, template=${instance.cardTemplateId}: ${validCardView.issues.join("; ")}`,
+            `Invalid canonical cardView for instance=${instance.id}, template=${instance.cardTemplateId}: ${error instanceof Error ? error.message : "unknown canonical cardView error"}`,
             500,
           );
         }
@@ -128,7 +119,7 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
           imageUrl: instance.cardTemplate.imageUrl,
           tokenProjectName: instance.cardTemplate.tokenProject!.displayName,
           tokenProjectId: instance.cardTemplate.tokenProject!.id,
-          cardView: validCardView.cardView,
+          cardView,
         };
       });
 

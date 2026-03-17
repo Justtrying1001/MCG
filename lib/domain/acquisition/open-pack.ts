@@ -2,7 +2,7 @@ import { PackSource, Prisma, RewardLedgerReasonType, RewardType } from "@prisma/
 
 import type { MvpCardView } from "@/types/cards";
 import { prisma } from "@/lib/prisma";
-import { findTokenMasterBySlug, toMvpCardViewFromTokenMasterRow } from "@/lib/domain/cards/token-master";
+import { buildCanonicalCardViewOrThrow } from "@/lib/domain/cards/canonical-card-builder";
 import {
   MVP_CARD_SET_CODE,
   MVP_REWARD_PACK_CODE,
@@ -250,23 +250,23 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
         },
       });
 
-      const token = findTokenMasterBySlug(selected.tokenProject.slug);
-      if (!token) {
-        throw new PackOpenRuntimeError(`Token master row not found for slug mapping: ${selected.tokenProject.slug}`, 500);
+      try {
+        pulledCardsMvp.push(
+          buildCanonicalCardViewOrThrow({
+            source: "pack-open",
+            tokenSlug: selected.tokenProject.slug,
+            templateId: selected.id,
+            rarityCode: selected.rarity.code,
+            editionCode: selected.edition.code,
+            plannedSupply: selected.plannedSupply,
+            issuedSupply: selected.issuedSupply + 1,
+            instanceCount: 1,
+            editionNumber: selected.issuedSupply + 1,
+          })
+        );
+      } catch (error) {
+        throw new PackOpenRuntimeError(error instanceof Error ? error.message : "Invalid canonical cardView during pack allocation", 500);
       }
-
-      pulledCardsMvp.push(
-        toMvpCardViewFromTokenMasterRow({
-          token,
-          templateId: selected.id,
-          rarityCode: selected.rarity.code,
-          editionCode: selected.edition.code,
-          plannedSupply: selected.plannedSupply,
-          issuedSupply: selected.issuedSupply + 1,
-          instanceCount: 1,
-          editionNumber: selected.issuedSupply + 1,
-        })
-      );
 
       slotAwarded = true;
       break;

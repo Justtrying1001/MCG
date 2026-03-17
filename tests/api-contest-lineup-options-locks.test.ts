@@ -1,22 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionUserMock, getContestDetailMvpMock, prismaMock, findTokenMasterBySlugMock, toMvpCardViewFromTokenMasterRowMock } = vi.hoisted(() => ({
+const { getSessionUserMock, getContestDetailMvpMock, prismaMock, buildCanonicalCardViewOrThrowMock } = vi.hoisted(() => ({
   getSessionUserMock: vi.fn(),
   getContestDetailMvpMock: vi.fn(),
   prismaMock: {
     ownedCardInstance: { findMany: vi.fn() },
     rosterLock: { findMany: vi.fn() },
   },
-  findTokenMasterBySlugMock: vi.fn(),
-  toMvpCardViewFromTokenMasterRowMock: vi.fn(),
+  buildCanonicalCardViewOrThrowMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
 vi.mock("@/lib/domain/contests/runtime", () => ({ ContestRuntimeError: class ContestRuntimeError extends Error { status = 400; }, getContestDetailMvp: getContestDetailMvpMock }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
-vi.mock("@/lib/domain/cards/token-master", () => ({
-  findTokenMasterBySlug: findTokenMasterBySlugMock,
-  toMvpCardViewFromTokenMasterRow: toMvpCardViewFromTokenMasterRowMock,
+vi.mock("@/lib/domain/cards/canonical-card-builder", () => ({
+  buildCanonicalCardViewOrThrow: buildCanonicalCardViewOrThrowMock,
 }));
 
 import { GET } from "@/app/api/contests/[contestId]/lineup-options/route";
@@ -26,14 +24,13 @@ describe("lineup options lock derivation", () => {
     vi.clearAllMocks();
     getSessionUserMock.mockResolvedValue({ id: "u1" });
     getContestDetailMvpMock.mockResolvedValue({ contest: { rules: [{ cardSetId: null }] } });
-    findTokenMasterBySlugMock.mockImplementation((slug: string) => ({ tokenId: `tok_${slug}`, slug, displayName: slug.toUpperCase(), symbol: slug.toUpperCase(), imageUrl: null }));
-    toMvpCardViewFromTokenMasterRowMock.mockImplementation((input: any) => ({
+    buildCanonicalCardViewOrThrowMock.mockImplementation((input: any) => ({
       templateId: input.templateId,
-      tokenId: input.token.tokenId,
-      displayName: input.token.displayName,
-      symbol: input.token.symbol,
-      slug: input.token.slug,
-      imageUrl: input.token.imageUrl,
+      tokenId: `tok_${input.tokenSlug}`,
+      displayName: input.tokenSlug.toUpperCase(),
+      symbol: input.tokenSlug.toUpperCase(),
+      slug: input.tokenSlug,
+      imageUrl: null,
       primaryChain: null,
       faction: null,
       rarity: input.rarityCode,

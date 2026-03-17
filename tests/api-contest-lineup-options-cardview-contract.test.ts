@@ -1,22 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionUserMock, getContestDetailMvpMock, prismaMock, findTokenMasterBySlugMock, toMvpCardViewFromTokenMasterRowMock } = vi.hoisted(() => ({
+const { getSessionUserMock, getContestDetailMvpMock, prismaMock, buildCanonicalCardViewOrThrowMock } = vi.hoisted(() => ({
   getSessionUserMock: vi.fn(),
   getContestDetailMvpMock: vi.fn(),
   prismaMock: {
     ownedCardInstance: { findMany: vi.fn() },
     rosterLock: { findMany: vi.fn() },
   },
-  findTokenMasterBySlugMock: vi.fn(),
-  toMvpCardViewFromTokenMasterRowMock: vi.fn(),
+  buildCanonicalCardViewOrThrowMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
 vi.mock("@/lib/domain/contests/runtime", () => ({ ContestRuntimeError: class ContestRuntimeError extends Error { status = 500; }, getContestDetailMvp: getContestDetailMvpMock }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
-vi.mock("@/lib/domain/cards/token-master", () => ({
-  findTokenMasterBySlug: findTokenMasterBySlugMock,
-  toMvpCardViewFromTokenMasterRow: toMvpCardViewFromTokenMasterRowMock,
+vi.mock("@/lib/domain/cards/canonical-card-builder", () => ({
+  buildCanonicalCardViewOrThrow: buildCanonicalCardViewOrThrowMock,
 }));
 
 import { GET } from "@/app/api/contests/[contestId]/lineup-options/route";
@@ -70,8 +68,7 @@ describe("lineup-options canonical cardView contract", () => {
     getSessionUserMock.mockResolvedValue({ id: "u1" });
     getContestDetailMvpMock.mockResolvedValue({ contest: { rules: [{ cardSetId: null }] } });
     prismaMock.rosterLock.findMany.mockResolvedValue([]);
-    findTokenMasterBySlugMock.mockReturnValue({ tokenId: "tok_doge", slug: "doge", displayName: "Dogecoin", symbol: "DOGE", imageUrl: null });
-    toMvpCardViewFromTokenMasterRowMock.mockReturnValue(baseCardView());
+    buildCanonicalCardViewOrThrowMock.mockReturnValue(baseCardView());
   });
 
   it("returns complete cardView on happy path", async () => {
@@ -101,7 +98,7 @@ describe("lineup-options canonical cardView contract", () => {
     prismaMock.ownedCardInstance.findMany.mockResolvedValue([makeInstance()]);
     const invalid = { ...baseCardView() } as Record<string, unknown>;
     delete invalid.imageUrl;
-    toMvpCardViewFromTokenMasterRowMock.mockReturnValue(invalid);
+    buildCanonicalCardViewOrThrowMock.mockImplementation(() => { throw new Error("imageUrl field is required"); });
 
     const response = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
     const payload = await response.json();
@@ -136,13 +133,7 @@ describe("lineup-options canonical cardView contract", () => {
     expect(payloadA.error).toContain("plannedSupply");
 
     prismaMock.ownedCardInstance.findMany.mockResolvedValue([makeInstance()]);
-    toMvpCardViewFromTokenMasterRowMock.mockReturnValue({
-      ...baseCardView(),
-      cardText: "",
-      cardNumber: "",
-      setCode: "",
-      setEditionLabel: "",
-    });
+    buildCanonicalCardViewOrThrowMock.mockImplementation(() => { throw new Error("cardText is required; cardNumber is required; setCode is required"); });
 
     const responseB = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
     const payloadB = await responseB.json();
@@ -155,9 +146,9 @@ describe("lineup-options canonical cardView contract", () => {
   it("fails entire payload when one card is invalid in mixed lineup", async () => {
     const second = makeInstance({ id: "i2", cardTemplateId: "t2", cardTemplate: { ...makeInstance().cardTemplate, tokenProject: { id: "tp2", slug: "pepe", displayName: "Pepe" } } });
     prismaMock.ownedCardInstance.findMany.mockResolvedValue([makeInstance(), second]);
-    toMvpCardViewFromTokenMasterRowMock
+    buildCanonicalCardViewOrThrowMock
       .mockReturnValueOnce(baseCardView())
-      .mockReturnValueOnce({ ...baseCardView(), templateId: "t2", displayName: "Pepe", rarity: "" });
+      .mockImplementationOnce(() => { throw new Error("rarity is required"); });
 
     const response = await GET(new Request("http://localhost") as any, { params: { contestId: "c1" } });
     const payload = await response.json();

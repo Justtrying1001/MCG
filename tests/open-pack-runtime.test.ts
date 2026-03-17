@@ -1,13 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { findTokenMasterBySlugMock, toMvpCardViewFromTokenMasterRowMock, prismaTransactionMock } = vi.hoisted(() => ({
-  findTokenMasterBySlugMock: vi.fn(),
-  toMvpCardViewFromTokenMasterRowMock: vi.fn((input: any) => ({
+const { buildCanonicalCardViewOrThrowMock, prismaTransactionMock } = vi.hoisted(() => ({
+  buildCanonicalCardViewOrThrowMock: vi.fn((input: any) => ({
     templateId: input.templateId,
-    tokenId: input.token?.tokenId ?? "tok",
-    displayName: input.token?.displayName ?? "Token",
-    symbol: input.token?.symbol ?? "SYM",
-    slug: input.token?.slug ?? "slug",
+    tokenId: `tok_${input.tokenSlug}` ?? "tok",
+    displayName: input.tokenSlug ?? "Token",
+    symbol: (input.tokenSlug ?? "sym").toUpperCase(),
+    slug: input.tokenSlug ?? "slug",
     imageUrl: null,
     primaryChain: null,
     faction: null,
@@ -18,13 +17,16 @@ const { findTokenMasterBySlugMock, toMvpCardViewFromTokenMasterRowMock, prismaTr
     remainingSupply: Math.max((input.plannedSupply ?? 0) - (input.issuedSupply ?? 0), 0),
     owned: true,
     instanceCount: input.instanceCount ?? 1,
+    cardText: "Flavor",
+    cardNumber: "S01-001",
+    setCode: "GENESIS",
+    setEditionLabel: "Edition 1",
   })),
   prismaTransactionMock: vi.fn(),
 }));
 
-vi.mock("@/lib/domain/cards/token-master", () => ({
-  findTokenMasterBySlug: findTokenMasterBySlugMock,
-  toMvpCardViewFromTokenMasterRow: toMvpCardViewFromTokenMasterRowMock,
+vi.mock("@/lib/domain/cards/canonical-card-builder", () => ({
+  buildCanonicalCardViewOrThrow: buildCanonicalCardViewOrThrowMock,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -181,15 +183,6 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
 describe("openSalePackMvpDbNative", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    findTokenMasterBySlugMock.mockImplementation((slug: string) => ({
-      tokenId: `tok_${slug}`,
-      displayName: slug,
-      symbol: "SYM",
-      slug,
-      imageUrl: null,
-      primaryChain: null,
-      faction: null,
-    }));
   });
 
   it("applies points debit, pack stock, event, instances, issued supply on successful open", async () => {
@@ -296,15 +289,6 @@ describe("openSalePackMvpDbNative", () => {
 describe("grantRewardPackMvpDbNative", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    findTokenMasterBySlugMock.mockImplementation((slug: string) => ({
-      tokenId: `tok_${slug}`,
-      displayName: slug,
-      symbol: "SYM",
-      slug,
-      imageUrl: null,
-      primaryChain: null,
-      faction: null,
-    }));
   });
 
   it("grants and opens reward pack while consuming reward stock", async () => {
