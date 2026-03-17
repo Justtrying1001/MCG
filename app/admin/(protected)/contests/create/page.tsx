@@ -27,6 +27,7 @@ export default function AdminContestBuilderPage() {
     setField,
     payload,
     computedDurationHours,
+    computedEndAtInput,
     generatedPreview,
     allIssues,
     issuesByStep,
@@ -105,10 +106,10 @@ export default function AdminContestBuilderPage() {
       {publishSuccess ? <div className="admin-callout success"><p className="contest-inline-note"><strong>Contest published successfully.</strong> Redirecting to Contest Library…</p></div> : null}
 
       {stepIndex === 0 ? <ContestIdentityStep form={form} setField={setField} uploadBusy={uploadBusy} uploadCoverImage={uploadCoverImage} /> : null}
-      {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} /> : null}
+      {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} computedEndAtInput={computedEndAtInput} /> : null}
       {stepIndex === 2 ? <ContestEntryRulesStep form={form} cardSets={cardSets} setField={setField} /> : null}
       {stepIndex === 3 ? <ContestRewardsStep form={form} setField={setField} generatedPreview={generatedPreview} rewardIssues={issuesByStep.rewards} rewardCapacityCheck={rewardCapacityCheck} /> : null}
-      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} onGoToStep={goToStepById} /> : null}
+      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} scheduleDurationLabel={`${form.durationValue || "—"} ${form.durationUnit === "DAYS" ? "day(s)" : "hour(s)"}`} onGoToStep={goToStepById} /> : null}
 
       <section className="admin-panel" style={{ display: "grid", gap: "0.8rem" }}>
         {currentStepIssues.length > 0 ? (

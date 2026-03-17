@@ -68,18 +68,19 @@ export function ContestScheduleStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
   computedDurationHours: number | null;
+  computedEndAtInput: string;
 }) {
-  const { form, setField, computedDurationHours } = props;
+  const { form, setField, computedDurationHours, computedEndAtInput } = props;
   const timelineHasIssue =
-    Boolean(form.openAt && form.lockAt && form.openAt > form.lockAt)
-    || Boolean(form.lockAt && form.startsAt && form.lockAt > form.startsAt)
-    || Boolean(form.startsAt && form.endsAt && form.startsAt >= form.endsAt);
+    Boolean(form.openAt && form.lockAt && form.openAt >= form.lockAt)
+    || !Number.isFinite(Number(form.durationValue))
+    || Number(form.durationValue) <= 0;
 
   return (
     <section className="admin-panel contest-builder-v2-section">
       <header>
         <h2 className="admin-section-title">Step 2 — Schedule</h2>
-        <p className="contest-inline-note">Configure the lifecycle in chronological order: registration opens, lineups lock, contest goes live, then contest ends.</p>
+        <p className="contest-inline-note">Configure the lifecycle in chronological order: registration opens, lineups lock (contest starts), then duration defines the end.</p>
       </header>
       <article className="admin-callout" style={{ display: "grid", gap: "0.7rem" }}>
         <p className="contest-inline-note"><strong>A. Registration window</strong></p>
@@ -91,35 +92,41 @@ export function ContestScheduleStep(props: {
             <input id="schedule-open-at" className="input" type="datetime-local" value={form.openAt} onChange={(e) => setField("openAt", e.target.value)} />
           </article>
           <article className="contest-builder-v2-schedule-card">
-            <p className="contest-builder-v2-schedule-title">2. Lineup lock</p>
-            <label className="contest-inline-note" htmlFor="schedule-lock-at">Lock at</label>
+            <p className="contest-builder-v2-schedule-title">2. Lineup lock / Contest starts</p>
+            <label className="contest-inline-note" htmlFor="schedule-lock-at">Lock at / Start at</label>
             <input id="schedule-lock-at" className="input" type="datetime-local" min={form.openAt || undefined} value={form.lockAt} onChange={(e) => setField("lockAt", e.target.value)} />
           </article>
         </div>
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.7rem" }}>
-        <p className="contest-inline-note"><strong>B. Contest runtime</strong></p>
-        <p className="contest-inline-note">Defines when scoring starts and when the contest officially stops accepting game events.</p>
+        <p className="contest-inline-note"><strong>B. Contest duration</strong></p>
+        <p className="contest-inline-note">Contest start is always the lineup lock timestamp. End time is calculated automatically from duration.</p>
         <div className="contest-builder-v2-schedule-grid">
           <article className="contest-builder-v2-schedule-card">
-            <p className="contest-builder-v2-schedule-title">3. Contest goes live</p>
-            <label className="contest-inline-note" htmlFor="schedule-live-at">Live at</label>
-            <input id="schedule-live-at" className="input" type="datetime-local" min={form.lockAt || form.openAt || undefined} value={form.startsAt} onChange={(e) => setField("startsAt", e.target.value)} />
+            <p className="contest-builder-v2-schedule-title">3. Contest duration</p>
+            <label className="contest-inline-note" htmlFor="schedule-duration-value">Duration</label>
+            <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr auto" }}>
+              <input id="schedule-duration-value" className="input" type="number" min={1} value={form.durationValue} onChange={(e) => setField("durationValue", e.target.value)} />
+              <select className="input" value={form.durationUnit} onChange={(e) => setField("durationUnit", e.target.value as ContestFormState["durationUnit"])}>
+                <option value="HOURS">Hours</option>
+                <option value="DAYS">Days</option>
+              </select>
+            </div>
           </article>
           <article className="contest-builder-v2-schedule-card is-result">
-            <p className="contest-builder-v2-schedule-title">4. Contest ends</p>
-            <label className="contest-inline-note" htmlFor="schedule-ends-at">Ends at</label>
-            <input id="schedule-ends-at" className="input" type="datetime-local" min={form.startsAt || undefined} value={form.endsAt} onChange={(e) => setField("endsAt", e.target.value)} />
+            <p className="contest-builder-v2-schedule-title">Calculated end time</p>
+            <label className="contest-inline-note" htmlFor="schedule-ends-at-derived">Ends at (auto)</label>
+            <input id="schedule-ends-at-derived" className="input" type="datetime-local" value={computedEndAtInput} readOnly disabled aria-readonly="true" />
           </article>
         </div>
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.35rem" }}>
         <p className="contest-inline-note"><strong>Timeline guidance</strong></p>
-        <p className="contest-inline-note">Registration opens → Lineup locks → Contest goes live → Contest ends / settles after end.</p>
-        <p className="contest-inline-note">Computed runtime duration (live → end): {computedDurationHours !== null ? `${computedDurationHours}h` : "—"}</p>
-        {timelineHasIssue ? <p className="contest-error">Timeline is inconsistent. Keep chronological order: open ≤ lock ≤ live &lt; end.</p> : null}
+        <p className="contest-inline-note">Registration opens → Lineup lock (contest starts) → Duration elapses → Contest ends / settles after end.</p>
+        <p className="contest-inline-note">Computed runtime duration: {computedDurationHours !== null ? `${computedDurationHours}h` : "—"}</p>
+        {timelineHasIssue ? <p className="contest-error">Timeline is inconsistent. Keep chronological order: open &lt; lock, and duration &gt; 0.</p> : null}
       </article>
     </section>
   );
@@ -294,9 +301,10 @@ export function ContestReviewStep(props: {
   allIssues: string[];
   issuesByStep: Record<"identity" | "schedule" | "entry-rules" | "rewards" | "review", string[]>;
   rewardCapacityCheck: RewardCapacityCheck | null;
+  scheduleDurationLabel: string;
   onGoToStep: (step: "identity" | "schedule" | "entry-rules" | "rewards") => void;
 }) {
-  const { payload, checklist, allIssues, issuesByStep, rewardCapacityCheck, onGoToStep } = props;
+  const { payload, checklist, allIssues, issuesByStep, rewardCapacityCheck, scheduleDurationLabel, onGoToStep } = props;
   const localChecksPassed = allIssues.length === 0;
   const backendCapacityKnown = Boolean(rewardCapacityCheck);
   const backendPublishable = rewardCapacityCheck?.isPublishable ?? null;
@@ -326,7 +334,7 @@ export function ContestReviewStep(props: {
       <article className="admin-callout" style={{ display: "grid", gap: "0.45rem" }}>
         <p className="contest-inline-note"><strong>B. Section summaries</strong></p>
         <p className="contest-inline-note"><strong>Identity:</strong> Contest name {payload.title || "—"} · Contest code {payload.code || "—"}</p>
-        <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Lock {payload.lockAt || "—"} · Live {payload.liveAt || "—"} · End {payload.endsAt || "—"}</p>
+        <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Start (lock) {payload.lockAt || "—"} · Duration {scheduleDurationLabel} · End {payload.endsAt || "—"}</p>
         <p className="contest-inline-note"><strong>Entry & Rules:</strong> Roster size {payload.maxRosterSize} · Entry {payload.entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Free"} · Eligibility {payload.eligibilityMode === "CARD_SET_ONLY" ? `Card set only (${payload.cardSetId || "missing"})` : "Any eligible card"}</p>
         <p className="contest-inline-note"><strong>Rewards:</strong> Points pool {payload.rewardConfig?.pointsPool ?? 0} · Pack pool {payload.rewardConfig?.packPool ?? 0} · Rewarded top {payload.rewardConfig?.rewardedTopPercent ?? 0}% · Profile {payload.rewardConfig?.distributionProfile ?? "—"}</p>
       </article>
