@@ -28,6 +28,10 @@ export function computeRewards(input: {
   const participantsCount = Math.max(0, Math.floor(input.participantsCount));
   if (participantsCount === 0 || input.ranking.length === 0) return [];
 
+  // Product rule: percentage-based rewards are disabled for solo fields to avoid
+  // a misleading "top X%" payout when there is only one participant.
+  if (participantsCount < 2) return [];
+
   const { pointsPool, packPool, rewardedTopPercent, distributionProfile } = input.config;
   const effectivePercent = Math.max(1, Math.min(100, Math.floor(rewardedTopPercent)));
   const rewardedCount = Math.min(

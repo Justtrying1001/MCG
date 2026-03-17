@@ -40,6 +40,13 @@ type RankingPayload = {
 type RewardPayload = {
   hasPolicyData: boolean;
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
+  summary?: {
+    pointsPool: number;
+    packPool: number;
+    rewardedTopPercent: number;
+    rewardedWinners: number;
+    participantCount: number;
+  };
 };
 
 type ScoreBreakdownRow = {
