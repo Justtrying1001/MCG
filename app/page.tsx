@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { AuthErrorNotice } from "@/components/auth/AuthErrorNotice";
 import { useSession } from "@/components/useSession";
@@ -26,15 +27,24 @@ type ContestListItem = {
   _count: { entries: number };
 };
 
+type HomeRecentPull = {
+  id: string;
+  openedAt: string;
+  playerName: string;
+  card: MvpCardView;
+};
+
 export default function HomePage() {
   const { me, loading } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
+  const [recentPulls, setRecentPulls] = useState<HomeRecentPull[]>([]);
 
   const isAuth = !loading && me?.mode === "user";
 
   useEffect(() => {
     if (!isAuth) {
       setContests([]);
+      setRecentPulls([]);
       return;
     }
 
@@ -45,6 +55,14 @@ export default function HomePage() {
         setContests(rows.filter((c) => ["OPEN", "LIVE", "LOCKED"].includes(c.status)).slice(0, 5));
       })
       .catch(() => setContests([]));
+
+    fetch("/api/pulls/recent?limit=12", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        const rows = (payload?.pulls ?? []) as HomeRecentPull[];
+        setRecentPulls(rows);
+      })
+      .catch(() => setRecentPulls([]));
   }, [isAuth]);
 
   const userInfo = useMemo(() => {
@@ -68,7 +86,7 @@ export default function HomePage() {
             displayName={userInfo.displayName}
             points={userInfo.points}
           />
-          <RecentPullsRail />
+          <RecentPullsRail pulls={recentPulls} />
           <ActiveContestsRail contests={contests} />
           <GenesisPreviewStrip />
           <DocsLearnSection />
