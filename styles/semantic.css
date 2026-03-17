@@ -1,31 +1,38 @@
 :root {
   --color-bg-page: var(--ink-deep);
-  --color-surface-1: var(--ink-mid);
-  --color-surface-2: color-mix(in srgb, var(--ink-mid) 70%, var(--ink-light));
-  --color-border-subtle: rgba(184, 196, 204, 0.18);
-  --color-border-strong: rgba(184, 196, 204, 0.35);
+  --color-surface-1: color-mix(in srgb, var(--ink-mid) 88%, black);
+  --color-surface-2: color-mix(in srgb, var(--ink-light) 70%, var(--ink-mid));
+  --color-border-subtle: rgba(148, 163, 184, 0.2);
+  --color-border-strong: rgba(148, 163, 184, 0.4);
   --color-text-primary: var(--chalk);
   --color-text-secondary: color-mix(in srgb, var(--chalk) 70%, var(--fog));
-  --color-text-muted: color-mix(in srgb, var(--fog) 68%, var(--ink-light));
-  --color-accent-primary: var(--clay);
-  --color-accent-secondary: var(--slate);
+  --color-text-muted: color-mix(in srgb, var(--fog) 72%, var(--ink-light));
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+
+  --gradient-hero: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.08) 45%, rgba(245, 158, 11, 0.12));
+  --gradient-card: linear-gradient(165deg, rgba(16, 22, 36, 0.95), rgba(7, 9, 15, 0.96));
+  --gradient-cta: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  --gradient-strip: linear-gradient(90deg, rgba(139, 92, 246, 0.9), rgba(34, 211, 238, 0.8));
 
   /* Legacy alias to avoid breaking untouched pages */
   --bg-base: var(--ink-deep);
   --bg-1: var(--ink-mid);
   --bg-2: var(--ink-light);
-  --surface: rgba(27, 35, 44, 0.9);
-  --surface-hi: rgba(27, 35, 44, 1);
+  --surface: rgba(16, 22, 36, 0.86);
+  --surface-hi: rgba(16, 22, 36, 0.98);
   --border: var(--color-border-subtle);
   --border-hi: var(--color-border-strong);
   --text: var(--color-text-primary);
   --text-2: var(--color-text-secondary);
   --text-3: var(--color-text-muted);
-  --red: var(--clay);
-  --gold: var(--rarity-legendary);
+  --red: var(--accent-primary);
+  --gold: var(--accent-amber);
   --emerald: var(--success);
-  --arc-blue: var(--slate);
+  --arc-blue: var(--accent-secondary);
   --amber: var(--warning);
+  --clay: var(--accent-primary);
+  --slate: var(--accent-secondary);
 }
 
 html, body {

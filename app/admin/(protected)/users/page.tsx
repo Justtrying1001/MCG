@@ -107,7 +107,6 @@ export default function AdminUsersPage() {
                 key={row.id}
                 type="button"
                 className={`admin-v2-list-row action ${selectedUserId === row.id ? "is-active" : ""}`}
-                aria-selected={selectedUserId === row.id}
                 onClick={() => void loadContext(row.id)}
               >
                 <span>
