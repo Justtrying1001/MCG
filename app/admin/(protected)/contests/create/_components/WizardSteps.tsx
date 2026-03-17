@@ -199,21 +199,82 @@ export function ContestRewardsStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
   generatedPreview: { participantsCount: number; rows: Array<{ rank: number; pointsReward: number; packsReward: number }>; totalPoints: number; totalPacks: number };
+  rewardIssues: string[];
+  rewardCapacityCheck: RewardCapacityCheck | null;
 }) {
-  const { form, setField, generatedPreview } = props;
+  const { form, setField, generatedPreview, rewardIssues, rewardCapacityCheck } = props;
+  const pointsPool = Number(form.pointsPoolAmount) || 0;
+  const packPool = Number(form.packPoolAmount) || 0;
+  const hasPointsRewards = pointsPool > 0;
+  const hasPackRewards = packPool > 0;
+  const winnersCount = generatedPreview.rows.length;
+
   return (
     <section className="admin-panel contest-builder-v2-section">
-      <header><h2 className="admin-section-title">Step 4 — Rewards</h2></header>
-      <div className="contest-builder-v2-entry-grid">
-        <article className="contest-builder-v2-entry-card"><p className="contest-builder-v2-schedule-title">Points pool</p><input className="input" type="number" min={0} value={form.pointsPoolAmount} onChange={(e) => setField("pointsPoolAmount", e.target.value)} /></article>
-        <article className="contest-builder-v2-entry-card"><p className="contest-builder-v2-schedule-title">Pack pool</p><input className="input" type="number" min={0} value={form.packPoolAmount} onChange={(e) => setField("packPoolAmount", e.target.value)} /></article>
-        <article className="contest-builder-v2-entry-card"><p className="contest-builder-v2-schedule-title">Rewarded top %</p><input className="input" type="number" min={1} max={100} value={form.rewardedTopPercent} onChange={(e) => setField("rewardedTopPercent", e.target.value)} /><select className="input" value={form.distributionProfile} onChange={(e) => setField("distributionProfile", e.target.value as ContestFormState["distributionProfile"])}><option value="balanced">Balanced</option><option value="top-heavy">Top-heavy</option><option value="very-top-heavy">Very top-heavy</option></select></article>
-      </div>
-      <article className="admin-callout">
-        <p className="contest-inline-note"><strong>Distribution preview field size</strong></p>
+      <header>
+        <h2 className="admin-section-title">Step 4 — Rewards</h2>
+        <p className="contest-inline-note">Configure reward pools and distribution behavior for winners without changing backend reward policy mechanics.</p>
+      </header>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>A. Reward configuration overview</strong></p>
+        <p className="contest-inline-note">Reward types enabled: {hasPointsRewards ? "Points" : "No points"} · {hasPackRewards ? "Packs" : "No packs"}.</p>
+        <p className="contest-inline-note">Distribution profile: <strong>{form.distributionProfile}</strong> · Rewarded top: <strong>{form.rewardedTopPercent}%</strong>.</p>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>B. Reward bundles / prize pools</strong></p>
+        <div className="contest-builder-v2-entry-grid">
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Points pool</p>
+            <input className="input" type="number" min={0} value={form.pointsPoolAmount} onChange={(e) => setField("pointsPoolAmount", e.target.value)} />
+          </article>
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Pack pool</p>
+            <input className="input" type="number" min={0} value={form.packPoolAmount} onChange={(e) => setField("packPoolAmount", e.target.value)} />
+          </article>
+        </div>
+        <p className="contest-inline-note">Advanced bundle composition and custom distribution rules are still handled by the current backend reward policy layer.</p>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.65rem" }}>
+        <p className="contest-inline-note"><strong>C. Distribution rules</strong></p>
+        <div className="contest-builder-v2-entry-grid">
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Rewarded top %</p>
+            <input className="input" type="number" min={1} max={100} value={form.rewardedTopPercent} onChange={(e) => setField("rewardedTopPercent", e.target.value)} />
+          </article>
+          <article className="contest-builder-v2-entry-card">
+            <p className="contest-builder-v2-schedule-title">Distribution profile</p>
+            <select className="input" value={form.distributionProfile} onChange={(e) => setField("distributionProfile", e.target.value as ContestFormState["distributionProfile"])}>
+              <option value="balanced">Balanced</option>
+              <option value="top-heavy">Top-heavy</option>
+              <option value="very-top-heavy">Very top-heavy</option>
+            </select>
+          </article>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
+        <p className="contest-inline-note"><strong>D. Capacity / validation signals</strong></p>
+        {rewardIssues.length > 0 ? rewardIssues.map((issue) => <p key={issue} className="contest-error">• {issue}</p>) : <p className="contest-inline-note">No frontend blocking issue detected for rewards.</p>}
+        {rewardCapacityCheck ? (
+          <>
+            <p className="contest-inline-note"><strong>Latest backend capacity verdict:</strong> {rewardCapacityCheck.verdict} ({rewardCapacityCheck.isPublishable ? "publishable" : "not publishable"}).</p>
+            {rewardCapacityCheck.rows.map((row) => (
+              <p key={`${row.packDefinitionId}-${row.packCode ?? "none"}`} className="contest-inline-note">• Pack {row.packCode ?? row.packDefinitionId}: required {row.required}, available {row.available}, shortfall {row.shortfall}, verdict {row.verdict}.</p>
+            ))}
+          </>
+        ) : <p className="contest-inline-note">Backend pack-capacity checks run during publish validation and are shown here once available.</p>}
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
+        <p className="contest-inline-note"><strong>E. Reward summary preview</strong></p>
+        <p className="contest-inline-note"><strong>Preview field size</strong></p>
         <input className="input" type="number" min={0} value={form.previewParticipants} onChange={(e) => setField("previewParticipants", e.target.value)} />
-        <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {generatedPreview.rows.length}</p>
-        <p className="contest-inline-note">Total points: {generatedPreview.totalPoints.toLocaleString()} · Total packs: {generatedPreview.totalPacks.toLocaleString()}</p>
+        <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {winnersCount}</p>
+        <p className="contest-inline-note">Estimated distributed totals → Points: {generatedPreview.totalPoints.toLocaleString()} · Packs: {generatedPreview.totalPacks.toLocaleString()}</p>
+        <p className="contest-inline-note">This preview uses current pools + profile settings and does not override backend policy enforcement.</p>
       </article>
     </section>
   );
