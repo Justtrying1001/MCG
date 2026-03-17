@@ -195,7 +195,7 @@ export function useContestWizard(initialContestId: string) {
 
   const checklist = useMemo(() => [
     { label: "Contest name", done: Boolean(payload.title) },
-    { label: "Schedule complete", done: Boolean(payload.openAt && payload.liveAt && payload.endsAt) },
+    { label: "Schedule complete", done: Boolean(payload.openAt && payload.lockAt && payload.liveAt && payload.endsAt) },
     { label: "Entry rules valid", done: !(form.entryFeeEnabled && allIssues.some((issue) => issue.includes("Entry fee"))) },
     { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 || payload.rewardConfig.packPool > 0 },
     { label: "No blocking issue", done: allIssues.length === 0 },

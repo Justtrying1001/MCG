@@ -62,39 +62,56 @@ export function ContestScheduleStep(props: {
   computedDurationHours: number | null;
 }) {
   const { form, setField, computedDurationHours } = props;
+  const timelineHasIssue =
+    Boolean(form.openAt && form.lockAt && form.openAt > form.lockAt)
+    || Boolean(form.lockAt && form.startsAt && form.lockAt > form.startsAt)
+    || Boolean(form.startsAt && form.endsAt && form.startsAt >= form.endsAt);
+
   return (
     <section className="admin-panel contest-builder-v2-section">
       <header>
         <h2 className="admin-section-title">Step 2 — Schedule</h2>
-        <p className="contest-inline-note">Configure the contest timeline in strict chronological order to match lifecycle automation.</p>
+        <p className="contest-inline-note">Configure the lifecycle in chronological order: registration opens, lineups lock, contest goes live, then contest ends.</p>
       </header>
-      <div className="contest-builder-v2-schedule-grid">
-        <article className="contest-builder-v2-schedule-card">
-          <p className="contest-builder-v2-schedule-title">A. Registration opens</p>
-          <p className="contest-inline-note">Users can enter and edit lineup from this moment.</p>
-          <input className="input" type="datetime-local" value={form.openAt} onChange={(e) => setField("openAt", e.target.value)} />
-        </article>
-        <article className="contest-builder-v2-schedule-card">
-          <p className="contest-builder-v2-schedule-title">B. Lineup lock</p>
-          <p className="contest-inline-note">After this time, user lineups must be frozen.</p>
-          <input className="input" type="datetime-local" value={form.lockAt} onChange={(e) => setField("lockAt", e.target.value)} />
-        </article>
-        <article className="contest-builder-v2-schedule-card">
-          <p className="contest-builder-v2-schedule-title">C. Contest goes live</p>
-          <p className="contest-inline-note">Scoring runtime starts from this timestamp.</p>
-          <input className="input" type="datetime-local" value={form.startsAt} onChange={(e) => setField("startsAt", e.target.value)} />
-        </article>
-        <article className="contest-builder-v2-schedule-card is-result">
-          <p className="contest-builder-v2-schedule-title">D. Contest ends</p>
-          <p className="contest-inline-note">Final snapshots/settlement run after this timestamp.</p>
-          <input className="input" type="datetime-local" value={form.endsAt} onChange={(e) => setField("endsAt", e.target.value)} />
-        </article>
-      </div>
+      <article className="admin-callout" style={{ display: "grid", gap: "0.7rem" }}>
+        <p className="contest-inline-note"><strong>A. Registration window</strong></p>
+        <p className="contest-inline-note">Defines when users can start entering and editing lineups.</p>
+        <div className="contest-builder-v2-schedule-grid">
+          <article className="contest-builder-v2-schedule-card">
+            <p className="contest-builder-v2-schedule-title">1. Registration opens</p>
+            <label className="contest-inline-note" htmlFor="schedule-open-at">Open at</label>
+            <input id="schedule-open-at" className="input" type="datetime-local" value={form.openAt} onChange={(e) => setField("openAt", e.target.value)} />
+          </article>
+          <article className="contest-builder-v2-schedule-card">
+            <p className="contest-builder-v2-schedule-title">2. Lineup lock</p>
+            <label className="contest-inline-note" htmlFor="schedule-lock-at">Lock at</label>
+            <input id="schedule-lock-at" className="input" type="datetime-local" min={form.openAt || undefined} value={form.lockAt} onChange={(e) => setField("lockAt", e.target.value)} />
+          </article>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.7rem" }}>
+        <p className="contest-inline-note"><strong>B. Contest runtime</strong></p>
+        <p className="contest-inline-note">Defines when scoring starts and when the contest officially stops accepting game events.</p>
+        <div className="contest-builder-v2-schedule-grid">
+          <article className="contest-builder-v2-schedule-card">
+            <p className="contest-builder-v2-schedule-title">3. Contest goes live</p>
+            <label className="contest-inline-note" htmlFor="schedule-live-at">Live at</label>
+            <input id="schedule-live-at" className="input" type="datetime-local" min={form.lockAt || form.openAt || undefined} value={form.startsAt} onChange={(e) => setField("startsAt", e.target.value)} />
+          </article>
+          <article className="contest-builder-v2-schedule-card is-result">
+            <p className="contest-builder-v2-schedule-title">4. Contest ends</p>
+            <label className="contest-inline-note" htmlFor="schedule-ends-at">Ends at</label>
+            <input id="schedule-ends-at" className="input" type="datetime-local" min={form.startsAt || undefined} value={form.endsAt} onChange={(e) => setField("endsAt", e.target.value)} />
+          </article>
+        </div>
+      </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.35rem" }}>
         <p className="contest-inline-note"><strong>Timeline guidance</strong></p>
-        <p className="contest-inline-note">Registration opens → Lineup locks → Contest goes live → Contest ends.</p>
-        <p className="contest-inline-note">Computed runtime duration: {computedDurationHours !== null ? `${computedDurationHours}h` : "—"}</p>
+        <p className="contest-inline-note">Registration opens → Lineup locks → Contest goes live → Contest ends / settles after end.</p>
+        <p className="contest-inline-note">Computed runtime duration (live → end): {computedDurationHours !== null ? `${computedDurationHours}h` : "—"}</p>
+        {timelineHasIssue ? <p className="contest-error">Timeline is inconsistent. Keep chronological order: open ≤ lock ≤ live &lt; end.</p> : null}
       </article>
     </section>
   );
@@ -177,7 +194,7 @@ export function ContestReviewStep(props: {
       <header><h2 className="admin-section-title">Step 5 — Review</h2></header>
       <div className="admin-callout">
         <p className="contest-inline-note"><strong>Name:</strong> {payload.title || "—"}</p>
-        <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Start/Lock {payload.liveAt || "—"} · End {payload.endsAt || "—"}</p>
+        <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Lock {payload.lockAt || "—"} · Live {payload.liveAt || "—"} · End {payload.endsAt || "—"}</p>
         <p className="contest-inline-note"><strong>Entry:</strong> Team size {payload.maxRosterSize} · Entry fee {payload.entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Disabled"}</p>
       </div>
       <div className="admin-callout">
