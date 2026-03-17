@@ -99,7 +99,7 @@ export default function AdminContestBuilderPage() {
       {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} /> : null}
       {stepIndex === 2 ? <ContestEntryRulesStep form={form} cardSets={cardSets} setField={setField} /> : null}
       {stepIndex === 3 ? <ContestRewardsStep form={form} setField={setField} generatedPreview={generatedPreview} rewardIssues={issuesByStep.rewards} rewardCapacityCheck={rewardCapacityCheck} /> : null}
-      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} rewardCapacityCheck={rewardCapacityCheck} /> : null}
+      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} /> : null}
 
       <section className="admin-panel" style={{ display: "grid", gap: "0.8rem" }}>
         {currentStepIssues.length > 0 ? (
