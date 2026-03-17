@@ -1,38 +1,38 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ContestCard } from "@/components/contests/ContestCard";
+import { ContestHeader } from "@/components/contests/ContestHeader";
+import { ContestTabs, type ContestTabKey } from "@/components/contests/ContestTabs";
+import type { ContestListItem } from "@/components/contests/types";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ContestHubHeader } from "@/components/contests/ContestHubHeader";
-import { ContestPremiumCard } from "@/components/contests/ContestPremiumCard";
-import { ContestStatusSegmented, type ContestHubTab } from "@/components/contests/ContestStatusSegmented";
-import type { ContestListItem } from "@/components/contests/types";
 import { useSession } from "@/components/useSession";
 
 type ContestPayload = { contests?: ContestListItem[] };
 
-function belongsToTab(contest: ContestListItem, tab: ContestHubTab) {
+function belongsToTab(contest: ContestListItem, tab: ContestTabKey) {
   if (tab === "OPEN") return contest.status === "OPEN";
-  if (tab === "IN_PROGRESS") return contest.status === "LOCKED" || contest.status === "LIVE";
+  if (tab === "LIVE") return contest.status === "LOCKED" || contest.status === "LIVE";
   return contest.status === "SETTLED";
 }
 
-function getEmptyByTab(tab: ContestHubTab) {
+function getEmptyByTab(tab: ContestTabKey) {
   if (tab === "OPEN") {
     return {
-      title: "No open contests right now",
-      description: "Check back soon — new contests are prepared regularly.",
+      title: "No contests open right now",
+      description: "Fresh tournament lobbies are preparing in the background.",
     };
   }
-  if (tab === "IN_PROGRESS") {
+  if (tab === "LIVE") {
     return {
-      title: "No contests in this lifecycle",
-      description: "Adjust filters or check another status tab.",
+      title: "No contests live right now",
+      description: "New tournaments are coming soon.",
     };
   }
   return {
     title: "No finished contests yet",
-    description: "Completed contests and results history will be listed here.",
+    description: "Results and completed brackets will appear here.",
   };
 }
 
@@ -41,10 +41,9 @@ export default function ContestsPage() {
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [tab, setTab] = useState<ContestHubTab>("OPEN");
+  const [tab, setTab] = useState<ContestTabKey>("OPEN");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
-
 
   const loadContests = useCallback(async () => {
     setIsLoading(true);
@@ -98,21 +97,26 @@ export default function ContestsPage() {
     void loadContests();
   }, [loading, me, retryCount, loadContests]);
 
-  const counts = useMemo(() => {
+  const computed = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
-    const inProgress = contests.filter((contest) => contest.status === "LOCKED" || contest.status === "LIVE").length;
+    const live = contests.filter((contest) => contest.status === "LOCKED" || contest.status === "LIVE").length;
     const finished = contests.filter((contest) => contest.status === "SETTLED").length;
+    const activePlayers = contests
+      .filter((contest) => contest.status === "OPEN" || contest.status === "LOCKED" || contest.status === "LIVE")
+      .reduce((sum, contest) => sum + contest._count.entries, 0);
+    const totalRewards = contests.reduce((sum, contest) => sum + (contest.rewardPreview?.amount ?? 0), 0);
 
     return {
-      open,
-      inProgress,
-      finished,
-      total: contests.length,
-      segmented: {
+      counts: {
         OPEN: open,
-        IN_PROGRESS: inProgress,
+        LIVE: live,
         FINISHED: finished,
-      } as Record<ContestHubTab, number>,
+      } as Record<ContestTabKey, number>,
+      headerStats: [
+        { label: "Live contests", value: String(live), tone: "live" as const },
+        { label: "Players active", value: String(activePlayers), tone: "active" as const },
+        { label: "Total rewards", value: `${totalRewards || 0} pts`, tone: "reward" as const },
+      ],
     };
   }, [contests]);
 
@@ -129,22 +133,15 @@ export default function ContestsPage() {
 
   return (
     <SiteShell>
-      <div className="contest-hub-layout-v4">
-        <ContestHubHeader
-          counts={{
-            open: counts.open,
-            inProgress: counts.inProgress,
-            finished: counts.finished,
-            total: counts.total,
-          }}
-        />
+      <div className="contest-arena-layout">
+        <ContestHeader stats={computed.headerStats} />
 
-        <ContestStatusSegmented active={tab} onChange={setTab} counts={counts.segmented} />
+        <ContestTabs active={tab} onChange={setTab} counts={computed.counts} />
 
         {isLoading ? (
-          <section className="contest-premium-grid" aria-label="Loading contests">
+          <section className="contest-arena-grid" aria-label="Loading contests">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="contest-premium-skeleton-card" />
+              <div key={index} className="contest-arena-skeleton-card" />
             ))}
           </section>
         ) : error ? (
@@ -154,14 +151,14 @@ export default function ContestsPage() {
               Retry
             </button>
           </section>
-        ) : contests.length === 0 ? (
-          <EmptyState title="No contests available" description="Check back soon for new tournaments." />
-        ) : visible.length === 0 ? (
-          <EmptyState title={emptyByTab.title} description={emptyByTab.description} />
+        ) : contests.length === 0 || visible.length === 0 ? (
+          <div className="contest-arena-empty-wrap">
+            <EmptyState title={emptyByTab.title} description={emptyByTab.description} />
+          </div>
         ) : (
-          <section className="contest-premium-grid" aria-live="polite">
+          <section key={tab} className="contest-arena-grid contest-arena-grid-enter" aria-live="polite">
             {visible.map((contest) => (
-              <ContestPremiumCard key={contest.id} contest={contest} nowTs={nowTs} />
+              <ContestCard key={contest.id} contest={contest} nowTs={nowTs} />
             ))}
           </section>
         )}
