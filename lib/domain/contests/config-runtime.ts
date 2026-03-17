@@ -7,20 +7,12 @@ import {
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { evaluateContestRewardPackCapacity } from "@/lib/domain/contests/reward-pack-capacity";
-import { findDistributionRuleOverlapIssues } from "@/lib/domain/contests/distribution-rules";
 import { prisma } from "@/lib/prisma";
 import { qstash } from "@/lib/qstash";
 
 const TEAM_SIZE_MODE_EXACT = "EXACT" as const;
 const ELIGIBILITY_MODE_ANY = "ANY" as const;
 const ELIGIBILITY_MODE_CARD_SET_ONLY = "CARD_SET_ONLY" as const;
-const REWARD_TYPE_POINTS = "POINTS" as const;
-const REWARD_TYPE_PACK = "PACK" as const;
-const REWARD_TYPE_XP = "XP" as const;
-const DISTRIBUTION_RULE_FIXED_RANKS = "FIXED_RANKS" as const;
-const DISTRIBUTION_RULE_TOP_N = "TOP_N" as const;
-const DISTRIBUTION_RULE_TOP_PERCENT = "TOP_PERCENT" as const;
-const DISTRIBUTION_RULE_POINTS_POOL_TOP_PERCENT = "POINTS_POOL_TOP_PERCENT" as const;
 
 type RewardComponentInput = {
   type: "POINTS" | "PACK" | "XP";
@@ -47,6 +39,13 @@ type DistributionRuleInput = {
   poolAmount?: number;
 };
 
+type ContestRewardConfigInput = {
+  pointsPool: number;
+  packPool: number;
+  rewardedTopPercent: number;
+  distributionProfile: "balanced" | "top-heavy" | "very-top-heavy";
+};
+
 export type ContestConfigInput = {
   code: string;
   title: string;
@@ -66,6 +65,7 @@ export type ContestConfigInput = {
   ruleConfig?: Record<string, unknown> | null;
   rewardBundles?: RewardBundleInput[];
   distributionRules?: DistributionRuleInput[];
+  rewardConfig?: ContestRewardConfigInput;
 };
 
 export async function generateUniqueContestCode(seed?: string | null) {
@@ -106,13 +106,13 @@ export async function createContestDraft(input: ContestConfigInput) {
             entryFeeEnabled: normalized.entryFeeEnabled,
             entryFeeCurrency: "POINTS",
             entryFeeAmount: normalized.entryFeeAmount,
-            config: (normalized.ruleConfig ?? Prisma.JsonNull) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull,
+            config: normalizeRuleConfig(normalized.ruleConfig, normalized.rewardConfig),
           },
         },
       },
     });
 
-    await replaceRewardPolicyTx(tx, contest.id, normalized.rewardBundles, normalized.distributionRules);
+    await replaceRewardPolicyTx(tx, contest.id, normalized.rewardBundles, normalized.distributionRules, normalized.rewardConfig);
 
     const fullContest = await tx.contest.findUnique({ where: { id: contest.id }, include: contestDraftInclude });
     return { contest: fullContest };
@@ -161,6 +161,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     entryFeeCurrency: input.entryFeeCurrency ?? (existingRule?.entryFeeCurrency as "POINTS" | undefined) ?? "POINTS",
     entryFeeAmount: input.entryFeeAmount ?? existingRule?.entryFeeAmount ?? null,
     ruleConfig: input.ruleConfig ?? ((existingRule?.config as Record<string, unknown> | null) ?? null),
+    rewardConfig: input.rewardConfig ?? parseRewardConfig((input.ruleConfig ?? (existingRule?.config as Record<string, unknown> | null) ?? null)?.rewardConfig),
     rewardBundles: input.rewardBundles ?? existing.rewardPolicy?.bundles.map((bundle) => ({
       name: bundle.name,
       priority: bundle.priority,
@@ -213,7 +214,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
       entryFeeEnabled: normalized.entryFeeEnabled,
       entryFeeCurrency: "POINTS",
       entryFeeAmount: normalized.entryFeeAmount,
-      config: (normalized.ruleConfig ?? Prisma.JsonNull) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull,
+      config: normalizeRuleConfig(normalized.ruleConfig, normalized.rewardConfig),
     };
 
     if (rule?.id) {
@@ -222,7 +223,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
       await tx.contestRule.create({ data: { contestId, ...ruleData } });
     }
 
-    await replaceRewardPolicyTx(tx, contestId, normalized.rewardBundles, normalized.distributionRules);
+    await replaceRewardPolicyTx(tx, contestId, normalized.rewardBundles, normalized.distributionRules, normalized.rewardConfig);
 
     const fullContest = await tx.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
     return { contest: fullContest };
@@ -506,6 +507,20 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
     return issues;
   }
 
+  const rewardConfig = parseRewardConfig((contest.rules[0]?.config as Record<string, unknown> | null)?.rewardConfig);
+  if (rewardConfig) {
+    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool <= 0) {
+      issues.push({ code: "REWARD_POINTS_POOL_INVALID", severity: "ERROR", field: "rewardConfig.pointsPool", message: "pointsPool must be a positive integer" });
+    }
+    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool <= 0) {
+      issues.push({ code: "REWARD_PACK_POOL_INVALID", severity: "ERROR", field: "rewardConfig.packPool", message: "packPool must be a positive integer" });
+    }
+    if (typeof rewardConfig.rewardedTopPercent !== "number" || rewardConfig.rewardedTopPercent < 1 || rewardConfig.rewardedTopPercent > 100) {
+      issues.push({ code: "REWARD_PERCENT_INVALID", severity: "ERROR", field: "rewardConfig.rewardedTopPercent", message: "rewardedTopPercent must be between 1 and 100" });
+    }
+    return issues;
+  }
+
   const bundles = policy.bundles;
   if (bundles.length === 0) {
     issues.push({ code: "REWARD_BUNDLE_REQUIRED", severity: "ERROR", field: "rewardBundles", message: "At least one reward bundle is required" });
@@ -522,13 +537,13 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
     }
 
     for (const [componentIndex, component] of bundle.components.entries()) {
-      if (component.type === REWARD_TYPE_POINTS && (!Number.isInteger(component.pointsAmount) || (component.pointsAmount ?? 0) <= 0)) {
+      if (component.type === "POINTS" && (!Number.isInteger(component.pointsAmount) || (component.pointsAmount ?? 0) <= 0)) {
         issues.push({ code: "POINTS_COMPONENT_INVALID", severity: "ERROR", field: `rewardBundles[${bundleIndex}].components[${componentIndex}]`, message: "POINTS component requires positive integer pointsAmount" });
       }
-      if (component.type === REWARD_TYPE_XP && (!Number.isInteger(component.xpAmount) || (component.xpAmount ?? 0) <= 0)) {
+      if (component.type === "XP" && (!Number.isInteger(component.xpAmount) || (component.xpAmount ?? 0) <= 0)) {
         issues.push({ code: "XP_COMPONENT_INVALID", severity: "ERROR", field: `rewardBundles[${bundleIndex}].components[${componentIndex}]`, message: "XP component requires positive integer xpAmount" });
       }
-      if (component.type === REWARD_TYPE_PACK) {
+      if (component.type === "PACK") {
         if (!component.packDefinitionId) {
           issues.push({ code: "PACK_COMPONENT_MISSING_PACK", severity: "ERROR", field: `rewardBundles[${bundleIndex}].components[${componentIndex}]`, message: "PACK component requires packDefinitionId" });
         }
@@ -544,27 +559,6 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
     issues.push({ code: "DISTRIBUTION_RULE_REQUIRED", severity: "ERROR", field: "distributionRules", message: "At least one distribution rule is required" });
   }
 
-  const overlapIssues = findDistributionRuleOverlapIssues(
-    rules.map((rule, index) => ({
-      id: `distributionRules[${index}]`,
-      ruleType: rule.ruleType,
-      rankFrom: rule.rankFrom ?? null,
-      rankTo: rule.rankTo ?? null,
-      topN: rule.topN ?? null,
-      topPercent: rule.topPercent ?? null,
-    })),
-    500
-  );
-
-  for (const overlapIssue of overlapIssues) {
-    issues.push({
-      code: "DISTRIBUTION_RULE_OVERLAP",
-      severity: "ERROR",
-      field: "distributionRules",
-      message: `Reward distribution rules overlap: ${overlapIssue}`,
-    });
-  }
-
   const seenPriorities = new Set<number>();
   for (const [index, rule] of rules.entries()) {
     if (seenPriorities.has(rule.priority)) {
@@ -576,21 +570,21 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
       issues.push({ code: "DISTRIBUTION_BUNDLE_MISSING", severity: "ERROR", field: `distributionRules[${index}].bundleId`, message: "Distribution rule references unknown bundle" });
     }
 
-    if (rule.ruleType === DISTRIBUTION_RULE_FIXED_RANKS) {
+    if (rule.ruleType === "FIXED_RANKS") {
       if (!Number.isInteger(rule.rankFrom) || !Number.isInteger(rule.rankTo) || (rule.rankFrom ?? 0) <= 0 || (rule.rankTo ?? 0) <= 0 || (rule.rankFrom ?? 0) > (rule.rankTo ?? 0)) {
         issues.push({ code: "DISTRIBUTION_FIXED_RANKS_INVALID", severity: "ERROR", field: `distributionRules[${index}]`, message: "FIXED_RANKS requires rankFrom/rankTo with rankFrom <= rankTo" });
       }
     }
 
-    if (rule.ruleType === DISTRIBUTION_RULE_TOP_N && (!Number.isInteger(rule.topN) || (rule.topN ?? 0) <= 0)) {
+    if (rule.ruleType === "TOP_N" && (!Number.isInteger(rule.topN) || (rule.topN ?? 0) <= 0)) {
       issues.push({ code: "DISTRIBUTION_TOP_N_INVALID", severity: "ERROR", field: `distributionRules[${index}].topN`, message: "TOP_N requires positive integer topN" });
     }
 
-    if (rule.ruleType === DISTRIBUTION_RULE_TOP_PERCENT && (typeof rule.topPercent !== "number" || rule.topPercent <= 0 || rule.topPercent > 100)) {
+    if (rule.ruleType === "TOP_PERCENT" && (typeof rule.topPercent !== "number" || rule.topPercent <= 0 || rule.topPercent > 100)) {
       issues.push({ code: "DISTRIBUTION_TOP_PERCENT_INVALID", severity: "ERROR", field: `distributionRules[${index}].topPercent`, message: "TOP_PERCENT requires topPercent > 0 and <= 100" });
     }
 
-    if (rule.ruleType === DISTRIBUTION_RULE_POINTS_POOL_TOP_PERCENT) {
+    if (rule.ruleType === "POINTS_POOL_TOP_PERCENT") {
       if (typeof rule.topPercent !== "number" || rule.topPercent <= 0 || rule.topPercent > 100) {
         issues.push({ code: "DISTRIBUTION_POOL_TOP_PERCENT_INVALID", severity: "ERROR", field: `distributionRules[${index}].topPercent`, message: "POINTS_POOL_TOP_PERCENT requires topPercent > 0 and <= 100" });
       }
@@ -651,6 +645,19 @@ function normalizeContestInput(input: ContestConfigInput) {
     throw new ContestRuntimeError("endsAt must be after liveAt", 400);
   }
 
+  const rewardConfig = input.rewardConfig ?? parseRewardConfig((input.ruleConfig as Record<string, unknown> | null)?.rewardConfig);
+  if (rewardConfig) {
+    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool <= 0) {
+      throw new ContestRuntimeError("pointsPool must be a positive integer", 400);
+    }
+    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool <= 0) {
+      throw new ContestRuntimeError("packPool must be a positive integer", 400);
+    }
+    if (rewardConfig.rewardedTopPercent < 1 || rewardConfig.rewardedTopPercent > 100) {
+      throw new ContestRuntimeError("rewardedTopPercent must be between 1 and 100", 400);
+    }
+  }
+
   return {
     code,
     title,
@@ -667,9 +674,29 @@ function normalizeContestInput(input: ContestConfigInput) {
     entryFeeEnabled,
     entryFeeAmount,
     ruleConfig: (input.ruleConfig ?? null) as Record<string, unknown> | null,
+    rewardConfig,
     rewardBundles: input.rewardBundles ?? [],
     distributionRules: input.distributionRules ?? [],
   };
+}
+
+
+function parseRewardConfig(value: unknown): ContestRewardConfigInput | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const pointsPool = Number(raw.pointsPool);
+  const packPool = Number(raw.packPool);
+  const rewardedTopPercent = Number(raw.rewardedTopPercent);
+  const distributionProfile = raw.distributionProfile;
+  if (!Number.isFinite(pointsPool) || !Number.isFinite(packPool) || !Number.isFinite(rewardedTopPercent)) return undefined;
+  if (distributionProfile !== "balanced" && distributionProfile !== "top-heavy" && distributionProfile !== "very-top-heavy") return undefined;
+  return { pointsPool: Math.floor(pointsPool), packPool: Math.floor(packPool), rewardedTopPercent, distributionProfile };
+}
+
+function normalizeRuleConfig(ruleConfig: Record<string, unknown> | null, rewardConfig?: ContestRewardConfigInput) {
+  const merged = { ...(ruleConfig ?? {}) } as Record<string, unknown>;
+  if (rewardConfig) merged.rewardConfig = rewardConfig;
+  return (Object.keys(merged).length === 0 ? Prisma.JsonNull : merged) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull;
 }
 
 async function rescheduleQStashJobs(
@@ -708,7 +735,8 @@ async function replaceRewardPolicyTx(
   tx: Prisma.TransactionClient,
   contestId: string,
   rewardBundles: RewardBundleInput[],
-  distributionRules: DistributionRuleInput[]
+  distributionRules: DistributionRuleInput[],
+  rewardConfig?: ContestRewardConfigInput
 ) {
   const policy = await tx.contestRewardPolicy.upsert({
     where: { contestId },
@@ -719,6 +747,10 @@ async function replaceRewardPolicyTx(
   await tx.contestRewardDistributionRule.deleteMany({ where: { rewardPolicyId: policy.id } });
   await tx.contestRewardComponent.deleteMany({ where: { bundle: { rewardPolicyId: policy.id } } });
   await tx.contestRewardBundle.deleteMany({ where: { rewardPolicyId: policy.id } });
+
+  if (rewardConfig) {
+    return;
+  }
 
   const bundles = await Promise.all(
     rewardBundles.map((bundle, index) =>

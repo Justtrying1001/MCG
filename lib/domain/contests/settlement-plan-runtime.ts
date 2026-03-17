@@ -2,6 +2,7 @@ import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/c
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { DISTRIBUTION_RULE_TYPES, DistributionRuleType, findMatchingDistributionRulesForRank } from "@/lib/domain/contests/distribution-rules";
+import { computeRewards, type ContestRewardConfig } from "@/lib/domain/contests/reward-distribution";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 
@@ -33,6 +34,7 @@ export async function generateSettlementPlan(contestId: string) {
     const contest = await tx.contest.findUnique({
       where: { id: contestId },
       include: {
+        rules: { orderBy: { id: "asc" } },
         rewardPolicy: {
           include: {
             bundles: { include: { components: true } },
@@ -53,9 +55,11 @@ export async function generateSettlementPlan(contestId: string) {
       throw new ContestRuntimeError("Published reward policy is required for auto settlement plan", 409);
     }
 
+    const rewardConfig = parseRewardConfig((contest.rules[0]?.config as Record<string, unknown> | null)?.rewardConfig);
+
     const rules = policy.distributionRules as unknown as RuleLike[];
     const bundles = policy.bundles;
-    if (rules.length === 0 || bundles.length === 0) {
+    if (!rewardConfig && (rules.length === 0 || bundles.length === 0)) {
       throw new ContestRuntimeError("Reward policy must include bundles and distribution rules", 409);
     }
 
@@ -74,7 +78,41 @@ export async function generateSettlementPlan(contestId: string) {
       packsTotal: number;
     }> = [];
 
-    for (const ranking of contest.rankings) {
+    if (rewardConfig) {
+      const defaultPackDefinition = await tx.packDefinition.findFirst({
+        where: { source: "REWARD", isActive: true },
+        orderBy: [{ createdAt: "asc" }],
+        select: { id: true },
+      });
+
+      if (!defaultPackDefinition) {
+        throw new ContestRuntimeError("No active REWARD pack definition found for contest settlement", 409);
+      }
+
+      const rewards = computeRewards({
+        participantsCount: rankingSize,
+        ranking: contest.rankings.map((row) => row.userId),
+        config: rewardConfig,
+      });
+
+      for (const reward of rewards) {
+        const aggregatedComponents: ResolvedComponent[] = [];
+        if (reward.pointsReward > 0) aggregatedComponents.push({ type: "POINTS", amount: reward.pointsReward });
+        if (reward.packsReward > 0) aggregatedComponents.push({ type: "PACK", packDefinitionId: defaultPackDefinition.id, quantity: reward.packsReward });
+        items.push({
+          userId: reward.userId,
+          rank: reward.rank,
+          sourceRuleId: null,
+          sourceRuleType: "SIMPLE_POOL",
+          sourceBundleId: null,
+          rewardComponents: aggregatedComponents,
+          pointsTotal: reward.pointsReward,
+          xpTotal: 0,
+          packsTotal: reward.packsReward,
+        });
+      }
+    } else {
+      for (const ranking of contest.rankings) {
       const matchedRules = findMatchingDistributionRulesForRank<RuleLike>(rules, ranking.rank, rankingSize);
       if (matchedRules.length === 0) continue;
 
@@ -125,6 +163,7 @@ export async function generateSettlementPlan(contestId: string) {
         xpTotal,
         packsTotal,
       });
+      }
     }
 
     const latestDraftPlans = await tx.contestSettlementPlan.findMany({
@@ -147,6 +186,7 @@ export async function generateSettlementPlan(contestId: string) {
           policyId: policy.id,
           policyStatus: policy.status,
           configPublishedAt: contest.configPublishedAt?.toISOString() ?? null,
+          rewardConfig,
           rules: rules.map((rule) => ({
             id: rule.id,
             priority: rule.priority,
@@ -395,5 +435,24 @@ function summarizePlanItems(items: Array<{ pointsTotal: number; xpTotal: number;
     xpCreditTotal: items.reduce((sum, item) => sum + item.xpTotal, 0),
     packsGrantTotal: items.reduce((sum, item) => sum + item.packsTotal, 0),
     rewardActionsCount: items.reduce((sum, item) => sum + Number(item.pointsTotal > 0) + Number(item.xpTotal > 0) + Number(item.packsTotal > 0), 0),
+  };
+}
+
+function parseRewardConfig(value: unknown): ContestRewardConfig | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (
+    (raw.distributionProfile !== "balanced" && raw.distributionProfile !== "top-heavy" && raw.distributionProfile !== "very-top-heavy") ||
+    !Number.isInteger(raw.pointsPool) ||
+    !Number.isInteger(raw.packPool) ||
+    typeof raw.rewardedTopPercent !== "number"
+  ) {
+    return null;
+  }
+  return {
+    pointsPool: raw.pointsPool as number,
+    packPool: raw.packPool as number,
+    rewardedTopPercent: raw.rewardedTopPercent as number,
+    distributionProfile: raw.distributionProfile as "balanced" | "top-heavy" | "very-top-heavy",
   };
 }
