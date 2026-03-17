@@ -162,6 +162,7 @@ export function toContestRewardPayload(rules: RewardRuleDraft[]) {
   const overlapErrors = findDistributionRuleOverlapIssues(
     validRules.map((rule) => ({
       id: rule.id,
+      bundleId: `rule_bundle_${rule.id}`,
       ruleType: rule.distributionType,
       rankFrom: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,
       rankTo: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,
