@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
+import { computeRewards } from "@/lib/domain/contests/reward-distribution";
 
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
 type RewardCapacityRow = {
@@ -64,6 +65,8 @@ export default function AdminContestBuilderPage() {
   const [packPoolAmount, setPackPoolAmount] = useState("100");
   const [rewardedTopPercent, setRewardedTopPercent] = useState("25");
   const [distributionProfile, setDistributionProfile] = useState<"balanced" | "top-heavy" | "very-top-heavy">("balanced");
+  const [previewParticipants, setPreviewParticipants] = useState("100");
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -188,6 +191,18 @@ export default function AdminContestBuilderPage() {
     ];
   }, [entryFeeEnabled, issues, payload]);
 
+  const generatedPreview = useMemo(() => {
+    const participantsCount = Math.max(0, Math.floor(Number(previewParticipants) || 0));
+    const ranking = Array.from({ length: participantsCount }, (_, index) => `rank-${index + 1}`);
+    const rows = computeRewards({ participantsCount, ranking, config: payload.rewardConfig });
+    return {
+      participantsCount,
+      rows,
+      totalPoints: rows.reduce((sum, row) => sum + row.pointsReward, 0),
+      totalPacks: rows.reduce((sum, row) => sum + row.packsReward, 0),
+    };
+  }, [payload.rewardConfig, previewParticipants]);
+
   const formatApiError = (body: unknown, fallback: string) => {
     const raw = body as { error?: string; issues?: Array<{ message?: string }> } | null;
     const apiIssues = Array.isArray(raw?.issues) ? raw.issues : [];
@@ -250,6 +265,33 @@ export default function AdminContestBuilderPage() {
     }, 1200);
   };
 
+  const uploadCoverImage = async (file: File | null) => {
+    if (!file) return;
+    setUploadBusy(true);
+    setMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/internal/uploads/contest-cover", {
+        method: "POST",
+        body: formData,
+      });
+
+      const body = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (!response.ok || !body?.url) {
+        setMessage(body?.error ?? "Image upload failed");
+        return;
+      }
+
+      setCoverImageUrl(body.url);
+      setMessage("Cover image uploaded.");
+    } finally {
+      setUploadBusy(false);
+    }
+  };
+
   return (
     <div className="admin-v2-page contest-builder-v2-page">
       <section className="contest-builder-v2-header">
@@ -286,7 +328,17 @@ export default function AdminContestBuilderPage() {
               <input className="input" placeholder="Contest name" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <textarea className="input" placeholder="Description shown in admin and contest cards" value={description} onChange={(e) => setDescription(e.target.value)} />
-            <input className="input" placeholder="Cover image URL (optional)" value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} />
+            <div className="contest-builder-v2-upload-wrap">
+              <input
+                className="input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                disabled={uploadBusy}
+                onChange={(e) => void uploadCoverImage(e.target.files?.[0] ?? null)}
+              />
+              <input className="input" placeholder="Cover image URL (optional)" value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} />
+              {coverImageUrl ? <img src={coverImageUrl} alt="Contest cover preview" className="contest-builder-v2-cover-preview" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)" }} /> : null}
+            </div>
           </section>
 
           <section id="schedule" className="admin-panel contest-builder-v2-section">
@@ -387,6 +439,29 @@ export default function AdminContestBuilderPage() {
                   <option value="very-top-heavy">Very top-heavy</option>
                 </select>
               </article>
+
+              <article className="contest-builder-v2-entry-card">
+                <p className="contest-builder-v2-schedule-title">Distribution preview field size</p>
+                <input className="input" type="number" min={0} value={previewParticipants} onChange={(e) => setPreviewParticipants(e.target.value)} />
+                <p className="contest-inline-note">Used only for previewing exact rank-by-rank payouts.</p>
+              </article>
+            </div>
+
+            <div className="admin-callout" style={{ marginTop: 12 }}>
+              <p className="contest-inline-note"><strong>Generated distribution preview</strong></p>
+              <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {generatedPreview.rows.length}</p>
+              {generatedPreview.participantsCount < 2 ? (
+                <p className="contest-inline-note">At least 2 participants are required for top-% reward distribution.</p>
+              ) : null}
+              <p className="contest-inline-note">Total points: {generatedPreview.totalPoints.toLocaleString()} · Total packs: {generatedPreview.totalPacks.toLocaleString()}</p>
+              <div style={{ display: "grid", gap: 4, maxHeight: 220, overflow: "auto", marginTop: 8 }}>
+                {generatedPreview.rows.slice(0, 50).map((row) => (
+                  <p key={row.rank} className="contest-inline-note">
+                    Rank #{row.rank} → {row.packsReward} pack{row.packsReward > 1 ? "s" : ""} + {row.pointsReward.toLocaleString()} pts
+                  </p>
+                ))}
+                {generatedPreview.rows.length > 50 ? <p className="contest-inline-note">…and {generatedPreview.rows.length - 50} more ranks.</p> : null}
+              </div>
             </div>
           </section>
 

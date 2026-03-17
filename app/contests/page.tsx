@@ -45,8 +45,9 @@ export default function ContestsPage() {
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
 
-  const loadContests = useCallback(async () => {
-    setIsLoading(true);
+  const loadContests = useCallback(async (options?: { showLoader?: boolean }) => {
+    const showLoader = options?.showLoader ?? false;
+    if (showLoader) setIsLoading(true);
     setError("");
 
     try {
@@ -57,7 +58,7 @@ export default function ContestsPage() {
         if (!hasSession) {
           setError("Your session expired. Please reconnect to load contests.");
           setContests([]);
-          setIsLoading(false);
+          if (showLoader) setIsLoading(false);
           return;
         }
       }
@@ -66,7 +67,7 @@ export default function ContestsPage() {
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
         setError(payload?.error ?? "We couldn't load contests right now. Please retry in a moment.");
         setContests([]);
-        setIsLoading(false);
+        if (showLoader) setIsLoading(false);
         return;
       }
 
@@ -77,7 +78,7 @@ export default function ContestsPage() {
       setError("Network issue while loading contests. Please check your connection and retry.");
       setContests([]);
     } finally {
-      setIsLoading(false);
+      if (showLoader) setIsLoading(false);
     }
   }, [refresh]);
 
@@ -94,8 +95,8 @@ export default function ContestsPage() {
       setIsLoading(false);
       return;
     }
-    void loadContests();
-  }, [loading, me, retryCount, loadContests]);
+    void loadContests({ showLoader: contests.length === 0 });
+  }, [contests.length, loading, me, retryCount, loadContests]);
 
   const computed = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
@@ -104,8 +105,6 @@ export default function ContestsPage() {
     const activePlayers = contests
       .filter((contest) => contest.status === "OPEN" || contest.status === "LOCKED" || contest.status === "LIVE")
       .reduce((sum, contest) => sum + contest._count.entries, 0);
-    const totalRewards = contests.reduce((sum, contest) => sum + (contest.rewardPreview?.amount ?? 0), 0);
-
     return {
       counts: {
         OPEN: open,
@@ -115,7 +114,7 @@ export default function ContestsPage() {
       headerStats: [
         { label: "Live contests", value: String(live), tone: "live" as const },
         { label: "Players active", value: String(activePlayers), tone: "active" as const },
-        { label: "Total rewards", value: `${totalRewards || 0} pts`, tone: "reward" as const },
+        { label: "Total contests", value: String(contests.length), tone: "reward" as const },
       ],
     };
   }, [contests]);
@@ -147,7 +146,7 @@ export default function ContestsPage() {
         ) : error ? (
           <section className="contest-hub-error-state" role="alert">
             <EmptyState title="Unable to load contests" description={error} />
-            <button type="button" className="mcg-btn" onClick={() => setRetryCount((current) => current + 1)}>
+            <button type="button" className="mcg-btn" onClick={() => { setIsLoading(true); setRetryCount((current) => current + 1); }}>
               Retry
             </button>
           </section>

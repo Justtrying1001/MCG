@@ -10,44 +10,34 @@ function toArenaStatus(status: ContestListItem["status"]): ArenaStatus {
   return "LIVE";
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "TBD";
-  return new Date(value).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function getTargetDate(contest: ContestListItem) {
-  if (contest.status === "OPEN") return contest.lockAt;
-  if (contest.status === "LIVE" || contest.status === "LOCKED") return contest.endsAt;
-  return contest.endsAt;
-}
-
-function getTimelineProgress(contest: ContestListItem, nowTs: number) {
-  const start = new Date(contest.liveAt ?? contest.lockAt ?? 0).getTime();
-  const end = new Date(contest.endsAt ?? 0).getTime();
-  if (!start || !end || end <= start) return contest.status === "SETTLED" ? 100 : 18;
-  const progress = ((nowTs - start) / (end - start)) * 100;
-  if (contest.status === "SETTLED") return 100;
-  return Math.max(8, Math.min(100, Math.round(progress)));
+function getTimerMeta(contest: ContestListItem) {
+  if (contest.status === "OPEN") {
+    return { label: "Registration ends in", target: contest.lockAt };
+  }
+  if (contest.status === "LOCKED" || contest.status === "LIVE") {
+    return { label: "Contest ends in", target: contest.endsAt };
+  }
+  return { label: "Contest ended", target: null as string | null };
 }
 
 function getCta(status: ArenaStatus) {
-  if (status === "LIVE") return "Enter now";
   if (status === "OPEN") return "Join contest";
+  if (status === "LIVE") return "View contest";
   return "View results";
+}
+
+function getRewardLabel(contest: ContestListItem) {
+  if (contest.rewardPreview?.label) return contest.rewardPreview.label;
+  if (contest.rewardPreview?.amount) return `${contest.rewardPreview.amount.toLocaleString()} pts`;
+  return "Rewards configured";
 }
 
 export function ContestCard({ contest, nowTs }: { contest: ContestListItem; nowTs: number }) {
   const status = toArenaStatus(contest.status);
   const rule = contest.rules[0];
-  const countdown = formatCountdown(getTargetDate(contest), nowTs);
-  const reward = contest.rewardPreview?.amount ? `${contest.rewardPreview.amount} pts` : "TBA";
+  const timer = getTimerMeta(contest);
+  const countdown = timer.target ? formatCountdown(timer.target, nowTs) : "—";
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const progress = getTimelineProgress(contest, nowTs);
 
   return (
     <article className={`contest-arena-card tone-${status.toLowerCase()}`}>
@@ -66,12 +56,12 @@ export function ContestCard({ contest, nowTs }: { contest: ContestListItem; nowT
 
         <div className="contest-arena-info-grid">
           <div>
-            <small>Ends in</small>
-            <strong>{countdown}</strong>
+            <small>{timer.label}</small>
+            <strong className="contest-arena-countdown-fixed">{countdown}</strong>
           </div>
           <div>
-            <small>Reward pool</small>
-            <strong className="reward">{reward}</strong>
+            <small>Rewards</small>
+            <strong className="reward reward-summary">{getRewardLabel(contest)}</strong>
           </div>
           <div>
             <small>Participants</small>
@@ -80,16 +70,6 @@ export function ContestCard({ contest, nowTs }: { contest: ContestListItem; nowT
           <div>
             <small>Entry fee</small>
             <strong>{entryFee}</strong>
-          </div>
-        </div>
-
-        <div className="contest-arena-progress-wrap">
-          <div className="contest-arena-progress-label">
-            <span>{formatDate(getTargetDate(contest))}</span>
-            <strong>{progress}%</strong>
-          </div>
-          <div className="contest-arena-progress-track" aria-hidden>
-            <div className="contest-arena-progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
 

@@ -48,6 +48,13 @@ type RankingPayload = {
 type RewardPayload = {
   hasPolicyData: boolean;
   tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number }>;
+  summary?: {
+    pointsPool: number;
+    packPool: number;
+    rewardedTopPercent: number;
+    rewardedWinners: number;
+    participantCount: number;
+  };
 };
 
 
@@ -122,6 +129,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[] | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  const [showAllRewards, setShowAllRewards] = useState(false);
 
   // Guards slot state so re-fetches (e.g. session refresh) never overwrite user's in-progress selection
   const slotsInitializedRef = useRef(false);
@@ -467,8 +475,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     },
   ];
 
-  const rewardPoints = Math.max(100, rosterSize * 40);
   const fieldTier = contest._count.entries >= 100 ? "High" : contest._count.entries >= 30 ? "Mid" : "Early";
+  const rewardRows = rewards?.tiers ?? [];
+  const displayedRewardRows = showAllRewards ? rewardRows : rewardRows.slice(0, 10);
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -490,7 +499,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           <div className="cpd-topbar-right">
             {showRegistrationCountdown && (
               <>
-                <span className="cpd-topbar-label">Lock in</span>
+                <span className="cpd-topbar-label">Registration ends in</span>
                 <span className="cpd-countdown">{formatHMS(contest.lockAt, nowTs)}</span>
               </>
             )}
@@ -499,7 +508,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 <span className="cpd-status-chip" data-status={isLive ? "LIVE" : "LOCKED"}>
                   {isLive ? "● In Progress" : "🔒 Locked"}
                 </span>
-                <span className="cpd-topbar-label">Ends in</span>
+                <span className="cpd-topbar-label">Contest ends in</span>
                 <span className="cpd-countdown">{formatHMS(contest.endsAt, nowTs)}</span>
               </>
             )}
@@ -681,9 +690,14 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             {/* REWARDS */}
             <div className="cpd-block">
               <h3 className="cpd-block-title">Rewards</h3>
+              {rewards?.summary ? (
+                <p className="contest-inline-note">
+                  Top {rewards.summary.rewardedTopPercent}% earn rewards · {rewards.summary.rewardedWinners} winner(s)
+                </p>
+              ) : null}
               <div className="cpd-rewards-list">
-                {(rewards?.tiers ?? []).length > 0
-                  ? (rewards?.tiers ?? []).map((tier, idx) => (
+                {rewardRows.length > 0
+                  ? displayedRewardRows.map((tier, idx) => (
                       <div
                         key={`${tier.label}-${idx}`}
                         className={`cpd-reward-row ${idx === 0 ? "cpd-reward-row-first" : ""}`}
@@ -703,22 +717,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                       </div>
                     ))
                   : (
-                    <>
-                      <div className="cpd-reward-row cpd-reward-row-first">
-                        <span className="cpd-reward-label">#1</span>
-                        <span className="cpd-reward-gold">{rewardPoints} pts</span>
-                      </div>
-                      <div className="cpd-reward-row">
-                        <span className="cpd-reward-label">#2</span>
-                        <span>{Math.round(rewardPoints * 0.6)} pts</span>
-                      </div>
-                      <div className="cpd-reward-row">
-                        <span className="cpd-reward-label">#3</span>
-                        <span>{Math.round(rewardPoints * 0.3)} pts</span>
-                      </div>
-                    </>
+                    <div className="cpd-reward-row">
+                      <span className="cpd-reward-label">Rewards</span>
+                      <span>Rewards are not published yet.</span>
+                    </div>
                   )}
               </div>
+              {rewardRows.length > 10 ? (
+                <button className="mcg-btn mcg-btn-ghost" type="button" onClick={() => setShowAllRewards((current) => !current)}>
+                  {showAllRewards ? "Show less" : `Show full distribution (${rewardRows.length})`}
+                </button>
+              ) : null}
             </div>
 
             {/* INFO */}

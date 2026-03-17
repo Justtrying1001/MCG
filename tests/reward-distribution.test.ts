@@ -15,7 +15,7 @@ describe("computeRewards", () => {
     expect(rows.reduce((sum, row) => sum + row.packsReward, 0)).toBe(20);
   });
 
-  it("always rewards at least one participant", () => {
+  it("rewards at least one participant when field has 2+ players", () => {
     const rows = computeRewards({
       participantsCount: 4,
       ranking: ["u1", "u2", "u3", "u4"],
@@ -24,5 +24,15 @@ describe("computeRewards", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0].userId).toBe("u1");
+  });
+
+  it("does not distribute top-percent rewards to solo fields", () => {
+    const rows = computeRewards({
+      participantsCount: 1,
+      ranking: ["u1"],
+      config: { pointsPool: 10, packPool: 2, rewardedTopPercent: 25, distributionProfile: "balanced" },
+    });
+
+    expect(rows).toHaveLength(0);
   });
 });
