@@ -50,8 +50,9 @@ export function AdminStatStrip({ items }: { items: Array<{ label: string; value:
   );
 }
 
-export function AdminPanel({ children }: { children: ReactNode }) {
-  return <section className="admin-v2-panel">{children}</section>;
+export function AdminPanel({ children, className }: { children: ReactNode; className?: string }) {
+  const classes = className ? `admin-v2-panel ${className}` : "admin-v2-panel";
+  return <section className={classes}>{children}</section>;
 }
 
 export function AdminEmptyState({ title, description }: { title: string; description?: string }) {
