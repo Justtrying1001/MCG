@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { Barlow_Condensed, DM_Mono, Inter, JetBrains_Mono, Lora, Rajdhani } from "next/font/google";
 import { ensureContestLifecycleSchedulerStarted } from "@/lib/domain/contests/lifecycle-scheduler";
 import "./globals.css";
-import "./design-system.css";
 import "../styles/tokens.css";
 import "../styles/semantic.css";
 import "../styles/motion.css";

@@ -247,7 +247,7 @@ function QuestCard({
   const statusBadge = (() => {
     if (state === "PENDING_REVIEW") return { label: "PENDING", style: { background: "rgba(240,164,58,0.15)", color: "#F0A43A", border: "1px solid rgba(240,164,58,0.3)" } };
     if (state === "REJECTED") return { label: "REJECTED", style: { background: "rgba(214,58,50,0.15)", color: "#E05550", border: "1px solid rgba(214,58,50,0.3)" } };
-    return { label: "OPEN", style: { background: "rgba(232,131,74,0.15)", color: "#E8834A", border: "1px solid rgba(232,131,74,0.3)" } };
+    return { label: "OPEN", style: { background: "rgba(232,131,74,0.15)", color: "var(--color-accent-primary)", border: "1px solid rgba(232,131,74,0.3)" } };
   })();
 
   return (
@@ -265,7 +265,7 @@ function QuestCard({
           <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "0.2rem" }}>
             {quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : (quest.configSummary.socialAction ?? "Engagement")}
           </p>
-          <h4 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{quest.title}</h4>
+          <h4 style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--color-text-primary)", lineHeight: 1.3 }}>{quest.title}</h4>
         </div>
         <span style={{ ...statusBadge.style, fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 99, whiteSpace: "nowrap", flexShrink: 0 }}>
           {statusBadge.label}
@@ -276,7 +276,7 @@ function QuestCard({
         {quest.description ?? quest.configSummary.instructions ?? "Complete this quest to earn points."}
       </p>
 
-      <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#E8834A" }}>{formatReward(quest)}</p>
+      <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--color-accent-primary)" }}>{formatReward(quest)}</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
         {state === "PENDING_REVIEW" && (
@@ -293,7 +293,7 @@ function QuestCard({
               borderRadius: 8,
               border: "none",
               background: submittingId === quest.id || Boolean(etaRemainingSec) ? "rgba(232,131,74,0.3)" : "#E8834A",
-              color: "#fff",
+              color: "var(--color-text-primary)",
               fontWeight: 700,
               fontSize: "0.85rem",
               cursor: submittingId === quest.id || Boolean(etaRemainingSec) ? "not-allowed" : "pointer",
@@ -312,7 +312,7 @@ function QuestCard({
                 borderRadius: 8,
                 border: "1px solid rgba(255,255,255,0.12)",
                 background: "rgba(255,255,255,0.05)",
-                color: "#fff",
+                color: "var(--color-text-primary)",
                 fontSize: "0.8rem",
               }}
               placeholder={proofRequired ? "Proof URL (required)" : "Proof URL (optional)"}
@@ -326,7 +326,7 @@ function QuestCard({
                 borderRadius: 8,
                 border: "1px solid rgba(255,255,255,0.12)",
                 background: "rgba(255,255,255,0.05)",
-                color: "#fff",
+                color: "var(--color-text-primary)",
                 fontSize: "0.8rem",
                 resize: "vertical",
               }}
@@ -343,8 +343,8 @@ function QuestCard({
                 padding: "0.55rem 1rem",
                 borderRadius: 8,
                 border: "1px solid rgba(255,255,255,0.15)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
+                background: "rgba(148,163,184,0.08)",
+                color: "var(--color-text-primary)",
                 fontWeight: 600,
                 fontSize: "0.85rem",
                 cursor: "pointer",
@@ -384,7 +384,7 @@ function CompletedQuestCard({ quest }: { quest: QuestRow }) {
       </div>
       <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>{quest.description ?? "Social quest"}</p>
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8834A" }}>{formatReward(quest)}</span>
+        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--color-accent-primary)" }}>{formatReward(quest)}</span>
         <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>Completed {formatDate(quest.completedAt)}</span>
       </div>
     </article>
@@ -441,7 +441,7 @@ function MilestoneBadge({ code, category, title, objective, rewardPoints, reward
             alignItems: "center",
             justifyContent: "center",
             fontSize: "0.65rem",
-            color: "#fff",
+            color: "var(--color-text-primary)",
             fontWeight: 700,
             border: "2px solid #1A1A1F",
           }}>
@@ -453,9 +453,9 @@ function MilestoneBadge({ code, category, title, objective, rewardPoints, reward
       {/* Text below — only if unlocked */}
       {unlocked && (
         <div style={{ textAlign: "center", maxWidth: 88 }}>
-          <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>{title}</p>
+          <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-primary)", lineHeight: 1.2 }}>{title}</p>
           <p style={{ fontSize: "0.64rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.3, marginTop: "0.15rem" }}>{objective}</p>
-          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#E8834A", marginTop: "0.15rem" }}>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--color-accent-primary)", marginTop: "0.15rem" }}>
             {formatReward({ rewardPoints, rewardPackCode: rewardPackCode ?? null, rewardPackQuantity: rewardPackQuantity ?? null })}
           </p>
           <p style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.35)", marginTop: "0.1rem" }}>{formatDate(completedAt)}</p>
@@ -703,11 +703,10 @@ export default function RewardsPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  const TAB_BORDER = "#E8834A";
-  const BG_PRIMARY = "#1A1A1F";
-  const BG_CARD = "#1E1E24";
-  const BORDER_COLOR = "rgba(255,255,255,0.08)";
-  const TEXT_MUTED = "rgba(255,255,255,0.45)";
+  const TAB_BORDER = "var(--color-accent-primary)";
+  const BG_CARD = "var(--color-surface-1)";
+  const BORDER_COLOR = "var(--color-border-subtle)";
+  const TEXT_MUTED = "var(--color-text-secondary)";
 
   function tabStyle(id: TabId) {
     const active = activeTab === id;
@@ -737,7 +736,7 @@ export default function RewardsPage() {
 
           {/* ── Page header ── */}
           <div style={{ marginBottom: "1.5rem" }}>
-            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#fff", marginBottom: "0.2rem" }}>Rewards</h1>
+            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "0.2rem" }}>Rewards</h1>
             <p style={{ fontSize: "0.9rem", color: TEXT_MUTED, marginBottom: "0.6rem" }}>Quests, milestones &amp; earning history</p>
           </div>
 
@@ -754,17 +753,17 @@ export default function RewardsPage() {
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 120 }}>
               <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Current points</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "#E8834A" }}>{currentPoints.toLocaleString()}</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-accent-primary)" }}>{currentPoints.toLocaleString()}</span>
             </div>
             <div style={{ width: 1, background: BORDER_COLOR, alignSelf: "stretch" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 120 }}>
               <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Total ever earned</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fff" }}>{totalCredits.toLocaleString()}</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{totalCredits.toLocaleString()}</span>
             </div>
             <div style={{ width: 1, background: BORDER_COLOR, alignSelf: "stretch" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 100 }}>
               <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Friends invited</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fff" }}>{friendsInvited}</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{friendsInvited}</span>
             </div>
           </div>
 
@@ -812,11 +811,11 @@ export default function RewardsPage() {
                 gap: "0.75rem",
               }}>
                 <div>
-                  <p style={{ fontWeight: 700, color: "#fff", fontSize: "0.95rem" }}>Invite friends, earn points</p>
+                  <p style={{ fontWeight: 700, color: "var(--color-text-primary)", fontSize: "0.95rem" }}>Invite friends, earn points</p>
                   <p style={{ fontSize: "0.8rem", color: TEXT_MUTED }}>+1,000 pts per friend · {friendsInvited} friend{friendsInvited !== 1 ? "s" : ""} invited</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                  <code style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.85rem", color: "#fff", background: "rgba(255,255,255,0.07)", padding: "0.3rem 0.7rem", borderRadius: 6 }}>
+                  <code style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.85rem", color: "var(--color-text-primary)", background: "rgba(148,163,184,0.18)", padding: "0.3rem 0.7rem", borderRadius: 6 }}>
                     {inviteCode}
                   </code>
                   <button
@@ -829,8 +828,8 @@ export default function RewardsPage() {
                       padding: "0.4rem 0.9rem",
                       borderRadius: 8,
                       border: `1px solid ${BORDER_COLOR}`,
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#fff",
+                      background: "rgba(148,163,184,0.08)",
+                      color: "var(--color-text-primary)",
                       fontWeight: 600,
                       fontSize: "0.82rem",
                       cursor: "pointer",
@@ -1013,12 +1012,12 @@ export default function RewardsPage() {
                         </div>
 
                         {/* Name */}
-                        <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#fff", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--color-text-primary)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {row.title}
                         </span>
 
                         {/* Points */}
-                        <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#E8834A", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--color-accent-primary)", whiteSpace: "nowrap" }}>
                           +{row.points.toLocaleString()}
                         </span>
 
@@ -1039,7 +1038,7 @@ export default function RewardsPage() {
                           borderRadius: 8,
                           border: `1px solid ${BORDER_COLOR}`,
                           background: "rgba(255,255,255,0.05)",
-                          color: "#fff",
+                          color: "var(--color-text-primary)",
                           fontWeight: 600,
                           fontSize: "0.85rem",
                           cursor: "pointer",
