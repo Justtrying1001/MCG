@@ -75,7 +75,7 @@ export async function generateSettlementPlan(contestId: string) {
     }> = [];
 
     for (const ranking of contest.rankings) {
-      const matchedRules = findMatchingDistributionRulesForRank(rules as any, ranking.rank, rankingSize);
+      const matchedRules = findMatchingDistributionRulesForRank<RuleLike>(rules, ranking.rank, rankingSize);
       if (matchedRules.length === 0) continue;
 
       const aggregatedComponents: ResolvedComponent[] = [];
