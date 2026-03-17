@@ -458,16 +458,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 type="button"
                 className="mcg-btn primary"
                 onClick={() => {
+                  const firstEmpty = lineupSlots.findIndex((slot) => !slot);
+                  setActiveBuilderSlot(firstEmpty >= 0 ? firstEmpty : 0);
                   setShowBuilder(true);
                   setBuilderFlash("");
                 }}
               >
                 {hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : "Build lineup"}
-              </button>
-            ) : null}
-            {me && isOpen && selectedIds.length === rosterSize ? (
-              <button type="button" className="mcg-btn" onClick={() => void submitLineup()} disabled={submitBusy}>
-                {submitBusy ? "Submitting…" : hasEntry ? "Update lineup" : "Submit lineup"}
               </button>
             ) : null}
             {(isLocked || isLive) ? <span className="mcg-chip">Lineup locked</span> : null}
@@ -480,10 +477,22 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             <section className="contest-command-board mcg-surface raised">
               <div className="contest-command-board-head">
                 <div>
-                  <h2>Lineup board</h2>
-                  <p>{selectedIds.length}/{rosterSize} cards selected · {options.length} eligible cards available</p>
+                  <h2>Your lineup preview</h2>
+                  <p>Manage your lineup in the builder popup. Preview remains read-first in the lobby.</p>
                 </div>
-                <span className={`mcg-badge ${isOpen ? "open" : isLive ? "live" : isLocked ? "locked" : "settled"}`}>{contest.status}</span>
+                {isOpen ? (
+                  <button
+                    type="button"
+                    className="mcg-btn primary"
+                    onClick={() => {
+                      const firstEmpty = lineupSlots.findIndex((slot) => !slot);
+                      setActiveBuilderSlot(firstEmpty >= 0 ? firstEmpty : 0);
+                      setShowBuilder(true);
+                    }}
+                  >
+                    {hasEntry ? "Open lineup builder" : "Build lineup"}
+                  </button>
+                ) : <span className={`mcg-badge ${isOpen ? "open" : isLive ? "live" : isLocked ? "locked" : "settled"}`}>{contest.status}</span>}
               </div>
 
               <div className={`contest-command-slot-grid slots-${rosterSize}`}>
@@ -616,17 +625,18 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       <LineupBuilderModal
         open={showBuilder}
         contestTitle={contest.title}
+        contestCode={contest.code}
         contestStatus={contest.status}
         lockAt={contest.lockAt}
-        entryFeeLabel={entryFee}
         rosterSize={rosterSize}
-        rule={rule}
+        initialActiveSlot={activeBuilderSlot}
         lineupSlots={lineupSlots.length === rosterSize ? lineupSlots : toSlots(selectedIds, rosterSize)}
         options={options}
         selectedLogicalTokenKeys={selectedLogicalTokenKeys}
         busy={submitBusy}
         flashMessage={builderFlash}
         errorMessage={builderError}
+        submitLabel={hasEntry ? "Update lineup" : "Submit lineup"}
         onClose={() => setShowBuilder(false)}
         onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
         onSelectCard={handleSelectCard}
@@ -650,6 +660,14 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }}
         onSubmit={() => void submitLineup()}
       />
+
+      <style jsx>{`
+        .contest-command-statusbar {
+          position: sticky;
+          top: var(--nav-h);
+          z-index: 90;
+        }
+      `}</style>
     </SiteShell>
   );
 }

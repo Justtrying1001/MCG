@@ -509,11 +509,14 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
 
   const rewardConfig = parseRewardConfig((contest.rules[0]?.config as Record<string, unknown> | null)?.rewardConfig);
   if (rewardConfig) {
-    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool <= 0) {
-      issues.push({ code: "REWARD_POINTS_POOL_INVALID", severity: "ERROR", field: "rewardConfig.pointsPool", message: "pointsPool must be a positive integer" });
+    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool < 0) {
+      issues.push({ code: "REWARD_POINTS_POOL_INVALID", severity: "ERROR", field: "rewardConfig.pointsPool", message: "pointsPool must be zero or a positive integer" });
     }
-    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool <= 0) {
-      issues.push({ code: "REWARD_PACK_POOL_INVALID", severity: "ERROR", field: "rewardConfig.packPool", message: "packPool must be a positive integer" });
+    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool < 0) {
+      issues.push({ code: "REWARD_PACK_POOL_INVALID", severity: "ERROR", field: "rewardConfig.packPool", message: "packPool must be zero or a positive integer" });
+    }
+    if (rewardConfig.pointsPool === 0 && rewardConfig.packPool === 0) {
+      issues.push({ code: "REWARD_POOL_REQUIRED", severity: "ERROR", field: "rewardConfig", message: "At least one reward pool must be greater than zero" });
     }
     if (typeof rewardConfig.rewardedTopPercent !== "number" || rewardConfig.rewardedTopPercent < 1 || rewardConfig.rewardedTopPercent > 100) {
       issues.push({ code: "REWARD_PERCENT_INVALID", severity: "ERROR", field: "rewardConfig.rewardedTopPercent", message: "rewardedTopPercent must be between 1 and 100" });
@@ -647,11 +650,14 @@ function normalizeContestInput(input: ContestConfigInput) {
 
   const rewardConfig = input.rewardConfig ?? parseRewardConfig((input.ruleConfig as Record<string, unknown> | null)?.rewardConfig);
   if (rewardConfig) {
-    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool <= 0) {
-      throw new ContestRuntimeError("pointsPool must be a positive integer", 400);
+    if (!Number.isInteger(rewardConfig.pointsPool) || rewardConfig.pointsPool < 0) {
+      throw new ContestRuntimeError("pointsPool must be zero or a positive integer", 400);
     }
-    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool <= 0) {
-      throw new ContestRuntimeError("packPool must be a positive integer", 400);
+    if (!Number.isInteger(rewardConfig.packPool) || rewardConfig.packPool < 0) {
+      throw new ContestRuntimeError("packPool must be zero or a positive integer", 400);
+    }
+    if (rewardConfig.pointsPool === 0 && rewardConfig.packPool === 0) {
+      throw new ContestRuntimeError("At least one reward pool must be greater than zero", 400);
     }
     if (rewardConfig.rewardedTopPercent < 1 || rewardConfig.rewardedTopPercent > 100) {
       throw new ContestRuntimeError("rewardedTopPercent must be between 1 and 100", 400);

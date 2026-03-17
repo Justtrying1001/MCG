@@ -61,8 +61,8 @@ export default function AdminContestBuilderPage() {
   const [participationNotes, setParticipationNotes] = useState("");
   const [optionalClarifications, setOptionalClarifications] = useState("");
 
-  const [pointsPoolAmount, setPointsPoolAmount] = useState("15000");
-  const [packPoolAmount, setPackPoolAmount] = useState("100");
+  const [pointsPoolAmount, setPointsPoolAmount] = useState("0");
+  const [packPoolAmount, setPackPoolAmount] = useState("0");
   const [rewardedTopPercent, setRewardedTopPercent] = useState("25");
   const [distributionProfile, setDistributionProfile] = useState<"balanced" | "top-heavy" | "very-top-heavy">("balanced");
   const [previewParticipants, setPreviewParticipants] = useState("100");
@@ -109,8 +109,8 @@ export default function AdminContestBuilderPage() {
 
       const rewardConfig = ruleConfig?.rewardConfig;
       if (rewardConfig && typeof rewardConfig === "object") {
-        setPointsPoolAmount(String((rewardConfig as any).pointsPool ?? 15000));
-        setPackPoolAmount(String((rewardConfig as any).packPool ?? 100));
+        setPointsPoolAmount(String((rewardConfig as any).pointsPool ?? 0));
+        setPackPoolAmount(String((rewardConfig as any).packPool ?? 0));
         setRewardedTopPercent(String((rewardConfig as any).rewardedTopPercent ?? 25));
         setDistributionProfile(((rewardConfig as any).distributionProfile as "balanced" | "top-heavy" | "very-top-heavy") ?? "balanced");
       }
@@ -175,8 +175,9 @@ export default function AdminContestBuilderPage() {
       arr.push("Entry fee amount must be a positive integer when enabled.");
     }
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set when eligibility is restricted.");
-    if (!Number.isInteger(payload.rewardConfig.pointsPool) || payload.rewardConfig.pointsPool <= 0) arr.push("Points pool must be a positive integer.");
-    if (!Number.isInteger(payload.rewardConfig.packPool) || payload.rewardConfig.packPool <= 0) arr.push("Pack pool must be a positive integer.");
+    if (!Number.isInteger(payload.rewardConfig.pointsPool) || payload.rewardConfig.pointsPool < 0) arr.push("Points pool must be zero or a positive integer.");
+    if (!Number.isInteger(payload.rewardConfig.packPool) || payload.rewardConfig.packPool < 0) arr.push("Pack pool must be zero or a positive integer.");
+    if (payload.rewardConfig.pointsPool === 0 && payload.rewardConfig.packPool === 0) arr.push("Configure at least one reward pool (points or packs).");
     if (payload.rewardConfig.rewardedTopPercent < 1 || payload.rewardConfig.rewardedTopPercent > 100) arr.push("Rewarded top % must be between 1 and 100.");
     return [...new Set(arr)];
   }, [autoCode, eligibilityMode, entryFeeEnabled, payload]);
@@ -186,7 +187,7 @@ export default function AdminContestBuilderPage() {
       { label: "Contest name", done: Boolean(payload.title) },
       { label: "Schedule complete", done: Boolean(payload.openAt && payload.liveAt && payload.endsAt) },
       { label: "Entry rules valid", done: !(entryFeeEnabled && issues.some((issue) => issue.includes("Entry fee"))) },
-      { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 && payload.rewardConfig.packPool > 0 },
+      { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 || payload.rewardConfig.packPool > 0 },
       { label: "No blocking issue", done: issues.length === 0 },
     ];
   }, [entryFeeEnabled, issues, payload]);
@@ -421,13 +422,13 @@ export default function AdminContestBuilderPage() {
 
             <div className="contest-builder-v2-entry-grid">
               <article className="contest-builder-v2-entry-card">
-                <p className="contest-builder-v2-schedule-title">Points pool</p>
-                <input className="input" type="number" min={1} value={pointsPoolAmount} onChange={(e) => setPointsPoolAmount(e.target.value)} placeholder="Total points" />
+              <p className="contest-builder-v2-schedule-title">Points pool</p>
+                <input className="input" type="number" min={0} value={pointsPoolAmount} onChange={(e) => setPointsPoolAmount(e.target.value)} placeholder="Total points" />
               </article>
 
               <article className="contest-builder-v2-entry-card">
                 <p className="contest-builder-v2-schedule-title">Pack pool</p>
-                <input className="input" type="number" min={1} value={packPoolAmount} onChange={(e) => setPackPoolAmount(e.target.value)} placeholder="Total packs" />
+                <input className="input" type="number" min={0} value={packPoolAmount} onChange={(e) => setPackPoolAmount(e.target.value)} placeholder="Total packs" />
               </article>
 
               <article className="contest-builder-v2-entry-card">
