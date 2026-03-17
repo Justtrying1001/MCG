@@ -44,16 +44,21 @@ export function findMatchingDistributionRulesForRank<T extends DistributionRuleM
   return rules.filter((rule) => matchesDistributionRule(rule, rank, rankingSize));
 }
 
-export function findDistributionRuleOverlapIssues<T extends DistributionRuleMatcherLike & { id: string }>(rules: T[], rankingSize: number): string[] {
+export function findDistributionRuleOverlapIssues<T extends Pick<DistributionRuleLike, "id" | "ruleType" | "rankFrom" | "rankTo" | "topN" | "topPercent"> & { bundleId?: string | null }>(
+  rules: T[],
+  rankingSize: number
+): string[] {
   const issues: string[] = [];
 
   for (let rank = 1; rank <= rankingSize; rank += 1) {
-    const matches = findMatchingDistributionRulesForRank(rules, rank, rankingSize);
+    const matched = findMatchingDistributionRulesForRank(rules as DistributionRuleLike[], rank, rankingSize);
+    if (matched.length <= 1) continue;
 
-    if (matches.length > 1) {
-      const ids = matches.map((rule) => rule.id).join(", ");
-      issues.push(`rank ${rank} matches multiple rules (${ids})`);
-    }
+    const bundleIds = new Set(matched.map((rule) => rule.bundleId).filter((bundleId): bundleId is string => !!bundleId));
+    if (bundleIds.size <= 1) continue;
+
+    const conflictingRuleIds = matched.map((rule) => rule.id).sort((a, b) => a.localeCompare(b));
+    issues.push(`rank ${rank} matches multiple rules (${conflictingRuleIds.join(", ")})`);
   }
 
   return issues;
