@@ -2523,8 +2523,38 @@ button.admin-v2-list-row.action.is-active {
   background: rgba(184,196,204,.06);
   font-size: .78rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
 }
 .contest-builder-v2-step-pill:hover { background: rgba(184,196,204,.15); }
+.contest-builder-v2-step-pill.is-active {
+  border-color: #c48bff;
+  color: #fff;
+  background: rgba(196,139,255,.18);
+}
+.contest-builder-v2-step-pill.has-issue {
+  border-color: #ff6b6b;
+}
+.contest-builder-v2-step-pill.is-complete {
+  border-color: rgba(74, 222, 128, .46);
+}
+.contest-builder-v2-step-pill-badge {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: .67rem;
+  line-height: 1;
+  font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--color-border-subtle) 60%, #fff);
+  background: rgba(184,196,204,.12);
+}
+.contest-builder-v2-step-pill-badge.ok {
+  border-color: rgba(74, 222, 128, .5);
+  background: rgba(74, 222, 128, .16);
+}
 
 .contest-builder-v2-layout {
   display: grid;

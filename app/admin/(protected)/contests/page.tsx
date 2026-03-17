@@ -36,7 +36,16 @@ type AdminContest = {
   _count: { entries: number; scores: number; settlements: number };
 };
 
-const STATUS_OPTIONS: Array<ContestStatus | "ALL"> = ["ALL", "DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
+type CatalogFilter = "ALL" | "DRAFT" | "ACTIVE" | "LIVE" | "SETTLED" | "CANCELED";
+
+const FILTER_OPTIONS: Array<{ value: CatalogFilter; label: string }> = [
+  { value: "ALL", label: "All" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "ACTIVE", label: "Open / Active" },
+  { value: "LIVE", label: "Live" },
+  { value: "SETTLED", label: "Settled" },
+  { value: "CANCELED", label: "Canceled" },
+];
 
 function newIdempotencyKey(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -49,7 +58,7 @@ export default function AdminContestsLibraryPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ContestStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<CatalogFilter>("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -81,10 +90,23 @@ export default function AdminContestsLibraryPage() {
     return () => document.removeEventListener("click", handler);
   }, [openMenuId]);
 
+  const statusCounts = useMemo(() => ({
+    all: contests.length,
+    draft: contests.filter((contest) => contest.status === "DRAFT").length,
+    active: contests.filter((contest) => contest.status === "OPEN" || contest.status === "LOCKED").length,
+    live: contests.filter((contest) => contest.status === "LIVE").length,
+    settled: contests.filter((contest) => contest.status === "SETTLED").length,
+    canceled: contests.filter((contest) => contest.status === "CANCELED").length,
+  }), [contests]);
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return contests.filter((contest) => {
-      if (statusFilter !== "ALL" && contest.status !== statusFilter) return false;
+      if (statusFilter === "DRAFT" && contest.status !== "DRAFT") return false;
+      if (statusFilter === "ACTIVE" && contest.status !== "OPEN" && contest.status !== "LOCKED") return false;
+      if (statusFilter === "LIVE" && contest.status !== "LIVE") return false;
+      if (statusFilter === "SETTLED" && contest.status !== "SETTLED") return false;
+      if (statusFilter === "CANCELED" && contest.status !== "CANCELED") return false;
       if (!q) return true;
       return [contest.code, contest.title, contest.description ?? ""].join(" ").toLowerCase().includes(q);
     });
@@ -162,16 +184,24 @@ export default function AdminContestsLibraryPage() {
   return (
     <div className="admin-v2-page contest-library-page">
       <AdminPageHeader
-        title="Contest Library"
-        subtitle="Create, edit and publish contests from a clear product-focused library. Technical operations stay in a separate console."
+        title="Contest Catalog"
+        subtitle="Admin control center for draft, active, live, settled, and canceled contests."
         actions={
           <div className="admin-v2-action-row">
-            <Link href="/admin/contests/create" className="contest-console-cta">Create Contest</Link>
-            <Link href="/admin/contests/legacy" className="admin-v2-link-chip">Legacy console</Link>
+            <Link href="/admin/contests/create" className="contest-console-cta">Create contest</Link>
             <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
           </div>
         }
       />
+
+      <AdminPanel>
+        <div className="contest-console-kpis">
+          <div className="contest-console-mini-metric"><span>Total</span><strong>{statusCounts.all}</strong></div>
+          <div className="contest-console-mini-metric"><span>Draft</span><strong>{statusCounts.draft}</strong></div>
+          <div className="contest-console-mini-metric"><span>Open / Active</span><strong>{statusCounts.active}</strong></div>
+          <div className="contest-console-mini-metric"><span>Live</span><strong>{statusCounts.live}</strong></div>
+        </div>
+      </AdminPanel>
 
       {params.get("published") === "1" ? (
         <AdminPanel>
@@ -182,18 +212,28 @@ export default function AdminContestsLibraryPage() {
       ) : null}
 
       <AdminToolbar>
-        <input className="input" placeholder="Search title, code or description" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContestStatus | "ALL") }>
-          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status === "ALL" ? "All statuses" : status}</option>)}
-        </select>
-        <AdminStatusBadge tone="neutral" label={`${rows.length} contests`} />
+        <input className="input" placeholder="Search contest name, code, or description" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+          {FILTER_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className="admin-v2-link-chip"
+              style={statusFilter === option.value ? { borderColor: "#c48bff", color: "#fff" } : undefined}
+              onClick={() => setStatusFilter(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <AdminStatusBadge tone="neutral" label={`${rows.length} visible`} />
       </AdminToolbar>
 
       {loading ? <AdminPanel><AdminEmptyState title="Loading contests…" /></AdminPanel> : null}
       {error ? <AdminPanel><p className="contest-error">{error}</p></AdminPanel> : null}
       {message ? <AdminPanel><p className="contest-inline-note">{message}</p></AdminPanel> : null}
 
-      {!loading && rows.length === 0 ? <AdminPanel><AdminEmptyState title="No contests found" description="Adjust filters or create a new contest draft." /></AdminPanel> : null}
+      {!loading && rows.length === 0 ? <AdminPanel><AdminEmptyState title="No contests found" description="Try another filter or create a new contest draft." /></AdminPanel> : null}
 
       {!loading ? (
         <section className="contest-library-grid">
@@ -220,13 +260,13 @@ export default function AdminContestsLibraryPage() {
 
                 <div className="contest-library-dates">
                   <p><strong>Registration opens:</strong> {fmt(contest.openAt)}</p>
-                  <p><strong>Start:</strong> {fmt(contest.liveAt)}</p>
+                  <p><strong>Live:</strong> {fmt(contest.liveAt)}</p>
                   <p><strong>Contest ends:</strong> {fmt(contest.endsAt)}</p>
                 </div>
 
                 <p className="contest-inline-note">{buildRewardTeaser(contest)}</p>
 
-                <p className="contest-inline-note"><strong>Publish state:</strong> {contest.configPublishedAt ? `Published ${fmt(contest.configPublishedAt)}` : "Not published"} · <strong>Entries:</strong> {contest._count.entries}</p>
+                <p className="contest-inline-note"><strong>Config state:</strong> {contest.configPublishedAt ? `Published ${fmt(contest.configPublishedAt)}` : "Not published"} · <strong>Entries:</strong> {contest._count.entries}</p>
 
                 {snapshotIndicator(contest)}
 
