@@ -4,6 +4,7 @@ import { validateContestDraftEntity } from "@/lib/domain/contests/config-runtime
 
 function baseContest() {
   return {
+    openAt: new Date("2026-03-01T09:00:00.000Z"),
     lockAt: new Date("2026-03-01T10:00:00.000Z"),
     liveAt: new Date("2026-03-01T11:00:00.000Z"),
     endsAt: new Date("2026-03-01T12:00:00.000Z"),
@@ -74,4 +75,49 @@ describe("contest config runtime validation", () => {
     expect(issues.some((issue) => issue.code === "ENTRY_FEE_INVALID")).toBe(true);
     expect(issues.some((issue) => issue.code === "DISTRIBUTION_TOP_PERCENT_INVALID")).toBe(true);
   });
+
+  it("accepts cumulative overlapping distribution rules", () => {
+    const contest = baseContest();
+    contest.rewardPolicy.distributionRules = [
+      {
+        bundleId: "b1",
+        priority: 1,
+        ruleType: "FIXED_RANKS",
+        rankFrom: 1,
+        rankTo: 1,
+        topN: null,
+        topPercent: null,
+      },
+      {
+        bundleId: "b1",
+        priority: 2,
+        ruleType: "TOP_N",
+        rankFrom: null,
+        rankTo: null,
+        topN: 1,
+        topPercent: null,
+      },
+    ];
+
+    const issues = validateContestDraftEntity(contest);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_RULE_OVERLAP")).toBe(false);
+  });
+
+  it("rejects invalid points pool rule", () => {
+    const contest = baseContest();
+    contest.rewardPolicy.distributionRules = [
+      {
+        bundleId: "b1",
+        priority: 1,
+        ruleType: "POINTS_POOL_TOP_PERCENT",
+        topPercent: 0,
+        poolAmount: -10,
+      },
+    ];
+
+    const issues = validateContestDraftEntity(contest);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_TOP_PERCENT_INVALID")).toBe(true);
+    expect(issues.some((issue) => issue.code === "DISTRIBUTION_POOL_AMOUNT_INVALID")).toBe(true);
+  });
+
 });

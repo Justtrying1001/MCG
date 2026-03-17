@@ -16,7 +16,7 @@ describe("settlement plan runtime", () => {
     vi.clearAllMocks();
   });
 
-  it("generates plan for FIXED_RANKS and TOP_N without overlap", async () => {
+  it("generates cumulative rewards when multiple rules match the same rank", async () => {
     const tx: any = {
       contest: {
         findUnique: vi.fn().mockResolvedValue({
@@ -26,19 +26,17 @@ describe("settlement plan runtime", () => {
           rankings: [
             { userId: "u1", rank: 1, score: 100 },
             { userId: "u2", rank: 2, score: 90 },
-            { userId: "u3", rank: 3, score: 80 },
-            { userId: "u4", rank: 4, score: 70 },
           ],
           rewardPolicy: {
             id: "rp1",
             status: "PUBLISHED",
             bundles: [
-              { id: "b1", components: [{ type: "POINTS", pointsAmount: 1000, xpAmount: null, packDefinitionId: null, packQuantity: null }] },
-              { id: "b2", components: [{ type: "XP", pointsAmount: null, xpAmount: 100, packDefinitionId: null, packQuantity: null }] },
+              { id: "b1", components: [{ type: "POINTS", pointsAmount: 500, xpAmount: null, packDefinitionId: null, packQuantity: null }] },
+              { id: "b2", components: [{ type: "PACK", pointsAmount: null, xpAmount: null, packDefinitionId: "pack1", packQuantity: 2 }] },
             ],
             distributionRules: [
-              { id: "r1", priority: 1, ruleType: "FIXED_RANKS", rankFrom: 4, rankTo: 4, topN: null, topPercent: null, bundleId: "b1" },
-              { id: "r2", priority: 2, ruleType: "TOP_N", rankFrom: null, rankTo: null, topN: 3, topPercent: null, bundleId: "b2" },
+              { id: "r1", priority: 1, ruleType: "TOP_N", rankFrom: null, rankTo: null, topN: 2, topPercent: null, poolAmount: null, bundleId: "b1" },
+              { id: "r2", priority: 2, ruleType: "FIXED_RANKS", rankFrom: 1, rankTo: 1, topN: null, topPercent: null, poolAmount: null, bundleId: "b2" },
             ],
           },
         }),
@@ -60,14 +58,12 @@ describe("settlement plan runtime", () => {
     const result = await generateSettlementPlan("c1");
 
     expect(result.planId).toBe("sp1");
-    expect(result.matchedUsers).toBe(4); // rank4 fixed + ranks1-3 from TOP_N
+    expect(result.matchedUsers).toBe(2);
     expect(result.totals.pointsCreditTotal).toBe(1000);
-    expect(result.totals.xpCreditTotal).toBe(300);
+    expect(result.totals.packsGrantTotal).toBe(2);
   });
 
-
-
-  it("applies TOP_PERCENT using ceil with minimum one winner", async () => {
+  it("applies POINTS_POOL_TOP_PERCENT and distributes remainder from best rank", async () => {
     const tx: any = {
       contest: {
         findUnique: vi.fn().mockResolvedValue({
@@ -82,11 +78,9 @@ describe("settlement plan runtime", () => {
           rewardPolicy: {
             id: "rp1",
             status: "PUBLISHED",
-            bundles: [
-              { id: "b1", components: [{ type: "XP", pointsAmount: null, xpAmount: 25, packDefinitionId: null, packQuantity: null }] },
-            ],
+            bundles: [{ id: "b1", components: [{ type: "POINTS", pointsAmount: 1, xpAmount: null, packDefinitionId: null, packQuantity: null }] }],
             distributionRules: [
-              { id: "r1", priority: 1, ruleType: "TOP_PERCENT", rankFrom: null, rankTo: null, topN: null, topPercent: 34, bundleId: "b1" },
+              { id: "r1", priority: 1, ruleType: "POINTS_POOL_TOP_PERCENT", rankFrom: null, rankTo: null, topN: null, topPercent: 50, poolAmount: 100, bundleId: "b1" },
             ],
           },
         }),
@@ -107,33 +101,8 @@ describe("settlement plan runtime", () => {
 
     const result = await generateSettlementPlan("c1");
 
-    expect(result.matchedUsers).toBe(2); // ceil(3*34%) => 2
-    expect(result.totals.xpCreditTotal).toBe(50);
-  });
-  it("blocks generation when rules overlap ambiguously", async () => {
-    const tx: any = {
-      contest: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "c1",
-          configPublishedAt: new Date(),
-          settlements: [],
-          rankings: [{ userId: "u1", rank: 1, score: 10 }],
-          rewardPolicy: {
-            id: "rp1",
-            status: "PUBLISHED",
-            bundles: [{ id: "b1", components: [{ type: "POINTS", pointsAmount: 100, xpAmount: null, packDefinitionId: null, packQuantity: null }] }],
-            distributionRules: [
-              { id: "r1", priority: 1, ruleType: "FIXED_RANKS", rankFrom: 1, rankTo: 1, topN: null, topPercent: null, bundleId: "b1" },
-              { id: "r2", priority: 2, ruleType: "TOP_N", rankFrom: null, rankTo: null, topN: 1, topPercent: null, bundleId: "b1" },
-            ],
-          },
-        }),
-      },
-      contestSettlementPlan: { findMany: vi.fn().mockResolvedValue([]), updateMany: vi.fn(), create: vi.fn() },
-    };
-    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
-
-    await expect(generateSettlementPlan("c1")).rejects.toMatchObject({ status: 409 });
+    expect(result.matchedUsers).toBe(2);
+    expect(result.totals.pointsCreditTotal).toBe(100);
   });
 
   it("previews plan with totals", async () => {
@@ -212,6 +181,9 @@ describe("settlement plan runtime", () => {
       rosterLock: {
         deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
       },
+      userProgression: {
+        upsert: vi.fn().mockResolvedValue({}),
+      },
     };
 
     prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
@@ -220,5 +192,4 @@ describe("settlement plan runtime", () => {
 
     expect(tx.rosterLock.deleteMany).not.toHaveBeenCalled();
   });
-
 });

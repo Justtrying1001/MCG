@@ -1,18 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
 import {
   createRewardRuleDraft,
   describeRewardRule,
-  rewardRuleReducer,
   toContestRewardPayload,
-  type DistributionType,
   type RewardRuleDraft,
-  type RewardType,
 } from "@/lib/admin/contest-reward-builder";
 
 type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
@@ -41,12 +38,6 @@ const BUILDER_STEPS = [
   { id: "rules", label: "Rules" },
   { id: "review", label: "Review" },
 ] as const;
-
-const DEFAULT_REWARD_RULES: RewardRuleDraft[] = [
-  createRewardRuleDraft({ id: "seed-r1", label: "Rank 1", rewardType: "POINTS", amount: 1000, distributionType: "FIXED_RANKS", distributionValue: 1 }),
-  createRewardRuleDraft({ id: "seed-r2", label: "Rank 2", rewardType: "POINTS", amount: 500, distributionType: "FIXED_RANKS", distributionValue: 2 }),
-  createRewardRuleDraft({ id: "seed-r3", label: "Rank 3", rewardType: "POINTS", amount: 250, distributionType: "FIXED_RANKS", distributionValue: 3 }),
-];
 
 export default function AdminContestBuilderPage() {
   const params = useSearchParams();
@@ -78,7 +69,17 @@ export default function AdminContestBuilderPage() {
   const [participationNotes, setParticipationNotes] = useState("");
   const [optionalClarifications, setOptionalClarifications] = useState("");
 
-  const [rules, dispatchRules] = useReducer(rewardRuleReducer, DEFAULT_REWARD_RULES);
+  const [pointsPoolEnabled, setPointsPoolEnabled] = useState(true);
+  const [pointsPoolTopPercent, setPointsPoolTopPercent] = useState("25");
+  const [pointsPoolAmount, setPointsPoolAmount] = useState("15000");
+
+  const [packDefinitionId, setPackDefinitionId] = useState("");
+  const [rank1PackQty, setRank1PackQty] = useState("3");
+  const [rank2PackQty, setRank2PackQty] = useState("2");
+  const [rank3PackQty, setRank3PackQty] = useState("1");
+
+  const [bonusTopN, setBonusTopN] = useState("10");
+  const [bonusPoints, setBonusPoints] = useState("500");
 
   useEffect(() => {
     void (async () => {
@@ -126,6 +127,44 @@ export default function AdminContestBuilderPage() {
       const [participation = "", clarifications = ""] = notes.split("\n\n---\n\n");
       setParticipationNotes(participation);
       setOptionalClarifications(clarifications);
+
+      const distributionRules = contest.rewardPolicy?.distributionRules ?? [];
+      const bundles = contest.rewardPolicy?.bundles ?? [];
+      const bundleById = new Map(bundles.map((bundle: any) => [bundle.id, bundle]));
+
+      const poolRule = distributionRules.find((item: any) => item.ruleType === "POINTS_POOL_TOP_PERCENT");
+      if (poolRule) {
+        setPointsPoolEnabled(true);
+        setPointsPoolTopPercent(String(Math.floor(poolRule.topPercent ?? 25)));
+        setPointsPoolAmount(String(Math.floor(poolRule.poolAmount ?? 15000)));
+      }
+
+      const packRows: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+      for (const distRule of distributionRules) {
+        if (distRule.ruleType !== "FIXED_RANKS" || distRule.rankFrom !== distRule.rankTo) continue;
+        const bundle = bundleById.get(distRule.bundleId);
+        const packComponent = bundle?.components?.find((component: any) => component.type === "PACK");
+        if (!packComponent) continue;
+        if ([1, 2, 3].includes(distRule.rankFrom)) {
+          packRows[distRule.rankFrom] = packComponent.packQuantity ?? 0;
+          if (!packDefinitionId) setPackDefinitionId(packComponent.packDefinitionId ?? "");
+        }
+      }
+
+      if (packRows[1] > 0) setRank1PackQty(String(packRows[1]));
+      if (packRows[2] > 0) setRank2PackQty(String(packRows[2]));
+      if (packRows[3] > 0) setRank3PackQty(String(packRows[3]));
+
+      const bonusRule = distributionRules.find((item: any) => item.ruleType === "TOP_N" && item.topN);
+      if (bonusRule) {
+        const bundle = bundleById.get(bonusRule.bundleId);
+        const pointsComponent = bundle?.components?.find((component: any) => component.type === "POINTS");
+        if (pointsComponent?.pointsAmount) {
+          setBonusTopN(String(bonusRule.topN));
+          setBonusPoints(String(pointsComponent.pointsAmount));
+        }
+      }
+
       setAutoCode(false);
     })();
   }, [contestId]);
@@ -137,9 +176,61 @@ export default function AdminContestBuilderPage() {
     return new Date(new Date(startsAt).getTime() + parsedDuration * 60 * 60 * 1000).toISOString();
   }, [durationHours, startsAt]);
 
-  const rewardPayload = useMemo(() => toContestRewardPayload(rules), [rules]);
+  const rewardDraftRules = useMemo<RewardRuleDraft[]>(() => {
+    const generated: RewardRuleDraft[] = [];
 
-  const invalidRewardRulesById = useMemo(() => new Map(rewardPayload.invalidRules.map((rule) => [rule.id, rule.message])), [rewardPayload.invalidRules]);
+    const poolPercent = Number(pointsPoolTopPercent);
+    const poolAmount = Number(pointsPoolAmount);
+    if (pointsPoolEnabled && Number.isFinite(poolPercent) && Number.isFinite(poolAmount) && poolPercent > 0 && poolAmount > 0) {
+      generated.push(createRewardRuleDraft({
+        id: "pool-top-percent",
+        label: "Points pool",
+        rewardType: "POINTS",
+        mode: "POOL",
+        distributionType: "TOP_PERCENT",
+        distributionValue: Math.floor(poolPercent),
+        poolAmount: Math.floor(poolAmount),
+      }));
+    }
+
+    const packRanks = [
+      { rank: 1, qty: Number(rank1PackQty) },
+      { rank: 2, qty: Number(rank2PackQty) },
+      { rank: 3, qty: Number(rank3PackQty) },
+    ];
+
+    for (const row of packRanks) {
+      if (!packDefinitionId || !Number.isFinite(row.qty) || row.qty <= 0) continue;
+      generated.push(createRewardRuleDraft({
+        id: `pack-rank-${row.rank}`,
+        label: `Rank ${row.rank} packs`,
+        rewardType: "PACK",
+        mode: "FIXED",
+        amount: Math.floor(row.qty),
+        packDefinitionId,
+        distributionType: "FIXED_RANKS",
+        distributionValue: row.rank,
+      }));
+    }
+
+    const bonusN = Number(bonusTopN);
+    const bonus = Number(bonusPoints);
+    if (Number.isFinite(bonusN) && Number.isFinite(bonus) && bonusN > 0 && bonus > 0) {
+      generated.push(createRewardRuleDraft({
+        id: "bonus-top-n",
+        label: `Top ${Math.floor(bonusN)} bonus`,
+        rewardType: "POINTS",
+        mode: "FIXED",
+        amount: Math.floor(bonus),
+        distributionType: "TOP_N",
+        distributionValue: Math.floor(bonusN),
+      }));
+    }
+
+    return generated;
+  }, [bonusPoints, bonusTopN, packDefinitionId, pointsPoolAmount, pointsPoolEnabled, pointsPoolTopPercent, rank1PackQty, rank2PackQty, rank3PackQty]);
+
+  const rewardPayload = useMemo(() => toContestRewardPayload(rewardDraftRules), [rewardDraftRules]);
 
   const payload = useMemo(() => {
     const parsedEntryFee = Number(entryFeeAmount);
@@ -374,51 +465,50 @@ export default function AdminContestBuilderPage() {
           <section id="rewards" className="admin-panel contest-builder-v2-section">
             <header>
               <h2 className="admin-section-title">4. Rewards</h2>
-              <p className="contest-inline-note">Build an easy-to-scan reward distribution by rank or ranges.</p>
+              <p className="contest-inline-note">Configure cumulative reward layers: points pool, rank packs and bonus points.</p>
             </header>
 
-            <div className="contest-builder-v2-rewards-stack">
-              {rules.map((rule) => (
-                <article key={rule.id} className="contest-builder-v2-reward-card">
-                  <div className="contest-builder-v2-reward-top">
-                    <div>
-                      <input className="input" value={rule.label} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { label: e.target.value } })} />
-                      <p className="contest-builder-v2-reward-target">{describeRewardRule(rule)}</p>
-                    </div>
-                    <span className="contest-builder-v2-reward-tier-chip">{getTierHint(rule.distributionType, rule.distributionValue)}</span>
-                  </div>
-                  <div className="admin-field-grid">
-                    <select className="input" value={rule.rewardType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { rewardType: e.target.value as RewardType } })}><option value="POINTS">Points</option><option value="XP">XP</option><option value="PACK">Pack</option></select>
-                    <input className="input" type="number" min={1} value={rule.amount} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { amount: Number(e.target.value) } })} />
-                    <select className="input" value={rule.distributionType} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionType: e.target.value as DistributionType } })}><option value="FIXED_RANKS">Exact rank</option><option value="TOP_N">Top N</option><option value="TOP_PERCENT">Top %</option></select>
-                    <input className="input" type="number" min={1} value={rule.distributionValue} onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { distributionValue: Number(e.target.value) } })} />
-                  </div>
-                  {rule.rewardType === "PACK" ? (
-                    <div>
-                      <label className="contest-inline-note" htmlFor={`pack-definition-${rule.id}`}>Pack Definition ID</label>
-                      <select
-                        id={`pack-definition-${rule.id}`}
-                        className="input"
-                        value={rule.packDefinitionId}
-                        onChange={(e) => dispatchRules({ type: "update", id: rule.id, patch: { packDefinitionId: e.target.value } })}
-                      >
-                        <option value="">Select reward pack</option>
-                        {rewardPackDefinitions.map((pack) => (
-                          <option key={pack.id} value={pack.id}>{pack.code}</option>
-                        ))}
-                      </select>
-                      <p className="contest-inline-note">
-                        {rewardPackDefinitions.length === 0
-                          ? "No reward packs available. Create a REWARD pack definition first."
-                          : "Only REWARD-type packs are available. Make sure the pack has a reward supply pool configured."}
-                      </p>
-                    </div>
-                  ) : null}
-                  {invalidRewardRulesById.has(rule.id) ? <p className="contest-error">{invalidRewardRulesById.get(rule.id)}</p> : null}
-                  <p className="contest-inline-note">Player-facing: <strong>{rule.label}</strong> receives <strong>{rule.amount}</strong> {rule.rewardType === "PACK" ? "pack(s)" : rule.rewardType.toLowerCase()} for <strong>{describeRewardRule(rule)}</strong>.</p>
-                </article>
-              ))}            </div>
-            <Button onClick={() => dispatchRules({ type: "add" })}>Add reward rule</Button>
+            <div className="contest-builder-v2-entry-grid">
+              <article className="contest-builder-v2-entry-card">
+                <p className="contest-builder-v2-schedule-title">Points Pool</p>
+                <label className="contest-inline-note"><input type="checkbox" checked={pointsPoolEnabled} onChange={(e) => setPointsPoolEnabled(e.target.checked)} /> Enable points pool</label>
+                <input className="input" type="number" min={1} disabled={!pointsPoolEnabled} value={pointsPoolTopPercent} onChange={(e) => setPointsPoolTopPercent(e.target.value)} placeholder="Top % to share" />
+                <input className="input" type="number" min={1} disabled={!pointsPoolEnabled} value={pointsPoolAmount} onChange={(e) => setPointsPoolAmount(e.target.value)} placeholder="Pool amount" />
+                <p className="contest-inline-note">Top % winners share the pool. Remainder points are assigned from best rank downward.</p>
+              </article>
+
+              <article className="contest-builder-v2-entry-card">
+                <p className="contest-builder-v2-schedule-title">Pack Rewards (Top 1/2/3)</p>
+                <select className="input" value={packDefinitionId} onChange={(e) => setPackDefinitionId(e.target.value)}>
+                  <option value="">Select reward pack</option>
+                  {rewardPackDefinitions.map((pack) => <option key={pack.id} value={pack.id}>{pack.code}</option>)}
+                </select>
+                <input className="input" type="number" min={0} value={rank1PackQty} onChange={(e) => setRank1PackQty(e.target.value)} placeholder="Rank 1 packs" />
+                <input className="input" type="number" min={0} value={rank2PackQty} onChange={(e) => setRank2PackQty(e.target.value)} placeholder="Rank 2 packs" />
+                <input className="input" type="number" min={0} value={rank3PackQty} onChange={(e) => setRank3PackQty(e.target.value)} placeholder="Rank 3 packs" />
+              </article>
+
+              <article className="contest-builder-v2-entry-card">
+                <p className="contest-builder-v2-schedule-title">Points Bonus</p>
+                <input className="input" type="number" min={1} value={bonusTopN} onChange={(e) => setBonusTopN(e.target.value)} placeholder="Top N" />
+                <input className="input" type="number" min={1} value={bonusPoints} onChange={(e) => setBonusPoints(e.target.value)} placeholder="Bonus points per winner" />
+                <p className="contest-inline-note">Each qualifying rank receives the same bonus points.</p>
+              </article>
+            </div>
+
+            {rewardPayload.invalidRules.length > 0 ? (
+              <div className="admin-callout danger">
+                <p className="contest-inline-note"><strong>Reward configuration issues</strong></p>
+                {rewardPayload.invalidRules.map((rule) => <p key={rule.id} className="contest-inline-note">• {rule.message}</p>)}
+              </div>
+            ) : null}
+
+            <div className="admin-callout">
+              <p className="contest-inline-note"><strong>Generated rules preview</strong></p>
+              {rewardDraftRules.length === 0
+                ? <p className="contest-inline-note">No generated reward rule yet.</p>
+                : rewardDraftRules.map((rule) => <p key={rule.id} className="contest-inline-note">• {describeRewardRule(rule)}</p>)}
+            </div>
           </section>
 
           <section id="rules" className="admin-panel contest-builder-v2-section">
@@ -490,21 +580,14 @@ export default function AdminContestBuilderPage() {
             <h3>Actions</h3>
             {message ? <p className="contest-inline-note">{message}</p> : <p className="contest-inline-note">Save draft any time, then publish when checklist is green.</p>}
             <div className="contest-builder-v2-actions">
-              <Button variant="ghost" onClick={() => void saveDraft()}>Save draft</Button>
-              <Button onClick={() => void launch()} disabled={issues.length > 0}>Publish contest</Button>
+              <Button variant="ghost" disabled={issues.length > 0} onClick={() => void saveDraft()}>Save draft</Button>
+              <Button onClick={() => void launch()} disabled={publishSuccess || issues.length > 0}>Publish contest</Button>
             </div>
           </div>
         </aside>
       </section>
     </div>
   );
-}
-
-
-function getTierHint(type: DistributionType, value: number) {
-  if (type === "FIXED_RANKS") return `Rank ${value}`;
-  if (type === "TOP_N") return `Top ${value}`;
-  return `Top ${value}%`;
 }
 
 function toInputDate(value: string | null) {

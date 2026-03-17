@@ -166,6 +166,7 @@ enum ContestRewardDistributionRuleType {
   FIXED_RANKS
   TOP_N
   TOP_PERCENT
+  POINTS_POOL_TOP_PERCENT
 }
 
 enum ContestSettlementPlanStatus {
@@ -646,6 +647,7 @@ model ContestRewardDistributionRule {
   rankTo         Int?
   topN           Int?
   topPercent     Float?
+  poolAmount     Int?
 
   rewardPolicy ContestRewardPolicy @relation(fields: [rewardPolicyId], references: [id], onDelete: Cascade)
   bundle       ContestRewardBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)

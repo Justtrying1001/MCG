@@ -1,11 +1,14 @@
 export type RewardType = "POINTS" | "XP" | "PACK";
 export type DistributionType = "FIXED_RANKS" | "TOP_N" | "TOP_PERCENT";
+export type RewardRuleMode = "FIXED" | "POOL";
 
 export type RewardRuleDraft = {
   id: string;
   label: string;
   rewardType: RewardType;
+  mode: RewardRuleMode;
   amount: number;
+  poolAmount: number;
   packDefinitionId: string;
   distributionType: DistributionType;
   distributionValue: number;
@@ -22,7 +25,9 @@ export function createRewardRuleDraft(partial?: Partial<RewardRuleDraft>): Rewar
     id: partial?.id ?? `rule_${Math.random().toString(36).slice(2, 9)}`,
     label: partial?.label ?? "",
     rewardType: partial?.rewardType ?? "POINTS",
+    mode: partial?.mode ?? "FIXED",
     amount: partial?.amount ?? 1000,
+    poolAmount: partial?.poolAmount ?? 1000,
     packDefinitionId: partial?.packDefinitionId ?? "",
     distributionType: partial?.distributionType ?? "TOP_N",
     distributionValue: partial?.distributionValue ?? 10,
@@ -30,17 +35,9 @@ export function createRewardRuleDraft(partial?: Partial<RewardRuleDraft>): Rewar
 }
 
 export function rewardRuleReducer(state: RewardRuleDraft[], action: RewardBuilderAction): RewardRuleDraft[] {
-  if (action.type === "add") {
-    return [...state, createRewardRuleDraft(action.rule)];
-  }
-
-  if (action.type === "remove") {
-    return state.filter((rule) => rule.id !== action.id);
-  }
-
-  if (action.type === "update") {
-    return state.map((rule) => (rule.id === action.id ? { ...rule, ...action.patch } : rule));
-  }
+  if (action.type === "add") return [...state, createRewardRuleDraft(action.rule)];
+  if (action.type === "remove") return state.filter((rule) => rule.id !== action.id);
+  if (action.type === "update") return state.map((rule) => (rule.id === action.id ? { ...rule, ...action.patch } : rule));
 
   const index = state.findIndex((rule) => rule.id === action.id);
   if (index < 0) return state;
@@ -61,6 +58,10 @@ export function describeDistribution(type: DistributionType, value: number) {
 
 export function describeRewardRule(rule: RewardRuleDraft) {
   const target = describeDistribution(rule.distributionType, rule.distributionValue);
+  if (rule.mode === "POOL") {
+    return `${target} share a ${Math.max(0, Math.floor(rule.poolAmount)).toLocaleString()} points pool.`;
+  }
+
   const amount = Number.isFinite(rule.amount) ? Math.max(0, Math.floor(rule.amount)) : 0;
   if (rule.rewardType === "PACK") {
     const packId = rule.packDefinitionId.trim() || "pack-definition";
@@ -73,14 +74,39 @@ export function describeRewardRule(rule: RewardRuleDraft) {
 
 export function toContestRewardPayload(rules: RewardRuleDraft[]) {
   const invalidRules: Array<{ id: string; message: string }> = [];
+
   const validRules = rules.filter((rule) => {
-    if (!Number.isInteger(rule.amount) || rule.amount <= 0) {
-      invalidRules.push({ id: rule.id, message: "Reward amount must be a positive integer." });
+    if (!Number.isInteger(rule.distributionValue) || rule.distributionValue <= 0) {
+      invalidRules.push({ id: rule.id, message: "Distribution value must be a positive integer." });
       return false;
     }
 
-    if (!Number.isInteger(rule.distributionValue) || rule.distributionValue <= 0) {
-      invalidRules.push({ id: rule.id, message: "Distribution value must be a positive integer." });
+    if (rule.distributionType === "TOP_PERCENT" && rule.distributionValue > 100) {
+      invalidRules.push({ id: rule.id, message: "Top percent must be less than or equal to 100." });
+      return false;
+    }
+
+    if (rule.mode === "POOL") {
+      if (rule.rewardType !== "POINTS") {
+        invalidRules.push({ id: rule.id, message: "Pool mode is only supported for points rewards." });
+        return false;
+      }
+
+      if (rule.distributionType !== "TOP_PERCENT") {
+        invalidRules.push({ id: rule.id, message: "Pool mode requires TOP_PERCENT distribution." });
+        return false;
+      }
+
+      if (!Number.isInteger(rule.poolAmount) || rule.poolAmount <= 0) {
+        invalidRules.push({ id: rule.id, message: "Pool amount must be a positive integer." });
+        return false;
+      }
+
+      return true;
+    }
+
+    if (!Number.isInteger(rule.amount) || rule.amount <= 0) {
+      invalidRules.push({ id: rule.id, message: "Reward amount must be a positive integer." });
       return false;
     }
 
@@ -94,27 +120,38 @@ export function toContestRewardPayload(rules: RewardRuleDraft[]) {
 
   const rewardBundles = validRules.map((rule, index) => {
     const name = `rule_bundle_${rule.id}`;
-    const component = rule.rewardType === "PACK"
-      ? { type: "PACK" as const, packDefinitionId: rule.packDefinitionId.trim(), packQuantity: rule.amount }
-      : rule.rewardType === "XP"
-        ? { type: "XP" as const, xpAmount: rule.amount }
-        : { type: "POINTS" as const, pointsAmount: rule.amount };
+    const component = rule.mode === "POOL"
+      ? { type: "POINTS" as const, pointsAmount: 1 }
+      : rule.rewardType === "PACK"
+        ? { type: "PACK" as const, packDefinitionId: rule.packDefinitionId.trim(), packQuantity: rule.amount }
+        : rule.rewardType === "XP"
+          ? { type: "XP" as const, xpAmount: rule.amount }
+          : { type: "POINTS" as const, pointsAmount: rule.amount };
 
-    return {
-      name,
-      priority: index + 1,
-      components: [component],
-    };
+    return { name, priority: index + 1, components: [component] };
   });
 
   const distributionRules = validRules.map((rule, index) => {
     const bundleRef = `rule_bundle_${rule.id}`;
+
+    if (rule.mode === "POOL") {
+      return {
+        priority: index + 1,
+        ruleType: "POINTS_POOL_TOP_PERCENT" as const,
+        bundleRef,
+        topPercent: rule.distributionValue,
+        poolAmount: rule.poolAmount,
+      };
+    }
+
     if (rule.distributionType === "FIXED_RANKS") {
       return { priority: index + 1, ruleType: "FIXED_RANKS" as const, bundleRef, rankFrom: rule.distributionValue, rankTo: rule.distributionValue };
     }
+
     if (rule.distributionType === "TOP_N") {
       return { priority: index + 1, ruleType: "TOP_N" as const, bundleRef, topN: rule.distributionValue };
     }
+
     return { priority: index + 1, ruleType: "TOP_PERCENT" as const, bundleRef, topPercent: rule.distributionValue };
   });
 
