@@ -12,19 +12,21 @@ export function WizardStepper({ steps, activeIndex, onStepClick, issueCountBySte
     <nav className="contest-builder-v2-stepper" aria-label="Contest builder steps">
       {steps.map((step, index) => {
         const isActive = index === activeIndex;
-        const hasIssue = (issueCountByStep[step.id] ?? 0) > 0;
+        const issueCount = issueCountByStep[step.id] ?? 0;
+        const hasIssue = issueCount > 0;
+        const isCompleted = index < activeIndex && !hasIssue;
+
         return (
           <button
             key={step.id}
             type="button"
-            className="contest-builder-v2-step-pill"
+            className={`contest-builder-v2-step-pill${isActive ? " is-active" : ""}${hasIssue ? " has-issue" : ""}${isCompleted ? " is-complete" : ""}`}
             onClick={() => onStepClick(index)}
-            style={{
-              borderColor: isActive ? "#c48bff" : hasIssue ? "#ff6b6b" : undefined,
-              color: isActive ? "#fff" : undefined,
-            }}
+            aria-current={isActive ? "step" : undefined}
+            aria-label={`${step.title}${hasIssue ? ` (${issueCount} issue${issueCount > 1 ? "s" : ""})` : ""}`}
           >
-            {index + 1}. {step.title}
+            <span>{index + 1}. {step.title}</span>
+            {hasIssue ? <span className="contest-builder-v2-step-pill-badge">{issueCount}</span> : isCompleted ? <span className="contest-builder-v2-step-pill-badge ok">✓</span> : null}
           </button>
         );
       })}

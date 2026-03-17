@@ -43,7 +43,7 @@ export default function AdminContestBuilderPage() {
 
   const goNext = () => {
     if (currentStepIssues.length > 0) {
-      setMessage("Please fix the current step issues before moving forward.");
+      setMessage("Please resolve the issues in this step before continuing.");
       return;
     }
     setMessage("");
@@ -65,6 +65,14 @@ export default function AdminContestBuilderPage() {
     window.setTimeout(() => {
       router.push("/admin/contests?published=1");
     }, 1200);
+  };
+
+
+  const goToStepById = (target: (typeof WIZARD_STEPS)[number]["id"]) => {
+    const index = WIZARD_STEPS.findIndex((step) => step.id === target);
+    if (index < 0) return;
+    setMessage("");
+    setStepIndex(index);
   };
 
   const issueCountByStep = {
@@ -99,19 +107,19 @@ export default function AdminContestBuilderPage() {
       {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} /> : null}
       {stepIndex === 2 ? <ContestEntryRulesStep form={form} cardSets={cardSets} setField={setField} /> : null}
       {stepIndex === 3 ? <ContestRewardsStep form={form} setField={setField} generatedPreview={generatedPreview} rewardIssues={issuesByStep.rewards} rewardCapacityCheck={rewardCapacityCheck} /> : null}
-      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} /> : null}
+      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} onGoToStep={goToStepById} /> : null}
 
       <section className="admin-panel" style={{ display: "grid", gap: "0.8rem" }}>
         {currentStepIssues.length > 0 ? (
           <div className="admin-callout danger">
-            <p className="contest-inline-note"><strong>Issues to fix in this step</strong></p>
+            <p className="contest-inline-note"><strong>Issues in this step</strong></p>
             {currentStepIssues.map((issue) => <p className="contest-inline-note" key={issue}>• {issue}</p>)}
           </div>
         ) : null}
         <div className="contest-builder-v2-actions" style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
           <Button variant="ghost" onClick={goBack} disabled={stepIndex === 0}>Back</Button>
           <Button variant="ghost" onClick={() => void save()}>Save draft</Button>
-          {stepIndex < WIZARD_STEPS.length - 1 ? <Button onClick={goNext}>Next</Button> : <Button onClick={() => void publish()} disabled={publishSuccess || allIssues.length > 0}>Publish contest</Button>}
+          {stepIndex < WIZARD_STEPS.length - 1 ? <Button onClick={goNext}>Next step</Button> : <Button onClick={() => void publish()} disabled={publishSuccess || allIssues.length > 0}>Publish contest</Button>}
         </div>
         {message ? <p className="contest-inline-note">{message}</p> : null}
       </section>

@@ -286,29 +286,30 @@ export function ContestReviewStep(props: {
   allIssues: string[];
   issuesByStep: Record<"identity" | "schedule" | "entry-rules" | "rewards" | "review", string[]>;
   rewardCapacityCheck: RewardCapacityCheck | null;
+  onGoToStep: (step: "identity" | "schedule" | "entry-rules" | "rewards") => void;
 }) {
-  const { payload, checklist, allIssues, issuesByStep, rewardCapacityCheck } = props;
+  const { payload, checklist, allIssues, issuesByStep, rewardCapacityCheck, onGoToStep } = props;
   const localChecksPassed = allIssues.length === 0;
   const backendCapacityKnown = Boolean(rewardCapacityCheck);
   const backendPublishable = rewardCapacityCheck?.isPublishable ?? null;
   const publishReady = localChecksPassed && (backendPublishable !== false);
 
   const readinessLabel = publishReady
-    ? (backendCapacityKnown ? "Ready to publish" : "Ready pending backend capacity validation")
+    ? (backendCapacityKnown ? "Ready to publish" : "Ready pending backend validation")
     : "Blocked — fix issues before publish";
 
   return (
     <section className="admin-panel contest-builder-v2-section contest-builder-v2-review">
       <header>
         <h2 className="admin-section-title">Step 5 — Review</h2>
-        <p className="contest-inline-note">Final pre-flight check before saving draft or publishing.</p>
+        <p className="contest-inline-note">Final pre-flight check before save draft or publish.</p>
       </header>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.45rem" }}>
         <p className="contest-inline-note"><strong>A. Readiness status</strong></p>
         <p className="contest-inline-note"><strong>Overall:</strong> {readinessLabel}</p>
-        <p className="contest-inline-note">Local validation: {localChecksPassed ? "passed" : "blocking issues detected"}.</p>
-        <p className="contest-inline-note">Backend reward capacity: {backendCapacityKnown ? `${rewardCapacityCheck?.verdict} (${backendPublishable ? "publishable" : "not publishable"})` : "not yet checked (evaluated on publish validation)"}.</p>
+        <p className="contest-inline-note">Wizard validation: {localChecksPassed ? "passed" : "blocking issues detected"}.</p>
+        <p className="contest-inline-note">Backend reward capacity: {backendCapacityKnown ? `${rewardCapacityCheck?.verdict} (${backendPublishable ? "publishable" : "not publishable"})` : "not yet checked (runs on publish validation)"}.</p>
         <div style={{ display: "grid", gap: "0.2rem" }}>
           {checklist.map((item) => <p key={item.label} className="contest-inline-note">{item.done ? "✓" : "•"} {item.label}</p>)}
         </div>
@@ -316,26 +317,26 @@ export function ContestReviewStep(props: {
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.45rem" }}>
         <p className="contest-inline-note"><strong>B. Section summaries</strong></p>
-        <p className="contest-inline-note"><strong>Identity:</strong> {payload.title || "—"} ({payload.code || "—"})</p>
+        <p className="contest-inline-note"><strong>Identity:</strong> Contest name {payload.title || "—"} · Contest code {payload.code || "—"}</p>
         <p className="contest-inline-note"><strong>Schedule:</strong> Open {payload.openAt || "—"} · Lock {payload.lockAt || "—"} · Live {payload.liveAt || "—"} · End {payload.endsAt || "—"}</p>
-        <p className="contest-inline-note"><strong>Entry & Rules:</strong> Team size {payload.maxRosterSize} · Entry fee {payload.entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Free"} · Eligibility {payload.eligibilityMode === "CARD_SET_ONLY" ? `Card set only (${payload.cardSetId || "missing"})` : "Any eligible card"}.</p>
-        <p className="contest-inline-note"><strong>Rewards:</strong> Points pool {payload.rewardConfig?.pointsPool ?? 0} · Pack pool {payload.rewardConfig?.packPool ?? 0} · Top {payload.rewardConfig?.rewardedTopPercent ?? 0}% · Profile {payload.rewardConfig?.distributionProfile ?? "—"}.</p>
+        <p className="contest-inline-note"><strong>Entry & Rules:</strong> Roster size {payload.maxRosterSize} · Entry {payload.entryFeeEnabled ? `${payload.entryFeeAmount ?? 0} POINTS` : "Free"} · Eligibility {payload.eligibilityMode === "CARD_SET_ONLY" ? `Card set only (${payload.cardSetId || "missing"})` : "Any eligible card"}</p>
+        <p className="contest-inline-note"><strong>Rewards:</strong> Points pool {payload.rewardConfig?.pointsPool ?? 0} · Pack pool {payload.rewardConfig?.packPool ?? 0} · Rewarded top {payload.rewardConfig?.rewardedTopPercent ?? 0}% · Profile {payload.rewardConfig?.distributionProfile ?? "—"}</p>
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.45rem" }}>
         <p className="contest-inline-note"><strong>C. Validation / issue panel</strong></p>
         {!allIssues.length ? <p className="contest-inline-note">No blocking issue detected from current wizard validations.</p> : null}
 
-        {issuesByStep.identity.length ? <><p className="contest-inline-note"><strong>Identity</strong></p>{issuesByStep.identity.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}</> : null}
-        {issuesByStep.schedule.length ? <><p className="contest-inline-note"><strong>Schedule</strong></p>{issuesByStep.schedule.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}</> : null}
-        {issuesByStep["entry-rules"].length ? <><p className="contest-inline-note"><strong>Entry & Rules</strong></p>{issuesByStep["entry-rules"].map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}</> : null}
-        {issuesByStep.rewards.length ? <><p className="contest-inline-note"><strong>Rewards</strong></p>{issuesByStep.rewards.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}</> : null}
+        {issuesByStep.identity.length ? <><p className="contest-inline-note"><strong>Identity</strong></p>{issuesByStep.identity.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}<button type="button" className="admin-v2-link-chip" onClick={() => onGoToStep("identity")}>Go to Step 1</button></> : null}
+        {issuesByStep.schedule.length ? <><p className="contest-inline-note"><strong>Schedule</strong></p>{issuesByStep.schedule.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}<button type="button" className="admin-v2-link-chip" onClick={() => onGoToStep("schedule")}>Go to Step 2</button></> : null}
+        {issuesByStep["entry-rules"].length ? <><p className="contest-inline-note"><strong>Entry & Rules</strong></p>{issuesByStep["entry-rules"].map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}<button type="button" className="admin-v2-link-chip" onClick={() => onGoToStep("entry-rules")}>Go to Step 3</button></> : null}
+        {issuesByStep.rewards.length ? <><p className="contest-inline-note"><strong>Rewards</strong></p>{issuesByStep.rewards.map((issue) => <p key={issue} className="contest-error">• {issue}</p>)}<button type="button" className="admin-v2-link-chip" onClick={() => onGoToStep("rewards")}>Go to Step 4</button></> : null}
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.45rem" }}>
         <p className="contest-inline-note"><strong>D. Final actions</strong></p>
-        <p className="contest-inline-note">Save draft is available to persist current configuration, including incomplete states.</p>
-        <p className="contest-inline-note">Publish requires zero blocking wizard issues and successful backend validation.</p>
+        <p className="contest-inline-note">Save draft persists your current configuration, even when incomplete.</p>
+        <p className="contest-inline-note">Publish contest requires no blocking wizard issue and successful backend validation.</p>
       </article>
     </section>
   );

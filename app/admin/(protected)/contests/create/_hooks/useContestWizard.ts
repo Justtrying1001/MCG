@@ -157,12 +157,12 @@ export function useContestWizard(initialContestId: string) {
     if (!payload.title) arr.push("Contest name is required.");
     if (!payload.openAt) arr.push("Registration open date is required.");
     if (!payload.lockAt) arr.push("Lineup lock date is required.");
-    if (!payload.liveAt) arr.push("Contest start date is required.");
+    if (!payload.liveAt) arr.push("Contest live date is required.");
     if (!payload.endsAt) arr.push("Contest end date is required.");
     if (payload.openAt && payload.lockAt && payload.openAt > payload.lockAt) arr.push("Registration open date must be before or equal to lineup lock date.");
     if (payload.lockAt && payload.liveAt && payload.lockAt > payload.liveAt) arr.push("Lineup lock date must be before or equal to contest start.");
     if (payload.openAt && payload.liveAt && payload.openAt > payload.liveAt) arr.push("Registration open date must be before or equal to contest start.");
-    if (payload.liveAt && payload.endsAt && payload.liveAt >= payload.endsAt) arr.push("Contest end must be after start.");
+    if (payload.liveAt && payload.endsAt && payload.liveAt >= payload.endsAt) arr.push("Contest end date must be after contest live date.");
     if (!Number.isInteger(payload.maxRosterSize) || payload.maxRosterSize <= 0) arr.push("Roster size must be a positive integer.");
     if (form.entryFeeEnabled && (!Number.isInteger(payload.entryFeeAmount) || (payload.entryFeeAmount ?? 0) <= 0)) {
       arr.push("Entry fee amount must be a positive integer when enabled.");
@@ -196,9 +196,9 @@ export function useContestWizard(initialContestId: string) {
   }, [form.previewParticipants, payload.rewardConfig]);
 
   const checklist = useMemo(() => [
-    { label: "Contest name", done: Boolean(payload.title) },
+    { label: "Identity complete", done: Boolean(payload.title && payload.code) },
     { label: "Schedule complete", done: Boolean(payload.openAt && payload.lockAt && payload.liveAt && payload.endsAt) },
-    { label: "Entry rules valid", done: !allIssues.some((issue) => issue.includes("Entry fee") || issue.includes("card set") || issue.includes("Roster size") || issue.includes("eligibility")) },
+    { label: "Entry & rules valid", done: !allIssues.some((issue) => issue.includes("Entry fee") || issue.includes("card set") || issue.includes("Roster size") || issue.includes("eligibility")) },
     { label: "Rewards configured", done: payload.rewardConfig.pointsPool > 0 || payload.rewardConfig.packPool > 0 },
     { label: "No blocking issue", done: allIssues.length === 0 },
   ], [allIssues, payload]);
