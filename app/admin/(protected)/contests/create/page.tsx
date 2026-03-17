@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -338,7 +339,7 @@ export default function AdminContestBuilderPage() {
                 onChange={(e) => void uploadCoverImage(e.target.files?.[0] ?? null)}
               />
               <input className="input" placeholder="Cover image URL (optional)" value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} />
-              {coverImageUrl ? <img src={coverImageUrl} alt="Contest cover preview" className="contest-builder-v2-cover-preview" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)" }} /> : null}
+              {coverImageUrl ? <Image src={coverImageUrl} alt="Contest cover preview" className="contest-builder-v2-cover-preview" width={1200} height={220} unoptimized style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)" }} /> : null}
             </div>
           </section>
 
