@@ -7,6 +7,7 @@ import {
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { evaluateContestRewardPackCapacity } from "@/lib/domain/contests/reward-pack-capacity";
+import { findDistributionRuleOverlapIssues } from "@/lib/domain/contests/distribution-rules";
 import { prisma } from "@/lib/prisma";
 import { qstash } from "@/lib/qstash";
 
@@ -541,6 +542,27 @@ export function validateContestDraftEntity(contest: ContestWithConfig): DraftIss
   const rules = policy.distributionRules;
   if (rules.length === 0) {
     issues.push({ code: "DISTRIBUTION_RULE_REQUIRED", severity: "ERROR", field: "distributionRules", message: "At least one distribution rule is required" });
+  }
+
+  const overlapIssues = findDistributionRuleOverlapIssues(
+    rules.map((rule, index) => ({
+      id: `distributionRules[${index}]`,
+      ruleType: rule.ruleType,
+      rankFrom: rule.rankFrom ?? null,
+      rankTo: rule.rankTo ?? null,
+      topN: rule.topN ?? null,
+      topPercent: rule.topPercent ?? null,
+    })),
+    500
+  );
+
+  for (const overlapIssue of overlapIssues) {
+    issues.push({
+      code: "DISTRIBUTION_RULE_OVERLAP",
+      severity: "ERROR",
+      field: "distributionRules",
+      message: `Reward distribution rules overlap: ${overlapIssue}`,
+    });
   }
 
   const seenPriorities = new Set<number>();

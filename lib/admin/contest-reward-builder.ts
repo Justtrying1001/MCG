@@ -1,3 +1,5 @@
+import { findDistributionRuleOverlapIssues } from "@/lib/domain/contests/distribution-rules";
+
 export type RewardType = "POINTS" | "XP" | "PACK";
 export type DistributionType = "FIXED_RANKS" | "TOP_N" | "TOP_PERCENT";
 export type RewardRuleMode = "FIXED" | "POOL";
@@ -155,5 +157,28 @@ export function toContestRewardPayload(rules: RewardRuleDraft[]) {
     return { priority: index + 1, ruleType: "TOP_PERCENT" as const, bundleRef, topPercent: rule.distributionValue };
   });
 
-  return { rewardBundles, distributionRules, invalidRules };
+  const overlapErrors = findDistributionRuleOverlapIssues(
+    validRules.map((rule) => ({
+      id: rule.id,
+      ruleType: rule.distributionType,
+      rankFrom: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,
+      rankTo: rule.distributionType === "FIXED_RANKS" ? rule.distributionValue : null,
+      topN: rule.distributionType === "TOP_N" ? rule.distributionValue : null,
+      topPercent: rule.distributionType === "TOP_PERCENT" ? rule.distributionValue : null,
+    })),
+    500
+  );
+
+  for (const error of overlapErrors) {
+    const match = error.match(/rank (\d+) matches multiple rules \(([^)]+)\)/);
+    const rank = match?.[1] ?? "?";
+    const ids = (match?.[2] ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+    overlapIssues.push({
+      message: `Reward distribution rules overlap: rank ${rank} matches multiple rules.`,
+      ranks: [`rank ${rank}`],
+      conflictingRuleIds: ids,
+    });
+  }
+
+  return { rewardBundles, distributionRules, invalidRules, overlapIssues };
 }

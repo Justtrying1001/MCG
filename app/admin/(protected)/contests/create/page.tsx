@@ -301,8 +301,9 @@ export default function AdminContestBuilderPage() {
     if (eligibilityMode === "CARD_SET_ONLY" && !payload.cardSetId) arr.push("Select a card set when eligibility is restricted.");
     if (payload.rewardBundles.length === 0) arr.push("Add at least one valid reward rule.");
     for (const invalidRule of rewardPayload.invalidRules) arr.push(invalidRule.message);
+    for (const overlapIssue of rewardPayload.overlapIssues) arr.push(overlapIssue.message);
     return [...new Set(arr)];
-  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules]);
+  }, [autoCode, eligibilityMode, entryFeeEnabled, payload, rewardPayload.invalidRules, rewardPayload.overlapIssues]);
 
   const checklist = useMemo(() => {
     return [
