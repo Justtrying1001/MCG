@@ -6285,7 +6285,9 @@ a { color: inherit; text-decoration: none; }
 .contest-arena-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  min-width: 74px;
   padding: 0.23rem 0.58rem;
   border-radius: 999px;
   font-size: 0.68rem;
@@ -6340,6 +6342,18 @@ a { color: inherit; text-decoration: none; }
 }
 
 .contest-arena-info-grid strong.reward { color: #fbbf24; }
+.contest-arena-info-grid strong.reward-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.contest-arena-countdown-fixed {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  min-height: 1.2rem;
+}
 
 .contest-arena-progress-label {
   display: flex;
