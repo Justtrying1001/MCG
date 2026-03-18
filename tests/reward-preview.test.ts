@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildContestRewardPreview, parseRewardConfig } from "@/lib/domain/contests/reward-preview";
+import type { RewardPlanBundleLike, RewardPlanRuleLike } from "@/lib/domain/contests/reward-plan";
 
 const rewardConfig = parseRewardConfig({
   pointsPool: 1200,
@@ -9,7 +10,7 @@ const rewardConfig = parseRewardConfig({
   distributionProfile: "balanced",
 });
 
-const rules = [
+const rules: RewardPlanRuleLike[] = [
   {
     id: "rule-r1",
     priority: 1,
@@ -34,7 +35,7 @@ const rules = [
   },
 ];
 
-const bundles = [
+const bundles: RewardPlanBundleLike[] = [
   {
     id: "bundle-r1",
     name: "Champion",

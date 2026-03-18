@@ -232,7 +232,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   useEffect(() => {
     if (!contestData || loading) return;
-    if (!(["OPEN", "LOCKED", "LIVE"] as const).includes(contestData.status)) return;
+
+    const isRefreshableStatus = contestData.status === "OPEN" || contestData.status === "LOCKED" || contestData.status === "LIVE";
+    if (!isRefreshableStatus) return;
 
     const refresh = () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
