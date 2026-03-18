@@ -119,4 +119,28 @@ describe("contest publish runtime", () => {
       data: { qstashOpenJobId: "lock-job", qstashLiveJobId: "live-job", qstashSettleJobId: "settle-job" },
     });
   });
+
+  it("still schedules LIVE and SETTLED jobs when lockAt is absent", async () => {
+    prismaMock.contest.findUnique.mockResolvedValue({
+      lockAt: null,
+      liveAt: new Date("2026-03-01T11:00:00.000Z"),
+      endsAt: new Date("2026-03-01T12:00:00.000Z"),
+    });
+    qstashMock.publishJSON.mockReset();
+    qstashMock.publishJSON
+      .mockResolvedValueOnce({ messageId: "live-job" })
+      .mockResolvedValueOnce({ messageId: "settle-job" });
+
+    await publishContest("c1");
+
+    expect(qstashMock.publishJSON).toHaveBeenCalledTimes(2);
+    expect(qstashMock.publishJSON.mock.calls.map(([input]: any[]) => input.url)).toEqual([
+      "https://example.test/api/internal/jobs/contest-live",
+      "https://example.test/api/internal/jobs/contest-settle",
+    ]);
+    expect(prismaMock.contest.update).toHaveBeenCalledWith({
+      where: { id: "c1" },
+      data: { qstashOpenJobId: null, qstashLiveJobId: "live-job", qstashSettleJobId: "settle-job" },
+    });
+  });
 });

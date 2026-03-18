@@ -231,7 +231,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
     return { contest: fullContest };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
-  if (timesChanged && existing.configPublishedAt && process.env.QSTASH_TOKEN && normalized.lockAt && normalized.liveAt && normalized.endsAt) {
+  if (timesChanged && existing.configPublishedAt && process.env.QSTASH_TOKEN && normalized.liveAt && normalized.endsAt) {
     await rescheduleQStashJobs(contestId, existing, normalized.lockAt, normalized.liveAt, normalized.endsAt);
   }
 
@@ -349,24 +349,23 @@ export async function publishContest(contestId: string) {
 
   if (hasQStash) {
     const contest = await prisma.contest.findUnique({ where: { id: contestId }, select: { lockAt: true, liveAt: true, endsAt: true } });
-    if (contest?.lockAt && contest.liveAt && contest.endsAt) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
+    if (contest?.liveAt && contest.endsAt) {
       try {
-        const [lockJob, liveJob, settleJob] = await Promise.all([
-          qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-open`, body: { contestId }, notBefore: Math.floor(contest.lockAt.getTime() / 1000) }),
-          qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-live`, body: { contestId }, notBefore: Math.floor(contest.liveAt.getTime() / 1000) }),
-          qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-settle`, body: { contestId }, notBefore: Math.floor(contest.endsAt.getTime() / 1000) }),
-        ]);
+        const jobs = await scheduleLifecycleQStashJobs(contestId, contest.lockAt, contest.liveAt, contest.endsAt);
         await prisma.contest.update({
           where: { id: contestId },
-          data: { qstashOpenJobId: lockJob.messageId, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
+          data: {
+            qstashOpenJobId: jobs.openJobId,
+            qstashLiveJobId: jobs.liveJobId,
+            qstashSettleJobId: jobs.settleJobId,
+          },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`[publish] Failed to schedule QStash jobs for contest ${contestId}: ${message}`);
       }
     } else {
-      console.warn(`[publish] Contest ${contestId} missing lockAt/liveAt/endsAt — QStash jobs not scheduled`);
+      console.warn(`[publish] Contest ${contestId} missing liveAt/endsAt — QStash jobs not scheduled`);
     }
   }
 
@@ -731,11 +730,10 @@ function normalizeRuleConfig(ruleConfig: Record<string, unknown> | null, rewardC
 async function rescheduleQStashJobs(
   contestId: string,
   existing: { qstashOpenJobId: string | null; qstashLiveJobId: string | null; qstashSettleJobId: string | null },
-  lockAt: Date,
+  lockAt: Date | null,
   liveAt: Date,
   endsAt: Date
 ) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
   try {
     // Cancel old jobs (best-effort — ignore 404s)
     await Promise.allSettled([
@@ -743,21 +741,54 @@ async function rescheduleQStashJobs(
       existing.qstashLiveJobId ? qstash.messages.delete(existing.qstashLiveJobId) : Promise.resolve(),
       existing.qstashSettleJobId ? qstash.messages.delete(existing.qstashSettleJobId) : Promise.resolve(),
     ]);
-
-    const [lockJob, liveJob, settleJob] = await Promise.all([
-      qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-open`, body: { contestId }, notBefore: Math.floor(lockAt.getTime() / 1000) }),
-      qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-live`, body: { contestId }, notBefore: Math.floor(liveAt.getTime() / 1000) }),
-      qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-settle`, body: { contestId }, notBefore: Math.floor(endsAt.getTime() / 1000) }),
-    ]);
+    const jobs = await scheduleLifecycleQStashJobs(contestId, lockAt, liveAt, endsAt);
 
     await prisma.contest.update({
       where: { id: contestId },
-      data: { qstashOpenJobId: lockJob.messageId, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
+      data: {
+        qstashOpenJobId: jobs.openJobId,
+        qstashLiveJobId: jobs.liveJobId,
+        qstashSettleJobId: jobs.settleJobId,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[update] Failed to reschedule QStash jobs for contest ${contestId}: ${message}`);
   }
+}
+
+async function scheduleLifecycleQStashJobs(
+  contestId: string,
+  lockAt: Date | null,
+  liveAt: Date,
+  endsAt: Date,
+) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const [openJob, liveJob, settleJob] = await Promise.all([
+    lockAt
+      ? qstash.publishJSON({
+          url: `${baseUrl}/api/internal/jobs/contest-open`,
+          body: { contestId },
+          notBefore: Math.floor(lockAt.getTime() / 1000),
+        })
+      : Promise.resolve(null),
+    qstash.publishJSON({
+      url: `${baseUrl}/api/internal/jobs/contest-live`,
+      body: { contestId },
+      notBefore: Math.floor(liveAt.getTime() / 1000),
+    }),
+    qstash.publishJSON({
+      url: `${baseUrl}/api/internal/jobs/contest-settle`,
+      body: { contestId },
+      notBefore: Math.floor(endsAt.getTime() / 1000),
+    }),
+  ]);
+
+  return {
+    openJobId: openJob?.messageId ?? null,
+    liveJobId: liveJob.messageId,
+    settleJobId: settleJob.messageId,
+  };
 }
 
 async function replaceRewardPolicyTx(
