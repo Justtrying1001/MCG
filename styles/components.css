@@ -3554,6 +3554,23 @@ textarea:focus {
   line-height: 1.05;
 }
 
+.contest-detail-hero-context {
+  display: grid;
+  gap: 8px;
+  max-width: 62ch;
+  padding-top: 4px;
+}
+
+.contest-detail-hero-context h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+}
+
+.contest-detail-hero-context p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
 .contest-detail-summary-line {
   margin: 0;
   color: var(--color-text-secondary);
@@ -3576,6 +3593,11 @@ textarea:focus {
 .contest-detail-countdown-block strong {
   font-size: clamp(1.4rem, 2.5vw, 2rem);
   font-family: 'JetBrains Mono', monospace;
+}
+
+.contest-detail-hero-cta {
+  justify-self: end;
+  min-width: min(100%, 240px);
 }
 
 .contest-detail-reward-teaser {
@@ -3673,25 +3695,86 @@ textarea:focus {
   min-width: min(100%, 240px);
 }
 
-.contest-detail-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .75fr);
-  gap: 18px;
-  align-items: start;
-}
-
-.contest-detail-main-left,
-.contest-detail-main-right,
-.contest-detail-secondary-stack {
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
-
 .contest-detail-block {
   padding: clamp(16px, 2vw, 22px);
   display: grid;
   gap: 14px;
+}
+
+.contest-detail-main-surface {
+  gap: 18px;
+}
+
+.contest-detail-summary-strip,
+.contest-detail-support-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.contest-detail-summary-strip div,
+.contest-detail-support-strip div,
+.contest-detail-support-mini-grid div {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.contest-detail-summary-strip span,
+.contest-detail-support-strip span,
+.contest-detail-support-mini-grid span,
+.contest-detail-section-head .mcg-eyebrow {
+  color: var(--color-text-muted);
+  font-size: .74rem;
+}
+
+.contest-detail-summary-strip strong,
+.contest-detail-support-strip strong,
+.contest-detail-support-mini-grid strong {
+  font-size: 1rem;
+}
+
+.contest-detail-main-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contest-detail-main-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.contest-detail-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.contest-detail-section-head h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.contest-detail-lineup-embed {
+  display: grid;
+  gap: 14px;
+}
+
+.contest-detail-lineup-embed .contest-detail-block-head {
+  padding: 0;
+}
+
+.contest-detail-lineup-embed .contest-detail-lineup-grid {
+  padding-top: 2px;
+}
+
+.contest-detail-lineup-embed .contest-detail-lineup-slot {
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .contest-detail-block-head {
@@ -3817,6 +3900,27 @@ textarea:focus {
 
 .contest-detail-leaderboard-row.is-top {
   background: rgba(245, 158, 11, .09);
+}
+
+.contest-detail-support-surface {
+  gap: 16px;
+}
+
+.contest-detail-support-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.contest-detail-support-head h3 {
+  margin: 0;
+}
+
+.contest-detail-support-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
 }
 
 .contest-detail-earned-rewards,
@@ -3949,15 +4053,18 @@ textarea:focus {
   .contest-detail-shell-hero,
   .contest-detail-primary-panel,
   .contest-detail-main-grid,
-  .contest-detail-main-grid.settled-grid {
-    grid-template-columns: 1fr;
-  }
+  .contest-detail-main-grid.settled-grid { grid-template-columns: 1fr; }
 
   .contest-detail-hero-side,
   .contest-detail-countdown-block,
-  .contest-detail-reward-teaser {
+  .contest-detail-reward-teaser,
+  .contest-detail-hero-cta {
     justify-items: start;
     text-align: left;
+  }
+
+  .contest-detail-hero-cta {
+    justify-self: start;
   }
 }
 
@@ -3972,7 +4079,9 @@ textarea:focus {
 
   .contest-detail-block-head,
   .contest-detail-block-head-meta,
-  .contest-detail-accordion summary {
+  .contest-detail-accordion summary,
+  .contest-detail-section-head,
+  .contest-detail-support-head {
     flex-direction: column;
     align-items: flex-start;
   }
