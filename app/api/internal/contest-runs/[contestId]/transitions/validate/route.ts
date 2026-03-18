@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: { params: { contest
 
     const contest = await prisma.contest.findUnique({
       where: { id: params.contestId },
-      include: { _count: { select: { rankings: true, settlements: true } } },
+      include: { _count: { select: { entries: true, rankings: true, settlements: true } } },
     });
 
     if (!contest) {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       });
     }
 
-    if (targetPhase === ContestStatus.SETTLED && contest._count.rankings === 0) {
+    if (targetPhase === ContestStatus.SETTLED && contest._count.entries > 0 && contest._count.rankings === 0) {
       issues.push({
         code: "CONTEST_TRANSITION_PREREQUISITE_FAILED",
         severity: "ERROR",
