@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
@@ -32,9 +33,14 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
   const hasPulls = pulls.length > 0;
 
   return (
-    <Surface className="mcg-anim-fade-up">
+    <Surface className="mcg-anim-fade-up recent-pulls-panel" variant="raised">
       <div className="mcg-home-section">
-        <SectionHeader eyebrow="Live activity" title="Recent Pulls" subtitle="Fresh reveals from active players." />
+        <SectionHeader
+          eyebrow="Live activity"
+          title="Recent pulls"
+          subtitle="Fresh reveals from active players across the game."
+          actions={<Link href="/packs" className="mcg-btn ghost">Open packs</Link>}
+        />
         {hasPulls ? (
           <div className="mcg-recent-pulls-rail" aria-label="Recent pulls feed">
             {pulls.map((pull) => (
@@ -55,7 +61,7 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
             ))}
           </div>
         ) : (
-          <div className="mcg-mini-card">
+          <div className="mcg-mini-card recent-pulls-empty">
             <strong>No recent pulls yet</strong>
             <span>The next pack opening will appear here live.</span>
           </div>
