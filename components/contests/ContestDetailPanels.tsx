@@ -24,7 +24,8 @@ export type RewardSummary = {
 export type HeroPanelProps = {
   title: string;
   status: ContestStatus;
-  summaryItems: string[];
+  coverImageUrl?: string | null;
+  summaryCards: Array<{ label: string; value: string }>;
   countdownLabel: string;
   countdownValue: string;
   contextLabel: string;
@@ -38,7 +39,8 @@ export type HeroPanelProps = {
 export function HeroPanel({
   title,
   status,
-  summaryItems,
+  coverImageUrl,
+  summaryCards,
   countdownLabel,
   countdownValue,
   contextLabel,
@@ -49,17 +51,29 @@ export function HeroPanel({
   error,
 }: HeroPanelProps) {
   const statusTone = status === "LIVE" ? "live" : status === "LOCKED" ? "locked" : status === "SETTLED" ? "settled" : "open";
+  const heroCoverStyle = {
+    backgroundImage: `linear-gradient(135deg, rgba(6, 10, 22, 0.18), rgba(6, 10, 22, 0.82)), url(${coverImageUrl || "/Contest.png"})`,
+  };
 
   return (
     <Surface className="contest-detail-shell-hero" variant="raised">
+      <div className="contest-detail-hero-cover" style={heroCoverStyle} aria-hidden="true" />
       <div className="contest-detail-hero-main">
         <div className="contest-detail-hero-meta">
           <span className={`mcg-badge ${statusTone}`}>{status}</span>
+          <span className="contest-detail-hero-kicker">{contextLabel}</span>
         </div>
         <h1>{title}</h1>
-        <p className="contest-detail-summary-line">{summaryItems.join(" • ")}</p>
+        <div className="contest-detail-hero-summary-grid">
+          {summaryCards.map((item) => (
+            <article key={item.label} className="contest-detail-hero-summary-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))}
+        </div>
         <div className="contest-detail-hero-context">
-          <p className="mcg-eyebrow">{contextLabel}</p>
+          <p className="mcg-eyebrow">Contest briefing</p>
           <p><strong>{contextHeadline}</strong> — {contextBody}</p>
           {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
           {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
@@ -70,6 +84,7 @@ export function HeroPanel({
         <div className="contest-detail-countdown-block">
           <span>{countdownLabel}</span>
           <strong>{countdownValue}</strong>
+          <small>{status === "SETTLED" ? "Results are locked in." : "Stay ahead of lock and live scoring."}</small>
         </div>
         {primaryAction ? (
           <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
@@ -389,8 +404,20 @@ export function LineupPanel({
     <>
       {embedded ? (
         <div className="contest-detail-lineup-meta">
+          <div className="contest-detail-lineup-headline">
+            <div>
+              <p className="mcg-eyebrow">Lineup</p>
+              {title ? <h3>{title}</h3> : null}
+            </div>
+            <div className="contest-detail-lineup-progress">
+              <strong>{selectedCount} / {rosterSize}</strong>
+              <span>{label}</span>
+            </div>
+          </div>
+          <div className="contest-detail-lineup-progress-bar" aria-hidden="true">
+            <span style={{ width: `${Math.min(100, (selectedCount / Math.max(rosterSize, 1)) * 100)}%` }} />
+          </div>
           <p className="contest-detail-panel-copy">{helperText}</p>
-          <span className="contest-detail-inline-note">{label} • {selectedCount}/{rosterSize} selected</span>
         </div>
       ) : (
         <>
