@@ -17,19 +17,30 @@ type ContestLifecycleSnapshot = {
   endsAt: Date | null;
 };
 
+export type ContestLifecycleAttempt = {
+  from: ContestStatus;
+  target: ContestStatus;
+  reason: ReconciliationStep["reason"];
+  outcome: "executed" | "noop" | "failed";
+  startSnapshotAttempted: boolean;
+  finalizationAttempted: boolean;
+  error: string | null;
+};
+
 export type ContestLifecycleReconciliationResult = {
   contestId: string;
   initialStatus: ContestStatus;
   finalStatus: ContestStatus;
   now: Date;
   steps: ReconciliationStep[];
+  attempts: ContestLifecycleAttempt[];
 };
 
-function resolveOpenPhaseEndAt(contest: ContestLifecycleSnapshot) {
+export function resolveOpenPhaseEndAt(contest: ContestLifecycleSnapshot) {
   return contest.lockAt ?? contest.liveAt;
 }
 
-function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { target: ContestStatus | null; reason: ReconciliationStep["reason"] | null } {
+export function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { target: ContestStatus | null; reason: ReconciliationStep["reason"] | null } {
   if (contest.status === ContestStatus.DRAFT || contest.status === ContestStatus.CANCELED || contest.status === ContestStatus.SETTLED) {
     return { target: null, reason: null };
   }
@@ -46,7 +57,7 @@ function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { tar
   return { target: null, reason: null };
 }
 
-function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatus | null {
+export function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatus | null {
   if (target === ContestStatus.LIVE && (current === ContestStatus.OPEN || current === ContestStatus.LOCKED)) {
     return ContestStatus.LIVE;
   }
@@ -61,35 +72,71 @@ function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatu
 
 export async function reconcileContestLifecycleByTime(contestId: string, nowInput?: Date): Promise<ContestLifecycleReconciliationResult | null> {
   const now = nowInput ?? new Date();
+  console.info(`[lifecycle] reconcileContestLifecycleByTime called for contest=${contestId} now=${now.toISOString()}`);
+
   const contest = await prisma.contest.findUnique({
     where: { id: contestId },
     select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
   });
 
-  if (!contest) return null;
+  if (!contest) {
+    console.warn(`[lifecycle] Contest ${contestId} not found during reconciliation`);
+    return null;
+  }
 
   let current = contest;
   const initialStatus = contest.status;
   const steps: ReconciliationStep[] = [];
+  const attempts: ContestLifecycleAttempt[] = [];
 
   while (true) {
     const { target, reason } = deriveTargetStatus(current, now);
+    console.info(
+      `[lifecycle] Contest ${contestId} status=${current.status} target=${target ?? "none"} reason=${reason ?? "none"} openPhaseEndAt=${resolveOpenPhaseEndAt(current)?.toISOString() ?? "null"} endsAt=${current.endsAt?.toISOString() ?? "null"}`,
+    );
+
     if (!target || !reason) break;
 
     const next = nextStatus(current.status, target);
-    if (!next) break;
+    if (!next) {
+      console.warn(`[lifecycle] Contest ${contestId} target=${target} could not be mapped from current=${current.status}`);
+      break;
+    }
 
-    console.info(`[lifecycle] Contest ${contestId} transitioning ${current.status} → ${next} — reason: ${reason}`);
-    await executeContestTransition(contestId, next, "auto");
+    const attempt: ContestLifecycleAttempt = {
+      from: current.status,
+      target: next,
+      reason,
+      outcome: "failed",
+      startSnapshotAttempted: next === ContestStatus.LIVE,
+      finalizationAttempted: next === ContestStatus.SETTLED,
+      error: null,
+    };
 
-    steps.push({ from: current.status, to: next, reason });
-    const latest = await prisma.contest.findUnique({
-      where: { id: contestId },
-      select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
-    });
-    if (!latest) break;
-    current = latest;
+    try {
+      console.info(`[lifecycle] Contest ${contestId} attempting transition ${current.status} -> ${next} reason=${reason}`);
+      const execution = await executeContestTransition(contestId, next, "auto");
+      attempt.outcome = execution.executed ? "executed" : "noop";
+      attempts.push(attempt);
+
+      steps.push({ from: current.status, to: next, reason });
+      const latest = await prisma.contest.findUnique({
+        where: { id: contestId },
+        select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
+      });
+      if (!latest) break;
+      current = latest;
+      console.info(`[lifecycle] Contest ${contestId} status after transition attempt=${current.status}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      attempt.error = message;
+      attempts.push(attempt);
+      console.error(`[lifecycle] Contest ${contestId} transition ${current.status} -> ${next} failed: ${message}`);
+      throw error;
+    }
   }
+
+  console.info(`[lifecycle] Contest ${contestId} reconciliation finished initial=${initialStatus} final=${current.status} steps=${steps.length}`);
 
   return {
     contestId,
@@ -97,6 +144,7 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
     finalStatus: current.status,
     now,
     steps,
+    attempts,
   };
 }
 
@@ -116,6 +164,8 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
     orderBy: { updatedAt: "asc" },
   });
 
+  console.info(`[contest-scheduler] due contests at ${now.toISOString()}: count=${dueContests.length}`);
+
   const results: ContestLifecycleReconciliationResult[] = [];
   for (const contest of dueContests) {
     try {
@@ -123,7 +173,7 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
       if (result) results.push(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`[cron] reconcileContestLifecycleByTime failed for contest ${contest.id}: ${message}`);
+      console.error(`[contest-scheduler] reconcileContestLifecycleByTime failed for contest ${contest.id}: ${message}`);
     }
   }
   return results;
