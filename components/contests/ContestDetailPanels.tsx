@@ -180,17 +180,15 @@ export function MainStateBlock({
         </p>
       ) : null}
 
-      {status === "LIVE" || status === "SETTLED" ? (
-        <section className="contest-detail-main-section">
-          <div className="contest-detail-section-head">
-            <div>
-              <p className="mcg-eyebrow">{status === "SETTLED" ? "Leaderboard" : "Standings"}</p>
-              <h4>{status === "SETTLED" ? "Final leaderboard" : "Live leaderboard"}</h4>
-            </div>
+      <section className="contest-detail-main-section lineup-subsection">
+        <div className="contest-detail-section-head">
+          <div>
+            <p className="mcg-eyebrow">{status === "LIVE" ? "Your lineup" : status === "SETTLED" ? "Final lineup" : "Lineup"}</p>
+            <h4>{status === "OPEN" ? "Build your entry" : status === "LOCKED" ? "Locked entry" : status === "LIVE" ? "Live lineup" : "Cards that counted"}</h4>
           </div>
-          <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} />
-        </section>
-      ) : null}
+        </div>
+        {lineup}
+      </section>
 
       {status === "SETTLED" ? (
         <section className="contest-detail-main-section">
@@ -201,6 +199,18 @@ export function MainStateBlock({
             </div>
           </div>
           <InlineScoreBreakdown rows={scoreBreakdown ?? []} />
+        </section>
+      ) : null}
+
+      {status === "LIVE" || status === "SETTLED" ? (
+        <section className="contest-detail-main-section">
+          <div className="contest-detail-section-head">
+            <div>
+              <p className="mcg-eyebrow">{status === "SETTLED" ? "Leaderboard" : "Standings"}</p>
+              <h4>{status === "SETTLED" ? "Final leaderboard" : "Live leaderboard"}</h4>
+            </div>
+          </div>
+          <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} />
         </section>
       ) : null}
 
@@ -215,16 +225,6 @@ export function MainStateBlock({
           <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} compact />
         </section>
       ) : null}
-
-      <section className="contest-detail-main-section lineup-subsection">
-        <div className="contest-detail-section-head">
-          <div>
-            <p className="mcg-eyebrow">{status === "LIVE" ? "Your lineup" : status === "SETTLED" ? "Final lineup" : "Lineup"}</p>
-            <h4>{status === "OPEN" ? "Build your entry" : status === "LOCKED" ? "Locked entry" : status === "LIVE" ? "Read-only lineup" : "Cards that counted"}</h4>
-          </div>
-        </div>
-        {lineup}
-      </section>
     </Surface>
   );
 }
@@ -266,7 +266,6 @@ export function CompactSupportBlock({
 
   return (
     <Surface className="contest-detail-block contest-detail-support-surface" variant="raised">
-      <p className="mcg-eyebrow">Contest support</p>
       <ul className="contest-detail-support-list">
         {supportItems.map((item) => (
           <li key={item.label}>
@@ -365,18 +364,27 @@ export function LineupPanel({
   const hasLineup = slotCards.some(Boolean);
   const content = (
     <>
-      <div className="contest-detail-block-head">
-        <div>
-          <p className="mcg-eyebrow">Lineup</p>
-          {title ? <h3>{title}</h3> : null}
+      {embedded ? (
+        <div className="contest-detail-lineup-meta">
+          <p className="contest-detail-panel-copy">{helperText}</p>
+          <span className="contest-detail-inline-note">{label} • {selectedCount}/{rosterSize} selected</span>
         </div>
-        <div className="contest-detail-block-head-meta">
-          <span className="mcg-chip">{label}</span>
-          <span className="contest-detail-inline-note">{selectedCount}/{rosterSize} selected</span>
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="contest-detail-block-head">
+            <div>
+              <p className="mcg-eyebrow">Lineup</p>
+              {title ? <h3>{title}</h3> : null}
+            </div>
+            <div className="contest-detail-block-head-meta">
+              <span className="mcg-chip">{label}</span>
+              <span className="contest-detail-inline-note">{selectedCount}/{rosterSize} selected</span>
+            </div>
+          </div>
 
-      <p className="contest-detail-panel-copy">{helperText}</p>
+          <p className="contest-detail-panel-copy">{helperText}</p>
+        </>
+      )}
 
       <div className={`contest-detail-lineup-grid ${slotCountClass}`}>
         {Array.from({ length: rosterSize }).map((_, index) => {

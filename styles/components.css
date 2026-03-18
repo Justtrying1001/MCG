@@ -3545,7 +3545,7 @@ textarea:focus {
 
 .contest-detail-shell-hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 4.1vw, 3rem);
+  font-size: clamp(2.3rem, 4.8vw, 3.35rem);
   line-height: 1.05;
 }
 
@@ -3729,7 +3729,7 @@ textarea:focus {
 
 .contest-detail-lineup-embed {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .contest-detail-lineup-embed .contest-detail-block-head {
@@ -3737,7 +3737,12 @@ textarea:focus {
 }
 
 .contest-detail-lineup-embed .contest-detail-lineup-grid {
-  padding-top: 2px;
+  padding-top: 6px;
+}
+
+.contest-detail-lineup-meta {
+  display: grid;
+  gap: 6px;
 }
 
 .contest-detail-block-head {
@@ -3762,16 +3767,16 @@ textarea:focus {
 
 .contest-detail-lineup-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(156px, 1fr));
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
 }
 
 .contest-detail-lineup-grid.dense {
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(184px, 1fr));
 }
 
 .contest-detail-lineup-grid.wide {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .contest-detail-lineup-slot {
@@ -3787,17 +3792,20 @@ textarea:focus {
 .contest-detail-lineup-slot-label,
 .contest-detail-slot-note {
   color: var(--color-text-muted);
-  font-size: .74rem;
+  font-size: .78rem;
+  letter-spacing: .04em;
 }
 
 .contest-detail-lineup-slot.empty {
   justify-items: start;
   align-content: start;
-  min-height: 88px;
+  min-height: 120px;
+  padding: 14px 0 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.16);
 }
 
 .contest-detail-lineup-slot.empty strong {
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
 .contest-detail-lineup-slot.actionable {
@@ -3843,9 +3851,9 @@ textarea:focus {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 12px 18px;
+  gap: 8px 18px;
 }
 
 .contest-detail-support-list li {
@@ -3853,6 +3861,13 @@ textarea:focus {
   flex-wrap: wrap;
   gap: 6px;
   align-items: baseline;
+  white-space: nowrap;
+}
+
+.contest-detail-support-list li:not(:last-child)::after {
+  content: "•";
+  color: var(--color-text-muted);
+  margin-left: 8px;
 }
 
 .contest-detail-support-list strong {

@@ -511,21 +511,21 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             status={contest.status}
             title={
               isOpen
-                ? "Enter with one focused lineup"
+                ? "Your lineup takes center stage"
                 : isLocked
-                  ? "Your lineup is frozen for the next phase"
+                  ? "Your locked lineup is the contest"
                   : isLive
-                    ? "Leaderboard first, lineup close behind"
-                    : "Your contest result is now final"
+                    ? "Your lineup is now live"
+                    : "Your final lineup tells the story"
             }
             body={
               isOpen
-                ? "Build and submit from one place. Progress, submission state, and the field snapshot all stay inside this single contest experience."
+                ? "Build, adjust, and submit from one focused surface."
                 : isLocked
-                  ? "Your submitted cards are fixed now. Use this area to review the entry and keep an eye on the field without jumping between separate modules."
+                  ? "Your cards are fixed. Review the lineup here and follow the field below."
                   : isLive
-                    ? "The live standings take the lead here, while your locked lineup stays visible below so the page feels like one continuous experience."
-                    : "Final rank, full leaderboard, and per-card scoring now live together in one result flow instead of separate settled panels."
+                    ? "Track scoring through the lineup first, then scan the live table below."
+                    : "Your result, card scores, and final standings now flow from the lineup outward."
             }
             summaryItems={stateSummaryItems}
             rankingRows={rankingRows}
