@@ -79,23 +79,6 @@ export function HeroPanel({
             {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
             {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
           </div>
-
-          <div className="contest-detail-hero-rules">
-            <div className="contest-detail-hero-rules-head">
-              <div>
-                <p className="mcg-eyebrow">Rules & timing</p>
-                <p className="contest-detail-hero-rules-summary">{rulesSummary}</p>
-              </div>
-            </div>
-            <dl className="contest-detail-hero-rules-grid">
-              {detailItems.map((item) => (
-                <div key={item.label}>
-                  <dt>{item.label}</dt>
-                  <dd>{item.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
         </div>
       </div>
 
@@ -108,6 +91,24 @@ export function HeroPanel({
           <strong>{countdownValue}</strong>
           <small>{status === "SETTLED" ? "Results are locked in." : "Stay ahead of lock and live scoring."}</small>
         </div>
+
+        <div className="contest-detail-hero-rules contest-detail-hero-rules-compact">
+          <div className="contest-detail-hero-rules-head">
+            <div>
+              <p className="mcg-eyebrow">Rules & timing</p>
+              <p className="contest-detail-hero-rules-summary">{rulesSummary}</p>
+            </div>
+          </div>
+          <dl className="contest-detail-hero-rules-grid">
+            {detailItems.map((item) => (
+              <div key={item.label}>
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
         {primaryAction ? (
           <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
             {primaryAction.label}</button>

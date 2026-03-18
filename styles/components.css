@@ -3521,9 +3521,9 @@ textarea:focus {
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.65fr);
-  gap: 18px;
-  padding: clamp(18px, 2.6vw, 28px);
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.62fr);
+  gap: 16px;
+  padding: clamp(16px, 2.2vw, 24px);
   border: 1px solid rgba(120, 144, 255, 0.22);
   background: linear-gradient(160deg, rgba(10, 14, 28, 0.98), rgba(16, 21, 34, 0.98));
 }
@@ -3533,13 +3533,13 @@ textarea:focus {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
 .contest-detail-hero-visual {
-  min-height: clamp(260px, 32vw, 380px);
-  padding: clamp(18px, 2.4vw, 28px);
+  min-height: clamp(220px, 28vw, 312px);
+  padding: clamp(16px, 2vw, 24px);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background-position: center;
@@ -3586,17 +3586,17 @@ textarea:focus {
 }
 
 .contest-detail-hero-copy {
-  align-self: stretch;
+  align-self: end;
   display: grid;
-  gap: 14px;
-  max-width: min(66ch, 100%);
+  gap: 10px;
+  max-width: min(64ch, 100%);
 }
 
 .contest-detail-hero-copy-panel {
   display: grid;
-  gap: 10px;
-  max-width: 58ch;
-  padding: clamp(14px, 2vw, 18px);
+  gap: 8px;
+  max-width: 56ch;
+  padding: clamp(12px, 1.6vw, 16px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(5, 10, 20, 0.82), rgba(7, 11, 24, 0.72));
@@ -3631,22 +3631,22 @@ textarea:focus {
 
 .contest-detail-shell-hero h1 {
   margin: 0;
-  font-size: clamp(2.25rem, 4.6vw, 3.4rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.02;
 }
 
 .contest-detail-hero-info-line {
   margin: 0;
   color: rgba(226, 232, 240, 0.9);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   letter-spacing: 0.02em;
 }
 
 .contest-detail-hero-context {
   display: grid;
-  gap: 8px;
-  max-width: 54ch;
-  padding-top: 4px;
+  gap: 6px;
+  max-width: 52ch;
+  padding-top: 2px;
 }
 
 .contest-detail-hero-context p {
@@ -3711,11 +3711,41 @@ textarea:focus {
   line-height: 1.35;
 }
 
+.contest-detail-hero-rules-compact {
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(7, 11, 24, 0.62), rgba(7, 11, 24, 0.46));
+}
+
+.contest-detail-hero-rules-compact .contest-detail-hero-rules-head {
+  align-items: start;
+}
+
+.contest-detail-hero-rules-compact .contest-detail-hero-rules-summary {
+  margin-top: 3px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.contest-detail-hero-rules-compact .contest-detail-hero-rules-grid {
+  gap: 8px 12px;
+}
+
+.contest-detail-hero-rules-compact .contest-detail-hero-rules-grid dt {
+  font-size: 0.66rem;
+}
+
+.contest-detail-hero-rules-compact .contest-detail-hero-rules-grid dd {
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
 .contest-detail-countdown-block {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   justify-items: start;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(9, 13, 24, 0.56), rgba(9, 13, 24, 0.88));
@@ -3730,7 +3760,7 @@ textarea:focus {
 }
 
 .contest-detail-countdown-block strong {
-  font-size: clamp(2rem, 4vw, 2.85rem);
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
   font-family: 'JetBrains Mono', monospace;
   line-height: 1;
 }
