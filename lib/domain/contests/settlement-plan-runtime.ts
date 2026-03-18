@@ -1,8 +1,9 @@
 import { ContestStatus, Prisma, RewardType, ContestEntryStatus } from "@prisma/client";
 
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
-import { DISTRIBUTION_RULE_TYPES, DistributionRuleType, findMatchingDistributionRulesForRank } from "@/lib/domain/contests/distribution-rules";
-import { computeRewards, type ContestRewardConfig } from "@/lib/domain/contests/reward-distribution";
+import { DistributionRuleType } from "@/lib/domain/contests/distribution-rules";
+import type { ContestRewardConfig } from "@/lib/domain/contests/reward-distribution";
+import { buildContestRewardPlanItems, type RewardPlanBundleLike, type RewardPlanRuleLike, type ResolvedRewardComponent } from "@/lib/domain/contests/reward-plan";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 
@@ -12,12 +13,7 @@ const SETTLEMENT_PLAN_STATUS = {
   CANCELED: "CANCELED",
 } as const;
 
-type ResolvedComponent =
-  | { type: "POINTS"; amount: number }
-  | { type: "XP"; amount: number }
-  | { type: "PACK"; packDefinitionId: string; quantity: number };
-
-type RuleLike = {
+type RuleLike = RewardPlanRuleLike & {
   id: string;
   priority: number;
   ruleType: DistributionRuleType;
@@ -69,22 +65,10 @@ export async function generateSettlementPlan(contestId: string) {
       throw new ContestRuntimeError("Reward policy must include bundles and distribution rules", 409);
     }
 
-    const bundleById = new Map(bundles.map((bundle) => [bundle.id, bundle]));
     const rankingSize = contest.rankings.length;
 
-    const items: Array<{
-      userId: string;
-      rank: number;
-      sourceRuleId: string | null;
-      sourceRuleType: string | null;
-      sourceBundleId: string | null;
-      rewardComponents: ResolvedComponent[];
-      pointsTotal: number;
-      xpTotal: number;
-      packsTotal: number;
-    }> = [];
-
-    if (rewardConfig) {
+    let defaultPackDefinitionId: string | null = null;
+    if (rewardConfig && rewardConfig.packPool > 0) {
       const defaultPackDefinition = await tx.packDefinition.findFirst({
         where: { source: "REWARD", isActive: true },
         orderBy: [{ createdAt: "asc" }],
@@ -95,82 +79,27 @@ export async function generateSettlementPlan(contestId: string) {
         throw new ContestRuntimeError("No active REWARD pack definition found for contest settlement", 409);
       }
 
-      const rewards = computeRewards({
-        participantsCount: rankingSize,
-        ranking: contest.rankings.map((row) => row.userId),
-        config: rewardConfig,
-      });
-
-      for (const reward of rewards) {
-        const aggregatedComponents: ResolvedComponent[] = [];
-        if (reward.pointsReward > 0) aggregatedComponents.push({ type: "POINTS", amount: reward.pointsReward });
-        if (reward.packsReward > 0) aggregatedComponents.push({ type: "PACK", packDefinitionId: defaultPackDefinition.id, quantity: reward.packsReward });
-        items.push({
-          userId: reward.userId,
-          rank: reward.rank,
-          sourceRuleId: null,
-          sourceRuleType: "SIMPLE_POOL",
-          sourceBundleId: null,
-          rewardComponents: aggregatedComponents,
-          pointsTotal: reward.pointsReward,
-          xpTotal: 0,
-          packsTotal: reward.packsReward,
-        });
-      }
-    } else {
-      for (const ranking of contest.rankings) {
-      const matchedRules = findMatchingDistributionRulesForRank<RuleLike>(rules, ranking.rank, rankingSize);
-      if (matchedRules.length === 0) continue;
-
-      const aggregatedComponents: ResolvedComponent[] = [];
-      const ruleIds: string[] = [];
-      const bundleIds: string[] = [];
-
-      for (const matchedRule of matchedRules) {
-        const bundle = bundleById.get(matchedRule.bundleId);
-        if (!bundle) {
-          throw new ContestRuntimeError(`Rule ${matchedRule.id} references an unknown bundle`, 500);
-        }
-
-        ruleIds.push(matchedRule.id);
-        bundleIds.push(bundle.id);
-
-        if (matchedRule.ruleType === DISTRIBUTION_RULE_TYPES.POINTS_POOL_TOP_PERCENT) {
-          const topPercent = matchedRule.topPercent ?? 0;
-          const poolAmount = matchedRule.poolAmount ?? 0;
-          if (topPercent <= 0 || topPercent > 100 || !Number.isInteger(poolAmount) || poolAmount <= 0) {
-            throw new ContestRuntimeError(`Invalid POINTS_POOL_TOP_PERCENT rule ${matchedRule.id}`, 409);
-          }
-
-          const winnerCount = Math.max(1, Math.ceil((rankingSize * topPercent) / 100));
-          const baseShare = Math.floor(poolAmount / winnerCount);
-          const remainder = poolAmount % winnerCount;
-          const bonus = ranking.rank <= remainder ? 1 : 0;
-          const amount = baseShare + bonus;
-          if (amount > 0) aggregatedComponents.push({ type: "POINTS", amount });
-          continue;
-        }
-
-        aggregatedComponents.push(...resolveBundleComponents(bundle.components));
-      }
-
-      const pointsTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "POINTS" ? component.amount : 0), 0);
-      const xpTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "XP" ? component.amount : 0), 0);
-      const packsTotal = aggregatedComponents.reduce((sum, component) => sum + (component.type === "PACK" ? component.quantity : 0), 0);
-
-      items.push({
-        userId: ranking.userId,
-        rank: ranking.rank,
-        sourceRuleId: ruleIds.join(",") || null,
-        sourceRuleType: matchedRules.length > 1 ? "MULTI_RULE" : matchedRules[0]?.ruleType ?? null,
-        sourceBundleId: [...new Set(bundleIds)].join(",") || null,
-        rewardComponents: aggregatedComponents,
-        pointsTotal,
-        xpTotal,
-        packsTotal,
-      });
-      }
+      defaultPackDefinitionId = defaultPackDefinition.id;
     }
+
+    const items = buildContestRewardPlanItems({
+      participantCount: rankingSize,
+      rankingRows: contest.rankings.map((row) => ({ userId: row.userId, rank: row.rank })),
+      rewardConfig,
+      rules: rules as RuleLike[],
+      bundles: bundles as unknown as RewardPlanBundleLike[],
+      defaultPackDefinitionId,
+    }).map((item) => ({
+      userId: item.userId,
+      rank: item.rank,
+      sourceRuleId: item.sourceRuleId,
+      sourceRuleType: item.sourceRuleType,
+      sourceBundleId: item.sourceBundleId,
+      rewardComponents: item.rewardComponents,
+      pointsTotal: item.pointsTotal,
+      xpTotal: item.xpTotal,
+      packsTotal: item.packsTotal,
+    }));
 
     const latestDraftPlans = await tx.contestSettlementPlan.findMany({
       where: { contestId, status: SETTLEMENT_PLAN_STATUS.DRAFT },
@@ -325,7 +254,7 @@ export async function executeSettlementPlan(planId: string, options?: ExecuteSet
 
     let rewardCount = 0;
     for (const item of plan.items) {
-      const components = Array.isArray(item.rewardComponents) ? item.rewardComponents as unknown as ResolvedComponent[] : [];
+      const components = Array.isArray(item.rewardComponents) ? item.rewardComponents as unknown as ResolvedRewardComponent[] : [];
       for (const component of components) {
         if (component.type === "POINTS") {
           await tx.rewardGrant.create({
@@ -342,6 +271,10 @@ export async function executeSettlementPlan(planId: string, options?: ExecuteSet
         }
 
         if (component.type === "PACK") {
+          if (!component.packDefinitionId) {
+            throw new ContestRuntimeError(`Settlement plan item ${item.id} is missing packDefinitionId`, 500);
+          }
+
           for (let i = 0; i < component.quantity; i += 1) {
             await grantRewardPackByDefinitionTx(tx, {
               userId: item.userId,
@@ -417,36 +350,6 @@ export async function executeAutoSettlementForContest(contestId: string, options
     settlementId: execution.settlementId,
     rewardCount: execution.rewardCount,
   };
-}
-
-function resolveBundleComponents(
-  components: Array<{
-    type: "POINTS" | "PACK" | "XP";
-    pointsAmount: number | null;
-    xpAmount: number | null;
-    packDefinitionId: string | null;
-    packQuantity: number | null;
-  }>
-): ResolvedComponent[] {
-  const resolved: ResolvedComponent[] = [];
-
-  for (const component of components) {
-    if (component.type === "POINTS" && Number.isInteger(component.pointsAmount) && (component.pointsAmount ?? 0) > 0) {
-      resolved.push({ type: "POINTS", amount: component.pointsAmount! });
-      continue;
-    }
-
-    if (component.type === "XP" && Number.isInteger(component.xpAmount) && (component.xpAmount ?? 0) > 0) {
-      resolved.push({ type: "XP", amount: component.xpAmount! });
-      continue;
-    }
-
-    if (component.type === "PACK" && component.packDefinitionId && Number.isInteger(component.packQuantity) && (component.packQuantity ?? 0) > 0) {
-      resolved.push({ type: "PACK", packDefinitionId: component.packDefinitionId, quantity: component.packQuantity! });
-    }
-  }
-
-  return resolved;
 }
 
 function summarizePlanItems(items: Array<{ pointsTotal: number; xpTotal: number; packsTotal: number }>) {

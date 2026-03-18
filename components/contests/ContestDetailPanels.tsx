@@ -12,6 +12,7 @@ export type RewardTier = {
   pointsAmount: number;
   xpAmount: number;
   packsCount: number;
+  winnerLabel?: string | null;
 };
 
 export type RewardSummary = {
@@ -575,7 +576,10 @@ export function RewardsPanel({
             <article key={`${tier.label}-${index}`} className={index === 0 ? "featured" : ""}>
               <header>
                 <strong>{tier.label}</strong>
-                {tier.bundleName ? <span>{tier.bundleName}</span> : null}
+                <div>
+                  {tier.winnerLabel ? <span>{tier.winnerLabel}</span> : null}
+                  {tier.bundleName ? <span>{tier.bundleName}</span> : null}
+                </div>
               </header>
               <div>
                 {tier.pointsAmount > 0 ? <span>{tier.pointsAmount} pts</span> : null}

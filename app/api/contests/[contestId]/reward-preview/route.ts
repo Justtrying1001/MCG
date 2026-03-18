@@ -4,7 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { handleApiError } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
-import { computeRewards, type ContestRewardConfig } from "@/lib/domain/contests/reward-distribution";
+import { type ContestRewardConfig } from "@/lib/domain/contests/reward-distribution";
+import { buildContestRewardPlanItems, type RewardPlanBundleLike, type RewardPlanRuleLike } from "@/lib/domain/contests/reward-plan";
 
 type RewardTier = {
   label: string;
@@ -12,6 +13,7 @@ type RewardTier = {
   pointsAmount: number;
   xpAmount: number;
   packsCount: number;
+  winnerLabel?: string | null;
 };
 
 function parseRewardConfig(value: unknown): ContestRewardConfig | null {
@@ -41,6 +43,17 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
         id: true,
         _count: { select: { entries: true } },
         rules: { orderBy: { id: "asc" }, take: 1, select: { config: true } },
+        rankings: {
+          orderBy: [{ rank: "asc" }],
+          select: { rank: true, userId: true, user: { select: { displayName: true } } },
+        },
+        rewardPolicy: {
+          select: {
+            status: true,
+            bundles: { include: { components: true } },
+            distributionRules: { orderBy: [{ priority: "asc" }, { id: "asc" }] },
+          },
+        },
       },
     });
 
@@ -48,68 +61,47 @@ export async function GET(_request: Request, { params }: { params: { contestId: 
       return NextResponse.json({ hasPolicyData: false, tiers: [] });
     }
 
+    const participantCount = Math.max(0, contest._count.entries);
     const rewardConfig = parseRewardConfig((contest.rules[0]?.config as Record<string, unknown> | null)?.rewardConfig);
-    if (rewardConfig) {
-      const participantsCount = Math.max(0, contest._count.entries);
-      const ranking = Array.from({ length: participantsCount }, (_, index) => `rank-${index + 1}`);
-      const computed = computeRewards({ participantsCount, ranking, config: rewardConfig });
+    const policy = contest.rewardPolicy;
+    const rules = (policy?.distributionRules ?? []) as unknown as RewardPlanRuleLike[];
+    const bundles = (policy?.bundles ?? []) as unknown as RewardPlanBundleLike[];
 
-      const tiers: RewardTier[] = computed.map((reward) => ({
-        label: `Rank #${reward.rank}`,
-        bundleName: "Simple pool",
-        pointsAmount: reward.pointsReward,
-        xpAmount: 0,
-        packsCount: reward.packsReward,
-      }));
-
-      return NextResponse.json({
-        hasPolicyData: true,
-        tiers,
-        summary: {
-          pointsPool: rewardConfig.pointsPool,
-          packPool: rewardConfig.packPool,
-          rewardedTopPercent: rewardConfig.rewardedTopPercent,
-          rewardedWinners: tiers.length,
-          participantCount: participantsCount,
-        },
-      });
-    }
-
-    const policy = await prisma.contestRewardPolicy.findUnique({
-      where: { contestId: params.contestId },
-      include: {
-        bundles: { include: { components: true } },
-        distributionRules: { orderBy: [{ priority: "asc" }, { id: "asc" }] },
-      },
-    });
-
-    if (!policy || policy.status !== "PUBLISHED") {
+    if (!rewardConfig && (!policy || policy.status !== "PUBLISHED" || rules.length === 0 || bundles.length === 0)) {
       return NextResponse.json({ hasPolicyData: false, tiers: [] });
     }
 
-    const bundleById = new Map(policy.bundles.map((b) => [b.id, b]));
-
-    const tiers: RewardTier[] = policy.distributionRules.map((rule) => {
-      const bundle = bundleById.get(rule.bundleId);
-      const components = bundle?.components ?? [];
-
-      let label = "";
-      if (rule.ruleType === "FIXED_RANKS") {
-        label = rule.rankFrom === rule.rankTo ? `Rank #${rule.rankFrom}` : `Ranks #${rule.rankFrom}–#${rule.rankTo}`;
-      } else if (rule.ruleType === "TOP_N") {
-        label = `Top ${rule.topN}`;
-      } else if (rule.ruleType === "TOP_PERCENT") {
-        label = `Top ${rule.topPercent}%`;
-      }
-
-      const pointsAmount = components.filter((c) => c.type === "POINTS").reduce((sum, c) => sum + (c.pointsAmount ?? 0), 0);
-      const xpAmount = components.filter((c) => c.type === "XP").reduce((sum, c) => sum + (c.xpAmount ?? 0), 0);
-      const packsCount = components.filter((c) => c.type === "PACK").reduce((sum, c) => sum + (c.packQuantity ?? 0), 0);
-
-      return { label, bundleName: bundle?.name ?? "", pointsAmount, xpAmount, packsCount };
+    const rows = buildContestRewardPlanItems({
+      participantCount,
+      rankingRows: contest.rankings.map((row) => ({ userId: row.userId, rank: row.rank, displayName: row.user.displayName })),
+      rewardConfig,
+      rules,
+      bundles,
+      defaultPackDefinitionId: null,
     });
 
-    return NextResponse.json({ hasPolicyData: true, tiers });
+    const tiers: RewardTier[] = rows.map((row) => ({
+      label: `Rank #${row.rank}`,
+      bundleName: row.sourceBundleName ?? (rewardConfig ? "Simple pool" : "Reward tier"),
+      pointsAmount: row.pointsTotal,
+      xpAmount: row.xpTotal,
+      packsCount: row.packsTotal,
+      winnerLabel: row.displayName ?? null,
+    }));
+
+    return NextResponse.json({
+      hasPolicyData: true,
+      tiers,
+      summary: rewardConfig
+        ? {
+            pointsPool: rewardConfig.pointsPool,
+            packPool: rewardConfig.packPool,
+            rewardedTopPercent: rewardConfig.rewardedTopPercent,
+            rewardedWinners: tiers.length,
+            participantCount,
+          }
+        : null,
+    });
   } catch (error) {
     return handleApiError(error, "Cannot load reward preview");
   }

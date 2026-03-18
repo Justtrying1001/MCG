@@ -142,6 +142,61 @@ describe("settlement plan runtime", () => {
     await expect(generateSettlementPlan("c1")).rejects.toThrow(/Cannot generate settlement plan without ranking rows/i);
   });
 
+  it("keeps settlement generation unchanged for published reward-policy tiers", async () => {
+    const tx: any = {
+      contest: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "c-policy",
+          _count: { entries: 4 },
+          configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+          settlements: [],
+          rules: [{ config: {} }],
+          rankings: [
+            { userId: "u1", rank: 1, score: 100 },
+            { userId: "u2", rank: 2, score: 90 },
+            { userId: "u3", rank: 3, score: 80 },
+            { userId: "u4", rank: 4, score: 70 },
+          ],
+          rewardPolicy: {
+            id: "rp1",
+            status: "PUBLISHED",
+            bundles: [
+              {
+                id: "bundle-a",
+                name: "Top 2",
+                components: [
+                  { type: "POINTS", pointsAmount: 75, xpAmount: null, packDefinitionId: null, packQuantity: null },
+                ],
+              },
+            ],
+            distributionRules: [
+              { id: "rule-top-2", priority: 0, ruleType: "TOP_N", rankFrom: null, rankTo: null, topN: 2, topPercent: null, poolAmount: null, bundleId: "bundle-a" },
+            ],
+          },
+        }),
+      },
+      contestSettlementPlan: {
+        findMany: vi.fn().mockResolvedValue([]),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        create: vi.fn().mockImplementation(async ({ data }: any) => ({
+          id: "sp-policy",
+          status: "DRAFT",
+          contestId: data.contestId,
+          items: data.items.createMany.data.map((item: any, index: number) => ({ id: `ip${index + 1}`, ...item })),
+        })),
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    const result = await generateSettlementPlan("c-policy");
+
+    expect(result.planId).toBe("sp-policy");
+    expect(result.matchedUsers).toBe(2);
+    expect(result.totals.pointsCreditTotal).toBe(150);
+    expect(result.totals.packsGrantTotal).toBe(0);
+  });
+
   it("previews plan with totals", async () => {
     prismaMock.contestSettlementPlan.findUnique.mockResolvedValue({
       id: "sp1",
