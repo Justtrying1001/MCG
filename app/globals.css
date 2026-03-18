@@ -4738,6 +4738,10 @@ a { color: inherit; text-decoration: none; }
   gap: 0.6rem;
 }
 
+.admin-quest-card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
 .admin-focus-card {
   border: 1px solid var(--border-hi);
   background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
@@ -4750,9 +4754,129 @@ a { color: inherit; text-decoration: none; }
   text-align: left;
 }
 
+.admin-quest-focus-card {
+  min-height: 192px;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.72rem;
+  overflow: hidden;
+}
+
 .admin-focus-card:hover {
   transform: translateY(-1px);
   border-color: rgba(96,165,250,0.6);
+}
+
+.admin-quest-card-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.admin-quest-chip-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.admin-quest-card-heading {
+  min-width: 0;
+  display: grid;
+  gap: 0.22rem;
+  flex: 1;
+}
+
+.admin-quest-card-title,
+.admin-quest-card-target,
+.admin-quest-secondary-line,
+.admin-quest-url,
+.admin-quest-footer > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-quest-card-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.admin-quest-card-target {
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.admin-quest-badge-row,
+.admin-quest-meta-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-quest-secondary-line {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.admin-quest-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.28rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.54);
+  font-size: 0.73rem;
+  color: var(--text-2);
+}
+
+.admin-quest-meta-pill strong,
+.admin-quest-meta-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-quest-meta-pill strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.admin-quest-url {
+  margin: 0;
+  color: #93c5fd;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.admin-quest-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.admin-quest-footer > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .admin-quest-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .milestone-chip-icon {
