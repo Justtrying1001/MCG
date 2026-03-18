@@ -25,11 +25,7 @@ export type HeroPanelProps = {
   status: ContestStatus;
   coverImageUrl?: string | null;
   infoLine: string;
-  contextLabel: string;
-  contextHeadline: string;
   contextBody: string;
-  rulesSummary: string;
-  detailItems: Array<{ label: string; value: string }>;
   countdownLabel: string;
   countdownValue: string;
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
@@ -42,11 +38,7 @@ export function HeroPanel({
   status,
   coverImageUrl,
   infoLine,
-  contextLabel,
-  contextHeadline,
   contextBody,
-  rulesSummary,
-  detailItems,
   countdownLabel,
   countdownValue,
   primaryAction,
@@ -68,14 +60,9 @@ export function HeroPanel({
 
         <div className="contest-detail-hero-copy">
           <div className="contest-detail-hero-copy-panel">
-            <span className="contest-detail-hero-kicker">{contextLabel}</span>
             <h1>{title}</h1>
             <p className="contest-detail-hero-info-line">{infoLine}</p>
-            <div className="contest-detail-hero-context">
-              <p className="mcg-eyebrow">Contest briefing</p>
-              <p><strong>{contextHeadline}</strong></p>
-              <p>{contextBody}</p>
-            </div>
+            <p className="contest-detail-hero-context-line">{contextBody}</p>
             {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
             {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
           </div>
@@ -85,28 +72,10 @@ export function HeroPanel({
       <div className="contest-detail-hero-side">
         <div className="contest-detail-countdown-block">
           <div className="contest-detail-hero-side-top">
-            <span className={`mcg-badge ${statusTone}`}>{status}</span>
             <span className="contest-detail-hero-side-label">{countdownLabel}</span>
           </div>
           <strong>{countdownValue}</strong>
           <small>{status === "SETTLED" ? "Results are locked in." : "Stay ahead of lock and live scoring."}</small>
-        </div>
-
-        <div className="contest-detail-hero-rules contest-detail-hero-rules-compact">
-          <div className="contest-detail-hero-rules-head">
-            <div>
-              <p className="mcg-eyebrow">Rules & timing</p>
-              <p className="contest-detail-hero-rules-summary">{rulesSummary}</p>
-            </div>
-          </div>
-          <dl className="contest-detail-hero-rules-grid">
-            {detailItems.map((item) => (
-              <div key={item.label}>
-                <dt>{item.label}</dt>
-                <dd>{item.value}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
 
         {primaryAction ? (
@@ -296,6 +265,7 @@ export function CompactSupportBlock({
   lifecycleLabel,
   tiers,
   myRewards,
+  extraItems = [],
 }: {
   status: ContestStatus;
   participants: number;
@@ -303,6 +273,7 @@ export function CompactSupportBlock({
   lifecycleLabel: string;
   tiers: RewardTier[];
   myRewards?: RewardSummary | null;
+  extraItems?: Array<{ label: string; value: string }>;
 }) {
   const featuredTier = tiers[0] ?? null;
   const earnedRewards = myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0)
@@ -322,6 +293,7 @@ export function CompactSupportBlock({
     { label: "Players", value: String(participants) },
     { label: "Entry", value: entryFee },
     { label: "Status", value: lifecycleLabel },
+    ...extraItems,
   ];
 
   return (

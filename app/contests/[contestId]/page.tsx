@@ -8,6 +8,7 @@ import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import {
+  CompactSupportBlock,
   HeroPanel,
   LeaderboardPanel,
   LineupPanel,
@@ -424,16 +425,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Status" : "Contest ends in";
   const countdownValue = isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs);
   const rankingRows = ranking?.rankings ?? [];
-  const stateHeadline = isOpen
-    ? hasEntry
-      ? "Your lineup is submitted"
-      : selectedIds.length > 0
-        ? "Finish your lineup"
-        : "Build your lineup"
-    : isLive
-      ? "You are live in the contest"
-      : "Lineup locked";
-
   const stateBody = isOpen
     ? (hasEntry ? "Edit before lineup lock." : selectedIds.length > 0 ? "Finish and submit before lock." : "Build your entry before lock.")
     : isLive
@@ -473,7 +464,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     contest.seasonName ?? null,
     contest.leagueTierRequired ? `${contest.leagueTierRequired} tier` : null,
   ].filter((value): value is string => Boolean(value)).join(" • ");
-  const rulesSummary = `Submit exactly ${rosterSize} cards. ${entryFee === "Free" ? "Entry is free." : `Entry costs ${entryFee}.`}`;
   const heroDetailItems = [
     { label: "Contest code", value: contest.code },
     ...(contest.openAt ? [{ label: "Registration opens", value: fmtDate(contest.openAt) }] : []),
@@ -492,14 +482,20 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           infoLine={contestInfoLine}
           countdownLabel={countdownLabel}
           countdownValue={countdownValue}
-          contextLabel={isOpen ? "Entry" : isLive ? "Live contest" : isSettled ? "Final results" : "Locked contest"}
-          contextHeadline={stateHeadline}
           contextBody={stateBody}
-          rulesSummary={rulesSummary}
-          detailItems={heroDetailItems}
           primaryAction={heroAction}
           flash={builderFlash && !showBuilder ? builderFlash : null}
           error={error || builderError || null}
+        />
+
+        <CompactSupportBlock
+          status={contest.status}
+          participants={contest._count.entries}
+          entryFee={entryFee}
+          lifecycleLabel={isSettled ? "Finalized" : isLive ? "Live" : isLocked ? "Locked" : "Open"}
+          tiers={rewards?.tiers ?? []}
+          myRewards={myRewards ?? null}
+          extraItems={heroDetailItems}
         />
 
         <section className="contest-detail-main-layout">
