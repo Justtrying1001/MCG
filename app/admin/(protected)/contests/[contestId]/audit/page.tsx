@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { buildContestAuditQuery } from "@/lib/admin/contest-workbench";
+
+import { ContestWorkbenchShell, useContestWorkbenchMeta } from "../_components/ContestWorkbenchShell";
 
 type ActionRow = {
   id: string;
@@ -19,6 +20,8 @@ type ActionRow = {
 export default function ContestAuditTimelinePage({ params }: { params: { contestId: string } }) {
   const [rows, setRows] = useState<ActionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"ALL" | ActionRow["status"]>("ALL");
+  const meta = useContestWorkbenchMeta(params.contestId);
 
   useEffect(() => {
     const load = async () => {
@@ -32,31 +35,63 @@ export default function ContestAuditTimelinePage({ params }: { params: { contest
     void load();
   }, [params.contestId]);
 
+  const filtered = useMemo(() => {
+    if (statusFilter === "ALL") return rows;
+    return rows.filter((row) => row.status === statusFilter);
+  }, [rows, statusFilter]);
+
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <Link href={`/admin/contests/${params.contestId}`} className="contest-inline-note">← Back to contest overview</Link>
-      </section>
-
-      <section className="contest-section">
-        <h1 className="page-title">Contest Audit Timeline</h1>
-        <p className="page-subtitle">Transitions, scoring, settlement validations/executions, failures and actor attribution.</p>
-      </section>
-
-      <section className="contest-section" style={{ display: "grid", gap: "0.5rem" }}>
-        {loading ? <p className="contest-inline-note">Loading timeline…</p> : null}
-        {!loading && rows.map((row) => (
-          <div key={row.id} className="contest-card" style={{ padding: "0.6rem" }}>
-            <div className="contest-card-top">
-              <p className="contest-code">{row.actionType}</p>
-              <span className={`contest-status status-${row.status === "FAILED" ? "canceled" : "live"}`}>{row.status}</span>
-            </div>
-            <p className="contest-inline-note">actor={row.actorLabel} · {new Date(row.createdAt).toLocaleString()}</p>
-            {row.errorCode ? <p className="contest-error">{row.errorCode} {row.errorMessage ?? ""}</p> : null}
+    <ContestWorkbenchShell
+      contestId={params.contestId}
+      section="Audit"
+      description="Review transition, scoring, and settlement events with actor and status context."
+      meta={meta}
+    >
+      <section className="admin-v2-panel contest-workbench-two-col">
+        <div>
+          <h2 className="contest-admin-section-title">Timeline summary</h2>
+          <div className="contest-admin-summary-grid">
+            <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Total events</p><p className="contest-admin-meta-value">{rows.length}</p></div>
+            <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Executed</p><p className="contest-admin-meta-value">{rows.filter((row) => row.status === "EXECUTED").length}</p></div>
+            <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Validated</p><p className="contest-admin-meta-value">{rows.filter((row) => row.status === "VALIDATED").length}</p></div>
+            <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Failed</p><p className="contest-admin-meta-value">{rows.filter((row) => row.status === "FAILED").length}</p></div>
           </div>
-        ))}
-        {!loading && rows.length === 0 ? <p className="contest-inline-note">No contest audit actions found.</p> : null}
+        </div>
+        <div>
+          <h2 className="contest-admin-section-title">Filter</h2>
+          <div className="contest-workbench-actions-row">
+            {(["ALL", "VALIDATED", "EXECUTED", "FAILED"] as const).map((value) => (
+              <button key={value} type="button" className={`admin-v2-link-chip ${statusFilter === value ? "contest-workbench-nav-active" : ""}`} onClick={() => setStatusFilter(value)}>
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
-    </div>
+
+      <section className="admin-v2-panel">
+        <h2 className="contest-admin-section-title">Event timeline</h2>
+        {loading ? <p className="contest-admin-muted">Loading timeline…</p> : null}
+        {!loading && filtered.length === 0 ? <p className="contest-admin-subtle">No contest audit actions found for this filter.</p> : null}
+        <div className="contest-workbench-rows-stack">
+          {!loading && filtered.map((row) => (
+            <article key={row.id} className="contest-workbench-audit-row">
+              <div className="contest-workbench-audit-head">
+                <p className="contest-admin-code">{row.module}</p>
+                <span className={`contest-workbench-audit-status is-${row.status.toLowerCase()}`}>{row.status}</span>
+              </div>
+              <p className="contest-admin-muted"><strong>{row.actionType}</strong> · actor={row.actorLabel}</p>
+              <p className="contest-admin-subtle">{new Date(row.createdAt).toLocaleString()}</p>
+              {row.errorCode ? (
+                <div className="contest-admin-blocker-item">
+                  <span aria-hidden>⚠</span>
+                  <p>{row.errorCode} {row.errorMessage ?? ""}</p>
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </section>
+    </ContestWorkbenchShell>
   );
 }

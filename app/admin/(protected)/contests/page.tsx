@@ -213,13 +213,12 @@ export default function AdminContestsLibraryPage() {
 
       <AdminToolbar>
         <input className="input" placeholder="Search contest name, code, or description" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+        <div className="contest-library-filter-row">
           {FILTER_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
-              className="admin-v2-link-chip"
-              style={statusFilter === option.value ? { borderColor: "#c48bff", color: "#fff" } : undefined}
+              className={`admin-v2-link-chip ${statusFilter === option.value ? "contest-library-filter-active" : ""}`}
               onClick={() => setStatusFilter(option.value)}
             >
               {option.label}
@@ -231,7 +230,7 @@ export default function AdminContestsLibraryPage() {
 
       {loading ? <AdminPanel><AdminEmptyState title="Loading contests…" /></AdminPanel> : null}
       {error ? <AdminPanel><p className="contest-error">{error}</p></AdminPanel> : null}
-      {message ? <AdminPanel><p className="contest-inline-note">{message}</p></AdminPanel> : null}
+      {message ? <AdminPanel><p className="contest-library-muted">{message}</p></AdminPanel> : null}
 
       {!loading && rows.length === 0 ? <AdminPanel><AdminEmptyState title="No contests found" description="Try another filter or create a new contest draft." /></AdminPanel> : null}
 
@@ -251,31 +250,33 @@ export default function AdminContestsLibraryPage() {
                 <div className="contest-console-card-head">
                   <div>
                     <p className="contest-console-code">{contest.code}</p>
-                    <h3>{contest.title}</h3>
+                    <h3 className="contest-library-title">{contest.title}</h3>
                   </div>
-                  <AdminStatusBadge tone={statusTone(contest.status)} label={contest.status} />
+                  <span className={`contest-library-status is-${contest.status.toLowerCase()}`}>{contest.status}</span>
                 </div>
 
-                <p className="contest-inline-note">{contest.description?.trim() || "No description yet."}</p>
-
-                <div className="contest-library-dates">
-                  <p><strong>Registration opens:</strong> {fmt(contest.openAt)}</p>
-                  <p><strong>Live:</strong> {fmt(contest.liveAt)}</p>
-                  <p><strong>Contest ends:</strong> {fmt(contest.endsAt)}</p>
-                </div>
-
-                <p className="contest-inline-note">{buildRewardTeaser(contest)}</p>
-
-                <p className="contest-inline-note"><strong>Config state:</strong> {contest.configPublishedAt ? `Published ${fmt(contest.configPublishedAt)}` : "Not published"} · <strong>Entries:</strong> {contest._count.entries}</p>
+                <p className="contest-library-description">{contest.description?.trim() || "No description yet."}</p>
 
                 {snapshotIndicator(contest)}
 
-                <div className="contest-console-actions" style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
-                  {/* Primary actions */}
-                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
-                  <Link href={`/admin/contests/${contest.id}`} className="admin-v2-link-chip">Overview</Link>
+                <div className="contest-library-chip-row">
+                  <span className="contest-library-chip">Lifecycle: {contest.status}</span>
+                  <span className="contest-library-chip">Entries: {contest._count.entries}</span>
+                  <span className="contest-library-chip">Config: {contest.configPublishedAt ? "Published" : "Draft"}</span>
+                  <span className="contest-library-chip">Rewards: {buildRewardTeaser(contest)}</span>
+                </div>
 
-                  {/* Contextual primary action */}
+                <div className="contest-library-kpi-grid">
+                  <MetaStat label="Open" value={fmt(contest.openAt)} />
+                  <MetaStat label="Lock" value={fmt(contest.lockAt)} />
+                  <MetaStat label="End" value={fmt(contest.endsAt)} />
+                  <MetaStat label="Scores" value={String(contest._count.scores)} />
+                </div>
+
+                <div className="contest-library-actions">
+                  <Link href={`/admin/contests/${contest.id}`} className="contest-library-primary-action">Overview</Link>
+                  <Link href={`/admin/contests/create?contestId=${contest.id}`} className="admin-v2-link-chip">Edit</Link>
+
                   {contest.status === "DRAFT" ? (
                     <button
                       className="admin-v2-link-chip"
@@ -296,21 +297,10 @@ export default function AdminContestsLibraryPage() {
                       {isBusy ? "Stopping…" : "Stop"}
                     </button>
                   ) : null}
-                  {contest.status === "CANCELED" ? (
-                    <button
-                      className="admin-v2-link-chip contest-danger-chip"
-                      disabled={isBusy}
-                      onClick={() => void runAction(contest.id, "delete")}
-                    >
-                      Delete
-                    </button>
-                  ) : null}
 
-                  {/* Secondary menu */}
-                  <div style={{ position: "relative", marginLeft: "auto" }}>
+                  <div className="contest-library-more-menu-wrap">
                     <button
-                      className="admin-v2-link-chip"
-                      style={{ fontWeight: 700, letterSpacing: "0.05em" }}
+                      className="admin-v2-link-chip contest-library-more-btn"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         setOpenMenuId(isMenuOpen ? null : contest.id);
@@ -320,21 +310,7 @@ export default function AdminContestsLibraryPage() {
                       ···
                     </button>
                     {isMenuOpen ? (
-                      <div
-                        style={{
-                          position: "absolute",
-                          right: 0,
-                          top: "calc(100% + 4px)",
-                          background: "#fff",
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "6px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-                          minWidth: "160px",
-                          zIndex: 100,
-                          display: "grid",
-                        }}
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      >
+                      <div className="contest-library-menu" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         {unpublishable ? (
                           <button
                             className="contest-menu-item"
@@ -358,7 +334,7 @@ export default function AdminContestsLibraryPage() {
                           onClick={() => void runAction(contest.id, "delete")}
                         >
                           Delete
-                          {deleteBlocked ? <span style={{ display: "block", fontSize: "0.7rem", color: "#999", fontWeight: 400 }}>Stop first</span> : null}
+                          {deleteBlocked ? <span className="contest-library-menu-note">Stop first</span> : null}
                         </button>
                       </div>
                     ) : null}
@@ -381,11 +357,11 @@ function snapshotIndicator(contest: AdminContest) {
   const hasSnapshot = contest._count.scores > 0;
 
   if (hasSnapshot) {
-    return <p className="contest-inline-note" style={{ color: "#27ae60" }}>✓ START snapshot present</p>;
+    return <div className="contest-library-strip is-success">✓ START snapshot present</div>;
   }
 
   if (contest.status === "LIVE") {
-    return <p className="contest-inline-note" style={{ color: "#c0392b" }}>✗ START snapshot missing — check overview</p>;
+    return <div className="contest-library-strip is-danger">✗ START snapshot missing — check overview</div>;
   }
 
   return null;
@@ -401,14 +377,16 @@ function buildRewardTeaser(contest: AdminContest) {
   return `Top rewards include ${component.packQuantity ?? 0} pack(s).`;
 }
 
-function statusTone(status: ContestStatus): "success" | "warn" | "danger" | "neutral" {
-  if (status === "OPEN" || status === "LIVE" || status === "SETTLED") return "success";
-  if (status === "LOCKED") return "warn";
-  if (status === "CANCELED") return "danger";
-  return "neutral";
-}
-
 function fmt(value: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
+}
+
+function MetaStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="contest-library-kpi-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }

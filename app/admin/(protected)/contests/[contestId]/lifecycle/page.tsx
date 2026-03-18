@@ -1,16 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { getAllowedContestTransitions, lifecycleValidationState } from "@/lib/admin/contest-workbench";
+
+import { ContestWorkbenchShell, useContestWorkbenchMeta } from "../_components/ContestWorkbenchShell";
 
 type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 
 function newIdempotencyKey(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
+
+const PHASES: ContestStatus[] = ["DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
 
 export default function ContestLifecyclePage({ params }: { params: { contestId: string } }) {
   const [currentPhase, setCurrentPhase] = useState<ContestStatus | null>(null);
@@ -19,6 +22,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
   const [validationToken, setValidationToken] = useState("");
   const [message, setMessage] = useState("");
   const [canExecute, setCanExecute] = useState(false);
+  const meta = useContestWorkbenchMeta(params.contestId);
 
   useEffect(() => {
     void fetch(`/api/internal/contests/${params.contestId}`, { cache: "no-store" })
@@ -90,34 +94,68 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
     setMessage(`Phase updated to ${payload.contest?.status ?? targetPhase}`);
   };
 
+  const allowedTransitions = currentPhase ? getAllowedContestTransitions(currentPhase) : [];
+
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <Link href={`/admin/contests/${params.contestId}`} className="contest-inline-note">← Back to contest overview</Link>
+    <ContestWorkbenchShell
+      contestId={params.contestId}
+      section="Lifecycle"
+      description="Validate and execute lifecycle transitions with clear operational safeguards."
+      meta={meta}
+      actions={<Button variant="ghost" onClick={() => void validateTransition()}>Validate</Button>}
+    >
+      <section className="admin-v2-panel">
+        <h2 className="contest-admin-section-title">Phase timeline</h2>
+        <div className="contest-workbench-timeline">
+          {PHASES.map((phase) => (
+            <div key={phase} className={`contest-workbench-phase-pill ${currentPhase === phase ? "is-current" : ""} ${allowedTransitions.includes(phase) ? "is-allowed" : ""}`}>
+              <span>{phase}</span>
+              {currentPhase === phase ? <strong>Current</strong> : allowedTransitions.includes(phase) ? <small>Allowed</small> : null}
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.7rem" }}>
-        <h1 className="page-title">Lifecycle Control Panel</h1>
-        <p className="contest-inline-note">Current phase: <strong>{currentPhase ?? "loading…"}</strong></p>
-        <p className="contest-inline-note">Allowed next transitions: {currentPhase ? (getAllowedContestTransitions(currentPhase).join(", ") || "none") : "—"}</p>
-        <p className="contest-inline-note">Automation: transition to <strong>LIVE</strong> auto-captures START snapshot. Transition to <strong>SETTLED</strong> auto-captures END snapshot and auto-runs native scoring compute (ranking rebuild included).</p>
-
-        <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-          <label className="contest-inline-note">Target phase</label>
-          <select className="input" value={targetPhase} onChange={(event) => setTargetPhase(event.target.value as ContestStatus)}>
-            {(currentPhase ? getAllowedContestTransitions(currentPhase) : []).map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-          <Button onClick={() => void validateTransition()}>Validate transition</Button>
-          <Button onClick={() => void executeTransition()} disabled={!validationToken || !canExecute}>Execute transition</Button>
+      <section className="admin-v2-panel contest-workbench-two-col">
+        <div>
+          <h2 className="contest-admin-section-title">Transition action</h2>
+          <p className="contest-admin-muted">Current phase: <strong>{currentPhase ?? "loading…"}</strong></p>
+          <p className="contest-admin-muted">Allowed transitions: {allowedTransitions.join(", ") || "none"}</p>
+          <div className="contest-workbench-form-row">
+            <label className="contest-admin-subtle" htmlFor="targetPhase">Target phase</label>
+            <select id="targetPhase" className="input" value={targetPhase} onChange={(event) => setTargetPhase(event.target.value as ContestStatus)}>
+              {allowedTransitions.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+          <div className="contest-workbench-actions-row">
+            <Button onClick={() => void validateTransition()}>Validate transition</Button>
+            <Button onClick={() => void executeTransition()} disabled={!validationToken || !canExecute}>Execute transition</Button>
+          </div>
+          {message ? <p className="contest-admin-muted">{message}</p> : null}
         </div>
 
-        {message ? <p className="contest-inline-note">{message}</p> : null}
-        {issues.map((issue, index) => (
-          <p key={`${issue.message}-${index}`} className={issue.severity === "ERROR" ? "contest-error" : "contest-inline-note"}>{issue.message}</p>
-        ))}
+        <div>
+          <h2 className="contest-admin-section-title">Automation & checks</h2>
+          <div className="contest-workbench-note-block">
+            <p className="contest-admin-muted"><strong>LIVE</strong> transition auto-captures START snapshot.</p>
+            <p className="contest-admin-muted"><strong>SETTLED</strong> transition auto-captures END snapshot and runs native scoring compute.</p>
+          </div>
+          {issues.length > 0 ? (
+            <div className="contest-admin-blocker-list">
+              {issues.map((issue, index) => (
+                <div key={`${issue.message}-${index}`} className={issue.severity === "ERROR" ? "contest-admin-blocker-item" : "contest-workbench-warning-item"}>
+                  <span aria-hidden>{issue.severity === "ERROR" ? "⚠" : "•"}</span>
+                  <p>{issue.message}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="contest-admin-subtle">No validation issues detected yet.</p>
+          )}
+        </div>
       </section>
-    </div>
+    </ContestWorkbenchShell>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { parseScoringRowsFromText } from "@/lib/admin/contest-workbench";
+
+import { ContestWorkbenchShell, useContestWorkbenchMeta } from "../_components/ContestWorkbenchShell";
 
 type ScoreRow = { userId: string; score: string };
 
@@ -19,6 +20,7 @@ export default function ContestScoringWorkbenchPage({ params }: { params: { cont
   const [importId, setImportId] = useState("");
   const [preview, setPreview] = useState<{ afterTop?: Array<{ userId: string; rank: number; score: number }>; rankMovements?: Array<{ userId: string; from: number; to: number }> } | null>(null);
   const [message, setMessage] = useState("");
+  const meta = useContestWorkbenchMeta(params.contestId);
 
   const normalizedRows = rows
     .filter((row) => row.userId.trim())
@@ -106,51 +108,84 @@ export default function ContestScoringWorkbenchPage({ params }: { params: { cont
   };
 
   return (
-    <div style={{ display: "grid", gap: "1rem" }}>
-      <section className="contest-section">
-        <Link href={`/admin/contests/${params.contestId}`} className="contest-inline-note">← Back to contest overview</Link>
+    <ContestWorkbenchShell
+      contestId={params.contestId}
+      section="Scoring"
+      description="Import rows, validate impact, and execute scoring with clear pre-flight checks."
+      meta={meta}
+      actions={<Button onClick={() => void validateAndPreview()}>Validate + preview</Button>}
+    >
+      <section className="admin-v2-panel">
+        <h2 className="contest-admin-section-title">Scoring summary</h2>
+        <div className="contest-admin-summary-grid">
+          <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Rows ready</p><p className="contest-admin-meta-value">{normalizedRows.length}</p></div>
+          <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Import token</p><p className="contest-admin-meta-value">{importId || "—"}</p></div>
+          <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Issues</p><p className="contest-admin-meta-value">{issues.length}</p></div>
+          <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Preview top rows</p><p className="contest-admin-meta-value">{preview?.afterTop?.length ?? 0}</p></div>
+        </div>
       </section>
 
-      <section className="contest-section" style={{ display: "grid", gap: "0.7rem" }}>
-        <h1 className="page-title">Scoring Workbench</h1>
-        <p className="contest-inline-note">Primary flow: structured rows → validate → preview ranking impact → execute.</p>
-
-        <textarea className="input" rows={4} placeholder={"Paste rows: userId,score per line"} value={pasteText} onChange={(event) => setPasteText(event.target.value)} />
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <Button onClick={applyPaste}>Parse pasted rows</Button>
-          <Button variant="ghost" onClick={() => setRows((prev) => [...prev, { userId: "", score: "" }])}>Add row</Button>
-        </div>
-
-        {rows.map((row, index) => (
-          <div key={index} style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr 180px auto" }}>
-            <input className="input" placeholder="userId" value={row.userId} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, userId: event.target.value } : r))} />
-            <input className="input" placeholder="score" value={row.score} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, score: event.target.value } : r))} />
-            <Button variant="ghost" onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}>Remove</Button>
+      <section className="admin-v2-panel contest-workbench-two-col">
+        <div>
+          <h2 className="contest-admin-section-title">Import source</h2>
+          <textarea className="input contest-workbench-textarea" rows={6} placeholder="Paste rows: userId,score per line" value={pasteText} onChange={(event) => setPasteText(event.target.value)} />
+          <div className="contest-workbench-actions-row">
+            <Button onClick={applyPaste}>Parse pasted rows</Button>
+            <Button variant="ghost" onClick={() => setRows((prev) => [...prev, { userId: "", score: "" }])}>Add row</Button>
           </div>
-        ))}
-
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <Button onClick={() => void validateAndPreview()}>Validate + Preview</Button>
-          <Button onClick={() => void executeScoring()} disabled={!importId}>Execute scoring</Button>
         </div>
-        {message ? <p className="contest-inline-note">{message}</p> : null}
 
-        {issues.map((issue, index) => (
-          <p key={`${issue.message}-${index}`} className={issue.severity === "ERROR" ? "contest-error" : "contest-inline-note"}>
-            {issue.rowIndex !== null && issue.rowIndex !== undefined ? `Row ${issue.rowIndex + 1}: ` : ""}{issue.message}
-          </p>
-        ))}
+        <div>
+          <h2 className="contest-admin-section-title">Execution</h2>
+          <p className="contest-admin-muted">Validation is required before execute. Preview must be clean (no blocking issues).</p>
+          <div className="contest-workbench-actions-row">
+            <Button onClick={() => void validateAndPreview()}>Validate + Preview</Button>
+            <Button onClick={() => void executeScoring()} disabled={!importId}>Execute scoring</Button>
+          </div>
+          {message ? <p className="contest-admin-muted">{message}</p> : null}
+        </div>
+      </section>
 
-        {preview ? (
-          <div style={{ display: "grid", gap: "0.4rem" }}>
-            <p className="contest-inline-note">Top ranking preview:</p>
-            {(preview.afterTop ?? []).slice(0, 10).map((row) => (
-              <p key={row.userId} className="contest-inline-note">#{row.rank} {row.userId} — {row.score}</p>
+      <section className="admin-v2-panel">
+        <h2 className="contest-admin-section-title">Scoring rows</h2>
+        <div className="contest-workbench-row-grid">
+          {rows.map((row, index) => (
+            <div key={index} className="contest-workbench-row-item">
+              <input className="input" placeholder="userId" value={row.userId} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, userId: event.target.value } : r))} />
+              <input className="input" placeholder="score" value={row.score} onChange={(event) => setRows((prev) => prev.map((r, i) => i === index ? { ...r, score: event.target.value } : r))} />
+              <Button variant="ghost" onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}>Remove</Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-v2-panel contest-workbench-two-col">
+        <div>
+          <h2 className="contest-admin-section-title">Validation issues</h2>
+          {issues.length === 0 ? <p className="contest-admin-subtle">No validation issues.</p> : null}
+          <div className="contest-admin-blocker-list">
+            {issues.map((issue, index) => (
+              <div key={`${issue.message}-${index}`} className={issue.severity === "ERROR" ? "contest-admin-blocker-item" : "contest-workbench-warning-item"}>
+                <span aria-hidden>{issue.severity === "ERROR" ? "⚠" : "•"}</span>
+                <p>{issue.rowIndex !== null && issue.rowIndex !== undefined ? `Row ${issue.rowIndex + 1}: ` : ""}{issue.message}</p>
+              </div>
             ))}
-            <p className="contest-inline-note">Rank movements: {preview.rankMovements?.length ?? 0}</p>
           </div>
-        ) : null}
+        </div>
+
+        <div>
+          <h2 className="contest-admin-section-title">Preview</h2>
+          {preview ? (
+            <div className="contest-workbench-note-block">
+              <p className="contest-admin-muted">Top ranking preview:</p>
+              {(preview.afterTop ?? []).slice(0, 10).map((row) => (
+                <p key={row.userId} className="contest-admin-subtle">#{row.rank} {row.userId} — {row.score}</p>
+              ))}
+              <p className="contest-admin-muted">Rank movements: {preview.rankMovements?.length ?? 0}</p>
+            </div>
+          ) : <p className="contest-admin-subtle">No preview available yet.</p>}
+        </div>
       </section>
-    </div>
+    </ContestWorkbenchShell>
   );
 }
