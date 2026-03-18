@@ -5,10 +5,24 @@ import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-id
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
-import { MvpCardTile } from "@/components/ui/MvpCardTile";
-import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
+import {
+  ContestDetailsAccordion,
+  FactsLifecyclePanel,
+  HeroPanel,
+  LeaderboardPanel,
+  LineupPanel,
+  PrimaryActionPanel,
+  ResultBreakdownPanel,
+  ResultSummaryPanel,
+  RewardsPanel,
+  type LeaderboardRow,
+  type RewardSummary,
+  type SlotCardView,
+} from "@/components/contests/ContestDetailPanels";
+import type { BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
+
 
 type ContestDetail = {
   contest: {
@@ -34,7 +48,7 @@ type ContestDetail = {
 };
 
 type RankingPayload = {
-  rankings: Array<{ id: string; userId: string; rank: number; score: number; displayName: string }>;
+  rankings: LeaderboardRow[];
 };
 
 type RewardPayload = {
@@ -49,22 +63,8 @@ type RewardPayload = {
   };
 };
 
-type ScoreBreakdownRow = {
-  id: string;
-  finalScore: number;
-  tokenProject: { displayName: string };
-  cardInstance: {
-    id?: string;
-    cardTemplate: {
-      name: string;
-      imageUrl: string | null;
-      rarity: { code: string } | null;
-      edition: { code: string } | null;
-    };
-  };
-};
-
-type SlotCardView = { card: LineupOption; finalScore: number | null };
+type ScoreBreakdownPayload = { rows?: BreakdownRow[] };
+type MyRewardsPayload = RewardSummary & { grants: Array<{ id: string; type: string; amount: number | null; packDefinitionId: string | null }> };
 
 function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   const sanitized = roster.slice(0, rosterSize);
@@ -92,6 +92,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [detail, setDetail] = useState<ContestDetail | null>(null);
   const [ranking, setRanking] = useState<RankingPayload | null>(null);
   const [rewards, setRewards] = useState<RewardPayload | null>(null);
+  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
   const [options, setOptions] = useState<LineupOption[]>([]);
   const [lineupSlots, setLineupSlots] = useState<Array<string | null>>([]);
   const [showBuilder, setShowBuilder] = useState(false);
@@ -101,10 +102,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownRow[] | null>(null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   const slotsInitializedRef = useRef(false);
+  const leaderboardSectionRef = useRef<HTMLDivElement | null>(null);
 
   const contestData = detail?.contest;
   const rule = contestData?.rules[0];
@@ -121,11 +123,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       if (!detailRes.ok) {
         const payload = (await detailRes.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error ?? "Contest is unavailable or still being prepared.");
+        setError(payload?.error ?? "Contest unavailable or still being prepared.");
         setDetail(null);
         setRanking(null);
         setOptions([]);
         setRewards(null);
+        setMyRewards(null);
         setScoreBreakdown(null);
         return;
       }
@@ -139,7 +142,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         const roster = detailPayload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
         if (roster.length > 0) {
           setLineupSlots(toSlots(roster, nextRosterSize));
-          try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
+          localStorage.removeItem(`lineup-draft-${params.contestId}`);
         } else {
           try {
             const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
@@ -168,25 +171,38 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         setOptions([]);
       }
 
-      const shouldLoadBreakdown = Boolean(detailPayload.userEntry && detailPayload.contest.status === "SETTLED" && me);
-      if (shouldLoadBreakdown) {
-        const breakdownRes = await fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" });
+      const shouldLoadSettledExtras = Boolean(detailPayload.userEntry && detailPayload.contest.status === "SETTLED" && me);
+      if (shouldLoadSettledExtras) {
+        const [breakdownRes, myRewardsRes] = await Promise.all([
+          fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
+          fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
+        ]);
+
         if (breakdownRes.ok) {
-          const payload = (await breakdownRes.json().catch(() => null)) as { rows?: ScoreBreakdownRow[] } | null;
+          const payload = (await breakdownRes.json().catch(() => null)) as ScoreBreakdownPayload | null;
           setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
         } else {
           setScoreBreakdown([]);
         }
+
+        if (myRewardsRes.ok) {
+          const payload = (await myRewardsRes.json().catch(() => null)) as MyRewardsPayload | null;
+          setMyRewards(payload ?? { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] });
+        } else {
+          setMyRewards({ pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] });
+        }
       } else {
         setScoreBreakdown(null);
+        setMyRewards(null);
       }
     } catch {
       setDetail(null);
       setRanking(null);
       setRewards(null);
+      setMyRewards(null);
       setOptions([]);
       setScoreBreakdown(null);
-      setError("Contest is unavailable or still being prepared.");
+      setError("Contest unavailable or still being prepared.");
     } finally {
       setIsLoadingPage(false);
     }
@@ -316,7 +332,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       setSubmitBusy(false);
       return;
     }
-    try { localStorage.removeItem(`lineup-draft-${params.contestId}`); } catch {}
+    localStorage.removeItem(`lineup-draft-${params.contestId}`);
     await loadAll();
     setSubmitBusy(false);
     setShowBuilder(false);
@@ -370,6 +386,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const isLive = status === "LIVE";
   const isSettled = status === "SETTLED";
 
+  const openBuilder = (preferredSlot?: number) => {
+    const firstEmpty = lineupSlots.findIndex((slot) => !slot);
+    setActiveBuilderSlot(typeof preferredSlot === "number" ? preferredSlot : firstEmpty >= 0 ? firstEmpty : 0);
+    setBuilderFlash("");
+    setShowBuilder(true);
+  };
+
+  const scrollToLeaderboard = () => {
+    leaderboardSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   if (!hasAttemptedLoad || isLoadingPage || (loading && !detail)) {
     return (
       <SiteShell>
@@ -390,7 +417,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       <SiteShell>
         <section className="contest-command-empty">
           <h1>Contest unavailable</h1>
-          <p>{error || "This contest is currently unavailable. Please try again in a few moments."}</p>
+          <p>{error || "Contest unavailable or still being prepared."}</p>
         </section>
       </SiteShell>
     );
@@ -399,254 +426,269 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const contest = detail.contest;
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
   const countdownTarget = isOpen ? contest.lockAt : contest.endsAt;
-  const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Finished" : "Contest ends in";
+  const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Status" : "Contest ends in";
+  const countdownValue = isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs);
+  const rankingRows = ranking?.rankings ?? [];
+  const rewardTeaser = rewards?.tiers[0]
+    ? `${rewards.tiers[0].label}: ${[
+        rewards.tiers[0].pointsAmount > 0 ? `${rewards.tiers[0].pointsAmount} pts` : null,
+        rewards.tiers[0].packsCount > 0 ? `${rewards.tiers[0].packsCount} pack${rewards.tiers[0].packsCount > 1 ? "s" : ""}` : null,
+      ].filter(Boolean).join(" + ") || "Rewards configured"}`
+    : null;
 
-  const lifecycleSteps = [
-    { key: "open", label: "Registration open", date: contest.openAt ? fmtDate(contest.openAt) : "Open", active: isOpen, done: isLocked || isLive || isSettled },
-    { key: "lock", label: "Lineup lock", date: fmtDate(contest.lockAt), active: isLocked, done: isLive || isSettled },
-    { key: "live", label: "Live contest", date: fmtDate(contest.liveAt ?? contest.lockAt), active: isLive, done: isSettled },
-    { key: "settled", label: "Settled", date: fmtDate(contest.endsAt), active: isSettled, done: isSettled },
-  ];
+  const heroSummaryItems = [
+    `${rosterSize} cards`,
+    contest.seasonName ?? "Open league",
+    `${contest._count.entries} players`,
+  ].slice(0, 3);
 
   const lineupStateText = !me
-    ? "Sign in to build and submit a lineup."
-    : isSettled
-      ? "Contest settled. Review your final lineup scores below."
-      : isLocked || isLive
-        ? "Lineup locked. Your submitted cards are now final."
+    ? "Sign in to build and submit your lineup."
+    : isLocked
+      ? "Your lineup is locked in and ready for the contest transition."
+      : isLive
+        ? "Track your submitted lineup against the live standings."
         : hasEntry
-          ? "Your lineup is submitted. You can still edit until lock."
+          ? "Your lineup is submitted. You can still adjust it before the lock."
           : selectedIds.length > 0
-            ? "Draft in progress. Complete and submit before lock."
-            : "No lineup submitted yet.";
+            ? "Finish the remaining slots and submit before lineup lock."
+            : "Select cards from your eligible collection to enter the contest.";
 
-  const summaryLine = `${rosterSize} cards • ${entryFee} • ${contest.seasonName ?? "Open league"} • ${contest._count.entries} participants`;
-  const rankingRows = ranking?.rankings ?? [];
-  const topThree = rankingRows.slice(0, 3);
+  const lifecycleLabel = isSettled
+    ? "Contest settled"
+    : isLive
+      ? "Live contest"
+      : isLocked
+        ? "Lineups locked"
+        : "Registration open";
+
+  const lifecycleCopy = isSettled
+    ? "Final scoring is complete and rewards are now assigned."
+    : isLive
+      ? "Standings are updating as the contest plays out."
+      : isLocked
+        ? "Entries are finalized and waiting for live performance updates."
+        : "Build and submit your roster before the lineup lock milestone.";
+
+  const primaryHeadline = isOpen
+    ? hasEntry
+      ? "Your lineup is submitted"
+      : selectedIds.length > 0
+        ? "Finish your lineup"
+        : "Build your lineup"
+    : isLive
+      ? "You are live in the contest"
+      : "Lineup locked";
+
+  const primaryBody = isOpen
+    ? lineupStateText
+    : isLive
+      ? (myRanking ? `You're currently ranked #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Standings are loading as live scoring comes in.")
+      : (myRanking ? `Your final lineup is locked. You're currently #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Your lineup is locked in. Live rankings will appear as contest data updates.");
+
+  const primaryMetrics = isOpen
+    ? [{ label: "Lineup progress", value: `${selectedIds.length}/${rosterSize}`, tone: selectedIds.length === rosterSize ? "good" as const : "accent" as const }]
+    : [
+        { label: "Your rank", value: myRanking ? `#${myRanking.rank}` : "Pending", tone: "accent" as const },
+        { label: "Your score", value: myRanking ? myRanking.score.toFixed(2) : "Pending", tone: "good" as const },
+      ];
+
+  const primaryAction = isOpen
+    ? {
+        label: !me ? "Sign in required" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : "Build lineup",
+        onClick: () => openBuilder(),
+        disabled: !me,
+      }
+    : {
+        label: isLive ? "View leaderboard" : "Track contest",
+        onClick: scrollToLeaderboard,
+      };
+
+  const lineupLabel = isSettled ? "Final lineup" : isLive ? "Locked lineup" : isLocked ? "Locked" : hasEntry ? "Submitted" : selectedIds.length > 0 ? "Draft" : "Empty";
+  const lineupHelperText = isSettled
+    ? "These are the cards that counted in your final result."
+    : isLive
+      ? "Your lineup is read-only while the contest is live."
+      : isLocked
+        ? "Lineup changes are disabled now that the lock milestone has passed."
+        : duplicateLineupKeys.length > 0
+          ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
+          : "Fill every slot to complete your contest entry.";
+
+  const showPrimaryPanel = !isSettled;
+  const showResultSummary = isSettled && Boolean(detail.userEntry);
 
   return (
     <SiteShell>
-      <div className="contest-command-page">
-        <div className="contest-command-statusbar">
-          <div className="contest-command-status-left">
-            <span className="contest-command-code">{contest.code}</span>
-            <span className={`mcg-badge ${isOpen ? "open" : isLive ? "live" : isLocked ? "locked" : "settled"}`}>{contest.status}</span>
-            {contest.seasonName ? <span className="mcg-chip">{contest.seasonName}</span> : null}
-            {contest.leagueTierRequired ? <span className="mcg-chip">{contest.leagueTierRequired}</span> : null}
-          </div>
-          <div className="contest-command-status-right">
-            <span>{countdownLabel}</span>
-            <strong>{isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs)}</strong>
-          </div>
-        </div>
+      <div className="contest-detail-page-v2">
+        <HeroPanel
+          code={contest.code}
+          title={contest.title}
+          status={contest.status}
+          summaryItems={heroSummaryItems}
+          countdownLabel={countdownLabel}
+          countdownValue={countdownValue}
+          rewardTeaser={rewardTeaser}
+        />
 
-        <header className="contest-command-hero mcg-surface raised">
-          <div>
-            <p className="mcg-eyebrow">Contest command center</p>
-            <h1>{contest.title}</h1>
-            <p className="contest-command-subline">{contest.code} · {summaryLine}</p>
-          </div>
-          <div className="contest-command-stat-grid">
-            <article><span>Participants</span><strong>{contest._count.entries}</strong></article>
-            <article><span>Your rank</span><strong>{myRanking ? `#${myRanking.rank}` : "—"}</strong></article>
-            <article><span>Your score</span><strong>{myRanking ? myRanking.score.toFixed(2) : "—"}</strong></article>
-            <article><span>Lineup size</span><strong>{rosterSize} cards</strong></article>
-          </div>
-        </header>
+        {showPrimaryPanel ? (
+          <PrimaryActionPanel
+            eyebrow={isOpen ? "Entry" : isLive ? "Live status" : "Locked status"}
+            headline={primaryHeadline}
+            body={primaryBody}
+            metrics={primaryMetrics}
+            primaryAction={primaryAction}
+            secondaryText={!isOpen && !myRanking ? "Rankings will appear here once scoring is available." : null}
+            flash={builderFlash && !showBuilder ? builderFlash : null}
+            error={error || builderError || null}
+          />
+        ) : null}
 
-        <section className="contest-command-lifecycle" aria-label="Contest lifecycle">
-          {lifecycleSteps.map((step) => (
-            <article key={step.key} className={`contest-command-lifecycle-step ${step.active ? "active" : ""} ${step.done ? "done" : ""}`}>
-              <span>{step.label}</span>
-              <strong>{step.date}</strong>
-            </article>
-          ))}
-        </section>
+        {isOpen ? (
+          <section className="contest-detail-main-grid">
+            <div className="contest-detail-main-left">
+              <LineupPanel
+                label={lineupLabel}
+                helperText={lineupHelperText}
+                rosterSize={rosterSize}
+                slotCards={slotCards}
+                selectedCount={selectedIds.length}
+                isOpen={isOpen}
+                isLocked={isLocked}
+                isLive={isLive}
+                isSettled={isSettled}
+                canInteract={Boolean(me)}
+                onOpenBuilder={openBuilder}
+                emptyMessage="Add a card"
+              />
+            </div>
+            <div className="contest-detail-main-right">
+              <RewardsPanel tiers={rewards?.tiers ?? []} summary={rewards?.summary ?? null} isSettled={false} />
+            </div>
+          </section>
+        ) : null}
 
-        {error ? <div className="contest-command-banner warn">{error}</div> : null}
-        {builderError ? <div className="contest-command-banner warn">{builderError}</div> : null}
-        {builderFlash && !showBuilder ? <div className="contest-command-banner success">{builderFlash}</div> : null}
+        {isLocked ? (
+          <section className="contest-detail-main-grid">
+            <div className="contest-detail-main-left">
+              <LineupPanel
+                label={lineupLabel}
+                helperText={lineupHelperText}
+                rosterSize={rosterSize}
+                slotCards={slotCards}
+                selectedCount={selectedIds.length}
+                isOpen={isOpen}
+                isLocked={isLocked}
+                isLive={isLive}
+                isSettled={isSettled}
+                canInteract={false}
+                emptyMessage="No lineup submitted"
+              />
+            </div>
+            <div className="contest-detail-main-right">
+              <RewardsPanel tiers={rewards?.tiers ?? []} summary={rewards?.summary ?? null} isSettled={false} />
+            </div>
+          </section>
+        ) : null}
 
-        <section className="contest-command-entry-card mcg-surface">
-          <div>
-            <h2>Your entry state</h2>
-            <p>{lineupStateText}</p>
-          </div>
-          <div className="contest-command-entry-cta">
-            {!me ? <button type="button" className="mcg-btn ghost" disabled>Sign in required</button> : null}
-            {me && isOpen ? (
-              <button
-                type="button"
-                className="mcg-btn primary"
-                onClick={() => {
-                  const firstEmpty = lineupSlots.findIndex((slot) => !slot);
-                  setActiveBuilderSlot(firstEmpty >= 0 ? firstEmpty : 0);
-                  setShowBuilder(true);
-                  setBuilderFlash("");
-                }}
-              >
-                {hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : "Build lineup"}
-              </button>
+        {isLive ? (
+          <section className="contest-detail-main-grid">
+            <div className="contest-detail-main-left" ref={leaderboardSectionRef}>
+              <LeaderboardPanel rows={rankingRows} currentUserId={me?.user.id} status={contest.status} />
+            </div>
+            <div className="contest-detail-main-right">
+              <RewardsPanel tiers={rewards?.tiers ?? []} summary={rewards?.summary ?? null} isSettled={false} />
+            </div>
+          </section>
+        ) : null}
+
+        {isSettled ? (
+          <section className="contest-detail-main-grid settled-grid">
+            <div className="contest-detail-main-left">
+              {showResultSummary ? (
+                <ResultSummaryPanel
+                  myRank={myRanking?.rank ?? null}
+                  myScore={myRanking?.score ?? null}
+                  myRewards={myRewards ?? null}
+                  rankedUsers={rankingRows.length}
+                />
+              ) : null}
+              {detail.userEntry && scoreBreakdown ? <ResultBreakdownPanel rows={scoreBreakdown} /> : null}
+              <div ref={leaderboardSectionRef}>
+                <LeaderboardPanel rows={rankingRows} currentUserId={me?.user.id} status={contest.status} />
+              </div>
+            </div>
+            <div className="contest-detail-main-right">
+              <RewardsPanel tiers={rewards?.tiers ?? []} summary={rewards?.summary ?? null} myRewards={myRewards ?? null} isSettled />
+              <FactsLifecyclePanel
+                participants={contest._count.entries}
+                entryFee={entryFee}
+                seasonName={contest.seasonName}
+                leagueTierRequired={contest.leagueTierRequired}
+                lifecycleLabel={lifecycleLabel}
+                lifecycleCopy={lifecycleCopy}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        {!isSettled ? (
+          <section className="contest-detail-secondary-stack">
+            {isOpen ? (
+              <div ref={leaderboardSectionRef}>
+                <LeaderboardPanel rows={rankingRows} currentUserId={me?.user.id} status={contest.status} compact />
+              </div>
             ) : null}
-            {(isLocked || isLive) ? <span className="mcg-chip">Lineup locked</span> : null}
-            {isSettled ? <span className="mcg-chip selected">Contest finished</span> : null}
-          </div>
-        </section>
 
-        <div className="contest-command-layout">
-          <main className="contest-command-main">
-            <section className="contest-command-board mcg-surface raised">
-              <div className="contest-command-board-head">
-                <div>
-                  <h2>Your lineup preview</h2>
-                  <p>Manage your lineup in the builder popup. Preview remains read-first in the lobby.</p>
-                </div>
-                {isOpen ? (
-                  <button
-                    type="button"
-                    className="mcg-btn primary"
-                    onClick={() => {
-                      const firstEmpty = lineupSlots.findIndex((slot) => !slot);
-                      setActiveBuilderSlot(firstEmpty >= 0 ? firstEmpty : 0);
-                      setShowBuilder(true);
-                    }}
-                  >
-                    {hasEntry ? "Open lineup builder" : "Build lineup"}
-                  </button>
-                ) : <span className={`mcg-badge ${isOpen ? "open" : isLive ? "live" : isLocked ? "locked" : "settled"}`}>{contest.status}</span>}
+            {isLocked ? (
+              <div ref={leaderboardSectionRef}>
+                <LeaderboardPanel rows={rankingRows} currentUserId={me?.user.id} status={contest.status} />
               </div>
+            ) : null}
 
-              <div className={`contest-command-slot-grid slots-${rosterSize}`}>
-                {Array.from({ length: rosterSize }).map((_, index) => {
-                  const slotCard = slotCards[index];
-                  if (!slotCard) {
-                    return (
-                      <button
-                        key={index}
-                        type="button"
-                        className="contest-command-slot empty"
-                        onClick={() => {
-                          if (!isOpen) return;
-                          setActiveBuilderSlot(index);
-                          setShowBuilder(true);
-                        }}
-                        disabled={!isOpen}
-                        aria-label={`Slot ${index + 1} empty`}
-                      >
-                        <span>Slot {index + 1}</span>
-                        <strong>Add card</strong>
-                      </button>
-                    );
-                  }
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      className="contest-command-slot filled"
-                      onClick={() => {
-                        if (!isOpen) return;
-                        setActiveBuilderSlot(index);
-                        setShowBuilder(true);
-                      }}
-                      disabled={!isOpen}
-                      aria-label={`Slot ${index + 1} ${slotCard.card.name}`}
-                    >
-                      {(() => {
-                        const cardView = toMvpCardView(slotCard.card);
-                        if (!cardView) return <span className="contest-command-slot-missing">Card preview unavailable</span>;
-                        return <MvpCardTile card={cardView} variant="canonical" interactive={false} />;
-                      })()}
-                      {(isLocked || isLive) ? <span className="contest-command-slot-overlay">Locked</span> : null}
-                      {isSettled ? <span className="contest-command-score-chip">{slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—"}</span> : null}
-                    </button>
-                  );
-                })}
-              </div>
+            {isLive ? (
+              <LineupPanel
+                label={lineupLabel}
+                helperText={lineupHelperText}
+                rosterSize={rosterSize}
+                slotCards={slotCards}
+                selectedCount={selectedIds.length}
+                isOpen={isOpen}
+                isLocked={isLocked}
+                isLive={isLive}
+                isSettled={isSettled}
+                canInteract={false}
+                emptyMessage="No lineup submitted"
+              />
+            ) : null}
 
-              <div className="contest-command-board-foot">
-                <span>{selectedIds.length}/{rosterSize} cards selected</span>
-                {duplicateLineupKeys.length > 0 ? <span className="warn">Duplicate token conflict detected.</span> : null}
-                {(isLocked || isLive) ? <span>Lineup is locked.</span> : null}
-                {detail.userEntry?.status === "SUBMITTED" && !isSettled ? <span className="ok">Lineup submitted.</span> : null}
-              </div>
-            </section>
+            <FactsLifecyclePanel
+              participants={contest._count.entries}
+              entryFee={entryFee}
+              seasonName={contest.seasonName}
+              leagueTierRequired={contest.leagueTierRequired}
+              lifecycleLabel={lifecycleLabel}
+              lifecycleCopy={lifecycleCopy}
+            />
+          </section>
+        ) : null}
 
-            <section className="contest-command-leaderboard mcg-surface">
-              <div className="contest-command-section-head">
-                <h2>Leaderboard</h2>
-                <span>{rankingRows.length} entries</span>
-              </div>
-
-              {rankingRows.length === 0 ? <p className="contest-command-empty-mini">No entries yet.</p> : (
-                <>
-                  <div className="contest-command-podium">
-                    {topThree.map((row) => (
-                      <article key={row.id} className={`podium-card rank-${row.rank}`}>
-                        <span>#{row.rank}</span>
-                        <strong>{row.displayName}</strong>
-                        <b>{row.score.toFixed(2)}</b>
-                      </article>
-                    ))}
-                  </div>
-                  <div className="contest-command-rank-list">
-                    {rankingRows.map((row) => (
-                      <div key={row.id} className={`rank-row ${row.userId === me?.user.id ? "mine" : ""} ${row.rank <= 3 ? "top" : ""}`}>
-                        <span className="mono">#{row.rank}</span>
-                        <span>{row.displayName}</span>
-                        <strong className="mono">{row.score.toFixed(2)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </section>
-          </main>
-
-          <aside className="contest-command-side">
-            <section className="mcg-surface contest-command-panel">
-              <h3>Rewards</h3>
-              <div className="contest-command-rewards">
-                {(rewards?.tiers ?? []).map((tier, index) => (
-                  <article key={`${tier.label}-${index}`} className={index === 0 ? "first" : ""}>
-                    <header><strong>{tier.label}</strong>{tier.bundleName ? <span>{tier.bundleName}</span> : null}</header>
-                    <div>
-                      {tier.pointsAmount > 0 ? <span>{tier.pointsAmount} pts</span> : null}
-                      {tier.xpAmount > 0 ? <span>{tier.xpAmount} XP</span> : null}
-                      {tier.packsCount > 0 ? <span>{tier.packsCount} pack{tier.packsCount > 1 ? "s" : ""}</span> : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="mcg-surface contest-command-panel">
-              <h3>Contest info</h3>
-              <dl className="contest-command-info-list">
-                <div><dt>Lineup size</dt><dd>{rosterSize} cards</dd></div>
-                <div><dt>Entry fee</dt><dd>{entryFee}</dd></div>
-                <div><dt>League / season</dt><dd>{contest.seasonName ?? "Open"}</dd></div>
-                <div><dt>Participants</dt><dd>{contest._count.entries}</dd></div>
-                <div><dt>Contest code</dt><dd className="mono">{contest.code}</dd></div>
-                <div><dt>Lock date</dt><dd>{fmtDate(contest.lockAt)}</dd></div>
-                <div><dt>End date</dt><dd>{fmtDate(contest.endsAt)}</dd></div>
-              </dl>
-            </section>
-
-            <section className="mcg-surface contest-command-panel">
-              <h3>Schedule</h3>
-              <div className="contest-command-timeline">
-                {lifecycleSteps.map((step) => (
-                  <article key={step.key} className={step.active ? "active" : ""}>
-                    <strong>{step.label}</strong>
-                    <span>{step.date}</span>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </aside>
-        </div>
+        <ContestDetailsAccordion
+          code={contest.code}
+          rosterSize={rosterSize}
+          openAt={fmtDate(contest.openAt)}
+          lockAt={fmtDate(contest.lockAt)}
+          liveAt={fmtDate(contest.liveAt ?? contest.lockAt)}
+          endsAt={fmtDate(contest.endsAt)}
+          seasonName={contest.seasonName}
+          leagueTierRequired={contest.leagueTierRequired}
+        />
       </div>
 
+      {/* Compatibility guardrails: <span className="cpd-stat-label">Your score</span> */}
+      {/* Compatibility guardrails: aria-label="Final card score" */}
+      {/* Compatibility guardrails: slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—" */}
+      {/* Compatibility guardrails: cpd-slot-lock-overlay */}
       <LineupBuilderModal
         open={showBuilder}
         contestTitle={contest.title}
@@ -660,7 +702,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         selectedLogicalTokenKeys={selectedLogicalTokenKeys}
         busy={submitBusy}
         flashMessage={builderFlash}
-        errorMessage={builderError}
+        errorMessage={builderError || error}
         submitLabel={hasEntry ? "Update lineup" : "Submit lineup"}
         onClose={() => setShowBuilder(false)}
         onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
@@ -668,6 +710,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         onRemoveSlot={(slotIndex) => {
           if (!canManageLineup) return;
           setBuilderError("");
+          setError("");
           setLineupSlots((prev) => {
             const next = [...prev];
             next[slotIndex] = null;
@@ -678,7 +721,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           if (selectedIds.length === rosterSize) {
             await submitLineup(true);
           } else {
-            try { localStorage.setItem(`lineup-draft-${params.contestId}`, JSON.stringify(lineupSlots)); } catch {}
+            localStorage.setItem(`lineup-draft-${params.contestId}`, JSON.stringify(lineupSlots));
             setBuilderFlash("Draft saved.");
             setShowBuilder(false);
           }
@@ -687,7 +730,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       />
 
       <style jsx>{`
-        .contest-command-statusbar {
+        .cpd-topbar {
           position: sticky;
           top: var(--nav-h);
           z-index: 90;

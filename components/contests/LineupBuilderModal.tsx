@@ -242,8 +242,9 @@ export function LineupBuilderModal({
             const atCapacity = selectedCount >= rosterSize && !isSelected;
             const tokenKey = getLogicalTokenKey({ tokenProjectId: item.tokenProjectId, cardTemplateId: item.cardTemplateId });
             const tokenConflict = selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
+            const tokenAlreadyUsed = tokenConflict;
             const cardView = toMvpCardView(item);
-            const isUnavailable = !canEdit || atCapacity || item.isLockedByActiveContest || tokenConflict || !cardView;
+            const isUnavailable = !canEdit || atCapacity || item.isLockedByActiveContest || tokenAlreadyUsed || !cardView;
 
             return (
               <article key={item.instanceId} className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}>
@@ -269,7 +270,7 @@ export function LineupBuilderModal({
                 </div>
                 {isSelected ? <span className="bldr-chip selected">Selected · Slot {slotIndex + 1}</span> : null}
                 {item.isLockedByActiveContest ? <span className="bldr-chip warn">Unavailable: locked in active contest</span> : null}
-                {tokenConflict ? <span className="bldr-chip warn">Unavailable: duplicate logical token</span> : null}
+                {tokenAlreadyUsed ? <span className="bldr-chip warn">Already used in this lineup</span> : null}
                 {!cardView ? <span className="bldr-chip warn">Unavailable: missing canonical card data</span> : null}
               </article>
             );
