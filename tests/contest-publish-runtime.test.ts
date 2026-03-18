@@ -89,12 +89,13 @@ describe("contest publish runtime", () => {
 
     prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
     prismaMock.contest.findUnique.mockResolvedValue({
-      openAt: new Date("2026-03-01T09:00:00.000Z"),
+      lockAt: new Date("2026-03-01T10:00:00.000Z"),
       liveAt: new Date("2026-03-01T11:00:00.000Z"),
       endsAt: new Date("2026-03-01T12:00:00.000Z"),
     });
     prismaMock.contest.update.mockResolvedValue({ id: "c1" });
     qstashMock.publishJSON
+      .mockResolvedValueOnce({ messageId: "lock-job" })
       .mockResolvedValueOnce({ messageId: "live-job" })
       .mockResolvedValueOnce({ messageId: "settle-job" });
   });
@@ -104,17 +105,18 @@ describe("contest publish runtime", () => {
     process.env.NEXT_PUBLIC_APP_URL = originalBaseUrl;
   });
 
-  it("schedules only live and settle jobs on publish", async () => {
+  it("schedules lock, live and settle jobs on publish", async () => {
     await publishContest("c1");
 
-    expect(qstashMock.publishJSON).toHaveBeenCalledTimes(2);
+    expect(qstashMock.publishJSON).toHaveBeenCalledTimes(3);
     expect(qstashMock.publishJSON.mock.calls.map(([input]: any[]) => input.url)).toEqual([
+      "https://example.test/api/internal/jobs/contest-open",
       "https://example.test/api/internal/jobs/contest-live",
       "https://example.test/api/internal/jobs/contest-settle",
     ]);
     expect(prismaMock.contest.update).toHaveBeenCalledWith({
       where: { id: "c1" },
-      data: { qstashOpenJobId: null, qstashLiveJobId: "live-job", qstashSettleJobId: "settle-job" },
+      data: { qstashOpenJobId: "lock-job", qstashLiveJobId: "live-job", qstashSettleJobId: "settle-job" },
     });
   });
 });
