@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -16,14 +15,13 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
       <div className="mcg-home-section">
         <SectionHeader
           eyebrow="Collection"
-          title="Binder progress"
-          subtitle="A compact view of the set coverage already available on your account."
-          actions={<Link href="/collection" className="mcg-btn ghost">Open binder</Link>}
+          title="Collection stats"
+          subtitle="Your current collection snapshot."
         />
 
         <div className="collection-progress-hero">
           <div>
-            <p className="collection-progress-label">Completion</p>
+            <p className="collection-progress-label">Collection completion</p>
             <div className="collection-progress-value">
               {hasCompletion ? `${completionPct}%` : "—"}
             </div>
@@ -31,11 +29,11 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
 
           <div className="collection-progress-stats" aria-label="Collection summary">
             <div className="collection-progress-stat">
-              <span>Owned templates</span>
+              <span>Cards owned</span>
               <strong>{ownedCount.toLocaleString()}</strong>
             </div>
             <div className="collection-progress-stat">
-              <span>Missing templates</span>
+              <span>Cards missing</span>
               <strong>{missingCount.toLocaleString()}</strong>
             </div>
           </div>

@@ -9,7 +9,6 @@ import { useSession } from "@/components/useSession";
 // State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
 import { HowItWorks } from "@/components/home/HowItWorks";
-import { GenesisPreviewStrip } from "@/components/home/GenesisPreviewStrip";
 import { StatsBar } from "@/components/home/StatsBar";
 import { DocsLearnSection } from "@/components/home/DocsLearnSection";
 
@@ -133,17 +132,13 @@ export default function HomePage() {
 
           <RecentPullsRail pulls={recentPulls} />
 
-          <div className="home-dashboard-secondary-grid">
-            <GenesisPreviewStrip />
-            <DocsLearnSection compact />
-          </div>
+          <DocsLearnSection compact />
         </div>
       ) : (
         <>
           <HomeHeroLanding />
           <StatsBar />
           <HowItWorks />
-          <GenesisPreviewStrip />
           <DocsLearnSection />
         </>
       )}
