@@ -3360,11 +3360,15 @@ textarea:focus {
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.52fr) minmax(280px, 0.62fr);
+  gap: clamp(14px, 1.8vw, 18px);
   padding: clamp(14px, 1.8vw, 20px);
   border: 1px solid rgba(120, 144, 255, 0.22);
-  background: linear-gradient(160deg, rgba(10, 14, 28, 0.98), rgba(16, 21, 34, 0.98));
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(76, 122, 255, 0.16), transparent 28%),
+    linear-gradient(160deg, rgba(8, 12, 26, 0.98), rgba(14, 19, 33, 0.98));
+  box-shadow: 0 22px 56px rgba(2, 6, 23, 0.32);
 }
 
 .contest-detail-hero-visual,
@@ -3377,14 +3381,16 @@ textarea:focus {
 }
 
 .contest-detail-hero-visual {
-  min-height: clamp(180px, 22vw, 240px);
-  padding: clamp(14px, 1.8vw, 20px);
-  border-radius: 24px;
+  min-height: clamp(230px, 26vw, 320px);
+  padding: clamp(16px, 2.1vw, 24px);
+  border-radius: 26px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -40px 80px rgba(6, 10, 20, 0.22);
 }
 
 .contest-detail-hero-visual.has-image {
@@ -3404,9 +3410,9 @@ textarea:focus {
   inset: 0;
   border-radius: inherit;
   background:
-    linear-gradient(90deg, rgba(4, 9, 20, 0.8) 0%, rgba(4, 9, 20, 0.62) 34%, rgba(4, 9, 20, 0.18) 66%, rgba(4, 9, 20, 0.04) 100%),
-    linear-gradient(180deg, rgba(7, 11, 24, 0.06) 0%, rgba(7, 11, 24, 0.24) 32%, rgba(7, 11, 24, 0.88) 100%),
-    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.22), transparent 34%);
+    linear-gradient(98deg, rgba(4, 9, 20, 0.7) 0%, rgba(4, 9, 20, 0.48) 38%, rgba(4, 9, 20, 0.18) 66%, rgba(4, 9, 20, 0.06) 100%),
+    linear-gradient(180deg, rgba(7, 11, 24, 0.1) 0%, rgba(7, 11, 24, 0.18) 34%, rgba(7, 11, 24, 0.72) 100%),
+    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.18), transparent 38%);
   pointer-events: none;
 }
 
@@ -3414,7 +3420,9 @@ textarea:focus {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top right, rgba(244, 114, 182, 0.1), transparent 28%);
+  background:
+    radial-gradient(circle at top right, rgba(244, 114, 182, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%);
   pointer-events: none;
 }
 
@@ -3425,26 +3433,38 @@ textarea:focus {
 }
 
 .contest-detail-hero-copy {
-  align-self: end;
+  align-self: stretch;
   display: grid;
-  gap: 8px;
-  max-width: min(60ch, 100%);
+  align-content: end;
+  gap: 10px;
+  max-width: min(58ch, 100%);
 }
 
 .contest-detail-hero-copy-panel {
   display: grid;
-  gap: 8px;
-  max-width: 52ch;
-  padding: clamp(10px, 1.2vw, 14px);
+  gap: 10px;
+  max-width: 48ch;
+  padding: clamp(16px, 2vw, 22px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgba(5, 10, 20, 0.82), rgba(7, 11, 24, 0.72));
-  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.26);
-  backdrop-filter: blur(8px);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(5, 10, 20, 0.62), rgba(7, 11, 24, 0.48));
+  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.22);
+  backdrop-filter: blur(12px);
 }
 
 .contest-detail-hero-side {
+  align-self: stretch;
   grid-auto-rows: min-content;
+  gap: 12px;
+}
+
+.contest-detail-hero-kicker {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.92);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .contest-detail-hero-visual-badge-row {
@@ -3463,8 +3483,10 @@ textarea:focus {
 
 .contest-detail-shell-hero h1 {
   margin: 0;
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
-  line-height: 1.04;
+  max-width: 14ch;
+  font-size: clamp(2rem, 3.3vw, 3rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
 }
 
 .contest-detail-hero-info-line {
@@ -3474,12 +3496,32 @@ textarea:focus {
   letter-spacing: 0.02em;
 }
 
+.contest-detail-hero-meta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.contest-detail-hero-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0.38rem 0.72rem;
+  border: 1px solid rgba(191, 219, 254, 0.18);
+  border-radius: 999px;
+  background: rgba(7, 11, 24, 0.34);
+  color: rgba(226, 232, 240, 0.94);
+  font-size: 0.82rem;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+}
+
 .contest-detail-hero-context-line {
   margin: 0;
-  max-width: 46ch;
-  color: var(--color-text-secondary);
-  font-size: 0.92rem;
-  line-height: 1.45;
+  max-width: 44ch;
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .contest-detail-hero-rules {
@@ -3568,13 +3610,15 @@ textarea:focus {
 .contest-detail-timing-panel {
   display: grid;
   gap: 16px;
-  padding: 18px;
+  padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
+  border-radius: 24px;
   background:
     radial-gradient(circle at top left, rgba(96, 165, 250, 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(9, 13, 24, 0.72), rgba(9, 13, 24, 0.92));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    linear-gradient(180deg, rgba(11, 16, 30, 0.82), rgba(9, 13, 24, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 36px rgba(2, 6, 23, 0.22);
 }
 
 .contest-detail-timing-panel.status-live {
@@ -3623,8 +3667,10 @@ textarea:focus {
 .contest-detail-timing-details div {
   display: grid;
   gap: 4px;
-  padding-top: 10px;
+  padding: 10px 12px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
 }
 
 .contest-detail-timing-details strong {
@@ -3632,10 +3678,21 @@ textarea:focus {
   color: rgba(248, 250, 252, 0.92);
 }
 
+.contest-detail-hero-action-panel {
+  display: grid;
+  padding: 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+}
+
 .contest-detail-hero-cta {
   justify-self: stretch;
+  width: 100%;
   min-width: min(100%, 240px);
-  min-height: 50px;
+  min-height: 54px;
+  border-radius: 16px;
+  box-shadow: 0 14px 28px rgba(33, 64, 190, 0.24);
 }
 
 .contest-detail-main-layout {
@@ -4171,6 +4228,18 @@ textarea:focus {
     text-align: left;
   }
 
+  .contest-detail-shell-hero {
+    border-radius: 24px;
+  }
+
+  .contest-detail-hero-visual {
+    min-height: 260px;
+  }
+
+  .contest-detail-shell-hero h1 {
+    max-width: 100%;
+  }
+
   .contest-detail-hero-cta {
     justify-self: stretch;
   }
@@ -4224,6 +4293,27 @@ textarea:focus {
   .contest-detail-primary-panel,
   .contest-detail-block {
     padding: 16px;
+  }
+
+  .contest-detail-hero-visual {
+    min-height: 220px;
+    padding: 16px;
+  }
+
+  .contest-detail-hero-copy-panel,
+  .contest-detail-timing-panel {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .contest-detail-hero-meta-list {
+    gap: 0.45rem;
+  }
+
+  .contest-detail-hero-meta-pill {
+    min-height: 28px;
+    padding: 0.32rem 0.6rem;
+    font-size: 0.76rem;
   }
 }
 
@@ -4682,4 +4772,3 @@ textarea:focus {
     max-width: 190px;
   }
 }
-
