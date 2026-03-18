@@ -8,7 +8,6 @@ import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import {
-  CompactSupportBlock,
   HeroPanel,
   LeaderboardPanel,
   LineupPanel,
@@ -421,9 +420,42 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const contest = detail.contest;
   const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const countdownTarget = isOpen ? contest.lockAt : contest.endsAt;
-  const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Status" : "Contest ends in";
-  const countdownValue = isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs);
+  const countdownTarget = isOpen ? (contest.lockAt ?? contest.liveAt) : isLocked ? (contest.liveAt ?? contest.endsAt) : isLive ? contest.endsAt : null;
+  const timingDetails = (() => {
+    const items = [
+      (isOpen || isLocked) && (contest.liveAt ?? contest.lockAt)
+        ? { label: "Start", value: fmtDate(contest.liveAt ?? contest.lockAt) }
+        : null,
+      (isOpen || isLocked || isLive) && contest.endsAt
+        ? { label: "End", value: fmtDate(contest.endsAt) }
+        : null,
+      isSettled && contest.endsAt
+        ? { label: "Ended", value: fmtDate(contest.endsAt) }
+        : null,
+    ].filter((item): item is { label: string; value: string } => Boolean(item));
+
+    return items.filter((item, index, array) => array.findIndex((candidate) => candidate.label === item.label && candidate.value === item.value) === index);
+  })();
+  const heroTiming = isSettled
+    ? {
+        label: "Contest settled",
+        value: fmtDate(contest.endsAt ?? contest.liveAt ?? contest.lockAt),
+        helper: "Final scoring and rewards are now locked.",
+        details: timingDetails,
+      }
+    : isLive
+      ? {
+          label: "Contest ends in",
+          value: formatCountdown(countdownTarget, nowTs),
+          helper: "Live scoring is underway until the contest closes.",
+          details: timingDetails,
+        }
+      : {
+          label: isLocked ? "Contest starts in" : "Entry closes in",
+          value: formatCountdown(countdownTarget, nowTs),
+          helper: isLocked ? "Lineups are locked while you wait for live scoring." : "You can still edit and submit before lock.",
+          details: timingDetails,
+        };
   const rankingRows = ranking?.rankings ?? [];
   const stateBody = isOpen
     ? (hasEntry ? "Edit before lineup lock." : selectedIds.length > 0 ? "Finish and submit before lock." : "Build your entry before lock.")
@@ -464,13 +496,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     contest.seasonName ?? null,
     contest.leagueTierRequired ? `${contest.leagueTierRequired} tier` : null,
   ].filter((value): value is string => Boolean(value)).join(" • ");
-  const heroDetailItems = [
-    { label: "Contest code", value: contest.code },
-    ...(contest.openAt ? [{ label: "Registration opens", value: fmtDate(contest.openAt) }] : []),
-    ...(contest.lockAt ? [{ label: "Lineup lock", value: fmtDate(contest.lockAt) }] : []),
-    ...((contest.liveAt ?? contest.lockAt) ? [{ label: "Contest live", value: fmtDate(contest.liveAt ?? contest.lockAt) }] : []),
-    ...(contest.endsAt ? [{ label: "Contest end", value: fmtDate(contest.endsAt) }] : []),
-  ];
 
   return (
     <SiteShell>
@@ -480,22 +505,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           status={contest.status}
           coverImageUrl={heroCoverImageUrl}
           infoLine={contestInfoLine}
-          countdownLabel={countdownLabel}
-          countdownValue={countdownValue}
+          timing={heroTiming}
           contextBody={stateBody}
           primaryAction={heroAction}
           flash={builderFlash && !showBuilder ? builderFlash : null}
           error={error || builderError || null}
-        />
-
-        <CompactSupportBlock
-          status={contest.status}
-          participants={contest._count.entries}
-          entryFee={entryFee}
-          lifecycleLabel={isSettled ? "Finalized" : isLive ? "Live" : isLocked ? "Locked" : "Open"}
-          tiers={rewards?.tiers ?? []}
-          myRewards={myRewards ?? null}
-          extraItems={heroDetailItems}
         />
 
         <section className="contest-detail-main-layout">
@@ -522,11 +536,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
           <aside className="contest-detail-support-zone">
             <RewardsPanel
+              status={contest.status}
               tiers={rewards?.tiers ?? []}
               summary={rewards?.summary ?? null}
               hasPolicyData={rewards?.hasPolicyData ?? false}
               myRewards={myRewards ?? null}
-              isSettled={isSettled}
             />
             <LeaderboardPanel
               rows={rankingRows}
