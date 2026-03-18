@@ -21,6 +21,7 @@ export function LineupCardTile({
       className={`lineup-card-tile${selected ? " selected" : ""}${disabled ? " disabled" : ""}`}
       onClick={onClick}
       disabled={disabled || !cardView}
+      aria-pressed={selected}
     >
       <div className="lineup-card-visual">
         {cardView ? (

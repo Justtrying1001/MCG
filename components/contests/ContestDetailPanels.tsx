@@ -143,8 +143,9 @@ export function HeroPanel({
 }: HeroPanelProps) {
   const statusTone = status === "LIVE" ? "live" : status === "LOCKED" ? "locked" : status === "SETTLED" ? "settled" : "open";
   const hasCoverImage = Boolean(coverImageUrl && coverImageUrl.trim().length > 0);
+  const infoItems = infoLine.split("•").map((item) => item.trim()).filter(Boolean);
   const heroCoverStyle = hasCoverImage
-    ? { backgroundImage: `linear-gradient(102deg, rgba(4, 9, 20, 0.96) 0%, rgba(6, 10, 20, 0.92) 34%, rgba(7, 11, 24, 0.68) 58%, rgba(7, 11, 24, 0.34) 100%), url(${coverImageUrl})` }
+    ? { backgroundImage: `linear-gradient(108deg, rgba(5, 9, 20, 0.92) 0%, rgba(6, 10, 20, 0.74) 34%, rgba(7, 11, 24, 0.38) 66%, rgba(7, 11, 24, 0.18) 100%), url(${coverImageUrl})` }
     : undefined;
 
   return (
@@ -156,8 +157,19 @@ export function HeroPanel({
 
         <div className="contest-detail-hero-copy">
           <div className="contest-detail-hero-copy-panel">
+            <p className="contest-detail-hero-kicker">Contest spotlight</p>
             <h1>{title}</h1>
-            <p className="contest-detail-hero-info-line">{infoLine}</p>
+            {infoItems.length > 0 ? (
+              <div className="contest-detail-hero-meta-list" aria-label="Contest quick facts">
+                {infoItems.map((item) => (
+                  <span key={item} className="contest-detail-hero-meta-pill">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="contest-detail-hero-info-line">{infoLine}</p>
+            )}
             <p className="contest-detail-hero-context-line">{contextBody}</p>
             {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
             {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
@@ -186,8 +198,11 @@ export function HeroPanel({
         </div>
 
         {primaryAction ? (
-          <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
-            {primaryAction.label}</button>
+          <div className="contest-detail-hero-action-panel">
+            <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
+              {primaryAction.label}
+            </button>
+          </div>
         ) : null}
       </div>
     </Surface>
