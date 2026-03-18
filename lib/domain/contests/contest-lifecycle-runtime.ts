@@ -163,13 +163,18 @@ export async function executeContestTransition(
   targetStatus: ContestStatus,
   mode: ContestLifecycleMode,
 ): Promise<ContestTransitionExecutionResult> {
+  console.info(`[lifecycle] executeContestTransition contest=${contestId} mode=${mode} target=${targetStatus}`);
   const validation = await validateContestTransition(contestId, targetStatus, mode);
   if (validation.blocking) {
     const firstError = validation.issues.find((issue) => issue.severity === "ERROR");
+    console.error(
+      `[lifecycle] executeContestTransition blocked for contest=${contestId} current=${validation.currentStatus} target=${targetStatus} reason=${firstError?.message ?? "unknown"}`,
+    );
     throw new ContestRuntimeError(firstError?.message ?? "Contest transition blocked", 409);
   }
 
   if (validation.isNoOp) {
+    console.info(`[lifecycle] executeContestTransition noop for contest=${contestId} status=${validation.contest.status}`);
     return {
       contest: { id: validation.contest.id, status: validation.contest.status },
       previousStatus: validation.currentStatus,
@@ -191,11 +196,13 @@ export async function executeContestTransition(
 
   if (targetStatus === ContestStatus.LIVE) {
     automation.startSnapshotTriggered = true;
+    console.info(`[lifecycle] Contest ${contestId} OPEN -> LIVE transition attempted — starting START snapshot capture`);
     await runLiveTransitionSideEffects(contestId, mode);
   }
 
   if (targetStatus === ContestStatus.SETTLED) {
     automation.finalizationTriggered = true;
+    console.info(`[lifecycle] Contest ${contestId} LIVE -> SETTLED transition attempted — starting finalization`);
     await finalizeContestFromEndSnapshotTrigger(contestId);
   }
 
@@ -207,6 +214,7 @@ export async function executeContestTransition(
   if (updated.count === 0) {
     const latest = await getContestLifecycleSnapshot(contestId);
     if (latest.status === targetStatus) {
+      console.info(`[lifecycle] Contest ${contestId} already reached target=${targetStatus} via concurrent update`);
       return {
         contest: { id: latest.id, status: latest.status },
         previousStatus: validation.currentStatus,
@@ -217,11 +225,14 @@ export async function executeContestTransition(
         automation,
       };
     }
+    console.error(`[lifecycle] Contest ${contestId} concurrent update prevented ${validation.currentStatus} -> ${targetStatus}`);
     throw new ContestRuntimeError(
       `Contest transition ${validation.currentStatus} -> ${targetStatus} could not be applied due to a concurrent update`,
       409,
     );
   }
+
+  console.info(`[lifecycle] Contest ${contestId} final status after transition attempt=${targetStatus}`);
 
   return {
     contest: { id: validation.contest.id, status: targetStatus },
@@ -235,8 +246,16 @@ export async function executeContestTransition(
 }
 
 async function runLiveTransitionSideEffects(contestId: string, mode: ContestLifecycleMode) {
-  const result = await captureStartSnapshot(contestId);
-  if (mode === "auto") {
-    console.info(`[lifecycle] Contest ${contestId} START snapshot captured — tokens=${result.tokenCount} captured=${result.capturedCount}`);
+  console.info(`[lifecycle] Contest ${contestId} START snapshot capture started mode=${mode}`);
+  try {
+    const result = await captureStartSnapshot(contestId);
+    console.info(
+      `[lifecycle] Contest ${contestId} START snapshot capture succeeded tokens=${result.tokenCount} captured=${result.capturedCount}`,
+    );
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[lifecycle] Contest ${contestId} START snapshot capture failed: ${message}`);
+    throw error;
   }
 }

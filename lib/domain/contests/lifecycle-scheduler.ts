@@ -1,3 +1,4 @@
+import { isContestLifecycleSchedulerEnabled } from "@/lib/domain/contests/lifecycle-debug";
 import { reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 
 declare global {
@@ -7,7 +8,9 @@ declare global {
 
 async function runScheduledReconciliation() {
   try {
+    console.info("[contest-scheduler] tick started");
     await reconcileDueContestsByTime();
+    console.info("[contest-scheduler] tick completed");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[contest-scheduler] lifecycle reconciliation failed: ${message}`);
@@ -17,7 +20,10 @@ async function runScheduledReconciliation() {
 export function ensureContestLifecycleSchedulerStarted() {
   if (typeof window !== "undefined") return;
   if (process.env.NODE_ENV === "test") return;
-  if (process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER !== "1") return;
+  if (!isContestLifecycleSchedulerEnabled()) {
+    console.info("[contest-scheduler] not started because lifecycle scheduler is disabled");
+    return;
+  }
   if (globalThis.__mcgContestLifecycleSchedulerStarted) return;
 
   globalThis.__mcgContestLifecycleSchedulerStarted = true;

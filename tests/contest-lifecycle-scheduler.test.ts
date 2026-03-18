@@ -12,10 +12,14 @@ import { ensureContestLifecycleSchedulerStarted } from "@/lib/domain/contests/li
 
 describe("contest lifecycle scheduler", () => {
   const originalNodeEnv = process.env.NODE_ENV;
+  const originalSchedulerFlag = process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER;
+  const originalQStashToken = process.env.QSTASH_TOKEN;
 
   beforeEach(() => {
     vi.clearAllMocks();
     globalThis.__mcgContestLifecycleSchedulerStarted = undefined;
+    delete process.env.QSTASH_TOKEN;
+    delete process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER;
   });
 
   it("does not start when env flag is disabled", () => {
@@ -24,9 +28,8 @@ describe("contest lifecycle scheduler", () => {
     expect(reconcileDueContestsByTimeMock).not.toHaveBeenCalled();
   });
 
-  it("starts once when env flag is enabled", () => {
+  it("starts fallback automatically when QStash is absent", () => {
     (process.env as any).NODE_ENV = "development";
-    process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER = "1";
     const intervalSpy = vi.spyOn(global, "setInterval").mockImplementation((() => 1) as any);
 
     ensureContestLifecycleSchedulerStarted();
@@ -38,7 +41,23 @@ describe("contest lifecycle scheduler", () => {
     intervalSpy.mockRestore();
   });
 
+  it("can still be explicitly enabled alongside QStash", () => {
+    (process.env as any).NODE_ENV = "development";
+    process.env.QSTASH_TOKEN = "token";
+    process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER = "1";
+    const intervalSpy = vi.spyOn(global, "setInterval").mockImplementation((() => 1) as any);
+
+    ensureContestLifecycleSchedulerStarted();
+
+    expect(intervalSpy).toHaveBeenCalledTimes(1);
+    expect(reconcileDueContestsByTimeMock).toHaveBeenCalledTimes(1);
+
+    intervalSpy.mockRestore();
+  });
+
   afterEach(() => {
     (process.env as any).NODE_ENV = originalNodeEnv;
+    process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER = originalSchedulerFlag;
+    process.env.QSTASH_TOKEN = originalQStashToken;
   });
 });

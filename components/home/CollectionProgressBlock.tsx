@@ -38,6 +38,12 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
             </div>
           </div>
         </div>
+
+        <p className="collection-progress-note">
+          {hasCompletion
+            ? "Based on your current collection summary."
+            : "Completion percentage is unavailable, but owned and missing template counts are currently tracked."}
+        </p>
       </div>
     </Surface>
   );

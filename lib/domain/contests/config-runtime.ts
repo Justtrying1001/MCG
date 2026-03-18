@@ -303,7 +303,9 @@ export async function validateContestDraft(contestId: string) {
 }
 
 export async function publishContest(contestId: string) {
-  const hasQStash = Boolean(process.env.QSTASH_TOKEN);
+  const hasQStash = Boolean(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_APP_URL);
+
+  console.info(`[publish] Contest ${contestId} publish requested qstashConfigured=${hasQStash}`);
 
   await prisma.$transaction(async (tx) => {
     const contest = await tx.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
@@ -351,6 +353,9 @@ export async function publishContest(contestId: string) {
     const contest = await prisma.contest.findUnique({ where: { id: contestId }, select: { lockAt: true, liveAt: true, endsAt: true } });
     if (contest?.liveAt && contest.endsAt) {
       try {
+        console.info(
+          `[publish] Scheduling lifecycle jobs for contest ${contestId} lockAt=${contest.lockAt?.toISOString() ?? "null"} liveAt=${contest.liveAt.toISOString()} endsAt=${contest.endsAt.toISOString()}`,
+        );
         const jobs = await scheduleLifecycleQStashJobs(contestId, contest.lockAt, contest.liveAt, contest.endsAt);
         await prisma.contest.update({
           where: { id: contestId },
@@ -360,6 +365,9 @@ export async function publishContest(contestId: string) {
             qstashSettleJobId: jobs.settleJobId,
           },
         });
+        console.info(
+          `[publish] Contest ${contestId} lifecycle jobs scheduled open=${jobs.openJobId ?? "none"} live=${jobs.liveJobId} settle=${jobs.settleJobId}`,
+        );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`[publish] Failed to schedule QStash jobs for contest ${contestId}: ${message}`);
@@ -367,6 +375,8 @@ export async function publishContest(contestId: string) {
     } else {
       console.warn(`[publish] Contest ${contestId} missing liveAt/endsAt — QStash jobs not scheduled`);
     }
+  } else {
+    console.warn(`[publish] Contest ${contestId} has no QStash lifecycle driver configured. Runtime fallback scheduler must reconcile this contest.`);
   }
 
   const updated = await prisma.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
@@ -764,6 +774,7 @@ async function scheduleLifecycleQStashJobs(
   endsAt: Date,
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  console.info(`[publish] scheduleLifecycleQStashJobs contest=${contestId} baseUrl=${baseUrl}`);
   const [openJob, liveJob, settleJob] = await Promise.all([
     lockAt
       ? qstash.publishJSON({

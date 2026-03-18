@@ -3360,9 +3360,9 @@ textarea:focus {
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.62fr);
-  gap: 16px;
-  padding: clamp(16px, 2.2vw, 24px);
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
+  gap: 14px;
+  padding: clamp(14px, 1.8vw, 20px);
   border: 1px solid rgba(120, 144, 255, 0.22);
   background: linear-gradient(160deg, rgba(10, 14, 28, 0.98), rgba(16, 21, 34, 0.98));
 }
@@ -3372,13 +3372,13 @@ textarea:focus {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   align-content: start;
 }
 
 .contest-detail-hero-visual {
-  min-height: clamp(220px, 28vw, 312px);
-  padding: clamp(16px, 2vw, 24px);
+  min-height: clamp(180px, 22vw, 240px);
+  padding: clamp(14px, 1.8vw, 20px);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background-position: center;
@@ -3427,15 +3427,15 @@ textarea:focus {
 .contest-detail-hero-copy {
   align-self: end;
   display: grid;
-  gap: 10px;
-  max-width: min(64ch, 100%);
+  gap: 8px;
+  max-width: min(60ch, 100%);
 }
 
 .contest-detail-hero-copy-panel {
   display: grid;
   gap: 8px;
-  max-width: 56ch;
-  padding: clamp(12px, 1.6vw, 16px);
+  max-width: 52ch;
+  padding: clamp(10px, 1.2vw, 14px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(5, 10, 20, 0.82), rgba(7, 11, 24, 0.72));
@@ -3461,17 +3461,10 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-.contest-detail-hero-kicker {
-  color: rgba(226, 232, 240, 0.76);
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-}
-
 .contest-detail-shell-hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.02;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 1.04;
 }
 
 .contest-detail-hero-info-line {
@@ -3481,20 +3474,12 @@ textarea:focus {
   letter-spacing: 0.02em;
 }
 
-.contest-detail-hero-context {
-  display: grid;
-  gap: 6px;
-  max-width: 52ch;
-  padding-top: 2px;
-}
-
-.contest-detail-hero-context p {
+.contest-detail-hero-context-line {
   margin: 0;
+  max-width: 46ch;
   color: var(--color-text-secondary);
-}
-
-.contest-detail-hero-context p strong {
-  color: #f8fafc;
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .contest-detail-hero-rules {
@@ -4673,7 +4658,8 @@ textarea:focus {
     gap: var(--space-3);
   }
 
-  .player-dash-header {
+  .player-dash-header,
+  .home-dashboard-secondary-grid .home-genesis {
     padding: var(--space-3);
   }
 
