@@ -425,30 +425,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Status" : "Contest ends in";
   const countdownValue = isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs);
   const rankingRows = ranking?.rankings ?? [];
-  const rewardTeaser = rewards?.tiers[0]
-    ? `${rewards.tiers[0].label}: ${[
-        rewards.tiers[0].pointsAmount > 0 ? `${rewards.tiers[0].pointsAmount} pts` : null,
-        rewards.tiers[0].packsCount > 0 ? `${rewards.tiers[0].packsCount} pack${rewards.tiers[0].packsCount > 1 ? "s" : ""}` : null,
-      ].filter(Boolean).join(" + ") || "Rewards configured"}`
-    : null;
-
   const heroSummaryItems = [
     `${rosterSize} cards`,
     contest.seasonName ?? "Open league",
     `${contest._count.entries} players`,
   ].slice(0, 3);
-
-  const lineupStateText = !me
-    ? "Sign in to build and submit your lineup."
-    : isLocked
-      ? "Your lineup is locked in and ready for the contest transition."
-      : isLive
-        ? "Track your submitted lineup against the live standings."
-        : hasEntry
-          ? "Your lineup is submitted. You can still adjust it before the lock."
-          : selectedIds.length > 0
-            ? "Finish the remaining slots and submit before lineup lock."
-            : "Select cards from your eligible collection to enter the contest.";
 
   const lifecycleLabel = isSettled
     ? "Contest settled"
@@ -457,14 +438,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       : isLocked
         ? "Lineups locked"
         : "Registration open";
-
-  const lifecycleCopy = isSettled
-    ? "Final scoring is complete and rewards are now assigned."
-    : isLive
-      ? "Standings are updating as the contest plays out."
-      : isLocked
-        ? "Entries are finalized and waiting for live performance updates."
-        : "Build and submit your roster before the lineup lock milestone.";
 
   const stateHeadline = isOpen
     ? hasEntry
@@ -477,10 +450,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       : "Lineup locked";
 
   const stateBody = isOpen
-    ? lineupStateText
+    ? (hasEntry ? "Edit before lineup lock." : selectedIds.length > 0 ? "Finish and submit before lock." : "Build your entry before lock.")
     : isLive
-      ? (myRanking ? `You're currently ranked #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Standings are loading as live scoring comes in.")
-      : (myRanking ? `Your final lineup is locked. You're currently #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Your lineup is locked in. Live rankings will appear as contest data updates.");
+      ? (myRanking ? `Currently #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Live scoring is underway.")
+      : isSettled
+        ? (myRanking ? `Finished #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Final scoring is complete.")
+        : "Lineups are locked.";
 
   const heroAction = isOpen
     ? {
@@ -518,7 +493,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     <SiteShell>
       <div className="contest-detail-page-v2">
         <HeroPanel
-          code={contest.code}
           title={contest.title}
           status={contest.status}
           summaryItems={heroSummaryItems}
@@ -527,7 +501,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           contextLabel={isOpen ? "Entry" : isLive ? "Live contest" : isSettled ? "Final results" : "Locked contest"}
           contextHeadline={stateHeadline}
           contextBody={stateBody}
-          rewardTeaser={rewardTeaser}
           primaryAction={heroAction}
           flash={builderFlash && !showBuilder ? builderFlash : null}
           error={error || builderError || null}
@@ -585,18 +558,15 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           status={contest.status}
           participants={contest._count.entries}
           entryFee={entryFee}
-          seasonName={contest.seasonName}
-          leagueTierRequired={contest.leagueTierRequired}
           lifecycleLabel={lifecycleLabel}
-          lifecycleCopy={lifecycleCopy}
           tiers={rewards?.tiers ?? []}
-          summary={rewards?.summary ?? null}
           myRewards={myRewards ?? null}
         />
 
         <ContestDetailsAccordion
           code={contest.code}
           rosterSize={rosterSize}
+          entryFee={entryFee}
           openAt={fmtDate(contest.openAt)}
           lockAt={fmtDate(contest.lockAt)}
           liveAt={fmtDate(contest.liveAt ?? contest.lockAt)}
@@ -610,6 +580,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       {/* Compatibility guardrails: aria-label="Final card score" */}
       {/* Compatibility guardrails: slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—" */}
       {/* Compatibility guardrails: cpd-slot-lock-overlay */}
+      {/* Compatibility guardrails: Sign in to build and submit your lineup. */}
       {/* Compatibility guardrails: Contest unavailable or still being prepared */}
       <LineupBuilderModal
         open={showBuilder}
