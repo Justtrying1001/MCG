@@ -5185,6 +5185,37 @@ a { color: inherit; text-decoration: none; }
   background: transparent;
 }
 
+.contest-breakdown-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.contest-breakdown-card strong {
+  display: block;
+  flex-basis: 100%;
+  font-size: 0.95rem;
+}
+
+.contest-breakdown-card > span:not(.mcg-badge) {
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.contest-breakdown-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.7rem;
+  margin-top: 0.45rem;
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.contest-breakdown-scores strong {
+  color: var(--text);
+}
+
 .contest-breakdown-head {
   display: flex;
   justify-content: space-between;

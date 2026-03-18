@@ -3683,7 +3683,7 @@ textarea:focus {
 }
 
 .contest-detail-main-surface {
-  gap: 18px;
+  gap: 26px;
 }
 
 .contest-detail-main-inline-summary,
@@ -3697,13 +3697,17 @@ textarea:focus {
 .contest-detail-main-section {
   display: grid;
   gap: 12px;
-  padding-top: 4px;
+  padding-top: 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .contest-detail-main-section:first-of-type {
   border-top: 0;
   padding-top: 0;
+}
+
+.lineup-subsection {
+  gap: 18px;
 }
 
 .contest-detail-section-head {
@@ -3715,16 +3719,31 @@ textarea:focus {
 
 .contest-detail-section-head h4 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
+}
+
+.lineup-subsection .contest-detail-section-head h4 {
+  font-size: 1.18rem;
+}
+
+.contest-detail-main-section:not(.lineup-subsection) .contest-detail-section-head h4 {
+  color: var(--color-text-secondary);
 }
 
 .contest-detail-result-lead {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  padding-bottom: 6px;
 }
 
 .contest-detail-result-lead strong {
-  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  color: #f8fafc;
+}
+
+.contest-detail-result-lead .mcg-eyebrow {
+  margin: 0;
+  color: #c4b5fd;
 }
 
 .contest-detail-lineup-embed {
@@ -3743,6 +3762,7 @@ textarea:focus {
 .contest-detail-lineup-meta {
   display: grid;
   gap: 6px;
+  max-width: 54ch;
 }
 
 .contest-detail-block-head {
@@ -3767,7 +3787,7 @@ textarea:focus {
 
 .contest-detail-lineup-grid {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
 }
 
@@ -3831,8 +3851,9 @@ textarea:focus {
   grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
-  padding: 12px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
 }
 
 .contest-detail-leaderboard-row.is-me {
@@ -3844,7 +3865,7 @@ textarea:focus {
 }
 
 .contest-detail-support-surface {
-  gap: 10px;
+  gap: 6px;
 }
 
 .contest-detail-support-list {
@@ -3853,7 +3874,7 @@ textarea:focus {
   padding: 0;
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 8px 18px;
+  gap: 6px 16px;
 }
 
 .contest-detail-support-list li {
@@ -3862,6 +3883,7 @@ textarea:focus {
   gap: 6px;
   align-items: baseline;
   white-space: nowrap;
+  color: var(--color-text-secondary);
 }
 
 .contest-detail-support-list li:not(:last-child)::after {
@@ -3871,7 +3893,8 @@ textarea:focus {
 }
 
 .contest-detail-support-list strong {
-  font-size: .95rem;
+  font-size: .9rem;
+  font-weight: 600;
 }
 
 .contest-detail-earned-rewards,
