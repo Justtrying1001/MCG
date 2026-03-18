@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
@@ -25,11 +24,12 @@ export type HeroPanelProps = {
   title: string;
   status: ContestStatus;
   coverImageUrl?: string | null;
-  contestCode: string;
   infoLine: string;
   contextLabel: string;
   contextHeadline: string;
   contextBody: string;
+  rulesSummary: string;
+  detailItems: Array<{ label: string; value: string }>;
   countdownLabel: string;
   countdownValue: string;
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
@@ -41,11 +41,12 @@ export function HeroPanel({
   title,
   status,
   coverImageUrl,
-  contestCode,
   infoLine,
   contextLabel,
   contextHeadline,
   contextBody,
+  rulesSummary,
+  detailItems,
   countdownLabel,
   countdownValue,
   primaryAction,
@@ -55,7 +56,7 @@ export function HeroPanel({
   const statusTone = status === "LIVE" ? "live" : status === "LOCKED" ? "locked" : status === "SETTLED" ? "settled" : "open";
   const hasCoverImage = Boolean(coverImageUrl && coverImageUrl.trim().length > 0);
   const heroCoverStyle = hasCoverImage
-    ? { backgroundImage: `linear-gradient(115deg, rgba(7, 11, 24, 0.1), rgba(7, 11, 24, 0.82)), url(${coverImageUrl})` }
+    ? { backgroundImage: `linear-gradient(102deg, rgba(4, 9, 20, 0.96) 0%, rgba(6, 10, 20, 0.92) 34%, rgba(7, 11, 24, 0.68) 58%, rgba(7, 11, 24, 0.34) 100%), url(${coverImageUrl})` }
     : undefined;
 
   return (
@@ -63,18 +64,37 @@ export function HeroPanel({
       <div className={`contest-detail-hero-visual${hasCoverImage ? " has-image" : " is-fallback"}`} style={heroCoverStyle}>
         <div className="contest-detail-hero-visual-badge-row">
           <span className={`mcg-badge ${statusTone}`}>{status}</span>
-          <span className="contest-detail-hero-code">Contest {contestCode}</span>
         </div>
 
         <div className="contest-detail-hero-copy">
-          <span className="contest-detail-hero-kicker">{contextLabel}</span>
-          <h1>{title}</h1>
-          <p className="contest-detail-hero-info-line">{infoLine}</p>
-          <div className="contest-detail-hero-context">
-            <p className="mcg-eyebrow">Contest briefing</p>
-            <p><strong>{contextHeadline}</strong> — {contextBody}</p>
+          <div className="contest-detail-hero-copy-panel">
+            <span className="contest-detail-hero-kicker">{contextLabel}</span>
+            <h1>{title}</h1>
+            <p className="contest-detail-hero-info-line">{infoLine}</p>
+            <div className="contest-detail-hero-context">
+              <p className="mcg-eyebrow">Contest briefing</p>
+              <p><strong>{contextHeadline}</strong></p>
+              <p>{contextBody}</p>
+            </div>
             {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
             {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
+          </div>
+
+          <div className="contest-detail-hero-rules">
+            <div className="contest-detail-hero-rules-head">
+              <div>
+                <p className="mcg-eyebrow">Rules & timing</p>
+                <p className="contest-detail-hero-rules-summary">{rulesSummary}</p>
+              </div>
+            </div>
+            <dl className="contest-detail-hero-rules-grid">
+              {detailItems.map((item) => (
+                <div key={item.label}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </div>
@@ -690,70 +710,4 @@ export function ResultSummaryPanel({
 
 export function ResultBreakdownPanel({ rows }: { rows: BreakdownRow[] }) {
   return <ScoreBreakdownPanel rows={rows} />;
-}
-
-export function ContestDetailsPanel({
-  code,
-  rosterSize,
-  entryFee,
-  openAt,
-  lockAt,
-  liveAt,
-  endsAt,
-  seasonName,
-  leagueTierRequired,
-}: {
-  code: string;
-  rosterSize: number;
-  entryFee: string;
-  openAt?: string | null;
-  lockAt?: string | null;
-  liveAt?: string | null;
-  endsAt?: string | null;
-  seasonName?: string | null;
-  leagueTierRequired?: string | null;
-}) {
-  const items = [
-    { label: "Contest code", value: code },
-    ...(seasonName ? [{ label: "Season", value: seasonName }] : []),
-    ...(leagueTierRequired ? [{ label: "League tier", value: leagueTierRequired }] : []),
-    ...(openAt ? [{ label: "Registration opens", value: openAt }] : []),
-    ...(lockAt ? [{ label: "Lineup lock", value: lockAt }] : []),
-    ...(liveAt ? [{ label: "Contest live", value: liveAt }] : []),
-    ...(endsAt ? [{ label: "Contest end", value: endsAt }] : []),
-  ];
-  const rules = [
-    `Submit exactly ${rosterSize} cards.`,
-    entryFee === "Free" ? "Entry is free." : `Entry costs ${entryFee}.`,
-  ];
-
-  return (
-    <Surface className="contest-detail-block contest-detail-info-panel" variant="raised">
-      <div className="contest-detail-block-head">
-        <div>
-          <p className="mcg-eyebrow">Contest details</p>
-          <h3>Rules and timing</h3>
-        </div>
-      </div>
-      <div className="contest-detail-accordion-body">
-        <div className="contest-detail-accordion-section">
-          <p className="mcg-eyebrow">Rules</p>
-          <ul className="contest-detail-rule-list">
-            {rules.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ul>
-        </div>
-        <dl className="contest-detail-accordion-grid">
-          {items.map((item) => (
-            <div key={item.label}>
-              <dt>{item.label}</dt>
-              <dd>{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      <Link href="/contests" className="contest-detail-inline-link">Back to all contests</Link>
-    </Surface>
-  );
 }
