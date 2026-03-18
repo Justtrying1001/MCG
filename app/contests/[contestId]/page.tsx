@@ -230,6 +230,27 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!contestData || loading) return;
+    if (!(["OPEN", "LOCKED", "LIVE"] as const).includes(contestData.status)) return;
+
+    const refresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      void loadAll();
+    };
+
+    const intervalMs = contestData.status === "LIVE" ? 15_000 : 30_000;
+    const intervalId = window.setInterval(refresh, intervalMs);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [contestData, loadAll, loading]);
+
   const canManageLineup = contestData?.status === "OPEN" && Boolean(me);
   const hasEntry = Boolean(detail?.userEntry);
   const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
