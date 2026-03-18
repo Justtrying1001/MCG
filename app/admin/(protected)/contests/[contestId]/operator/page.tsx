@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   AdminEmptyState,
-  AdminPageHeader,
   AdminPanel,
-  AdminStatusBadge,
 } from "@/components/admin/AdminUi";
 import { ScoreBreakdownTable } from "@/components/admin/ScoreBreakdownTable";
+
+import { ContestWorkbenchShell } from "../_components/ContestWorkbenchShell";
 
 type ConsolePayload = {
   contest: { id: string; title: string; code: string; status: string };
@@ -64,18 +64,27 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
   }, [payload]);
 
   return (
-    <div className="admin-v2-page contest-console-page">
-      <AdminPageHeader
-        title="Contest Operator Console"
-        subtitle="Inspect snapshots, token performance, and user score breakdowns in one place."
-        actions={payload ? <AdminStatusBadge tone="neutral" label={`${payload.contest.code} · ${payload.contest.status}`} /> : null}
-      />
-
+    <ContestWorkbenchShell
+      contestId={params.contestId}
+      section="Operator"
+      description="Inspect runtime snapshots, token metrics, and player-level score composition."
+      meta={payload ? { title: payload.contest.title, code: payload.contest.code, status: payload.contest.status } : null}
+    >
       {loading ? <AdminPanel><AdminEmptyState title="Loading operator console…" /></AdminPanel> : null}
       {error ? <AdminPanel><p className="contest-error">{error}</p></AdminPanel> : null}
 
       {!loading && payload ? (
         <>
+          <section className="admin-v2-panel">
+            <h2 className="contest-admin-section-title">At-a-glance summary</h2>
+            <div className="contest-admin-summary-grid">
+              <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Players</p><p className="contest-admin-meta-value">{payload.players.length}</p></div>
+              <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">Token rows</p><p className="contest-admin-meta-value">{payload.scoring.tokenScores.length}</p></div>
+              <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">START snapshots</p><p className="contest-admin-meta-value">{payload.snapshots.START.length}</p></div>
+              <div className="contest-admin-meta-item"><p className="contest-admin-meta-label">END snapshots</p><p className="contest-admin-meta-value">{payload.snapshots.END.length}</p></div>
+            </div>
+          </section>
+
           <AdminPanel>
             <h3>Snapshots</h3>
             <div className="table-wrapper">
@@ -117,9 +126,7 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
 
           <AdminPanel>
             <h3>Score Breakdown</h3>
-            <p style={{ margin: "0 0 0.75rem", color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
-              Formula: <code>finalScore = baseScore × rarityMultiplier × editionMultiplier</code>
-            </p>
+            <p className="contest-admin-muted">Formula: <code>finalScore = baseScore × rarityMultiplier × editionMultiplier</code></p>
             <ScoreBreakdownTable breakdownRows={payload.scoring.breakdownRows} />
           </AdminPanel>
 
@@ -155,6 +162,6 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
           </AdminPanel>
         </>
       ) : null}
-    </div>
+    </ContestWorkbenchShell>
   );
 }
