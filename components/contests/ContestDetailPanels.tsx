@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
@@ -21,27 +22,48 @@ export type RewardSummary = {
 };
 
 export type HeroPanelProps = {
-  code: string;
   title: string;
   status: ContestStatus;
   summaryItems: string[];
   countdownLabel: string;
   countdownValue: string;
-  rewardTeaser?: string | null;
+  contextLabel: string;
+  contextHeadline: string;
+  contextBody: string;
+  primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
+  flash?: string | null;
+  error?: string | null;
 };
 
-export function HeroPanel({ code, title, status, summaryItems, countdownLabel, countdownValue, rewardTeaser }: HeroPanelProps) {
+export function HeroPanel({
+  title,
+  status,
+  summaryItems,
+  countdownLabel,
+  countdownValue,
+  contextLabel,
+  contextHeadline,
+  contextBody,
+  primaryAction,
+  flash,
+  error,
+}: HeroPanelProps) {
   const statusTone = status === "LIVE" ? "live" : status === "LOCKED" ? "locked" : status === "SETTLED" ? "settled" : "open";
 
   return (
     <Surface className="contest-detail-shell-hero" variant="raised">
       <div className="contest-detail-hero-main">
         <div className="contest-detail-hero-meta">
-          <span className="contest-detail-code mono">{code}</span>
           <span className={`mcg-badge ${statusTone}`}>{status}</span>
         </div>
         <h1>{title}</h1>
         <p className="contest-detail-summary-line">{summaryItems.join(" • ")}</p>
+        <div className="contest-detail-hero-context">
+          <p className="mcg-eyebrow">{contextLabel}</p>
+          <p><strong>{contextHeadline}</strong> — {contextBody}</p>
+          {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
+          {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
+        </div>
       </div>
 
       <div className="contest-detail-hero-side">
@@ -49,8 +71,232 @@ export function HeroPanel({ code, title, status, summaryItems, countdownLabel, c
           <span>{countdownLabel}</span>
           <strong>{countdownValue}</strong>
         </div>
-        {rewardTeaser ? <p className="contest-detail-reward-teaser">{rewardTeaser}</p> : null}
+        {primaryAction ? (
+          <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
+            {primaryAction.label}
+          </button>
+        ) : null}
       </div>
+    </Surface>
+  );
+}
+
+function InlineLeaderboard({
+  rows,
+  currentUserId,
+  compact = false,
+}: {
+  rows: LeaderboardRow[];
+  currentUserId?: string;
+  compact?: boolean;
+}) {
+  if (rows.length === 0) return <p className="contest-detail-empty-note">Ranking pending.</p>;
+
+  const previewRows = compact ? rows.slice(0, 5) : rows;
+  return (
+    <div className="contest-detail-leaderboard-list">
+      {previewRows.map((row) => (
+        <div key={row.id} className={`contest-detail-leaderboard-row ${row.userId === currentUserId ? "is-me" : ""} ${row.rank <= 3 && !compact ? "is-top" : ""}`}>
+          <span className="mono">#{row.rank}</span>
+          <span>{row.userId === currentUserId ? "You" : row.displayName}</span>
+          <strong className="mono">{row.score.toFixed(2)}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InlineScoreBreakdown({ rows }: { rows: BreakdownRow[] }) {
+  if (rows.length === 0) return <p className="contest-detail-empty-note">Per-card scoring is not available yet.</p>;
+
+  return (
+    <div className="contest-breakdown-list">
+      {rows.map((row) => (
+        <div key={row.id} className={`contest-breakdown-row${row.dataQuality === "INCOMPLETE" ? " is-incomplete" : ""}`}>
+          <div className="contest-breakdown-card">
+            <strong>{row.cardInstance.cardTemplate.name}</strong>
+            <span>{row.tokenProject.displayName}</span>
+            {row.cardInstance.cardTemplate.rarity ? <span className="mcg-badge">{row.cardInstance.cardTemplate.rarity.code}</span> : null}
+            {row.cardInstance.cardTemplate.edition ? <span className="mcg-badge">{row.cardInstance.cardTemplate.edition.code}</span> : null}
+            {row.dataQuality === "INCOMPLETE" ? <span className="mcg-badge is-warn">Incomplete data</span> : null}
+          </div>
+          <div className="contest-breakdown-scores">
+            <span>Base {row.baseScore.toFixed(2)}</span>
+            <span>×{row.rarityMultiplier.toFixed(2)}</span>
+            <span>×{row.editionMultiplier.toFixed(2)}</span>
+            <strong>= {row.finalScore.toFixed(2)}</strong>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function MainStateBlock({
+  status,
+  title,
+  body,
+  summaryItems,
+  rankingRows,
+  currentUserId,
+  myRank,
+  myScore,
+  myRewards,
+  scoreBreakdown,
+  lineup,
+}: {
+  status: ContestStatus;
+  title: string;
+  body: string;
+  summaryItems: Array<{ label: string; value: string }>;
+  rankingRows: LeaderboardRow[];
+  currentUserId?: string;
+  myRank?: number | null;
+  myScore?: number | null;
+  myRewards?: RewardSummary | null;
+  scoreBreakdown?: BreakdownRow[] | null;
+  lineup: ReactNode;
+}) {
+  const statusLabel = status === "OPEN" ? "Entry flow" : status === "LOCKED" ? "Locked lineup" : status === "LIVE" ? "Live contest" : "Final result";
+  const rewardSummary = myRewards
+    ? [
+        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
+        myRewards.xpTotal > 0 ? `${myRewards.xpTotal} XP` : null,
+        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
+      ].filter((value): value is string => Boolean(value)).join(" • ")
+    : "";
+
+  return (
+    <Surface id="contest-main-experience" className="contest-detail-block contest-detail-main-surface" variant="raised">
+      <div className="contest-detail-block-head">
+        <div>
+          <p className="mcg-eyebrow">{statusLabel}</p>
+          <h3>{title}</h3>
+        </div>
+      </div>
+
+      <p className="contest-detail-panel-copy">{body}</p>
+
+      {status === "SETTLED" ? (
+        <div className="contest-detail-result-lead">
+          <p className="mcg-eyebrow">Result</p>
+          <strong>{myRank ? `#${myRank}` : "—"}</strong>
+          <div className="contest-detail-result-rail">
+            <span>
+              <strong>{typeof myScore === "number" ? myScore.toFixed(2) : "—"}</strong>
+              <small>Score</small>
+            </span>
+            <span>
+              <strong>{rewardSummary || "No rewards"}</strong>
+              <small>Rewards</small>
+            </span>
+          </div>
+        </div>
+      ) : summaryItems.length > 0 ? (
+        <div className="contest-detail-main-inline-summary">
+          {summaryItems.map((item) => (
+            <span key={item.label}>
+              <strong>{item.value}</strong>
+              <small>{item.label}</small>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <section className="contest-detail-main-section lineup-subsection">
+        <div className="contest-detail-section-head">
+          <div>
+            <p className="mcg-eyebrow">{status === "LIVE" ? "Your lineup" : status === "SETTLED" ? "Final lineup" : "Lineup"}</p>
+            <h4>{status === "OPEN" ? "Build your entry" : status === "LOCKED" ? "Locked entry" : status === "LIVE" ? "Live lineup" : "Cards that counted"}</h4>
+          </div>
+        </div>
+        {lineup}
+      </section>
+
+      {status === "SETTLED" ? (
+        <section className="contest-detail-main-section">
+          <div className="contest-detail-section-head">
+            <div>
+              <p className="mcg-eyebrow">Score breakdown</p>
+              <h4>How your final score was built</h4>
+            </div>
+          </div>
+          <InlineScoreBreakdown rows={scoreBreakdown ?? []} />
+        </section>
+      ) : null}
+
+      {status === "LIVE" || status === "SETTLED" ? (
+        <section className="contest-detail-main-section">
+          <div className="contest-detail-section-head">
+            <div>
+              <p className="mcg-eyebrow">{status === "SETTLED" ? "Leaderboard" : "Standings"}</p>
+              <h4>{status === "SETTLED" ? "Final leaderboard" : "Live leaderboard"}</h4>
+            </div>
+          </div>
+          <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} />
+        </section>
+      ) : null}
+
+      {(status === "OPEN" || status === "LOCKED") && rankingRows.length > 0 ? (
+        <section className="contest-detail-main-section">
+          <div className="contest-detail-section-head">
+            <div>
+              <p className="mcg-eyebrow">{status === "OPEN" ? "Field snapshot" : "Early standings"}</p>
+              <h4>{status === "OPEN" ? "Who is already in" : "Leaderboard preview"}</h4>
+            </div>
+          </div>
+          <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} compact />
+        </section>
+      ) : null}
+    </Surface>
+  );
+}
+
+export function CompactSupportBlock({
+  status,
+  participants,
+  entryFee,
+  lifecycleLabel,
+  tiers,
+  myRewards,
+}: {
+  status: ContestStatus;
+  participants: number;
+  entryFee: string;
+  lifecycleLabel: string;
+  tiers: RewardTier[];
+  myRewards?: RewardSummary | null;
+}) {
+  const featuredTier = tiers[0] ?? null;
+  const earnedRewards = myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0)
+    ? [
+        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
+        myRewards.xpTotal > 0 ? `${myRewards.xpTotal} XP` : null,
+        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
+      ].filter((value): value is string => Boolean(value))
+    : [];
+  const rewardSummary = status === "SETTLED"
+    ? earnedRewards.join(" • ") || "No rewards"
+    : featuredTier
+      ? `${featuredTier.label}${featuredTier.pointsAmount > 0 ? ` • ${featuredTier.pointsAmount} pts` : ""}${featuredTier.packsCount > 0 ? ` • ${featuredTier.packsCount} pack${featuredTier.packsCount > 1 ? "s" : ""}` : ""}`
+      : "Rewards pending";
+  const supportItems = [
+    { label: "Rewards", value: rewardSummary },
+    { label: "Players", value: String(participants) },
+    { label: "Entry", value: entryFee },
+    { label: "Status", value: lifecycleLabel },
+  ];
+
+  return (
+    <Surface className="contest-detail-block contest-detail-support-surface" variant="raised">
+      <ul className="contest-detail-support-list">
+        {supportItems.map((item) => (
+          <li key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </li>
+        ))}
+      </ul>
     </Surface>
   );
 }
@@ -118,6 +364,7 @@ export type LineupPanelProps = {
   canInteract: boolean;
   onOpenBuilder?: (slotIndex: number) => void;
   emptyMessage?: string;
+  embedded?: boolean;
 };
 
 export function LineupPanel({
@@ -134,24 +381,33 @@ export function LineupPanel({
   canInteract,
   onOpenBuilder,
   emptyMessage,
+  embedded = false,
 }: LineupPanelProps) {
   const slotCountClass = rosterSize >= 6 ? "dense" : rosterSize === 5 ? "balanced" : "wide";
   const hasLineup = slotCards.some(Boolean);
-
-  return (
-    <Surface className="contest-detail-block lineup-panel" variant="raised">
-      <div className="contest-detail-block-head">
-        <div>
-          <p className="mcg-eyebrow">Lineup</p>
-          <h3>{title}</h3>
+  const content = (
+    <>
+      {embedded ? (
+        <div className="contest-detail-lineup-meta">
+          <p className="contest-detail-panel-copy">{helperText}</p>
+          <span className="contest-detail-inline-note">{label} • {selectedCount}/{rosterSize} selected</span>
         </div>
-        <div className="contest-detail-block-head-meta">
-          <span className="mcg-chip">{label}</span>
-          <span className="contest-detail-inline-note">{selectedCount}/{rosterSize} selected</span>
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="contest-detail-block-head">
+            <div>
+              <p className="mcg-eyebrow">Lineup</p>
+              {title ? <h3>{title}</h3> : null}
+            </div>
+            <div className="contest-detail-block-head-meta">
+              <span className="mcg-chip">{label}</span>
+              <span className="contest-detail-inline-note">{selectedCount}/{rosterSize} selected</span>
+            </div>
+          </div>
 
-      <p className="contest-detail-panel-copy">{helperText}</p>
+          <p className="contest-detail-panel-copy">{helperText}</p>
+        </>
+      )}
 
       <div className={`contest-detail-lineup-grid ${slotCountClass}`}>
         {Array.from({ length: rosterSize }).map((_, index) => {
@@ -166,7 +422,7 @@ export function LineupPanel({
                 onClick={() => actionable && onOpenBuilder(index)}
                 disabled={!actionable}
               >
-                <span>Slot {index + 1}</span>
+                <span className="contest-detail-lineup-slot-label">Slot {index + 1}</span>
                 <strong>{isOpen ? "Add card" : emptyMessage ?? "No card submitted"}</strong>
               </button>
             );
@@ -181,17 +437,22 @@ export function LineupPanel({
               onClick={() => canInteract && isOpen && onOpenBuilder?.(index)}
               disabled={!(canInteract && isOpen && onOpenBuilder)}
             >
+              <span className="contest-detail-lineup-slot-label">Slot {index + 1}</span>
               {cardView ? <MvpCardTile card={cardView} variant="canonical" interactive={false} /> : <span className="contest-command-slot-missing">Card preview unavailable</span>}
-              {(isLocked || isLive) ? <span className="contest-detail-slot-status">Locked</span> : null}
-              {isSettled ? <span className="contest-detail-slot-score">{slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—"}</span> : null}
+              {(isLocked || isLive) ? <span className="contest-detail-slot-note">Locked</span> : null}
+              {isSettled ? <span className="contest-detail-slot-note">{slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—"}</span> : null}
             </button>
           );
         })}
       </div>
 
       {!hasLineup && !isOpen ? <p className="contest-detail-empty-note">{emptyMessage ?? "No lineup was submitted for this contest."}</p> : null}
-    </Surface>
+    </>
   );
+
+  if (embedded) return <div className="contest-detail-lineup-embed">{content}</div>;
+
+  return <Surface className="contest-detail-block lineup-panel" variant="raised">{content}</Surface>;
 }
 
 export type LeaderboardRow = { id: string; userId: string; rank: number; score: number; displayName: string };
@@ -390,6 +651,7 @@ export function ResultBreakdownPanel({ rows }: { rows: BreakdownRow[] }) {
 export function ContestDetailsAccordion({
   code,
   rosterSize,
+  entryFee,
   openAt,
   lockAt,
   liveAt,
@@ -399,6 +661,7 @@ export function ContestDetailsAccordion({
 }: {
   code: string;
   rosterSize: number;
+  entryFee: string;
   openAt?: string | null;
   lockAt?: string | null;
   liveAt?: string | null;
@@ -408,13 +671,16 @@ export function ContestDetailsAccordion({
 }) {
   const items = [
     { label: "Contest code", value: code },
-    { label: "Lineup size", value: `${rosterSize} cards` },
     ...(seasonName ? [{ label: "Season", value: seasonName }] : []),
     ...(leagueTierRequired ? [{ label: "League tier", value: leagueTierRequired }] : []),
     ...(openAt ? [{ label: "Registration opens", value: openAt }] : []),
     ...(lockAt ? [{ label: "Lineup lock", value: lockAt }] : []),
     ...(liveAt ? [{ label: "Contest live", value: liveAt }] : []),
     ...(endsAt ? [{ label: "Contest end", value: endsAt }] : []),
+  ];
+  const rules = [
+    `Submit exactly ${rosterSize} cards.`,
+    entryFee === "Free" ? "Entry is free." : `Entry costs ${entryFee}.`,
   ];
 
   return (
@@ -423,14 +689,24 @@ export function ContestDetailsAccordion({
         <span>Contest details</span>
         <span className="contest-detail-inline-note">Rules, timing, and support metadata</span>
       </summary>
-      <dl className="contest-detail-accordion-grid">
-        {items.map((item) => (
-          <div key={item.label}>
-            <dt>{item.label}</dt>
-            <dd>{item.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="contest-detail-accordion-body">
+        <div className="contest-detail-accordion-section">
+          <p className="mcg-eyebrow">Rules</p>
+          <ul className="contest-detail-rule-list">
+            {rules.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+        </div>
+        <dl className="contest-detail-accordion-grid">
+          {items.map((item) => (
+            <div key={item.label}>
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
       <Link href="/contests" className="contest-detail-inline-link">Back to all contests</Link>
     </details>
   );
