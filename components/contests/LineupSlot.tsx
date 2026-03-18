@@ -21,7 +21,7 @@ export function LineupSlot({
       <div className="lineup-slot-v2-head">
         <span className="lineup-slot-v2-index">Slot {index + 1}</span>
         {canEdit ? (
-          <div style={{ display: "flex", gap: "0.35rem" }}>
+          <div className="lineup-slot-v2-actions">
             {card ? <button type="button" className="lineup-slot-v2-remove" onClick={onRemove}>Remove</button> : null}
             <button type="button" className="lineup-slot-v2-remove" onClick={onOpenPicker}>{card ? "Replace" : "Select"}</button>
           </div>
