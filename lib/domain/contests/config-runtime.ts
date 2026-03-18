@@ -303,70 +303,95 @@ export async function validateContestDraft(contestId: string) {
 }
 
 export async function publishContest(contestId: string) {
-  const hasQStash = Boolean(process.env.QSTASH_TOKEN);
+  const hasQStash = Boolean(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_APP_URL);
+  let scheduledJobs: ScheduledLifecycleJobs | null = null;
 
-  await prisma.$transaction(async (tx) => {
-    const contest = await tx.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
-    if (!contest) throw new ContestRuntimeError("Contest not found", 404);
-    if (contest.configPublishedAt) throw new ContestRuntimeError("Contest is already published", 409);
+  console.info(`[publish] Contest ${contestId} publish requested qstashConfigured=${hasQStash}`);
 
-    const issues = validateContestDraftEntity(contest as ContestWithConfig);
-    const blocking = issues.some((issue) => issue.severity === "ERROR");
-    if (blocking) {
-      throw new ContestRuntimeError(
-        `Contest draft cannot be published: ${issues
-          .filter((issue) => issue.severity === "ERROR")
-          .map((issue) => issue.message)
-          .join("; ")}`,
-        400
-      );
-    }
+  const contest = await prisma.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
+  if (!contest) throw new ContestRuntimeError("Contest not found", 404);
+  if (contest.configPublishedAt) throw new ContestRuntimeError("Contest is already published", 409);
 
-    const transitionValidation = validateContestTransitionState({
-      id: contest.id,
-      status: contest.status,
-      configPublishedAt: new Date(),
-      openAt: contest.openAt,
-      liveAt: contest.liveAt,
-      lockAt: contest.lockAt,
-      endsAt: contest.endsAt,
-      _count: {
-        entries: 0,
-        rankings: 0,
-        settlements: 0,
-      },
-    }, ContestStatus.OPEN, "manual");
-    if (transitionValidation.blocking) {
-      const firstError = transitionValidation.issues.find((issue) => issue.severity === "ERROR");
-      throw new ContestRuntimeError(firstError?.message ?? "Contest cannot transition to OPEN", 409);
-    }
+  const issues = validateContestDraftEntity(contest as ContestWithConfig);
+  const blocking = issues.some((issue) => issue.severity === "ERROR");
+  if (blocking) {
+    throw new ContestRuntimeError(
+      `Contest draft cannot be published: ${issues
+        .filter((issue) => issue.severity === "ERROR")
+        .map((issue) => issue.message)
+        .join("; ")}`,
+      400,
+    );
+  }
 
-    // Publishing always moves draft to OPEN immediately.
-    // openAt controls when players can effectively register.
-    await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), status: ContestStatus.OPEN } });
-    await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.PUBLISHED } });
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  const transitionValidation = validateContestTransitionState({
+    id: contest.id,
+    status: contest.status,
+    configPublishedAt: new Date(),
+    openAt: contest.openAt,
+    liveAt: contest.liveAt,
+    lockAt: contest.lockAt,
+    endsAt: contest.endsAt,
+    _count: {
+      entries: 0,
+      rankings: 0,
+      settlements: 0,
+    },
+  }, ContestStatus.OPEN, "manual");
+  if (transitionValidation.blocking) {
+    const firstError = transitionValidation.issues.find((issue) => issue.severity === "ERROR");
+    throw new ContestRuntimeError(firstError?.message ?? "Contest cannot transition to OPEN", 409);
+  }
 
   if (hasQStash) {
-    const contest = await prisma.contest.findUnique({ where: { id: contestId }, select: { lockAt: true, liveAt: true, endsAt: true } });
-    if (contest?.liveAt && contest.endsAt) {
-      try {
-        const jobs = await scheduleLifecycleQStashJobs(contestId, contest.lockAt, contest.liveAt, contest.endsAt);
-        await prisma.contest.update({
-          where: { id: contestId },
-          data: {
-            qstashOpenJobId: jobs.openJobId,
-            qstashLiveJobId: jobs.liveJobId,
-            qstashSettleJobId: jobs.settleJobId,
-          },
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`[publish] Failed to schedule QStash jobs for contest ${contestId}: ${message}`);
-      }
-    } else {
-      console.warn(`[publish] Contest ${contestId} missing liveAt/endsAt — QStash jobs not scheduled`);
+    if (!contest.liveAt || !contest.endsAt) {
+      throw new ContestRuntimeError("Contest cannot be published with QStash enabled until liveAt and endsAt are set", 409);
     }
+
+    try {
+      console.info(
+        `[publish] Scheduling lifecycle jobs for contest ${contestId} lockAt=${contest.lockAt?.toISOString() ?? "null"} liveAt=${contest.liveAt.toISOString()} endsAt=${contest.endsAt.toISOString()}`,
+      );
+      scheduledJobs = await scheduleLifecycleQStashJobs(contestId, contest.lockAt, contest.liveAt, contest.endsAt);
+      console.info(
+        `[publish] Contest ${contestId} lifecycle jobs prepared open=${scheduledJobs.openJobId ?? "none"} live=${scheduledJobs.liveJobId} settle=${scheduledJobs.settleJobId}`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[publish] Failed to schedule QStash jobs for contest ${contestId}: ${message}`);
+      throw new ContestRuntimeError(`Contest publish aborted because lifecycle job scheduling failed: ${message}`, 502);
+    }
+  } else {
+    console.warn(`[publish] Contest ${contestId} has no QStash lifecycle driver configured. Runtime fallback scheduler must reconcile this contest.`);
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const latestContest = await tx.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
+      if (!latestContest) throw new ContestRuntimeError("Contest not found", 404);
+      if (latestContest.configPublishedAt) throw new ContestRuntimeError("Contest is already published", 409);
+
+      await tx.contest.update({
+        where: { id: contestId },
+        data: {
+          configPublishedAt: new Date(),
+          status: ContestStatus.OPEN,
+          qstashOpenJobId: scheduledJobs?.openJobId ?? null,
+          qstashLiveJobId: scheduledJobs?.liveJobId ?? null,
+          qstashSettleJobId: scheduledJobs?.settleJobId ?? null,
+        },
+      });
+      await tx.contestRewardPolicy.updateMany({ where: { contestId }, data: { status: ContestRewardPolicyStatus.PUBLISHED } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    if (scheduledJobs) {
+      await deleteLifecycleQStashJobs({
+        qstashOpenJobId: scheduledJobs.openJobId,
+        qstashLiveJobId: scheduledJobs.liveJobId,
+        qstashSettleJobId: scheduledJobs.settleJobId,
+      });
+    }
+    throw error;
   }
 
   const updated = await prisma.contest.findUnique({ where: { id: contestId }, include: contestDraftInclude });
@@ -727,6 +752,20 @@ function normalizeRuleConfig(ruleConfig: Record<string, unknown> | null, rewardC
   return (Object.keys(merged).length === 0 ? Prisma.JsonNull : merged) as Prisma.InputJsonValue | Prisma.NullTypes.JsonNull;
 }
 
+type ScheduledLifecycleJobs = {
+  openJobId: string | null;
+  liveJobId: string;
+  settleJobId: string;
+};
+
+async function deleteLifecycleQStashJobs(existing: { qstashOpenJobId: string | null; qstashLiveJobId: string | null; qstashSettleJobId: string | null }) {
+  await Promise.allSettled([
+    existing.qstashOpenJobId ? qstash.messages.delete(existing.qstashOpenJobId) : Promise.resolve(),
+    existing.qstashLiveJobId ? qstash.messages.delete(existing.qstashLiveJobId) : Promise.resolve(),
+    existing.qstashSettleJobId ? qstash.messages.delete(existing.qstashSettleJobId) : Promise.resolve(),
+  ]);
+}
+
 async function rescheduleQStashJobs(
   contestId: string,
   existing: { qstashOpenJobId: string | null; qstashLiveJobId: string | null; qstashSettleJobId: string | null },
@@ -735,12 +774,7 @@ async function rescheduleQStashJobs(
   endsAt: Date
 ) {
   try {
-    // Cancel old jobs (best-effort — ignore 404s)
-    await Promise.allSettled([
-      existing.qstashOpenJobId ? qstash.messages.delete(existing.qstashOpenJobId) : Promise.resolve(),
-      existing.qstashLiveJobId ? qstash.messages.delete(existing.qstashLiveJobId) : Promise.resolve(),
-      existing.qstashSettleJobId ? qstash.messages.delete(existing.qstashSettleJobId) : Promise.resolve(),
-    ]);
+    await deleteLifecycleQStashJobs(existing);
     const jobs = await scheduleLifecycleQStashJobs(contestId, lockAt, liveAt, endsAt);
 
     await prisma.contest.update({
@@ -754,6 +788,7 @@ async function rescheduleQStashJobs(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[update] Failed to reschedule QStash jobs for contest ${contestId}: ${message}`);
+    throw new ContestRuntimeError(`Contest lifecycle reschedule failed: ${message}`, 502);
   }
 }
 
@@ -764,6 +799,7 @@ async function scheduleLifecycleQStashJobs(
   endsAt: Date,
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  console.info(`[publish] scheduleLifecycleQStashJobs contest=${contestId} baseUrl=${baseUrl}`);
   const [openJob, liveJob, settleJob] = await Promise.all([
     lockAt
       ? qstash.publishJSON({

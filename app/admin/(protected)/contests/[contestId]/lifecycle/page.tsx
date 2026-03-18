@@ -15,14 +15,51 @@ function newIdempotencyKey(prefix: string) {
 
 const PHASES: ContestStatus[] = ["DRAFT", "OPEN", "LOCKED", "LIVE", "SETTLED", "CANCELED"];
 
+type LifecycleDebugPayload = {
+  contestId: string;
+  currentStatus: ContestStatus;
+  expectedTargetStatus: ContestStatus | null;
+  canTransitionToLive: boolean;
+  reasonIfBlocked: string | null;
+  openPhaseEndAt: string | null;
+  hasStartSnapshot: boolean;
+  hasEndSnapshot: boolean;
+  hasEntries: boolean;
+  qstashOpenJobId: string | null;
+  qstashLiveJobId: string | null;
+  qstashSettleJobId: string | null;
+  publishedWithoutLifecycleJobs: boolean;
+  schedulerEnabled: boolean;
+  qstashConfigured: boolean;
+  lastKnownLifecycleDriver: string;
+  whatShouldHaveHappened: string;
+  whatActuallyHappened: string;
+  nextActionRecommended: string;
+  humanSummary: string;
+};
+
 export default function ContestLifecyclePage({ params }: { params: { contestId: string } }) {
   const [currentPhase, setCurrentPhase] = useState<ContestStatus | null>(null);
   const [targetPhase, setTargetPhase] = useState<ContestStatus>("OPEN");
   const [issues, setIssues] = useState<Array<{ severity: string; message: string }>>([]);
   const [validationToken, setValidationToken] = useState("");
   const [message, setMessage] = useState("");
+  const [debug, setDebug] = useState<LifecycleDebugPayload | null>(null);
+  const [debugLoading, setDebugLoading] = useState(false);
+  const [forceBusy, setForceBusy] = useState(false);
   const [canExecute, setCanExecute] = useState(false);
   const meta = useContestWorkbenchMeta(params.contestId);
+
+  const loadDebug = async () => {
+    setDebugLoading(true);
+    try {
+      const response = await fetch(`/api/internal/contests/${params.contestId}/lifecycle-debug`, { cache: "no-store" });
+      const payload = (await response.json().catch(() => null)) as { debug?: LifecycleDebugPayload } | null;
+      setDebug(payload?.debug ?? null);
+    } finally {
+      setDebugLoading(false);
+    }
+  };
 
   useEffect(() => {
     void fetch(`/api/internal/contests/${params.contestId}`, { cache: "no-store" })
@@ -35,6 +72,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
           setTargetPhase(allowed[0] ?? phase);
         }
       });
+    void loadDebug();
   }, [params.contestId]);
 
   const validateTransition = async () => {
@@ -92,6 +130,37 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
 
     setCurrentPhase(payload.contest?.status ?? targetPhase);
     setMessage(`Phase updated to ${payload.contest?.status ?? targetPhase}`);
+    await loadDebug();
+  };
+
+  const forceLifecycleNow = async () => {
+    setForceBusy(true);
+    setMessage("");
+
+    const response = await fetch(`/api/internal/contests/${params.contestId}/force-lifecycle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+      statusAfter?: ContestStatus;
+      statusBefore?: ContestStatus;
+      transitionAttempted?: string | null;
+    } | null;
+
+    if (!response.ok || !payload) {
+      setMessage(payload?.error ?? "Force lifecycle failed");
+      setForceBusy(false);
+      await loadDebug();
+      return;
+    }
+
+    if (payload.statusAfter) {
+      setCurrentPhase(payload.statusAfter);
+    }
+    setMessage(`Force lifecycle executed: ${payload.transitionAttempted ?? "no transition"} (${payload.statusBefore ?? "?"} -> ${payload.statusAfter ?? "?"}).`);
+    setForceBusy(false);
+    await loadDebug();
   };
 
   const allowedTransitions = currentPhase ? getAllowedContestTransitions(currentPhase) : [];
@@ -114,6 +183,42 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="admin-v2-panel">
+        <div className="contest-workbench-actions-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h2 className="contest-admin-section-title">Runtime lifecycle diagnostic</h2>
+            <p className="contest-admin-muted">Readable from admin without SQL. Use force-lifecycle to reconcile this contest immediately.</p>
+          </div>
+          <div className="contest-workbench-actions-row">
+            <Button variant="ghost" onClick={() => void loadDebug()} disabled={debugLoading}>Refresh diagnostic</Button>
+            <Button onClick={() => void forceLifecycleNow()} disabled={forceBusy}>{forceBusy ? "Forcing…" : "Force lifecycle now"}</Button>
+          </div>
+        </div>
+        {debug ? (
+          <div className="contest-admin-blocker-list" style={{ marginTop: 16 }}>
+            <div className="contest-workbench-note-block">
+              <p className="contest-admin-muted"><strong>Summary.</strong> {debug.humanSummary}</p>
+              <p className="contest-admin-muted"><strong>Should have happened.</strong> {debug.whatShouldHaveHappened}</p>
+              <p className="contest-admin-muted"><strong>Actually happened.</strong> {debug.whatActuallyHappened}</p>
+              <p className="contest-admin-muted"><strong>Next action.</strong> {debug.nextActionRecommended}</p>
+            </div>
+            <div className="contest-workbench-note-block">
+              <p className="contest-admin-muted">Driver: <strong>{debug.lastKnownLifecycleDriver}</strong></p>
+              <p className="contest-admin-muted">Expected target: <strong>{debug.expectedTargetStatus ?? "none"}</strong></p>
+              <p className="contest-admin-muted">OPEN phase end used by code: <strong>{debug.openPhaseEndAt ?? "null"}</strong></p>
+              <p className="contest-admin-muted">Can transition to LIVE: <strong>{debug.canTransitionToLive ? "yes" : "no"}</strong></p>
+              <p className="contest-admin-muted">Blocked reason: <strong>{debug.reasonIfBlocked ?? "none"}</strong></p>
+              <p className="contest-admin-muted">Snapshots: <strong>START={String(debug.hasStartSnapshot)}</strong> / <strong>END={String(debug.hasEndSnapshot)}</strong></p>
+              <p className="contest-admin-muted">Jobs: <strong>open={debug.qstashOpenJobId ?? "none"}</strong> / <strong>live={debug.qstashLiveJobId ?? "none"}</strong> / <strong>settle={debug.qstashSettleJobId ?? "none"}</strong></p>
+              <p className="contest-admin-muted">Published without lifecycle jobs: <strong>{debug.publishedWithoutLifecycleJobs ? "yes" : "no"}</strong></p>
+              <p className="contest-admin-muted">Runtime config: <strong>schedulerEnabled={String(debug.schedulerEnabled)}</strong> / <strong>qstashConfigured={String(debug.qstashConfigured)}</strong></p>
+            </div>
+          </div>
+        ) : (
+          <p className="contest-admin-subtle" style={{ marginTop: 12 }}>{debugLoading ? "Loading diagnostic…" : "No diagnostic loaded yet."}</p>
+        )}
       </section>
 
       <section className="admin-v2-panel contest-workbench-two-col">
