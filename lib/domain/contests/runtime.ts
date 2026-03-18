@@ -8,7 +8,6 @@ import {
   RewardType,
 } from "@prisma/client";
 
-import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { hasDuplicateLogicalTokens } from "@/lib/domain/contests/lineup-token";
@@ -81,9 +80,6 @@ async function getContestRule(tx: Prisma.TransactionClient, contestId: string) {
 }
 
 export async function listContestsMvp() {
-  // Fire-and-forget safety net: catches any QStash jobs that failed or were delayed.
-  void reconcileDueContestsByTime().catch(() => {});
-
   return prismaSafe((tx) =>
     tx.contest.findMany({
       where: {
@@ -117,7 +113,6 @@ export async function listContestsMvp() {
 }
 
 export async function getContestDetailMvp(contestId: string, userId?: string) {
-  await reconcileContestLifecycleByTime(contestId);
   return prismaSafe(async (tx) => {
     const contest = await tx.contest.findUnique({
       where: { id: contestId },
@@ -550,11 +545,9 @@ export async function createContestMvp(input: {
 }
 
 export async function updateContestStatusMvp(contestId: string, status: ContestStatus) {
-  return prismaSafe((tx) =>
-    tx.contest.update({
-      where: { id: contestId },
-      data: { status },
-    })
+  throw new ContestRuntimeError(
+    `Direct contest status updates are disabled for lifecycle transitions (contestId=${contestId}, status=${status}). Use executeContestTransition instead.`,
+    409,
   );
 }
 

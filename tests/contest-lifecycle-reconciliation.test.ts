@@ -3,40 +3,41 @@ import { ContestStatus } from "@prisma/client";
 
 const {
   prismaMock,
-  captureStartSnapshotMock,
-  finalizeContestFromEndSnapshotTriggerMock,
+  executeContestTransitionMock,
 } = vi.hoisted(() => ({
   prismaMock: {
     contest: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
-      updateMany: vi.fn(),
     },
   },
-  captureStartSnapshotMock: vi.fn(),
-  finalizeContestFromEndSnapshotTriggerMock: vi.fn(),
+  executeContestTransitionMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
-vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({
-  captureStartSnapshot: captureStartSnapshotMock,
-}));
-vi.mock("@/lib/domain/contests/finalization-runtime", () => ({
-  finalizeContestFromEndSnapshotTrigger: finalizeContestFromEndSnapshotTriggerMock,
+vi.mock("@/lib/domain/contests/contest-lifecycle-runtime", () => ({
+  executeContestTransition: executeContestTransitionMock,
 }));
 
 import { reconcileContestLifecycleByTime, reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 
 describe("contest lifecycle reconciliation", () => {
+  function mockContestState(initial: { id: string; status: ContestStatus; liveAt: Date; lockAt: Date; endsAt: Date }) {
+    const state = { ...initial };
+    prismaMock.contest.findUnique.mockImplementation(async () => ({ ...state }));
+    executeContestTransitionMock.mockImplementation(async (_contestId: string, target: ContestStatus) => {
+      state.status = target;
+      return { contest: { id: state.id, status: state.status } };
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
-    captureStartSnapshotMock.mockResolvedValue({});
-    finalizeContestFromEndSnapshotTriggerMock.mockResolvedValue({});
-    prismaMock.contest.updateMany.mockResolvedValue({ count: 1 });
+    executeContestTransitionMock.mockResolvedValue({});
   });
 
   it("keeps OPEN before lockAt", async () => {
-    prismaMock.contest.findUnique.mockResolvedValue({
+    mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
       liveAt: new Date("2026-03-14T13:30:00.000Z"),
@@ -52,7 +53,7 @@ describe("contest lifecycle reconciliation", () => {
   });
 
   it("moves OPEN to LOCKED after lockAt", async () => {
-    prismaMock.contest.findUnique.mockResolvedValue({
+    mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
       liveAt: new Date("2026-03-14T13:30:00.000Z"),
@@ -64,12 +65,11 @@ describe("contest lifecycle reconciliation", () => {
 
     expect(result?.finalStatus).toBe(ContestStatus.LOCKED);
     expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.LOCKED]);
-    expect(captureStartSnapshotMock).not.toHaveBeenCalled();
-    expect(finalizeContestFromEndSnapshotTriggerMock).not.toHaveBeenCalled();
+    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.LOCKED, "auto");
   });
 
   it("moves LIVE to SETTLED after endsAt with full finalization automation", async () => {
-    prismaMock.contest.findUnique.mockResolvedValue({
+    mockContestState({
       id: "c1",
       status: ContestStatus.LIVE,
       liveAt: new Date("2026-03-14T12:00:00.000Z"),
@@ -81,11 +81,11 @@ describe("contest lifecycle reconciliation", () => {
 
     expect(result?.finalStatus).toBe(ContestStatus.SETTLED);
     expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.SETTLED]);
-    expect(finalizeContestFromEndSnapshotTriggerMock).toHaveBeenCalledWith("c1");
+    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.SETTLED, "auto");
   });
 
   it("catches up OPEN directly to SETTLED step-by-step", async () => {
-    prismaMock.contest.findUnique.mockResolvedValue({
+    mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
       liveAt: new Date("2026-03-14T12:00:00.000Z"),
@@ -100,13 +100,16 @@ describe("contest lifecycle reconciliation", () => {
       "LOCKED->LIVE",
       "LIVE->SETTLED",
     ]);
-    expect(captureStartSnapshotMock).toHaveBeenCalledTimes(1);
-    expect(finalizeContestFromEndSnapshotTriggerMock).toHaveBeenCalledTimes(1);
+    expect(executeContestTransitionMock.mock.calls).toEqual([
+      ["c1", ContestStatus.LOCKED, "auto"],
+      ["c1", ContestStatus.LIVE, "auto"],
+      ["c1", ContestStatus.SETTLED, "auto"],
+    ]);
   });
 
   it("reconciles due contests in batch", async () => {
     prismaMock.contest.findMany.mockResolvedValue([{ id: "c1" }]);
-    prismaMock.contest.findUnique.mockResolvedValue({
+    mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
       liveAt: new Date("2026-03-14T13:30:00.000Z"),

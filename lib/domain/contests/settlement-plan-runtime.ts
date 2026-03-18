@@ -34,6 +34,7 @@ export async function generateSettlementPlan(contestId: string) {
     const contest = await tx.contest.findUnique({
       where: { id: contestId },
       include: {
+        _count: { select: { entries: true } },
         rules: { orderBy: { id: "asc" } },
         rewardPolicy: {
           include: {
@@ -48,7 +49,12 @@ export async function generateSettlementPlan(contestId: string) {
 
     if (!contest) throw new ContestRuntimeError("Contest not found", 404);
     if (contest.settlements.length > 0) throw new ContestRuntimeError("Contest already settled", 409);
-    if (contest.rankings.length === 0) throw new ContestRuntimeError("Cannot generate settlement plan without ranking rows", 409);
+    const entryCount = contest._count.entries;
+    const rankingCount = contest.rankings.length;
+    const isZeroEntryContest = entryCount === 0;
+    if (!isZeroEntryContest && rankingCount === 0) {
+      throw new ContestRuntimeError("Cannot generate settlement plan without ranking rows", 409);
+    }
 
     const policy = contest.rewardPolicy;
     if (!policy || policy.status !== "PUBLISHED") {
@@ -200,21 +206,25 @@ export async function generateSettlementPlan(contestId: string) {
           })),
         },
         rankingSnapshotSize: rankingSize,
-        items: {
-          createMany: {
-            data: items.map((item) => ({
-              userId: item.userId,
-              rank: item.rank,
-              sourceRuleId: item.sourceRuleId,
-              sourceRuleType: item.sourceRuleType,
-              sourceBundleId: item.sourceBundleId,
-              rewardComponents: item.rewardComponents as unknown as Prisma.InputJsonValue,
-              pointsTotal: item.pointsTotal,
-              xpTotal: item.xpTotal,
-              packsTotal: item.packsTotal,
-            })),
-          },
-        },
+        ...(items.length > 0
+          ? {
+              items: {
+                createMany: {
+                  data: items.map((item) => ({
+                    userId: item.userId,
+                    rank: item.rank,
+                    sourceRuleId: item.sourceRuleId,
+                    sourceRuleType: item.sourceRuleType,
+                    sourceBundleId: item.sourceBundleId,
+                    rewardComponents: item.rewardComponents as unknown as Prisma.InputJsonValue,
+                    pointsTotal: item.pointsTotal,
+                    xpTotal: item.xpTotal,
+                    packsTotal: item.packsTotal,
+                  })),
+                },
+              },
+            }
+          : {}),
       },
       include: {
         items: { orderBy: [{ rank: "asc" }] },

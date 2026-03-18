@@ -99,6 +99,49 @@ describe("finalizeContestFromEndSnapshotTrigger", () => {
     expect(result.stepsSkipped).toEqual(["END_SNAPSHOT", "SCORING", "RANKING", "SETTLEMENT"]);
   });
 
+  it("finalizes zero-entry contests without forcing scoring or ranking", async () => {
+    prismaMock.contestEntry.count.mockResolvedValue(0);
+    prismaMock.rosterLock.count.mockResolvedValue(0);
+    prismaMock.contestTokenSnapshot.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1);
+    prismaMock.contestTokenScore.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    prismaMock.contestEntryScoreBreakdown.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    prismaMock.contestScore.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    prismaMock.contestRanking.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0);
+    prismaMock.contestSettlement.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1);
+
+    const result = await finalizeContestFromEndSnapshotTrigger("c1");
+
+    expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
+    expect(computeContestScoresFromSnapshotsMock).not.toHaveBeenCalled();
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
+    expect(result.stepsExecuted).toEqual(["END_SNAPSHOT", "SETTLEMENT"]);
+    expect(result.stepsSkipped).toEqual(["SCORING", "RANKING"]);
+  });
+
   it("returns explicit step failure when scoring fails", async () => {
     prismaMock.contestEntry.count.mockResolvedValue(1);
     prismaMock.rosterLock.count.mockResolvedValue(1);

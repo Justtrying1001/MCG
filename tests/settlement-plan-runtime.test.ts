@@ -21,6 +21,7 @@ describe("settlement plan runtime", () => {
       contest: {
         findUnique: vi.fn().mockResolvedValue({
           id: "c1",
+          _count: { entries: 4 },
           configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
           settlements: [],
           rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 5, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
@@ -61,6 +62,84 @@ describe("settlement plan runtime", () => {
     expect(result.matchedUsers).toBe(2);
     expect(result.totals.pointsCreditTotal).toBe(100);
     expect(result.totals.packsGrantTotal).toBe(5);
+  });
+
+  it("generates an empty settlement plan for zero-entry contests", async () => {
+    const createMock = vi.fn().mockImplementation(async ({ data }: any) => ({
+      id: "sp-empty",
+      status: "DRAFT",
+      contestId: data.contestId,
+      items: [],
+    }));
+    const tx: any = {
+      contest: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "c-empty",
+          _count: { entries: 0 },
+          configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+          settlements: [],
+          rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 0, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+          rankings: [],
+          rewardPolicy: {
+            id: "rp1",
+            status: "PUBLISHED",
+            bundles: [],
+            distributionRules: [],
+          },
+        }),
+      },
+      packDefinition: {
+        findFirst: vi.fn().mockResolvedValue({ id: "pack1" }),
+      },
+      contestSettlementPlan: {
+        findMany: vi.fn().mockResolvedValue([]),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        create: createMock,
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    const result = await generateSettlementPlan("c-empty");
+
+    expect(result.planId).toBe("sp-empty");
+    expect(result.rankingSize).toBe(0);
+    expect(result.matchedUsers).toBe(0);
+    expect(result.totals).toEqual({
+      usersCount: 0,
+      pointsCreditTotal: 0,
+      xpCreditTotal: 0,
+      packsGrantTotal: 0,
+      rewardActionsCount: 0,
+    });
+    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.not.objectContaining({ items: expect.anything() }),
+    }));
+  });
+
+  it("keeps strict error when entrants exist but rankings are missing", async () => {
+    const tx: any = {
+      contest: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "c1",
+          _count: { entries: 2 },
+          configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+          settlements: [],
+          rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 0, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+          rankings: [],
+          rewardPolicy: {
+            id: "rp1",
+            status: "PUBLISHED",
+            bundles: [],
+            distributionRules: [],
+          },
+        }),
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    await expect(generateSettlementPlan("c1")).rejects.toThrow(/Cannot generate settlement plan without ranking rows/i);
   });
 
   it("previews plan with totals", async () => {
