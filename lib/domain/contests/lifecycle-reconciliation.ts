@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 type ReconciliationStep = {
   from: ContestStatus;
   to: ContestStatus;
-  reason: "LOCK_AT_REACHED" | "STARTS_AT_REACHED" | "ENDS_AT_REACHED";
+  reason: "OPEN_PHASE_ENDED" | "STARTS_AT_REACHED" | "ENDS_AT_REACHED";
 };
 
 type ContestLifecycleSnapshot = {
@@ -25,7 +25,9 @@ export type ContestLifecycleReconciliationResult = {
   steps: ReconciliationStep[];
 };
 
-const ORDERED_STATUSES: ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE, ContestStatus.SETTLED];
+function resolveOpenPhaseEndAt(contest: ContestLifecycleSnapshot) {
+  return contest.lockAt ?? contest.liveAt;
+}
 
 function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { target: ContestStatus | null; reason: ReconciliationStep["reason"] | null } {
   if (contest.status === ContestStatus.DRAFT || contest.status === ContestStatus.CANCELED || contest.status === ContestStatus.SETTLED) {
@@ -36,22 +38,25 @@ function deriveTargetStatus(contest: ContestLifecycleSnapshot, now: Date): { tar
     return { target: ContestStatus.SETTLED, reason: "ENDS_AT_REACHED" };
   }
 
-  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && contest.liveAt && now >= contest.liveAt) {
-    return { target: ContestStatus.LIVE, reason: "STARTS_AT_REACHED" };
-  }
-
-  if (contest.status === ContestStatus.OPEN && contest.lockAt && now >= contest.lockAt) {
-    return { target: ContestStatus.LOCKED, reason: "LOCK_AT_REACHED" };
+  const openPhaseEndAt = resolveOpenPhaseEndAt(contest);
+  if ((contest.status === ContestStatus.OPEN || contest.status === ContestStatus.LOCKED) && openPhaseEndAt && now >= openPhaseEndAt) {
+    return { target: ContestStatus.LIVE, reason: contest.status === ContestStatus.OPEN ? "OPEN_PHASE_ENDED" : "STARTS_AT_REACHED" };
   }
 
   return { target: null, reason: null };
 }
 
 function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatus | null {
-  const currentIndex = ORDERED_STATUSES.indexOf(current);
-  const targetIndex = ORDERED_STATUSES.indexOf(target);
-  if (currentIndex === -1 || targetIndex === -1 || currentIndex >= targetIndex) return null;
-  return ORDERED_STATUSES[currentIndex + 1] ?? null;
+  if (target === ContestStatus.LIVE && (current === ContestStatus.OPEN || current === ContestStatus.LOCKED)) {
+    return ContestStatus.LIVE;
+  }
+  if (target === ContestStatus.SETTLED && current === ContestStatus.OPEN) {
+    return ContestStatus.LIVE;
+  }
+  if (target === ContestStatus.SETTLED && (current === ContestStatus.LIVE || current === ContestStatus.LOCKED)) {
+    return ContestStatus.SETTLED;
+  }
+  return null;
 }
 
 export async function reconcileContestLifecycleByTime(contestId: string, nowInput?: Date): Promise<ContestLifecycleReconciliationResult | null> {
@@ -101,7 +106,8 @@ export async function reconcileDueContestsByTime(nowInput?: Date) {
     where: {
       OR: [
         { status: ContestStatus.OPEN, lockAt: { not: null, lte: now } },
-        { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] }, liveAt: { not: null, lte: now } },
+        { status: ContestStatus.OPEN, liveAt: { not: null, lte: now } },
+        { status: ContestStatus.LOCKED, liveAt: { not: null, lte: now } },
         { status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED, ContestStatus.LIVE] }, endsAt: { not: null, lte: now } },
       ],
     },

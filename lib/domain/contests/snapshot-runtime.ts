@@ -54,17 +54,8 @@ async function captureSnapshot(contestId: string, phase: ContestSnapshotPhase): 
   if (geckoIds.length === 0) {
     // No geckoIds at all — skip CoinGecko call entirely, store tokens with null prices
     markets = [];
-  } else if (phase === ContestSnapshotPhase.START) {
-    // START snapshot is critical for scoring — propagate failure to block LIVE transition
-    markets = await fetchMarketsWithRetry(geckoIds, phase, contestId);
   } else {
-    try {
-      markets = await fetchMarketsWithRetry(geckoIds, phase, contestId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[contest-snapshot] CoinGecko all retries exhausted for END snapshot contest=${contestId}: ${message}. Proceeding with null metrics.`);
-      markets = [];
-    }
+    markets = await fetchMarketsWithRetry(geckoIds, phase, contestId);
   }
 
   const marketById = new Map(markets.map((row) => [row.id.toLowerCase(), row]));

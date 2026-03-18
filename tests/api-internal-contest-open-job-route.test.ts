@@ -25,8 +25,8 @@ describe("contest-open job route", () => {
     reconcileContestLifecycleByTimeMock.mockResolvedValue({
       contestId: "c1",
       initialStatus: "OPEN",
-      finalStatus: "LOCKED",
-      steps: [{ from: "OPEN", to: "LOCKED", reason: "LOCK_AT_REACHED" }],
+      finalStatus: "LIVE",
+      steps: [{ from: "OPEN", to: "LIVE", reason: "OPEN_PHASE_ENDED" }],
     });
   });
 
@@ -46,6 +46,6 @@ describe("contest-open job route", () => {
     expect(response.status).toBe(200);
     expect(reconcileContestLifecycleByTimeMock).toHaveBeenCalledWith("c1");
     expect(json.ok).toBe(true);
-    expect(json.result.finalStatus).toBe("LOCKED");
+    expect(json.result.finalStatus).toBe("LIVE");
   });
 });

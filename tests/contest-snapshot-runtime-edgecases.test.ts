@@ -76,7 +76,7 @@ describe("snapshot runtime edge cases", () => {
     expect(warnSpy).toHaveBeenCalledTimes(3);
   });
 
-  it("continues with null metrics after 3 retries on END snapshot CoinGecko failure", async () => {
+  it("throws after 3 retries when CoinGecko fails on END snapshot", async () => {
     vi.useFakeTimers();
 
     prismaMock.contestTokenSnapshot.findMany.mockResolvedValue([
@@ -100,15 +100,12 @@ describe("snapshot runtime edge cases", () => {
 
     fetchCoinsMarketsMock.mockRejectedValue(new Error("503 service unavailable"));
 
-    let result: any;
-    const promise = captureEndSnapshot("c1").then((r) => { result = r; });
+    const assertion = expect(captureEndSnapshot("c1")).rejects.toThrow("503 service unavailable");
     await vi.runAllTimersAsync();
-    await promise;
+    await assertion;
 
-    expect(result.capturedCount).toBe(0);
-    expect(result.missingCount).toBe(2);
-    expect(upserts[0].create.priceUsd).toBeNull();
-    expect(upserts[0].create.marketDataUpdatedAt).toBeNull();
-    expect(warnSpy).toHaveBeenCalled();
+    expect(upserts).toHaveLength(0);
+    expect(fetchCoinsMarketsMock).toHaveBeenCalledTimes(3);
+    expect(warnSpy).toHaveBeenCalledTimes(3);
   });
 });

@@ -93,12 +93,15 @@ describe("contest entry fee integration", () => {
     ]);
     prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
 
-    await expect(
+    const assertion = expect(
       enterContestMvp({
         contestId: "c1",
         userId: "u1",
         lineupInstanceIds: ["i1", "i2", "i3", "i4", "i5"],
       })
-    ).rejects.toMatchObject({ status: 400, message: "Lineup cannot contain duplicate tokens" });
+    ).rejects;
+
+    await assertion.toHaveProperty("status", 400);
+    await assertion.toThrow(/duplicate tokens/i);
   });
 });

@@ -77,7 +77,7 @@ describe("finalizeContestFromEndSnapshotTrigger", () => {
 
     expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
     expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledWith("c1");
-    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1", { finalizeContestStatus: false });
     expect(result.stepsExecuted).toEqual(["END_SNAPSHOT", "SCORING", "RANKING", "SETTLEMENT"]);
   });
 
@@ -137,7 +137,7 @@ describe("finalizeContestFromEndSnapshotTrigger", () => {
 
     expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
     expect(computeContestScoresFromSnapshotsMock).not.toHaveBeenCalled();
-    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
+    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1", { finalizeContestStatus: false });
     expect(result.stepsExecuted).toEqual(["END_SNAPSHOT", "SETTLEMENT"]);
     expect(result.stepsSkipped).toEqual(["SCORING", "RANKING"]);
   });
@@ -156,6 +156,21 @@ describe("finalizeContestFromEndSnapshotTrigger", () => {
     await expect(finalizeContestFromEndSnapshotTrigger("c1")).rejects.toThrow(/\[RANKING\] broken compute/);
     expect(executeAutoSettlementForContestMock).not.toHaveBeenCalled();
   });
+
+  it("returns explicit step failure when reward settlement fails", async () => {
+    prismaMock.contestEntry.count.mockResolvedValue(1);
+    prismaMock.rosterLock.count.mockResolvedValue(1);
+    prismaMock.contestTokenSnapshot.count.mockResolvedValue(1);
+    prismaMock.contestTokenScore.count.mockResolvedValue(1);
+    prismaMock.contestEntryScoreBreakdown.count.mockResolvedValue(1);
+    prismaMock.contestScore.count.mockResolvedValue(1);
+    prismaMock.contestRanking.count.mockResolvedValue(1);
+    prismaMock.contestSettlement.count.mockResolvedValue(0);
+    executeAutoSettlementForContestMock.mockRejectedValue(new Error("reward pool exhausted"));
+
+    await expect(finalizeContestFromEndSnapshotTrigger("c1")).rejects.toThrow(/\[SETTLEMENT\] reward pool exhausted/);
+  });
+
   it("derives scoring-ready when ranking + settlement exist even without breakdown rows", () => {
     expect(deriveContestProgressFromCounts({
       entries: 12,
