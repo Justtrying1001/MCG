@@ -1,16 +1,9 @@
-export type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
+import { type ContestStatus } from "@prisma/client";
 
-const ALLOWED_TRANSITIONS: Record<ContestStatus, ContestStatus[]> = {
-  DRAFT: ["OPEN", "CANCELED"],
-  OPEN: ["LOCKED", "CANCELED"],
-  LOCKED: ["LIVE", "CANCELED"],
-  LIVE: ["SETTLED", "CANCELED"],
-  SETTLED: [],
-  CANCELED: [],
-};
+import { getAllowedContestTransitions as getAllowedContestLifecycleTransitions } from "@/lib/domain/contests/contest-lifecycle-spec";
 
 export function getAllowedContestTransitions(current: ContestStatus): ContestStatus[] {
-  return ALLOWED_TRANSITIONS[current] ?? [];
+  return getAllowedContestLifecycleTransitions(current);
 }
 
 export function parseScoringRowsFromText(text: string) {

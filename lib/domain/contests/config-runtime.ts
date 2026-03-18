@@ -5,6 +5,7 @@ import {
   Prisma,
 } from "@prisma/client";
 
+import { validateContestTransitionState } from "@/lib/domain/contests/contest-lifecycle-runtime";
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { evaluateContestRewardPackCapacity } from "@/lib/domain/contests/reward-pack-capacity";
 import { prisma } from "@/lib/prisma";
@@ -230,7 +231,7 @@ export async function updateContestDraft(contestId: string, input: Partial<Conte
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
   if (timesChanged && existing.configPublishedAt && process.env.QSTASH_TOKEN && normalized.openAt && normalized.liveAt && normalized.endsAt) {
-    await rescheduleQStashJobs(contestId, existing, normalized.openAt, normalized.liveAt, normalized.endsAt);
+    await rescheduleQStashJobs(contestId, existing, normalized.liveAt, normalized.endsAt);
   }
 
   return result;
@@ -320,6 +321,25 @@ export async function publishContest(contestId: string) {
       );
     }
 
+    const transitionValidation = validateContestTransitionState({
+      id: contest.id,
+      status: contest.status,
+      configPublishedAt: new Date(),
+      openAt: contest.openAt,
+      liveAt: contest.liveAt,
+      lockAt: contest.lockAt,
+      endsAt: contest.endsAt,
+      _count: {
+        entries: 0,
+        rankings: 0,
+        settlements: 0,
+      },
+    }, ContestStatus.OPEN, "manual");
+    if (transitionValidation.blocking) {
+      const firstError = transitionValidation.issues.find((issue) => issue.severity === "ERROR");
+      throw new ContestRuntimeError(firstError?.message ?? "Contest cannot transition to OPEN", 409);
+    }
+
     // Publishing always moves draft to OPEN immediately.
     // openAt controls when players can effectively register.
     await tx.contest.update({ where: { id: contestId }, data: { configPublishedAt: new Date(), status: ContestStatus.OPEN } });
@@ -328,24 +348,23 @@ export async function publishContest(contestId: string) {
 
   if (hasQStash) {
     const contest = await prisma.contest.findUnique({ where: { id: contestId }, select: { openAt: true, liveAt: true, endsAt: true } });
-    if (contest?.openAt && contest.liveAt && contest.endsAt) {
+    if (contest?.liveAt && contest.endsAt) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
       try {
-        const [openJob, liveJob, settleJob] = await Promise.all([
-          qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-open`, body: { contestId }, notBefore: Math.floor(contest.openAt.getTime() / 1000) }),
+        const [liveJob, settleJob] = await Promise.all([
           qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-live`, body: { contestId }, notBefore: Math.floor(contest.liveAt.getTime() / 1000) }),
           qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-settle`, body: { contestId }, notBefore: Math.floor(contest.endsAt.getTime() / 1000) }),
         ]);
         await prisma.contest.update({
           where: { id: contestId },
-          data: { qstashOpenJobId: openJob.messageId, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
+          data: { qstashOpenJobId: null, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`[publish] Failed to schedule QStash jobs for contest ${contestId}: ${message}`);
       }
     } else {
-      console.warn(`[publish] Contest ${contestId} missing openAt/liveAt/endsAt — QStash jobs not scheduled`);
+      console.warn(`[publish] Contest ${contestId} missing liveAt/endsAt — QStash jobs not scheduled`);
     }
   }
 
@@ -708,7 +727,6 @@ function normalizeRuleConfig(ruleConfig: Record<string, unknown> | null, rewardC
 async function rescheduleQStashJobs(
   contestId: string,
   existing: { qstashOpenJobId: string | null; qstashLiveJobId: string | null; qstashSettleJobId: string | null },
-  openAt: Date,
   liveAt: Date,
   endsAt: Date
 ) {
@@ -716,20 +734,18 @@ async function rescheduleQStashJobs(
   try {
     // Cancel old jobs (best-effort — ignore 404s)
     await Promise.allSettled([
-      existing.qstashOpenJobId ? qstash.messages.delete(existing.qstashOpenJobId) : Promise.resolve(),
       existing.qstashLiveJobId ? qstash.messages.delete(existing.qstashLiveJobId) : Promise.resolve(),
       existing.qstashSettleJobId ? qstash.messages.delete(existing.qstashSettleJobId) : Promise.resolve(),
     ]);
 
-    const [openJob, liveJob, settleJob] = await Promise.all([
-      qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-open`, body: { contestId }, notBefore: Math.floor(openAt.getTime() / 1000) }),
+    const [liveJob, settleJob] = await Promise.all([
       qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-live`, body: { contestId }, notBefore: Math.floor(liveAt.getTime() / 1000) }),
       qstash.publishJSON({ url: `${baseUrl}/api/internal/jobs/contest-settle`, body: { contestId }, notBefore: Math.floor(endsAt.getTime() / 1000) }),
     ]);
 
     await prisma.contest.update({
       where: { id: contestId },
-      data: { qstashOpenJobId: openJob.messageId, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
+      data: { qstashOpenJobId: null, qstashLiveJobId: liveJob.messageId, qstashSettleJobId: settleJob.messageId },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

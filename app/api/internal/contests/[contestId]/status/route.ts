@@ -3,10 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { ADMIN_ROLES, claimIdempotencyKey, getAdminArtifact, requireAdminRole, safeLogAdminAction } from "@/lib/admin-ops";
 import { handleApiError } from "@/lib/api-error";
-import { ContestRuntimeError, getContestDetailMvp, updateContestStatusMvp } from "@/lib/domain/contests/runtime";
-import { computeContestScoresFromSnapshots } from "@/lib/domain/contests/scoring-engine-runtime";
-import { executeAutoSettlementForContest } from "@/lib/domain/contests/settlement-plan-runtime";
-import { captureEndSnapshot, captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
+import { executeContestTransition } from "@/lib/domain/contests/contest-lifecycle-runtime";
+import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 
 export async function POST(request: NextRequest, { params }: { params: { contestId: string } }) {
@@ -60,21 +58,8 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       return NextResponse.json({ ok: false, error: "Duplicate idempotency key", code: "IDEMPOTENCY_REPLAY" }, { status: 409 });
     }
 
-    const before = await getContestDetailMvp(params.contestId);
-
-    if (before.contest.status !== status) {
-      if (status === ContestStatus.LIVE) {
-        await captureStartSnapshot(params.contestId);
-      }
-
-      if (status === ContestStatus.SETTLED) {
-        await captureEndSnapshot(params.contestId);
-        await computeContestScoresFromSnapshots(params.contestId);
-        await executeAutoSettlementForContest(params.contestId);
-      }
-    }
-
-    const contest = await updateContestStatusMvp(params.contestId, status);
+    const result = await executeContestTransition(params.contestId, status, "manual");
+    const contest = result.contest;
 
     await safeLogAdminAction({
       actionType: "CONTEST_TRANSITION_EXECUTE",
@@ -86,12 +71,9 @@ export async function POST(request: NextRequest, { params }: { params: { contest
       requestSummary: { targetPhase: status, reasonCode: body?.reasonCode ?? null, validationToken, idempotencyKey },
       effectSummary: {
         contestStatus: contest.status,
-        previousPhase: tokenPayload.currentPhase ?? null,
-        automation: {
-          startSnapshotTriggered: before.contest.status !== status && status === ContestStatus.LIVE,
-          endSnapshotTriggered: before.contest.status !== status && status === ContestStatus.SETTLED,
-          scoringTriggered: before.contest.status !== status && status === ContestStatus.SETTLED,
-        },
+        previousPhase: result.previousStatus ?? tokenPayload.currentPhase ?? null,
+        automation: result.automation,
+        executed: result.executed,
       },
     });
 

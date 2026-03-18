@@ -7,24 +7,14 @@ const {
   claimIdempotencyKeyMock,
   getAdminArtifactMock,
   safeLogAdminActionMock,
-  getContestDetailMvpMock,
-  updateContestStatusMvpMock,
-  captureStartSnapshotMock,
-  captureEndSnapshotMock,
-  computeContestScoresFromSnapshotsMock,
-  executeAutoSettlementForContestMock,
+  executeContestTransitionMock,
 } = vi.hoisted(() => ({
   requireInternalAdminAccessMock: vi.fn(),
   requireAdminRoleMock: vi.fn(),
   claimIdempotencyKeyMock: vi.fn(),
   getAdminArtifactMock: vi.fn(),
   safeLogAdminActionMock: vi.fn(),
-  getContestDetailMvpMock: vi.fn(),
-  updateContestStatusMvpMock: vi.fn(),
-  captureStartSnapshotMock: vi.fn(),
-  captureEndSnapshotMock: vi.fn(),
-  computeContestScoresFromSnapshotsMock: vi.fn(),
-  executeAutoSettlementForContestMock: vi.fn(),
+  executeContestTransitionMock: vi.fn(),
 }));
 
 vi.mock("@/lib/internal-auth", () => ({ requireInternalAdminAccess: requireInternalAdminAccessMock }));
@@ -43,18 +33,9 @@ vi.mock("@/lib/domain/contests/runtime", () => ({
       this.status = status;
     }
   },
-  getContestDetailMvp: getContestDetailMvpMock,
-  updateContestStatusMvp: updateContestStatusMvpMock,
 }));
-vi.mock("@/lib/domain/contests/snapshot-runtime", () => ({
-  captureStartSnapshot: captureStartSnapshotMock,
-  captureEndSnapshot: captureEndSnapshotMock,
-}));
-vi.mock("@/lib/domain/contests/scoring-engine-runtime", () => ({
-  computeContestScoresFromSnapshots: computeContestScoresFromSnapshotsMock,
-}));
-vi.mock("@/lib/domain/contests/settlement-plan-runtime", () => ({
-  executeAutoSettlementForContest: executeAutoSettlementForContestMock,
+vi.mock("@/lib/domain/contests/contest-lifecycle-runtime", () => ({
+  executeContestTransition: executeContestTransitionMock,
 }));
 
 import { POST } from "@/app/api/internal/contests/[contestId]/status/route";
@@ -74,15 +55,15 @@ describe("contest status route automation", () => {
       payload: { currentPhase: ContestStatus.LOCKED, targetPhase: ContestStatus.LIVE },
     });
     safeLogAdminActionMock.mockResolvedValue(undefined);
-    getContestDetailMvpMock.mockResolvedValue({ contest: { id: "c1", status: ContestStatus.LOCKED }, userEntry: null });
-    updateContestStatusMvpMock.mockResolvedValue({ id: "c1", status: ContestStatus.LIVE });
-    captureStartSnapshotMock.mockResolvedValue({});
-    captureEndSnapshotMock.mockResolvedValue({});
-    computeContestScoresFromSnapshotsMock.mockResolvedValue({});
-    executeAutoSettlementForContestMock.mockResolvedValue({ executed: true });
+    executeContestTransitionMock.mockResolvedValue({
+      contest: { id: "c1", status: ContestStatus.LIVE },
+      previousStatus: ContestStatus.LOCKED,
+      executed: true,
+      automation: { startSnapshotTriggered: true, finalizationTriggered: false },
+    });
   });
 
-  it("auto-triggers START snapshot when transitioning to LIVE", async () => {
+  it("delegates LIVE transition to centralized lifecycle runtime", async () => {
     const req = new Request("http://localhost", {
       method: "POST",
       headers: { "Idempotency-Key": "k1", "Content-Type": "application/json" },
@@ -92,13 +73,10 @@ describe("contest status route automation", () => {
     const response = await POST(req, { params: { contestId: "c1" } });
 
     expect(response.status).toBe(200);
-    expect(captureStartSnapshotMock).toHaveBeenCalledWith("c1");
-    expect(captureEndSnapshotMock).not.toHaveBeenCalled();
-    expect(computeContestScoresFromSnapshotsMock).not.toHaveBeenCalled();
-    expect(updateContestStatusMvpMock).toHaveBeenCalledWith("c1", ContestStatus.LIVE);
+    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.LIVE, "manual");
   });
 
-  it("auto-triggers END snapshot + scoring when transitioning to SETTLED", async () => {
+  it("delegates SETTLED transition to centralized lifecycle runtime", async () => {
     getAdminArtifactMock.mockResolvedValue({
       id: "val_2",
       artifactType: "contest_transition_validation",
@@ -106,8 +84,12 @@ describe("contest status route automation", () => {
       createdBy: "admin:ops",
       payload: { currentPhase: ContestStatus.LIVE, targetPhase: ContestStatus.SETTLED },
     });
-    getContestDetailMvpMock.mockResolvedValue({ contest: { id: "c1", status: ContestStatus.LIVE }, userEntry: null });
-    updateContestStatusMvpMock.mockResolvedValue({ id: "c1", status: ContestStatus.SETTLED });
+    executeContestTransitionMock.mockResolvedValue({
+      contest: { id: "c1", status: ContestStatus.SETTLED },
+      previousStatus: ContestStatus.LIVE,
+      executed: true,
+      automation: { startSnapshotTriggered: false, finalizationTriggered: true },
+    });
 
     const req = new Request("http://localhost", {
       method: "POST",
@@ -118,15 +100,16 @@ describe("contest status route automation", () => {
     const response = await POST(req, { params: { contestId: "c1" } });
 
     expect(response.status).toBe(200);
-    expect(captureStartSnapshotMock).not.toHaveBeenCalled();
-    expect(captureEndSnapshotMock).toHaveBeenCalledWith("c1");
-    expect(computeContestScoresFromSnapshotsMock).toHaveBeenCalledWith("c1");
-    expect(executeAutoSettlementForContestMock).toHaveBeenCalledWith("c1");
-    expect(updateContestStatusMvpMock).toHaveBeenCalledWith("c1", ContestStatus.SETTLED);
+    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.SETTLED, "manual");
   });
 
-  it("does not auto-trigger if contest is already in requested status", async () => {
-    getContestDetailMvpMock.mockResolvedValue({ contest: { id: "c1", status: ContestStatus.LIVE }, userEntry: null });
+  it("returns success for lifecycle no-op executions", async () => {
+    executeContestTransitionMock.mockResolvedValue({
+      contest: { id: "c1", status: ContestStatus.LIVE },
+      previousStatus: ContestStatus.LIVE,
+      executed: false,
+      automation: { startSnapshotTriggered: false, finalizationTriggered: false },
+    });
 
     const req = new Request("http://localhost", {
       method: "POST",
@@ -137,12 +120,10 @@ describe("contest status route automation", () => {
     const response = await POST(req, { params: { contestId: "c1" } });
 
     expect(response.status).toBe(200);
-    expect(captureStartSnapshotMock).not.toHaveBeenCalled();
-    expect(captureEndSnapshotMock).not.toHaveBeenCalled();
-    expect(computeContestScoresFromSnapshotsMock).not.toHaveBeenCalled();
+    expect(executeContestTransitionMock).toHaveBeenCalledTimes(1);
   });
 
-  it("does not update status when end automation fails", async () => {
+  it("does not report a status update when centralized execution fails", async () => {
     getAdminArtifactMock.mockResolvedValue({
       id: "val_2",
       artifactType: "contest_transition_validation",
@@ -150,8 +131,7 @@ describe("contest status route automation", () => {
       createdBy: "admin:ops",
       payload: { currentPhase: ContestStatus.LIVE, targetPhase: ContestStatus.SETTLED },
     });
-    getContestDetailMvpMock.mockResolvedValue({ contest: { id: "c1", status: ContestStatus.LIVE }, userEntry: null });
-    captureEndSnapshotMock.mockRejectedValue(new Error("coingecko unavailable"));
+    executeContestTransitionMock.mockRejectedValue(new Error("broken transition"));
 
     const req = new Request("http://localhost", {
       method: "POST",
@@ -162,6 +142,5 @@ describe("contest status route automation", () => {
     const response = await POST(req, { params: { contestId: "c1" } });
 
     expect(response.status).toBe(500);
-    expect(updateContestStatusMvpMock).not.toHaveBeenCalled();
   });
 });

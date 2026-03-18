@@ -1,7 +1,6 @@
 import { ContestStatus } from "@prisma/client";
 
-import { finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
-import { captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
+import { executeContestTransition } from "@/lib/domain/contests/contest-lifecycle-runtime";
 import { prisma } from "@/lib/prisma";
 
 type ReconciliationStep = {
@@ -55,24 +54,6 @@ function nextStatus(current: ContestStatus, target: ContestStatus): ContestStatu
   return ORDERED_STATUSES[currentIndex + 1] ?? null;
 }
 
-async function runAutomationBeforeTransition(contestId: string, target: ContestStatus) {
-  if (target === ContestStatus.LIVE) {
-    try {
-      const result = await captureStartSnapshot(contestId);
-      console.info(`[lifecycle] Contest ${contestId} START snapshot captured — tokens=${result.tokenCount} captured=${result.capturedCount}`);
-    } catch (error) {
-      // Snapshot failure must NOT cancel the contest — admin can re-capture via dashboard.
-      // Only a hard DB error (connection lost, etc.) would be worth escalating.
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[lifecycle] START snapshot failed for contest ${contestId} — proceeding to LIVE anyway (snapshot can be re-triggered from admin): ${message}`);
-    }
-  }
-
-  if (target === ContestStatus.SETTLED) {
-    await finalizeContestFromEndSnapshotTrigger(contestId);
-  }
-}
-
 export async function reconcileContestLifecycleByTime(contestId: string, nowInput?: Date): Promise<ContestLifecycleReconciliationResult | null> {
   const now = nowInput ?? new Date();
   const contest = await prisma.contest.findUnique({
@@ -94,25 +75,15 @@ export async function reconcileContestLifecycleByTime(contestId: string, nowInpu
     if (!next) break;
 
     console.info(`[lifecycle] Contest ${contestId} transitioning ${current.status} → ${next} — reason: ${reason}`);
-    await runAutomationBeforeTransition(contestId, next);
-
-    const updated = await prisma.contest.updateMany({
-      where: { id: contestId, status: current.status },
-      data: { status: next },
-    });
-
-    if (updated.count === 0) {
-      const latest = await prisma.contest.findUnique({
-        where: { id: contestId },
-        select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
-      });
-      if (!latest) break;
-      current = latest;
-      continue;
-    }
+    await executeContestTransition(contestId, next, "auto");
 
     steps.push({ from: current.status, to: next, reason });
-    current = { ...current, status: next };
+    const latest = await prisma.contest.findUnique({
+      where: { id: contestId },
+      select: { id: true, status: true, liveAt: true, lockAt: true, endsAt: true },
+    });
+    if (!latest) break;
+    current = latest;
   }
 
   return {

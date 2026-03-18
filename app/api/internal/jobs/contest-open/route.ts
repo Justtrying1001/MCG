@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ContestStatus } from "@prisma/client";
 
 import { handleApiError } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
+import { executeContestTransition } from "@/lib/domain/contests/contest-lifecycle-runtime";
 import { verifyQStashSignature } from "@/lib/qstash-verify";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +18,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const { contestId } = JSON.parse(body) as { contestId: string };
-
-    await prisma.contest.updateMany({
-      where: { id: contestId, status: ContestStatus.DRAFT, configPublishedAt: { not: null } },
-      data: { status: ContestStatus.OPEN },
-    });
-
-    return NextResponse.json({ ok: true, contestId });
+    const result = await executeContestTransition(contestId, ContestStatus.OPEN, "auto");
+    return NextResponse.json({ ok: true, contestId, result });
   } catch (error) {
     return handleApiError(error, "contest-open job failed");
   }

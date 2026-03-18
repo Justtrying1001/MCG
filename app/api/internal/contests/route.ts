@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
-import { reconcileDueContestsByTime } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { ContestRuntimeError, createContestMvp } from "@/lib/domain/contests/runtime";
 import { requireInternalAdminAccess } from "@/lib/internal-auth";
 import { prisma } from "@/lib/prisma";
@@ -14,11 +13,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await reconcileDueContestsByTime().catch((error) => {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[api/internal/contests] lifecycle reconciliation failed: ${message}`);
-    });
-
     const contests = await prisma.contest.findMany({
       select: {
         id: true,

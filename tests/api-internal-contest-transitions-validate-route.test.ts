@@ -53,10 +53,15 @@ describe("/api/internal/contest-runs/:contestId/transitions/validate", () => {
 
     expect(response.status).toBe(200);
     expect(body.blocking).toBe(false);
-    expect(body.issues).toEqual([]);
+    expect(body.issues).toEqual([
+      expect.objectContaining({
+        code: "CONTEST_ZERO_ENTRY_SETTLEMENT",
+        severity: "WARN",
+      }),
+    ]);
   });
 
-  it("keeps blocking LIVE -> SETTLED when entrants exist but rankings are missing", async () => {
+  it("warns but does not block LIVE -> SETTLED when entrants exist and finalization must generate rankings", async () => {
     prismaMock.contest.findUnique.mockResolvedValue({
       id: "c1",
       status: "LIVE",
@@ -72,11 +77,11 @@ describe("/api/internal/contest-runs/:contestId/transitions/validate", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.blocking).toBe(true);
+    expect(body.blocking).toBe(false);
     expect(body.issues).toEqual([
       expect.objectContaining({
-        code: "CONTEST_TRANSITION_PREREQUISITE_FAILED",
-        severity: "ERROR",
+        code: "CONTEST_FINALIZATION_REQUIRED",
+        severity: "WARN",
       }),
     ]);
   });
