@@ -17,6 +17,7 @@ import { DocsLearnSection } from "@/components/home/DocsLearnSection";
 import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
+import { CollectionProgressBlock } from "@/components/home/CollectionProgressBlock";
 
 type ContestListItem = {
   id: string;
@@ -24,6 +25,15 @@ type ContestListItem = {
   title: string;
   status: "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
   lockAt: string | null;
+  seasonName?: string | null;
+  rewardPreview?: {
+    label: string;
+    amount: number | null;
+  } | null;
+  userEntry?: {
+    id: string;
+    status: string;
+  } | null;
   _count: { entries: number };
 };
 
@@ -67,9 +77,23 @@ export default function HomePage() {
 
   const userInfo = useMemo(() => {
     if (me?.mode !== "user") return null;
+
+    const collectionProjection = me.coexistence?.v2?.collectionProjection;
+    const accountProgression = me.coexistence?.v2?.accountProgression;
+    const competitiveProgression = me.coexistence?.v2?.competitiveProgression;
+
     return {
       displayName: me.user.displayName,
       points: me.user.points,
+      packsOpened: me.user.packsOpened,
+      level: accountProgression?.level ?? null,
+      cardsOwned: collectionProjection?.totalOwnedInstances ?? null,
+      completionPct: collectionProjection?.completionPct ?? null,
+      ownedTemplates: collectionProjection?.ownedTemplateCount ?? 0,
+      missingTemplates: collectionProjection?.missingTemplateCount ?? 0,
+      contestsEntered: competitiveProgression?.contestsEntered ?? null,
+      activeEntries: competitiveProgression?.activeEntries ?? null,
+      seasonRank: competitiveProgression?.seasonRank ?? null,
     };
   }, [me]);
 
@@ -80,19 +104,40 @@ export default function HomePage() {
       </Suspense>
 
       {isAuth && userInfo ? (
-        /* ── State B: Connected player dashboard ── */
         <>
-          <PlayerDashboardHeader
-            displayName={userInfo.displayName}
-            points={userInfo.points}
-          />
-          <RecentPullsRail pulls={recentPulls} />
-          <ActiveContestsRail contests={contests} />
-          <GenesisPreviewStrip />
-          <DocsLearnSection />
+          <div className="home-dashboard-layout">
+            <PlayerDashboardHeader
+              displayName={userInfo.displayName}
+              points={userInfo.points}
+              level={userInfo.level}
+              packsOpened={userInfo.packsOpened}
+              cardsOwned={userInfo.cardsOwned}
+              collectionCompletionPct={userInfo.completionPct}
+              contestsEntered={userInfo.contestsEntered}
+              activeEntries={userInfo.activeEntries}
+              seasonRank={userInfo.seasonRank}
+            />
+
+            <div className="home-dashboard-main-grid">
+              <div className="home-dashboard-main-column">
+                <ActiveContestsRail contests={contests} />
+              </div>
+
+              <div className="home-dashboard-side-column">
+                <CollectionProgressBlock
+                  completionPct={userInfo.completionPct}
+                  ownedCount={userInfo.ownedTemplates}
+                  missingCount={userInfo.missingTemplates}
+                />
+                <DocsLearnSection />
+              </div>
+            </div>
+
+            <RecentPullsRail pulls={recentPulls} />
+            <GenesisPreviewStrip />
+          </div>
         </>
       ) : (
-        /* ── State A: Landing / conversion ── */
         <>
           <HomeHeroLanding />
           <StatsBar />
