@@ -6,6 +6,98 @@ import { ScoreBreakdownPanel, type BreakdownRow } from "@/components/contests/Sc
 import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
 import type { ContestStatus, LineupOption } from "@/components/contests/types";
 
+
+function formatRewardParts(input: { pointsAmount: number; xpAmount: number; packsCount: number }) {
+  return [
+    input.pointsAmount > 0 ? `${input.pointsAmount.toLocaleString()} pts` : null,
+    input.xpAmount > 0 ? `${input.xpAmount.toLocaleString()} XP` : null,
+    input.packsCount > 0 ? `${input.packsCount.toLocaleString()} pack${input.packsCount > 1 ? "s" : ""}` : null,
+  ].filter((value): value is string => Boolean(value));
+}
+
+function formatRewardSummary(input: { pointsAmount: number; xpAmount: number; packsCount: number }) {
+  const parts = formatRewardParts(input);
+  return parts.length > 0 ? parts.join(" • ") : "No rewards";
+}
+
+function parseTierRank(label: string) {
+  const match = label.match(/#(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+type RewardDisplayTier = {
+  rankStart: number | null;
+  rankEnd: number | null;
+  label: string;
+  bundleName: string;
+  pointsAmount: number;
+  xpAmount: number;
+  packsCount: number;
+  winnerLabel?: string | null;
+};
+
+function groupRewardTiers(tiers: RewardTier[]): RewardDisplayTier[] {
+  const groups: RewardDisplayTier[] = [];
+
+  for (const tier of tiers) {
+    const rank = parseTierRank(tier.label);
+    const previous = groups[groups.length - 1] ?? null;
+    const sameRewardShape = previous
+      && previous.bundleName === tier.bundleName
+      && previous.pointsAmount === tier.pointsAmount
+      && previous.xpAmount === tier.xpAmount
+      && previous.packsCount === tier.packsCount
+      && previous.rankEnd !== null
+      && rank !== null
+      && previous.rankEnd + 1 === rank;
+
+    if (sameRewardShape) {
+      previous.rankEnd = rank;
+      previous.label = previous.rankStart === previous.rankEnd ? `Rank ${previous.rankStart}` : `Ranks ${previous.rankStart}-${previous.rankEnd}`;
+      continue;
+    }
+
+    groups.push({
+      rankStart: rank,
+      rankEnd: rank,
+      label: rank !== null ? `Rank ${rank}` : tier.label,
+      bundleName: tier.bundleName,
+      pointsAmount: tier.pointsAmount,
+      xpAmount: tier.xpAmount,
+      packsCount: tier.packsCount,
+      winnerLabel: tier.winnerLabel ?? null,
+    });
+  }
+
+  return groups;
+}
+
+function buildOpenRewardPool(tiers: RewardTier[], summary?: {
+  pointsPool: number;
+  packPool: number;
+  rewardedTopPercent: number;
+  rewardedWinners: number;
+  participantCount: number;
+} | null) {
+  if (summary) {
+    return {
+      pointsPool: summary.pointsPool,
+      packPool: summary.packPool,
+      rewardedTopPercent: summary.rewardedTopPercent,
+      rewardedWinners: summary.rewardedWinners,
+      participantCount: summary.participantCount,
+    };
+  }
+
+  return {
+    pointsPool: tiers.reduce((sum, tier) => sum + Math.max(0, tier.pointsAmount), 0),
+    packPool: tiers.reduce((sum, tier) => sum + Math.max(0, tier.packsCount), 0),
+    rewardedTopPercent: null,
+    rewardedWinners: tiers.length,
+    participantCount: null,
+  };
+}
+
 export type RewardTier = {
   label: string;
   bundleName: string;
@@ -27,8 +119,12 @@ export type HeroPanelProps = {
   coverImageUrl?: string | null;
   infoLine: string;
   contextBody: string;
-  countdownLabel: string;
-  countdownValue: string;
+  timing: {
+    label: string;
+    value: string;
+    helper: string;
+    details: Array<{ label: string; value: string }>;
+  };
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
   flash?: string | null;
   error?: string | null;
@@ -40,8 +136,7 @@ export function HeroPanel({
   coverImageUrl,
   infoLine,
   contextBody,
-  countdownLabel,
-  countdownValue,
+  timing,
   primaryAction,
   flash,
   error,
@@ -71,12 +166,23 @@ export function HeroPanel({
       </div>
 
       <div className="contest-detail-hero-side">
-        <div className="contest-detail-countdown-block">
-          <div className="contest-detail-hero-side-top">
-            <span className="contest-detail-hero-side-label">{countdownLabel}</span>
+        <div className={`contest-detail-timing-panel status-${status.toLowerCase()}`}>
+          <div className="contest-detail-timing-header">
+            <span className="contest-detail-timing-label">{timing.label}</span>
+            <strong>{timing.value}</strong>
+            <p>{timing.helper}</p>
           </div>
-          <strong>{countdownValue}</strong>
-          <small>{status === "SETTLED" ? "Results are locked in." : "Stay ahead of lock and live scoring."}</small>
+
+          {timing.details.length > 0 ? (
+            <div className="contest-detail-timing-details">
+              {timing.details.map((item) => (
+                <div key={`${item.label}-${item.value}`}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {primaryAction ? (
@@ -255,58 +361,6 @@ export function MainStateBlock({
           <InlineLeaderboard rows={rankingRows} currentUserId={currentUserId} compact />
         </section>
       ) : null}
-    </Surface>
-  );
-}
-
-export function CompactSupportBlock({
-  status,
-  participants,
-  entryFee,
-  lifecycleLabel,
-  tiers,
-  myRewards,
-  extraItems = [],
-}: {
-  status: ContestStatus;
-  participants: number;
-  entryFee: string;
-  lifecycleLabel: string;
-  tiers: RewardTier[];
-  myRewards?: RewardSummary | null;
-  extraItems?: Array<{ label: string; value: string }>;
-}) {
-  const featuredTier = tiers[0] ?? null;
-  const earnedRewards = myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0)
-    ? [
-        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
-        myRewards.xpTotal > 0 ? `${myRewards.xpTotal} XP` : null,
-        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
-      ].filter((value): value is string => Boolean(value))
-    : [];
-  const rewardSummary = status === "SETTLED"
-    ? earnedRewards.join(" • ") || "No rewards"
-    : featuredTier
-      ? `${featuredTier.label}${featuredTier.pointsAmount > 0 ? ` • ${featuredTier.pointsAmount} pts` : ""}${featuredTier.packsCount > 0 ? ` • ${featuredTier.packsCount} pack${featuredTier.packsCount > 1 ? "s" : ""}` : ""}`
-      : "Rewards pending";
-  const supportItems = [
-    { label: "Rewards", value: rewardSummary },
-    { label: "Players", value: String(participants) },
-    { label: "Entry", value: entryFee },
-    { label: "Status", value: lifecycleLabel },
-    ...extraItems,
-  ];
-
-  return (
-    <Surface className="contest-detail-block contest-detail-support-surface" variant="raised">
-      <ul className="contest-detail-support-list">
-        {supportItems.map((item) => (
-          <li key={item.label}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-          </li>
-        ))}
-      </ul>
     </Surface>
   );
 }
@@ -527,12 +581,13 @@ export function LeaderboardPanel({
 }
 
 export function RewardsPanel({
+  status,
   tiers,
   summary,
   hasPolicyData = false,
   myRewards,
-  isSettled,
 }: {
+  status: ContestStatus;
   tiers: RewardTier[];
   summary?: {
     pointsPool: number;
@@ -543,77 +598,91 @@ export function RewardsPanel({
   } | null;
   hasPolicyData?: boolean;
   myRewards?: RewardSummary | null;
-  isSettled: boolean;
 }) {
+  const isOpen = status === "OPEN" || status === "LOCKED";
+  const isLive = status === "LIVE";
+  const isSettled = status === "SETTLED";
   const hasEarnedRewards = Boolean(myRewards && (myRewards.pointsTotal > 0 || myRewards.xpTotal > 0 || myRewards.packsTotal > 0));
+  const groupedTiers = groupRewardTiers(tiers);
+  const openPool = buildOpenRewardPool(tiers, summary);
+  const openPoolItems = [
+    openPool.pointsPool > 0 ? { label: "Points pool", value: `${openPool.pointsPool.toLocaleString()} pts` } : null,
+    openPool.packPool > 0 ? { label: "Pack pool", value: `${openPool.packPool.toLocaleString()} pack${openPool.packPool > 1 ? "s" : ""}` } : null,
+    openPool.rewardedTopPercent ? { label: "Paid range", value: `Top ${openPool.rewardedTopPercent}% paid` } : null,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
     <Surface className="contest-detail-block rewards-panel" variant="raised">
       <div className="contest-detail-block-head">
         <div>
           <p className="mcg-eyebrow">Rewards</p>
-          <h3>{isSettled ? "Rewards outcome" : "What you can win"}</h3>
+          <h3>{isOpen ? "Reward pool" : isLive ? "Live reward distribution" : "Final reward distribution"}</h3>
         </div>
       </div>
 
-      {isSettled && myRewards ? (
-        <div className="contest-detail-earned-rewards">
-          <div className="contest-detail-earned-rewards-head">
-            <strong>{hasEarnedRewards ? "Rewards earned" : "No rewards earned"}</strong>
-            {hasEarnedRewards ? <span className="mcg-chip selected">Settled</span> : null}
-          </div>
-          <div className="contest-detail-earned-rewards-grid">
-            <div><span>Points</span><strong>{myRewards.pointsTotal}</strong></div>
-            <div><span>XP</span><strong>{myRewards.xpTotal}</strong></div>
-            <div><span>Packs</span><strong>{myRewards.packsTotal}</strong></div>
-          </div>
-        </div>
-      ) : null}
+      {isOpen ? (
+        openPoolItems.length > 0 ? (
+          <>
+            <p className="contest-detail-panel-copy">See the pool at a glance now. The exact payout table becomes relevant once the contest is live.</p>
+            <div className="contest-detail-reward-pool-grid">
+              {openPoolItems.map((item) => (
+                <article key={item.label} className="contest-detail-reward-pool-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="contest-detail-empty-note">Rewards are still being published for this contest.</p>
+        )
+      ) : groupedTiers.length > 0 ? (
+        <>
+          <p className="contest-detail-panel-copy">
+            {isSettled
+              ? "Final placements are locked. Review the payout table below."
+              : "Track the current payout table while the contest is live."}
+          </p>
 
-      {tiers.length > 0 ? (
-        <div className="contest-detail-reward-tier-list">
-          {tiers.slice(0, isSettled ? 5 : 4).map((tier, index) => (
-            <article key={`${tier.label}-${index}`} className={index === 0 ? "featured" : ""}>
-              <header>
-                <strong>{tier.label}</strong>
-                <div>
-                  {tier.winnerLabel ? <span>{tier.winnerLabel}</span> : null}
-                  {tier.bundleName ? <span>{tier.bundleName}</span> : null}
-                </div>
-              </header>
-              <div>
-                {tier.pointsAmount > 0 ? <span>{tier.pointsAmount} pts</span> : null}
-                {tier.xpAmount > 0 ? <span>{tier.xpAmount} XP</span> : null}
-                {tier.packsCount > 0 ? <span>{tier.packsCount} pack{tier.packsCount > 1 ? "s" : ""}</span> : null}
+          {isSettled && myRewards ? (
+            <div className="contest-detail-earned-rewards">
+              <div className="contest-detail-earned-rewards-head">
+                <strong>{hasEarnedRewards ? "Your rewards" : "Your result"}</strong>
+                <span>{hasEarnedRewards ? formatRewardSummary({ pointsAmount: myRewards.pointsTotal, xpAmount: myRewards.xpTotal, packsCount: myRewards.packsTotal }) : "No rewards earned"}</span>
               </div>
+            </div>
+          ) : null}
+
+          <div className="contest-detail-reward-tier-list contest-detail-reward-tier-table">
+            {groupedTiers.map((tier, index) => {
+              const rewardParts = formatRewardParts(tier);
+              return (
+                <article key={`${tier.label}-${index}`}>
+                  <div className="contest-detail-reward-tier-rank">
+                    <strong>{tier.label}</strong>
+                    {tier.bundleName ? <span>{tier.bundleName}</span> : null}
+                  </div>
+                  <div className="contest-detail-reward-tier-value">
+                    <strong>{rewardParts.join(" • ") || "No rewards"}</strong>
+                    {isSettled && tier.winnerLabel ? <span>{tier.winnerLabel}</span> : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      ) : hasPolicyData && openPoolItems.length > 0 ? (
+        <div className="contest-detail-reward-pool-grid">
+          {openPoolItems.map((item) => (
+            <article key={item.label} className="contest-detail-reward-pool-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
             </article>
           ))}
-        </div>
-      ) : hasPolicyData && summary ? (
-        <div className="contest-detail-reward-tier-list">
-          <article className="featured">
-            <header>
-              <strong>Reward pool configured</strong>
-              <span>Field-dependent</span>
-            </header>
-            <div>
-              {summary.pointsPool > 0 ? <span>{summary.pointsPool} pts pool</span> : null}
-              {summary.packPool > 0 ? <span>{summary.packPool} pack{summary.packPool > 1 ? "s" : ""} pool</span> : null}
-              <span>Top {summary.rewardedTopPercent}% paid</span>
-            </div>
-          </article>
         </div>
       ) : (
         <p className="contest-detail-empty-note">Rewards are still being published for this contest.</p>
       )}
-
-      {summary ? (
-        <div className="contest-detail-rewards-summary-strip">
-          <span>{summary.rewardedWinners} winners</span>
-          <span>Top {summary.rewardedTopPercent}%</span>
-          <span>{summary.participantCount} players</span>
-        </div>
-      ) : null}
     </Surface>
   );
 }

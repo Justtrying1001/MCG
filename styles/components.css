@@ -3565,48 +3565,71 @@ textarea:focus {
   line-height: 1.3;
 }
 
-.contest-detail-countdown-block {
+.contest-detail-timing-panel {
   display: grid;
-  gap: 8px;
-  justify-items: start;
-  padding: 16px;
+  gap: 16px;
+  padding: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(9, 13, 24, 0.56), rgba(9, 13, 24, 0.88));
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(96, 165, 250, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(9, 13, 24, 0.72), rgba(9, 13, 24, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.contest-detail-countdown-block span {
+.contest-detail-timing-panel.status-live {
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(9, 13, 24, 0.72), rgba(9, 13, 24, 0.92));
+}
+
+.contest-detail-timing-panel.status-settled {
+  background:
+    radial-gradient(circle at top left, rgba(167, 139, 250, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(9, 13, 24, 0.72), rgba(9, 13, 24, 0.92));
+}
+
+.contest-detail-timing-header {
+  display: grid;
+  gap: 8px;
+}
+
+.contest-detail-timing-label,
+.contest-detail-timing-details span {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: .08em;
   font-size: .72rem;
 }
 
-.contest-detail-countdown-block strong {
-  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
-  font-family: 'JetBrains Mono', monospace;
-  line-height: 1;
+.contest-detail-timing-header strong {
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  line-height: 1.05;
+  color: #f8fafc;
 }
 
-.contest-detail-countdown-block small {
+.contest-detail-timing-header p {
+  margin: 0;
   color: var(--color-text-secondary);
-  font-size: .84rem;
-  max-width: 24ch;
+  font-size: .88rem;
+  max-width: 28ch;
 }
 
-.contest-detail-hero-side-top {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+.contest-detail-timing-details {
+  display: grid;
+  gap: 10px;
 }
 
-.contest-detail-hero-side-label {
-  color: var(--color-text-muted);
-  font-size: .74rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.contest-detail-timing-details div {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contest-detail-timing-details strong {
+  font-size: .98rem;
+  color: rgba(248, 250, 252, 0.92);
 }
 
 .contest-detail-hero-cta {
@@ -3737,8 +3760,7 @@ textarea:focus {
   max-width: 54ch;
 }
 
-.contest-detail-section-head .mcg-eyebrow,
-.contest-detail-support-list span {
+.contest-detail-section-head .mcg-eyebrow {
   color: var(--color-text-muted);
   font-size: .88rem;
 }
@@ -4039,46 +4061,11 @@ textarea:focus {
   color: #fde68a;
 }
 
-.contest-detail-support-surface {
-  gap: 12px;
-}
-
-.contest-detail-support-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-}
-
-.contest-detail-support-list li {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: baseline;
-  white-space: nowrap;
-  color: rgba(226, 232, 240, 0.78);
-}
-
-.contest-detail-support-list li:not(:last-child)::after {
-  content: "•";
-  color: var(--color-text-muted);
-  margin-left: 8px;
-}
-
-.contest-detail-support-list strong {
-  font-size: .84rem;
-  font-weight: 600;
-  color: rgba(248, 250, 252, 0.82);
-}
-
 .contest-detail-earned-rewards,
 .contest-detail-reward-tier-list,
-.contest-detail-fact-list,
-.contest-detail-rewards-summary-strip {
+.contest-detail-fact-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .rewards-panel,
@@ -4086,69 +4073,78 @@ textarea:focus {
   padding: 16px 18px;
 }
 
+.contest-detail-earned-rewards {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .contest-detail-earned-rewards-head {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.contest-detail-earned-rewards-grid {
+.contest-detail-earned-rewards-head strong:last-child,
+.contest-detail-earned-rewards-head span {
+  color: rgba(248, 250, 252, 0.84);
+}
+
+.contest-detail-reward-pool-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
 }
 
-.contest-detail-earned-rewards-grid div,
+.contest-detail-reward-pool-card,
 .contest-detail-reward-tier-list article,
 .contest-detail-fact-list div {
   border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
-  background: rgba(255,255,255,.03);
-  padding: 10px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.025));
+  padding: 12px 14px;
 }
 
-.contest-detail-earned-rewards-grid span,
-.contest-detail-reward-tier-list header span,
-.contest-detail-fact-list dt,
-.contest-detail-rewards-summary-strip span {
+.contest-detail-reward-pool-card span,
+.contest-detail-reward-tier-rank span,
+.contest-detail-reward-tier-value span,
+.contest-detail-fact-list dt {
   color: var(--color-text-muted);
   font-size: .74rem;
 }
 
-.contest-detail-earned-rewards-grid strong,
+.contest-detail-reward-pool-card strong,
 .contest-detail-fact-list dd {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
+  display: block;
   font-weight: 700;
+  color: #f8fafc;
 }
 
-.contest-detail-reward-tier-list article {
+.contest-detail-reward-tier-table article {
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: 12px;
+  align-items: center;
 }
 
-.contest-detail-reward-tier-list article.featured {
-  border-color: rgba(245, 158, 11, .42);
-  background: rgba(245, 158, 11, .08);
+.contest-detail-reward-tier-rank,
+.contest-detail-reward-tier-value {
+  display: grid;
+  gap: 4px;
 }
 
-.contest-detail-reward-tier-list article header {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+.contest-detail-reward-tier-rank strong,
+.contest-detail-reward-tier-value strong {
+  color: #f8fafc;
 }
 
-.contest-detail-reward-tier-list article div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.contest-detail-reward-tier-list article div span,
-.contest-detail-rewards-summary-strip span {
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 999px;
-  padding: 4px 8px;
+.contest-detail-reward-tier-value {
+  justify-items: end;
+  text-align: right;
 }
 
 .contest-detail-fact-list {
@@ -4169,7 +4165,7 @@ textarea:focus {
   .contest-detail-main-grid.settled-grid { grid-template-columns: 1fr; }
 
   .contest-detail-hero-side,
-  .contest-detail-countdown-block,
+  .contest-detail-timing-panel,
   .contest-detail-hero-cta {
     justify-items: start;
     text-align: left;
@@ -4181,8 +4177,8 @@ textarea:focus {
 }
 
 @media (max-width: 720px) {
-  .contest-detail-earned-rewards-grid,
   .contest-detail-fact-list,
+  .contest-detail-reward-tier-table article,
   .contest-detail-hero-rules-grid,
   .contest-detail-metric-grid.metrics-2,
   .contest-detail-metric-grid.metrics-3 {
