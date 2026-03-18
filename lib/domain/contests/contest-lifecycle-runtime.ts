@@ -235,16 +235,8 @@ export async function executeContestTransition(
 }
 
 async function runLiveTransitionSideEffects(contestId: string, mode: ContestLifecycleMode) {
-  if (mode === "manual") {
-    await captureStartSnapshot(contestId);
-    return;
-  }
-
-  try {
-    const result = await captureStartSnapshot(contestId);
+  const result = await captureStartSnapshot(contestId);
+  if (mode === "auto") {
     console.info(`[lifecycle] Contest ${contestId} START snapshot captured — tokens=${result.tokenCount} captured=${result.capturedCount}`);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[lifecycle] START snapshot failed for contest ${contestId} — proceeding to LIVE anyway (snapshot can be re-triggered from admin): ${message}`);
   }
 }

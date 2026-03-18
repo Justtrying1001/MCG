@@ -251,7 +251,7 @@ export async function enterContestMvp(params: {
       tokenProjectId: instance.cardTemplate.tokenProjectId,
       cardTemplateId: instance.cardTemplateId,
     })))) {
-      throw new ContestRuntimeError("Lineup cannot contain the same token twice", 400);
+      throw new ContestRuntimeError("Lineup cannot contain duplicate tokens (same token twice)", 400);
     }
 
     const effectiveEligibilityMode = rule?.eligibilityMode ?? "ANY";

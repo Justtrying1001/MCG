@@ -62,10 +62,10 @@ describe("contest lifecycle runtime", () => {
     await expect(executeContestTransition("c1", ContestStatus.SETTLED, "manual")).rejects.toThrow(/not allowed/i);
   });
 
-  it("manual and auto LOCKED -> LIVE use the same side effect path", async () => {
+  it("manual and auto OPEN -> LIVE use the same strict START snapshot path", async () => {
     const contest = {
       id: "c1",
-      status: ContestStatus.LOCKED,
+      status: ContestStatus.OPEN,
       configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
       openAt: null,
       liveAt: null,
@@ -80,6 +80,25 @@ describe("contest lifecycle runtime", () => {
 
     expect(captureStartSnapshotMock).toHaveBeenCalledTimes(2);
     expect(finalizeContestFromEndSnapshotTriggerMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the contest out of LIVE when the START snapshot fails in auto mode", async () => {
+    const contest = {
+      id: "c-start",
+      status: ContestStatus.OPEN,
+      configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+      openAt: null,
+      liveAt: null,
+      lockAt: null,
+      endsAt: null,
+      _count: { entries: 2, rankings: 0, settlements: 0 },
+    };
+
+    prismaMock.contest.findUnique.mockResolvedValue(contest);
+    captureStartSnapshotMock.mockRejectedValueOnce(new Error("snapshot down"));
+
+    await expect(executeContestTransition("c-start", ContestStatus.LIVE, "auto")).rejects.toThrow(/snapshot down/i);
+    expect(prismaMock.contest.updateMany).not.toHaveBeenCalled();
   });
 
   it("supports LIVE -> SETTLED for zero-entry contests through the centralized runtime", async () => {
@@ -130,5 +149,24 @@ describe("contest lifecycle runtime", () => {
       where: { id: "c2", status: ContestStatus.LIVE },
       data: { status: ContestStatus.SETTLED },
     });
+  });
+
+  it("does not mark the contest SETTLED when finalization fails", async () => {
+    const contest = {
+      id: "c3",
+      status: ContestStatus.LIVE,
+      configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+      openAt: null,
+      liveAt: null,
+      lockAt: null,
+      endsAt: null,
+      _count: { entries: 4, rankings: 0, settlements: 0 },
+    };
+
+    prismaMock.contest.findUnique.mockResolvedValue(contest);
+    finalizeContestFromEndSnapshotTriggerMock.mockRejectedValueOnce(new Error("rewards failed"));
+
+    await expect(executeContestTransition("c3", ContestStatus.SETTLED, "auto")).rejects.toThrow(/rewards failed/i);
+    expect(prismaMock.contest.updateMany).not.toHaveBeenCalled();
   });
 });

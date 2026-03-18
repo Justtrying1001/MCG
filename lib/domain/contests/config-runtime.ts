@@ -484,17 +484,18 @@ type ContestWithConfig = Prisma.ContestGetPayload<{ include: typeof contestDraft
 
 export function validateContestDraftEntity(contest: ContestWithConfig): DraftIssue[] {
   const issues: DraftIssue[] = [];
+  const effectiveLiveAt = contest.lockAt ?? contest.liveAt;
 
-  if (!contest.openAt || !contest.liveAt || !contest.lockAt || !contest.endsAt) {
-    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "openAt, liveAt, lockAt and endsAt are required" });
+  if (!contest.openAt || !effectiveLiveAt || !contest.endsAt) {
+    issues.push({ code: "TIMING_REQUIRED", severity: "ERROR", field: "timing", message: "openAt, lockAt/liveAt and endsAt are required" });
   } else {
-    if (contest.openAt > contest.liveAt) {
+    if (contest.openAt > effectiveLiveAt) {
       issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "openAt", message: "openAt must be before or equal to liveAt" });
     }
-    if (contest.lockAt > contest.liveAt) {
+    if (contest.lockAt && contest.lockAt > effectiveLiveAt) {
       issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "lockAt", message: "lockAt must be before or equal to liveAt" });
     }
-    if (contest.liveAt >= contest.endsAt) {
+    if (effectiveLiveAt >= contest.endsAt) {
       issues.push({ code: "TIMING_INVALID_ORDER", severity: "ERROR", field: "endsAt", message: "endsAt must be after liveAt" });
     }
   }
@@ -655,14 +656,15 @@ function normalizeContestInput(input: ContestConfigInput) {
   }
 
   const openAt = input.openAt ? new Date(input.openAt) : null;
-  const liveAt = input.liveAt ? new Date(input.liveAt) : null;
   const lockAt = input.lockAt ? new Date(input.lockAt) : null;
+  const liveAtInput = input.liveAt ? new Date(input.liveAt) : null;
+  const liveAt = lockAt ?? liveAtInput;
   const endsAt = input.endsAt ? new Date(input.endsAt) : null;
 
   if (openAt && liveAt && openAt > liveAt) {
     throw new ContestRuntimeError("openAt must be before or equal to liveAt", 400);
   }
-  if (lockAt && liveAt && lockAt > liveAt) {
+  if (lockAt && liveAtInput && lockAt > liveAtInput) {
     throw new ContestRuntimeError("lockAt must be before or equal to liveAt", 400);
   }
   if (liveAt && endsAt && liveAt >= endsAt) {

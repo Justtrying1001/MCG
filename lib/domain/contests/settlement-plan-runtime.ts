@@ -285,7 +285,12 @@ export async function previewSettlementPlan(planId: string, contestId?: string) 
   };
 }
 
-export async function executeSettlementPlan(planId: string) {
+type ExecuteSettlementPlanOptions = {
+  finalizeContestStatus?: boolean;
+};
+
+export async function executeSettlementPlan(planId: string, options?: ExecuteSettlementPlanOptions) {
+  const finalizeContestStatus = options?.finalizeContestStatus ?? true;
   return prisma.$transaction(async (tx) => {
     const plan = await tx.contestSettlementPlan.findUnique({
       where: { id: planId },
@@ -367,7 +372,9 @@ export async function executeSettlementPlan(planId: string) {
       }
     }
 
-    await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
+    if (finalizeContestStatus) {
+      await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
+    }
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
 
     await tx.contestSettlementPlan.update({
@@ -385,7 +392,11 @@ export async function executeSettlementPlan(planId: string) {
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
-export async function executeAutoSettlementForContest(contestId: string) {
+type ExecuteAutoSettlementOptions = {
+  finalizeContestStatus?: boolean;
+};
+
+export async function executeAutoSettlementForContest(contestId: string, options?: ExecuteAutoSettlementOptions) {
   const existingSettlement = await prisma.contestSettlement.findUnique({ where: { contestId }, select: { id: true } });
   if (existingSettlement) {
     return {
@@ -397,7 +408,7 @@ export async function executeAutoSettlementForContest(contestId: string) {
   }
 
   const plan = await generateSettlementPlan(contestId);
-  const execution = await executeSettlementPlan(plan.planId);
+  const execution = await executeSettlementPlan(plan.planId, options);
 
   return {
     executed: execution.executed,

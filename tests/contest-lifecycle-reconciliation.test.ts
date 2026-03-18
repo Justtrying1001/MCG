@@ -52,7 +52,7 @@ describe("contest lifecycle reconciliation", () => {
     expect(result?.steps).toEqual([]);
   });
 
-  it("moves OPEN to LOCKED after lockAt", async () => {
+  it("moves OPEN directly to LIVE after the OPEN phase ends", async () => {
     mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
@@ -63,9 +63,11 @@ describe("contest lifecycle reconciliation", () => {
 
     const result = await reconcileContestLifecycleByTime("c1", new Date("2026-03-14T13:01:00.000Z"));
 
-    expect(result?.finalStatus).toBe(ContestStatus.LOCKED);
-    expect(result?.steps.map((s) => s.to)).toEqual([ContestStatus.LOCKED]);
-    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.LOCKED, "auto");
+    expect(result?.finalStatus).toBe(ContestStatus.LIVE);
+    expect(result?.steps).toEqual([
+      { from: ContestStatus.OPEN, to: ContestStatus.LIVE, reason: "OPEN_PHASE_ENDED" },
+    ]);
+    expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.LIVE, "auto");
   });
 
   it("moves LIVE to SETTLED after endsAt with full finalization automation", async () => {
@@ -84,7 +86,7 @@ describe("contest lifecycle reconciliation", () => {
     expect(executeContestTransitionMock).toHaveBeenCalledWith("c1", ContestStatus.SETTLED, "auto");
   });
 
-  it("catches up OPEN directly to SETTLED step-by-step", async () => {
+  it("catches up OPEN directly to LIVE then SETTLED", async () => {
     mockContestState({
       id: "c1",
       status: ContestStatus.OPEN,
@@ -96,12 +98,10 @@ describe("contest lifecycle reconciliation", () => {
     const result = await reconcileContestLifecycleByTime("c1", new Date("2026-03-14T15:00:00.000Z"));
 
     expect(result?.steps.map((s) => `${s.from}->${s.to}`)).toEqual([
-      "OPEN->LOCKED",
-      "LOCKED->LIVE",
+      "OPEN->LIVE",
       "LIVE->SETTLED",
     ]);
     expect(executeContestTransitionMock.mock.calls).toEqual([
-      ["c1", ContestStatus.LOCKED, "auto"],
       ["c1", ContestStatus.LIVE, "auto"],
       ["c1", ContestStatus.SETTLED, "auto"],
     ]);
@@ -121,6 +121,6 @@ describe("contest lifecycle reconciliation", () => {
 
     expect(prismaMock.contest.findMany).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
-    expect(result[0]?.finalStatus).toBe(ContestStatus.LOCKED);
+    expect(result[0]?.finalStatus).toBe(ContestStatus.LIVE);
   });
 });

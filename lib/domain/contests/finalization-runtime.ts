@@ -114,7 +114,7 @@ export async function finalizeContestFromEndSnapshotTrigger(contestId: string): 
 
   if (state.counts.settlements === 0) {
     try {
-      await executeAutoSettlementForContest(contestId);
+      await executeAutoSettlementForContest(contestId, { finalizeContestStatus: false });
       stepsExecuted.push("SETTLEMENT");
     } catch (error) {
       throw toStepError("SETTLEMENT", error);
