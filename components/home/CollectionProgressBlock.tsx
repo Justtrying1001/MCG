@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -16,35 +15,35 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
       <div className="mcg-home-section">
         <SectionHeader
           eyebrow="Collection"
-          title="Binder progress"
-          subtitle="Track how much of the set is already in your collection."
-          actions={<Link href="/collection" className="mcg-btn ghost">Open binder</Link>}
+          title="Collection stats"
+          subtitle="Your current collection snapshot."
         />
 
         <div className="collection-progress-hero">
           <div>
-            <p className="collection-progress-label">Completion</p>
+            <p className="collection-progress-label">Collection completion</p>
             <div className="collection-progress-value">
               {hasCompletion ? `${completionPct}%` : "—"}
             </div>
           </div>
-          <p className="collection-progress-note">
-            {hasCompletion
-              ? "Based on your current collection summary."
-              : "Collection completion is not available yet, but your owned and missing counts are."}
-          </p>
+
+          <div className="collection-progress-stats" aria-label="Collection summary">
+            <div className="collection-progress-stat">
+              <span>Cards owned</span>
+              <strong>{ownedCount.toLocaleString()}</strong>
+            </div>
+            <div className="collection-progress-stat">
+              <span>Cards missing</span>
+              <strong>{missingCount.toLocaleString()}</strong>
+            </div>
+          </div>
         </div>
 
-        <div className="mcg-progress-list collection-progress-list">
-          <div className="mcg-progress-row">
-            <span>Owned templates</span>
-            <strong>{ownedCount.toLocaleString()}</strong>
-          </div>
-          <div className="mcg-progress-row">
-            <span>Missing templates</span>
-            <strong>{missingCount.toLocaleString()}</strong>
-          </div>
-        </div>
+        <p className="collection-progress-note">
+          {hasCompletion
+            ? "Based on your current collection summary."
+            : "Completion percentage is unavailable, but owned and missing template counts are currently tracked."}
+        </p>
       </div>
     </Surface>
   );

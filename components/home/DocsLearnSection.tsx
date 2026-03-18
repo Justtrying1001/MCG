@@ -1,24 +1,26 @@
-export function DocsLearnSection() {
+type Props = {
+  compact?: boolean;
+};
+
+export function DocsLearnSection({ compact = false }: Props) {
   return (
-    <section className="home-docs-section">
+    <section className={`home-docs-section${compact ? " home-docs-section--compact" : ""}`}>
       <div className="home-docs-panel">
         <div className="home-docs-content">
-          <p className="home-docs-eyebrow">New to MCG?</p>
+          <p className="home-docs-eyebrow">Docs</p>
           <h2 className="home-docs-title">Learn the game.</h2>
           <p className="home-docs-desc">
-            Everything you need to know about cards, packs, contests, and
-            scoring is in the docs.
+            Rules, packs, contests, and scoring in one place.
           </p>
-          <a
-            href="https://mcg-2.gitbook.io/mcg/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="home-docs-cta"
-          >
-            READ THE DOCS <span aria-hidden="true">↗</span>
-          </a>
         </div>
-        <div className="home-docs-icon" aria-hidden="true">📖</div>
+        <a
+          href="https://mcg-2.gitbook.io/mcg/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="home-docs-cta"
+        >
+          Read docs <span aria-hidden="true">↗</span>
+        </a>
       </div>
     </section>
   );
