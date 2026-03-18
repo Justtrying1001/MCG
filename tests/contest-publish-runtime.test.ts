@@ -109,10 +109,22 @@ describe("contest publish runtime", () => {
     await publishContest("c1");
 
     expect(qstashMock.publishJSON).toHaveBeenCalledTimes(3);
-    expect(qstashMock.publishJSON.mock.calls.map(([input]: any[]) => input.url)).toEqual([
-      "https://example.test/api/internal/jobs/contest-open",
-      "https://example.test/api/internal/jobs/contest-live",
-      "https://example.test/api/internal/jobs/contest-settle",
+    expect(qstashMock.publishJSON.mock.calls.map(([input]: any[]) => ({
+      url: input.url,
+      notBefore: input.notBefore,
+    }))).toEqual([
+      {
+        url: "https://example.test/api/internal/jobs/contest-open",
+        notBefore: Math.floor(new Date("2026-03-01T10:00:00.000Z").getTime() / 1000),
+      },
+      {
+        url: "https://example.test/api/internal/jobs/contest-live",
+        notBefore: Math.floor(new Date("2026-03-01T11:00:00.000Z").getTime() / 1000),
+      },
+      {
+        url: "https://example.test/api/internal/jobs/contest-settle",
+        notBefore: Math.floor(new Date("2026-03-01T12:00:00.000Z").getTime() / 1000),
+      },
     ]);
     expect(prismaMock.contest.update).toHaveBeenCalledWith({
       where: { id: "c1" },

@@ -16,23 +16,23 @@ vi.mock("@/lib/domain/contests/lifecycle-reconciliation", () => ({
   reconcileContestLifecycleByTime: reconcileContestLifecycleByTimeMock,
 }));
 
-import { POST } from "@/app/api/internal/jobs/contest-open/route";
+import { POST } from "@/app/api/internal/jobs/contest-settle/route";
 
-describe("contest-open job route", () => {
+describe("contest-settle job route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     verifyQStashSignatureMock.mockResolvedValue(true);
     reconcileContestLifecycleByTimeMock.mockResolvedValue({
       contestId: "c1",
-      initialStatus: "OPEN",
-      finalStatus: "LOCKED",
-      steps: [{ from: "OPEN", to: "LOCKED", reason: "LOCK_AT_REACHED" }],
+      initialStatus: "LIVE",
+      finalStatus: "SETTLED",
+      steps: [{ from: "LIVE", to: "SETTLED", reason: "ENDS_AT_REACHED" }],
     });
   });
 
-  it("reconciles lifecycle instead of issuing an OPEN no-op transition", async () => {
+  it("parses the raw QStash body and reconciles the contest lifecycle", async () => {
     const rawBody = JSON.stringify({ contestId: "c1" });
-    const request = new Request("http://localhost/api/internal/jobs/contest-open", {
+    const request = new Request("http://localhost/api/internal/jobs/contest-settle", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,10 +44,13 @@ describe("contest-open job route", () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(200);
     expect(verifyQStashSignatureMock).toHaveBeenCalledWith("sig", rawBody);
     expect(reconcileContestLifecycleByTimeMock).toHaveBeenCalledWith("c1");
-    expect(json.ok).toBe(true);
-    expect(json.result.finalStatus).toBe("LOCKED");
+    expect(response.status).toBe(200);
+    expect(json).toEqual({
+      ok: true,
+      contestId: "c1",
+      result: expect.objectContaining({ finalStatus: "SETTLED" }),
+    });
   });
 });
