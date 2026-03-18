@@ -92,19 +92,26 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
         </div>
 
         <div className="contest-modal-grid visual">
-          {filtered.map((item) => {
-            const isSelected = selectedIds.includes(item.instanceId);
-            const isLocked = item.isLockedByActiveContest && !isSelected;
-            return (
-              <LineupCardTile
-                key={item.instanceId}
-                option={item}
-                selected={isSelected}
-                disabled={isLocked || !canEnter}
-                onClick={() => onToggle(item.instanceId)}
-              />
-            );
-          })}
+          {filtered.length ? (
+            filtered.map((item) => {
+              const isSelected = selectedIds.includes(item.instanceId);
+              const isLocked = item.isLockedByActiveContest && !isSelected;
+              return (
+                <LineupCardTile
+                  key={item.instanceId}
+                  option={item}
+                  selected={isSelected}
+                  disabled={isLocked || !canEnter}
+                  onClick={() => onToggle(item.instanceId)}
+                />
+              );
+            })
+          ) : (
+            <div className="contest-card-pool-empty">
+              <strong>No cards found.</strong>
+              <span>Adjust the search or filters to see more eligible cards.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

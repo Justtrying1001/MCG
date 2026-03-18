@@ -65,7 +65,7 @@ export function EligibleCardsPanel({
 
   return (
     <section className="contest-eligible-panel">
-      <div className="contest-eligible-head">
+      <div className="contest-eligible-head contest-builder-section-head">
         <div>
           <p className="mcg-eyebrow">Card pool</p>
           <strong>{visible.length} cards available</strong>
@@ -75,38 +75,51 @@ export function EligibleCardsPanel({
         </p>
       </div>
 
-      <div className="contest-card-pool-filters">
-        <input className="input" placeholder="Search cards / token" value={search} onChange={(event) => setSearch(event.target.value)} />
-        <select className="input" value={rarity} onChange={(event) => setRarity(event.target.value)}>
-          {rarityOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All rarities" : value}</option>)}
-        </select>
-        <select className="input" value={edition} onChange={(event) => setEdition(event.target.value)}>
-          {editionOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All editions" : value}</option>)}
-        </select>
-        <select className="input" value={token} onChange={(event) => setToken(event.target.value)}>
-          {tokenOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All tokens" : value}</option>)}
-        </select>
-        <select className="input" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
-          <option value="rarity">Sort: rarity</option>
-          <option value="name">Sort: name</option>
-          <option value="score">Sort: score potential</option>
-        </select>
+      <div className="contest-card-pool-toolbar">
+        <div className="contest-card-pool-filters">
+          <input className="input" placeholder="Search cards / token" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <select className="input" value={rarity} onChange={(event) => setRarity(event.target.value)}>
+            {rarityOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All rarities" : value}</option>)}
+          </select>
+          <select className="input" value={edition} onChange={(event) => setEdition(event.target.value)}>
+            {editionOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All editions" : value}</option>)}
+          </select>
+          <select className="input" value={token} onChange={(event) => setToken(event.target.value)}>
+            {tokenOptions.map((value) => <option key={value} value={value}>{value === "ALL" ? "All tokens" : value}</option>)}
+          </select>
+          <select className="input" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
+            <option value="rarity">Sort: rarity</option>
+            <option value="name">Sort: name</option>
+            <option value="score">Sort: score potential</option>
+          </select>
+        </div>
+        <p className="contest-card-pool-meta">
+          <span>{selectedIds.length} selected</span>
+          <span>{visible.length} matching cards</span>
+        </p>
       </div>
 
       <div className="contest-eligible-grid visual">
-        {visible.map((item) => {
-          const isSelected = selectedIds.includes(item.instanceId);
-          const isLocked = item.isLockedByActiveContest && !isSelected;
-          return (
-            <LineupCardTile
-              key={item.instanceId}
-              option={item}
-              selected={isSelected}
-              disabled={!canManage || isLocked || (isSelected && activeSlot === null)}
-              onClick={() => onAssign(item.instanceId)}
-            />
-          );
-        })}
+        {visible.length ? (
+          visible.map((item) => {
+            const isSelected = selectedIds.includes(item.instanceId);
+            const isLocked = item.isLockedByActiveContest && !isSelected;
+            return (
+              <LineupCardTile
+                key={item.instanceId}
+                option={item}
+                selected={isSelected}
+                disabled={!canManage || isLocked || (isSelected && activeSlot === null)}
+                onClick={() => onAssign(item.instanceId)}
+              />
+            );
+          })
+        ) : (
+          <div className="contest-card-pool-empty">
+            <strong>No cards match these filters.</strong>
+            <span>Try broadening your search, rarity, edition, or token filters.</span>
+          </div>
+        )}
       </div>
     </section>
   );
