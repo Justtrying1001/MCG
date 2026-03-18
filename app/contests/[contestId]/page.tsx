@@ -8,8 +8,7 @@ import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
 import {
-  ContestDetailsAccordion,
-  FactsLifecyclePanel,
+  ContestDetailsPanel,
   HeroPanel,
   LeaderboardPanel,
   LineupPanel,
@@ -426,20 +425,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const countdownLabel = isOpen ? "Lineup lock in" : isSettled ? "Status" : "Contest ends in";
   const countdownValue = isSettled ? "Finalized" : formatCountdown(countdownTarget, nowTs);
   const rankingRows = ranking?.rankings ?? [];
-  const heroSummaryCards = [
-    { label: "Cards", value: String(rosterSize) },
-    { label: "Players", value: String(contest._count.entries) },
-    { label: "Entry", value: entryFee },
-  ];
-
-  const lifecycleLabel = isSettled
-    ? "Contest settled"
-    : isLive
-      ? "Live contest"
-      : isLocked
-        ? "Lineups locked"
-        : "Registration open";
-
   const stateHeadline = isOpen
     ? hasEntry
       ? "Your lineup is submitted"
@@ -479,7 +464,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         : duplicateLineupKeys.length > 0
           ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
           : "Fill every slot to complete your contest entry.";
-  const heroCoverImageUrl = slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl ?? "/Contest.png";
+  const heroCoverImageUrl = contest.rules[0]?.config?.coverImageUrl?.trim()
+    || slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl
+    || null;
+  const contestInfoLine = [
+    entryFee,
+    `${rosterSize} cards`,
+    `${contest._count.entries} entr${contest._count.entries === 1 ? "y" : "ies"}`,
+    contest.seasonName ?? null,
+    contest.leagueTierRequired ? `${contest.leagueTierRequired} tier` : null,
+  ].filter((value): value is string => Boolean(value)).join(" • ");
 
   return (
     <SiteShell>
@@ -487,8 +481,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         <HeroPanel
           title={contest.title}
           status={contest.status}
+          contestCode={contest.code}
           coverImageUrl={heroCoverImageUrl}
-          summaryCards={heroSummaryCards}
+          infoLine={contestInfoLine}
           countdownLabel={countdownLabel}
           countdownValue={countdownValue}
           contextLabel={isOpen ? "Entry" : isLive ? "Live contest" : isSettled ? "Final results" : "Locked contest"}
@@ -525,6 +520,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             <RewardsPanel
               tiers={rewards?.tiers ?? []}
               summary={rewards?.summary ?? null}
+              hasPolicyData={rewards?.hasPolicyData ?? false}
               myRewards={myRewards ?? null}
               isSettled={isSettled}
             />
@@ -534,36 +530,19 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               currentUserId={me?.user.id}
               status={contest.status}
             />
-            <FactsLifecyclePanel
-              participants={contest._count.entries}
+            <ContestDetailsPanel
+              code={contest.code}
+              rosterSize={rosterSize}
               entryFee={entryFee}
+              openAt={contest.openAt ? fmtDate(contest.openAt) : null}
+              lockAt={contest.lockAt ? fmtDate(contest.lockAt) : null}
+              liveAt={contest.liveAt ?? contest.lockAt ? fmtDate(contest.liveAt ?? contest.lockAt) : null}
+              endsAt={contest.endsAt ? fmtDate(contest.endsAt) : null}
               seasonName={contest.seasonName}
               leagueTierRequired={contest.leagueTierRequired}
-              lifecycleLabel={lifecycleLabel}
-              lifecycleCopy={
-                isOpen
-                  ? "Build your lineup first, then check the reward picture and field snapshot here."
-                  : isLive
-                    ? "The support stack keeps rewards, contenders, and contest facts nearby while your lineup stays primary."
-                    : isSettled
-                      ? "Review the final contest context without losing focus on the lineup that defined your outcome."
-                      : "Contest entry is frozen, and these facts summarize the event state at a glance."
-              }
             />
           </aside>
         </section>
-
-        <ContestDetailsAccordion
-          code={contest.code}
-          rosterSize={rosterSize}
-          entryFee={entryFee}
-          openAt={fmtDate(contest.openAt)}
-          lockAt={fmtDate(contest.lockAt)}
-          liveAt={fmtDate(contest.liveAt ?? contest.lockAt)}
-          endsAt={fmtDate(contest.endsAt)}
-          seasonName={contest.seasonName}
-          leagueTierRequired={contest.leagueTierRequired}
-        />
       </div>
 
       {/* Compatibility guardrails: <span className="cpd-stat-label">Your score</span> */}
