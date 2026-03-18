@@ -85,17 +85,19 @@ export default function HomePage() {
     return {
       displayName: me.user.displayName,
       points: me.user.points,
-      packsOpened: me.user.packsOpened,
       level: accountProgression?.level ?? null,
-      cardsOwned: collectionProjection?.totalOwnedInstances ?? null,
       completionPct: collectionProjection?.completionPct ?? null,
-      ownedTemplates: collectionProjection?.ownedTemplateCount ?? 0,
-      missingTemplates: collectionProjection?.missingTemplateCount ?? 0,
-      contestsEntered: competitiveProgression?.contestsEntered ?? null,
+      ownedTemplates: collectionProjection?.ownedTemplateCount ?? null,
+      missingTemplates: collectionProjection?.missingTemplateCount ?? null,
       activeEntries: competitiveProgression?.activeEntries ?? null,
       seasonRank: competitiveProgression?.seasonRank ?? null,
     };
   }, [me]);
+
+  const hasCollectionSummary = useMemo(() => {
+    if (!userInfo) return false;
+    return typeof userInfo.ownedTemplates === "number" || typeof userInfo.missingTemplates === "number";
+  }, [userInfo]);
 
   return (
     <SiteShell>
@@ -104,39 +106,38 @@ export default function HomePage() {
       </Suspense>
 
       {isAuth && userInfo ? (
-        <>
-          <div className="home-dashboard-layout">
-            <PlayerDashboardHeader
-              displayName={userInfo.displayName}
-              points={userInfo.points}
-              level={userInfo.level}
-              packsOpened={userInfo.packsOpened}
-              cardsOwned={userInfo.cardsOwned}
-              collectionCompletionPct={userInfo.completionPct}
-              contestsEntered={userInfo.contestsEntered}
-              activeEntries={userInfo.activeEntries}
-              seasonRank={userInfo.seasonRank}
-            />
+        <div className="home-dashboard-layout">
+          <PlayerDashboardHeader
+            displayName={userInfo.displayName}
+            points={userInfo.points}
+            level={userInfo.level}
+            activeEntries={userInfo.activeEntries}
+            seasonRank={userInfo.seasonRank}
+          />
 
-            <div className="home-dashboard-main-grid">
-              <div className="home-dashboard-main-column">
-                <ActiveContestsRail contests={contests} />
-              </div>
-
-              <div className="home-dashboard-side-column">
-                <CollectionProgressBlock
-                  completionPct={userInfo.completionPct}
-                  ownedCount={userInfo.ownedTemplates}
-                  missingCount={userInfo.missingTemplates}
-                />
-                <DocsLearnSection />
-              </div>
+          <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
+            <div className="home-dashboard-main-column">
+              <ActiveContestsRail contests={contests} />
             </div>
 
-            <RecentPullsRail pulls={recentPulls} />
-            <GenesisPreviewStrip />
+            {hasCollectionSummary ? (
+              <aside className="home-dashboard-side-column">
+                <CollectionProgressBlock
+                  completionPct={userInfo.completionPct}
+                  ownedCount={userInfo.ownedTemplates ?? 0}
+                  missingCount={userInfo.missingTemplates ?? 0}
+                />
+              </aside>
+            ) : null}
           </div>
-        </>
+
+          <RecentPullsRail pulls={recentPulls} />
+
+          <div className="home-dashboard-secondary-grid">
+            <GenesisPreviewStrip />
+            <DocsLearnSection compact />
+          </div>
+        </div>
       ) : (
         <>
           <HomeHeroLanding />

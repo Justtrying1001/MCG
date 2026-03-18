@@ -17,7 +17,7 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
         <SectionHeader
           eyebrow="Collection"
           title="Binder progress"
-          subtitle="Track how much of the set is already in your collection."
+          subtitle="A compact view of the set coverage already available on your account."
           actions={<Link href="/collection" className="mcg-btn ghost">Open binder</Link>}
         />
 
@@ -28,23 +28,24 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
               {hasCompletion ? `${completionPct}%` : "—"}
             </div>
           </div>
-          <p className="collection-progress-note">
-            {hasCompletion
-              ? "Based on your current collection summary."
-              : "Collection completion is not available yet, but your owned and missing counts are."}
-          </p>
+
+          <div className="collection-progress-stats" aria-label="Collection summary">
+            <div className="collection-progress-stat">
+              <span>Owned templates</span>
+              <strong>{ownedCount.toLocaleString()}</strong>
+            </div>
+            <div className="collection-progress-stat">
+              <span>Missing templates</span>
+              <strong>{missingCount.toLocaleString()}</strong>
+            </div>
+          </div>
         </div>
 
-        <div className="mcg-progress-list collection-progress-list">
-          <div className="mcg-progress-row">
-            <span>Owned templates</span>
-            <strong>{ownedCount.toLocaleString()}</strong>
-          </div>
-          <div className="mcg-progress-row">
-            <span>Missing templates</span>
-            <strong>{missingCount.toLocaleString()}</strong>
-          </div>
-        </div>
+        <p className="collection-progress-note">
+          {hasCompletion
+            ? "Based on your current collection summary."
+            : "Completion percentage is unavailable, but owned and missing template counts are currently tracked."}
+        </p>
       </div>
     </Surface>
   );
