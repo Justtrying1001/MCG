@@ -25,12 +25,13 @@ export type HeroPanelProps = {
   title: string;
   status: ContestStatus;
   coverImageUrl?: string | null;
-  summaryCards: Array<{ label: string; value: string }>;
-  countdownLabel: string;
-  countdownValue: string;
+  contestCode: string;
+  infoLine: string;
   contextLabel: string;
   contextHeadline: string;
   contextBody: string;
+  countdownLabel: string;
+  countdownValue: string;
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
   flash?: string | null;
   error?: string | null;
@@ -40,56 +41,56 @@ export function HeroPanel({
   title,
   status,
   coverImageUrl,
-  summaryCards,
-  countdownLabel,
-  countdownValue,
+  contestCode,
+  infoLine,
   contextLabel,
   contextHeadline,
   contextBody,
+  countdownLabel,
+  countdownValue,
   primaryAction,
   flash,
   error,
 }: HeroPanelProps) {
   const statusTone = status === "LIVE" ? "live" : status === "LOCKED" ? "locked" : status === "SETTLED" ? "settled" : "open";
-  const heroCoverStyle = {
-    backgroundImage: `linear-gradient(135deg, rgba(6, 10, 22, 0.18), rgba(6, 10, 22, 0.82)), url(${coverImageUrl || "/Contest.png"})`,
-  };
+  const hasCoverImage = Boolean(coverImageUrl && coverImageUrl.trim().length > 0);
+  const heroCoverStyle = hasCoverImage
+    ? { backgroundImage: `linear-gradient(115deg, rgba(7, 11, 24, 0.1), rgba(7, 11, 24, 0.82)), url(${coverImageUrl})` }
+    : undefined;
 
   return (
     <Surface className="contest-detail-shell-hero" variant="raised">
-      <div className="contest-detail-hero-cover" style={heroCoverStyle} aria-hidden="true" />
-      <div className="contest-detail-hero-main">
-        <div className="contest-detail-hero-meta">
+      <div className={`contest-detail-hero-visual${hasCoverImage ? " has-image" : " is-fallback"}`} style={heroCoverStyle}>
+        <div className="contest-detail-hero-visual-badge-row">
           <span className={`mcg-badge ${statusTone}`}>{status}</span>
+          <span className="contest-detail-hero-code">Contest {contestCode}</span>
+        </div>
+
+        <div className="contest-detail-hero-copy">
           <span className="contest-detail-hero-kicker">{contextLabel}</span>
-        </div>
-        <h1>{title}</h1>
-        <div className="contest-detail-hero-summary-grid">
-          {summaryCards.map((item) => (
-            <article key={item.label} className="contest-detail-hero-summary-card">
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </article>
-          ))}
-        </div>
-        <div className="contest-detail-hero-context">
-          <p className="mcg-eyebrow">Contest briefing</p>
-          <p><strong>{contextHeadline}</strong> — {contextBody}</p>
-          {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
-          {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
+          <h1>{title}</h1>
+          <p className="contest-detail-hero-info-line">{infoLine}</p>
+          <div className="contest-detail-hero-context">
+            <p className="mcg-eyebrow">Contest briefing</p>
+            <p><strong>{contextHeadline}</strong> — {contextBody}</p>
+            {error ? <p className="contest-detail-inline-alert error">{error}</p> : null}
+            {!error && flash ? <p className="contest-detail-inline-alert success">{flash}</p> : null}
+          </div>
         </div>
       </div>
 
       <div className="contest-detail-hero-side">
         <div className="contest-detail-countdown-block">
-          <span>{countdownLabel}</span>
+          <div className="contest-detail-hero-side-top">
+            <span className={`mcg-badge ${statusTone}`}>{status}</span>
+            <span className="contest-detail-hero-side-label">{countdownLabel}</span>
+          </div>
           <strong>{countdownValue}</strong>
           <small>{status === "SETTLED" ? "Results are locked in." : "Stay ahead of lock and live scoring."}</small>
         </div>
         {primaryAction ? (
           <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
-            {primaryAction.label}
-          </button>
+            {primaryAction.label}</button>
         ) : null}
       </div>
     </Surface>
@@ -534,6 +535,7 @@ export function LeaderboardPanel({
 export function RewardsPanel({
   tiers,
   summary,
+  hasPolicyData = false,
   myRewards,
   isSettled,
 }: {
@@ -545,6 +547,7 @@ export function RewardsPanel({
     rewardedWinners: number;
     participantCount: number;
   } | null;
+  hasPolicyData?: boolean;
   myRewards?: RewardSummary | null;
   isSettled: boolean;
 }) {
@@ -589,8 +592,22 @@ export function RewardsPanel({
             </article>
           ))}
         </div>
+      ) : hasPolicyData && summary ? (
+        <div className="contest-detail-reward-tier-list">
+          <article className="featured">
+            <header>
+              <strong>Reward pool configured</strong>
+              <span>Field-dependent</span>
+            </header>
+            <div>
+              {summary.pointsPool > 0 ? <span>{summary.pointsPool} pts pool</span> : null}
+              {summary.packPool > 0 ? <span>{summary.packPool} pack{summary.packPool > 1 ? "s" : ""} pool</span> : null}
+              <span>Top {summary.rewardedTopPercent}% paid</span>
+            </div>
+          </article>
+        </div>
       ) : (
-        <p className="contest-detail-empty-note">Rewards not available yet.</p>
+        <p className="contest-detail-empty-note">Rewards are still being published for this contest.</p>
       )}
 
       {summary ? (
@@ -604,7 +621,7 @@ export function RewardsPanel({
   );
 }
 
-export function FactsLifecyclePanel({
+export function FactsLifecyclePanel_UNUSED({
   participants,
   entryFee,
   seasonName,
@@ -675,7 +692,7 @@ export function ResultBreakdownPanel({ rows }: { rows: BreakdownRow[] }) {
   return <ScoreBreakdownPanel rows={rows} />;
 }
 
-export function ContestDetailsAccordion({
+export function ContestDetailsPanel({
   code,
   rosterSize,
   entryFee,
@@ -711,11 +728,13 @@ export function ContestDetailsAccordion({
   ];
 
   return (
-    <details className="contest-detail-accordion">
-      <summary>
-        <span>Contest details</span>
-        <span className="contest-detail-inline-note">Rules, timing, and support metadata</span>
-      </summary>
+    <Surface className="contest-detail-block contest-detail-info-panel" variant="raised">
+      <div className="contest-detail-block-head">
+        <div>
+          <p className="mcg-eyebrow">Contest details</p>
+          <h3>Rules and timing</h3>
+        </div>
+      </div>
       <div className="contest-detail-accordion-body">
         <div className="contest-detail-accordion-section">
           <p className="mcg-eyebrow">Rules</p>
@@ -735,6 +754,6 @@ export function ContestDetailsAccordion({
         </dl>
       </div>
       <Link href="/contests" className="contest-detail-inline-link">Back to all contests</Link>
-    </details>
+    </Surface>
   );
 }

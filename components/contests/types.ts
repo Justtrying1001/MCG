@@ -3,12 +3,23 @@ import type { MvpCardView } from "@/types/cards";
 export type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 export type ContestEntryStatus = "DRAFT" | "SUBMITTED" | "SCORED" | "SETTLED";
 
+export type ContestRuleConfig = {
+  coverImageUrl?: string | null;
+  rewardConfig?: {
+    pointsPool?: number | null;
+    packPool?: number | null;
+    rewardedTopPercent?: number | null;
+    distributionProfile?: string | null;
+  } | null;
+};
+
 export type ContestRule = {
   id: string;
   cardSetId: string | null;
   maxRosterSize: number | null;
   entryFeeEnabled?: boolean;
   entryFeeAmount?: number | null;
+  config?: ContestRuleConfig | null;
 };
 
 export type ContestListItem = {
