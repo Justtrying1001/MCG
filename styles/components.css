@@ -3686,12 +3686,40 @@ textarea:focus {
   gap: 26px;
 }
 
-.contest-detail-main-inline-summary,
+.contest-detail-main-surface > .contest-detail-panel-copy,
+.contest-detail-lineup-meta .contest-detail-panel-copy {
+  max-width: 54ch;
+}
+
 .contest-detail-section-head .mcg-eyebrow,
-.contest-detail-support-list span,
-.contest-detail-result-lead p:last-child {
+.contest-detail-support-list span {
   color: var(--color-text-muted);
   font-size: .88rem;
+}
+
+.contest-detail-main-inline-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.contest-detail-main-inline-summary span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  color: var(--color-text-secondary);
+}
+
+.contest-detail-main-inline-summary strong {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.contest-detail-main-inline-summary small {
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
 
 .contest-detail-main-section {
@@ -3744,6 +3772,32 @@ textarea:focus {
 .contest-detail-result-lead .mcg-eyebrow {
   margin: 0;
   color: #c4b5fd;
+}
+
+.contest-detail-result-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: baseline;
+}
+
+.contest-detail-result-rail span {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.contest-detail-result-rail strong {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.contest-detail-result-rail small {
+  color: var(--color-text-muted);
+  font-size: .76rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
 
 .contest-detail-lineup-embed {
@@ -3883,7 +3937,7 @@ textarea:focus {
   gap: 6px;
   align-items: baseline;
   white-space: nowrap;
-  color: var(--color-text-secondary);
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .contest-detail-support-list li:not(:last-child)::after {
@@ -3893,8 +3947,9 @@ textarea:focus {
 }
 
 .contest-detail-support-list strong {
-  font-size: .9rem;
+  font-size: .84rem;
   font-weight: 600;
+  color: rgba(248, 250, 252, 0.82);
 }
 
 .contest-detail-earned-rewards,

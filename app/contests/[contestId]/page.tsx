@@ -532,6 +532,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             currentUserId={me?.user.id}
             myRank={myRanking?.rank ?? null}
             myScore={myRanking?.score ?? null}
+            myRewards={myRewards ?? null}
             scoreBreakdown={scoreBreakdown}
             lineup={
               <LineupPanel

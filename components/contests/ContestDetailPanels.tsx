@@ -141,6 +141,7 @@ export function MainStateBlock({
   currentUserId,
   myRank,
   myScore,
+  myRewards,
   scoreBreakdown,
   lineup,
 }: {
@@ -152,10 +153,18 @@ export function MainStateBlock({
   currentUserId?: string;
   myRank?: number | null;
   myScore?: number | null;
+  myRewards?: RewardSummary | null;
   scoreBreakdown?: BreakdownRow[] | null;
   lineup: ReactNode;
 }) {
   const statusLabel = status === "OPEN" ? "Entry flow" : status === "LOCKED" ? "Locked lineup" : status === "LIVE" ? "Live contest" : "Final result";
+  const rewardSummary = myRewards
+    ? [
+        myRewards.pointsTotal > 0 ? `${myRewards.pointsTotal} pts` : null,
+        myRewards.xpTotal > 0 ? `${myRewards.xpTotal} XP` : null,
+        myRewards.packsTotal > 0 ? `${myRewards.packsTotal} pack${myRewards.packsTotal > 1 ? "s" : ""}` : null,
+      ].filter((value): value is string => Boolean(value)).join(" • ")
+    : "";
 
   return (
     <Surface id="contest-main-experience" className="contest-detail-block contest-detail-main-surface" variant="raised">
@@ -171,13 +180,27 @@ export function MainStateBlock({
       {status === "SETTLED" ? (
         <div className="contest-detail-result-lead">
           <p className="mcg-eyebrow">Result</p>
-          <strong>{myRank ? `Finished #${myRank}` : "Final result pending"}</strong>
-          <p>{typeof myScore === "number" ? `${myScore.toFixed(2)} points` : "Scoring is still finalizing."}</p>
+          <strong>{myRank ? `#${myRank}` : "—"}</strong>
+          <div className="contest-detail-result-rail">
+            <span>
+              <strong>{typeof myScore === "number" ? myScore.toFixed(2) : "—"}</strong>
+              <small>Score</small>
+            </span>
+            <span>
+              <strong>{rewardSummary || "No rewards"}</strong>
+              <small>Rewards</small>
+            </span>
+          </div>
         </div>
       ) : summaryItems.length > 0 ? (
-        <p className="contest-detail-main-inline-summary">
-          {summaryItems.map((item) => `${item.label}: ${item.value}`).join(" • ")}
-        </p>
+        <div className="contest-detail-main-inline-summary">
+          {summaryItems.map((item) => (
+            <span key={item.label}>
+              <strong>{item.value}</strong>
+              <small>{item.label}</small>
+            </span>
+          ))}
+        </div>
       ) : null}
 
       <section className="contest-detail-main-section lineup-subsection">
