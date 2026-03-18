@@ -102,6 +102,19 @@ describe("contest lifecycle debug runtime", () => {
     expect(debug?.nextActionRecommended).toMatch(/force-lifecycle/i);
   });
 
+  it("flags contests published without lifecycle jobs when QStash is configured", async () => {
+    process.env.QSTASH_TOKEN = "token";
+    process.env.NEXT_PUBLIC_APP_URL = "https://example.test";
+    process.env.ENABLE_CONTEST_LIFECYCLE_SCHEDULER = "0";
+
+    const debug = await getContestLifecycleDebugInfo("c1", new Date("2026-03-18T09:30:00.000Z"));
+
+    expect(debug?.publishedWithoutLifecycleJobs).toBe(true);
+    expect(debug?.qstashConfigured).toBe(true);
+    expect(debug?.lastKnownLifecycleDriver).toBe("NONE");
+    expect(debug?.blockers).toContain("Contest was published without lifecycle jobs even though QStash is configured.");
+  });
+
   it("reports before/after status change when force lifecycle can move OPEN to LIVE", async () => {
     reconcileContestLifecycleByTimeMock.mockResolvedValue({
       contestId: "c1",

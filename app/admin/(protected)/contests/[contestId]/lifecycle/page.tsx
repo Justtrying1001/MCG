@@ -28,6 +28,7 @@ type LifecycleDebugPayload = {
   qstashOpenJobId: string | null;
   qstashLiveJobId: string | null;
   qstashSettleJobId: string | null;
+  publishedWithoutLifecycleJobs: boolean;
   schedulerEnabled: boolean;
   qstashConfigured: boolean;
   lastKnownLifecycleDriver: string;
@@ -211,6 +212,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
               <p className="contest-admin-muted">Blocked reason: <strong>{debug.reasonIfBlocked ?? "none"}</strong></p>
               <p className="contest-admin-muted">Snapshots: <strong>START={String(debug.hasStartSnapshot)}</strong> / <strong>END={String(debug.hasEndSnapshot)}</strong></p>
               <p className="contest-admin-muted">Jobs: <strong>open={debug.qstashOpenJobId ?? "none"}</strong> / <strong>live={debug.qstashLiveJobId ?? "none"}</strong> / <strong>settle={debug.qstashSettleJobId ?? "none"}</strong></p>
+              <p className="contest-admin-muted">Published without lifecycle jobs: <strong>{debug.publishedWithoutLifecycleJobs ? "yes" : "no"}</strong></p>
               <p className="contest-admin-muted">Runtime config: <strong>schedulerEnabled={String(debug.schedulerEnabled)}</strong> / <strong>qstashConfigured={String(debug.qstashConfigured)}</strong></p>
             </div>
           </div>

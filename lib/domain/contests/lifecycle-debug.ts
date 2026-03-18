@@ -53,6 +53,7 @@ export type ContestLifecycleDebugInfo = {
   qstashOpenJobId: string | null;
   qstashLiveJobId: string | null;
   qstashSettleJobId: string | null;
+  publishedWithoutLifecycleJobs: boolean;
   schedulerEnabled: boolean;
   qstashConfigured: boolean;
   lastKnownLifecycleDriver: ContestLifecycleDriver;
@@ -194,6 +195,9 @@ export async function getContestLifecycleDebugInfo(contestId: string, nowInput?:
   const derived = deriveTargetStatus(contest, now);
   const liveValidation = validateContestTransitionState(lifecycleSnapshot, ContestStatus.LIVE, "auto");
   const driverState = buildDriverState(contest);
+  const publishedWithoutLifecycleJobs = Boolean(
+    contest.configPublishedAt && driverState.qstashConfigured && !contest.qstashOpenJobId && !contest.qstashLiveJobId && !contest.qstashSettleJobId,
+  );
 
   const blockers: string[] = [];
   if (!contest.configPublishedAt) blockers.push("Contest is not published.");
@@ -203,6 +207,9 @@ export async function getContestLifecycleDebugInfo(contestId: string, nowInput?:
   }
   if (derived.target === ContestStatus.LIVE && liveValidation.blocking) {
     blockers.push(...liveValidation.issues.filter((issue) => issue.severity === "ERROR").map((issue) => issue.message));
+  }
+  if (publishedWithoutLifecycleJobs) {
+    blockers.push("Contest was published without lifecycle jobs even though QStash is configured.");
   }
   if (derived.target === ContestStatus.LIVE && !driverState.qstashConfigured && !driverState.schedulerEnabled) {
     blockers.push("No lifecycle driver will call reconcileContestLifecycleByTime automatically: QStash is missing and scheduler fallback is disabled.");
@@ -249,6 +256,7 @@ export async function getContestLifecycleDebugInfo(contestId: string, nowInput?:
     qstashOpenJobId: contest.qstashOpenJobId,
     qstashLiveJobId: contest.qstashLiveJobId,
     qstashSettleJobId: contest.qstashSettleJobId,
+    publishedWithoutLifecycleJobs,
     schedulerEnabled: driverState.schedulerEnabled,
     qstashConfigured: driverState.qstashConfigured,
     lastKnownLifecycleDriver: driverState.lastKnownLifecycleDriver,

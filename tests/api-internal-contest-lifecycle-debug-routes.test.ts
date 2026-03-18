@@ -45,6 +45,7 @@ describe("contest lifecycle debug routes", () => {
       qstashOpenJobId: null,
       qstashLiveJobId: null,
       qstashSettleJobId: null,
+      publishedWithoutLifecycleJobs: true,
       schedulerEnabled: false,
       qstashConfigured: false,
       lastKnownLifecycleDriver: "NONE",
