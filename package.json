@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@privy-io/react-auth": "^3.18.0",
     "@upstash/qstash": "^2.9.0",
     "@vercel/analytics": "^1.6.1",
     "next": "14.2.35",
