@@ -4,12 +4,9 @@ import { useMemo } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 
 export function PrivyTestPanel() {
-  const { authenticated, login, ready, user } = usePrivy();
-
-  const twitterAccount = useMemo(() => user?.linkedAccounts.find((account) => account.type === "twitter_oauth") ?? null, [user]);
-
   if (!privyAppId) {
     return (
       <section className="privy-test-panel" aria-live="polite">
@@ -21,6 +18,25 @@ export function PrivyTestPanel() {
       </section>
     );
   }
+
+  if (!privyClientId) {
+    return (
+      <section className="privy-test-panel" aria-live="polite">
+        <div>
+          <p className="privy-test-panel__eyebrow">Privy frontend check</p>
+          <p className="privy-test-panel__title">Privy client missing</p>
+          <p className="privy-test-panel__copy">Set <code>NEXT_PUBLIC_PRIVY_CLIENT_ID</code> alongside <code>NEXT_PUBLIC_PRIVY_APP_ID</code> so the Privy provider can initialize cleanly on preview.</p>
+        </div>
+      </section>
+    );
+  }
+
+  return <PrivyTestPanelState />;
+}
+
+function PrivyTestPanelState() {
+  const { authenticated, login, ready, user } = usePrivy();
+  const twitterAccount = useMemo(() => user?.linkedAccounts.find((account) => account.type === "twitter_oauth") ?? null, [user]);
 
   return (
     <section className="privy-test-panel" aria-live="polite">

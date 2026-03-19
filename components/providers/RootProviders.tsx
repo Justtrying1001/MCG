@@ -5,11 +5,13 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { SessionProvider } from "@/components/session/SessionProvider";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 
 export function RootProviders({ children }: { children: ReactNode }) {
-  const content = privyAppId ? (
+  const content = privyAppId && privyClientId ? (
     <PrivyProvider
       appId={privyAppId}
+      clientId={privyClientId}
       config={{
         appearance: {
           accentColor: "#c89b3c",
