@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma";
 import {
   computeTokenScore,
   marketCapScoreFromChange,
+  momentumMultiplierFromChanges,
   priceScoreFromChange,
-  rankMultiplierFromChange,
   rankScoreFromChange,
   volumeScoreFromChange,
 } from "@/lib/domain/contests/scoring-engine-runtime";
@@ -63,11 +63,11 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
     return NextResponse.json({
       ok: true,
       tokenScores: tokenScores.map((row) => {
-        const baseScore = (0.45 * priceScoreFromChange(row.priceChange))
-          + (0.25 * volumeScoreFromChange(row.volumeChange))
-          + (0.20 * marketCapScoreFromChange(row.marketCapChange))
-          + (0.10 * rankScoreFromChange(row.rankChange));
-        const rankMultiplier = rankMultiplierFromChange(row.rankChange);
+        const baseScore = (0.40 * priceScoreFromChange(row.priceChange))
+          + (0.30 * volumeScoreFromChange(row.volumeChange))
+          + (0.15 * marketCapScoreFromChange(row.marketCapChange))
+          + (0.15 * rankScoreFromChange(row.rankChange));
+        const momentumMultiplier = momentumMultiplierFromChanges(row.volumeChange, row.rankChange);
 
         return {
           id: row.id,
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
           volumeChange: row.volumeChange,
           rankChange: row.rankChange,
           baseScore,
-          rankMultiplier,
+          momentumMultiplier,
           finalScore: row.score,
           score: computeTokenScore({
             priceChange: row.priceChange,
