@@ -85,13 +85,13 @@ export function usePrivyLogin() {
 
   const loginWithPrivy = useCallback(async (inviteCode?: string | null) => {
     const resolvedInviteCode = inviteCode ?? getInviteCodeFromLocation();
-    writePendingLoginRequest(true);
-    writePendingInviteCode(resolvedInviteCode);
 
     if (authenticated) {
       await logout();
     }
 
+    writePendingLoginRequest(true);
+    writePendingInviteCode(resolvedInviteCode);
     login({ loginMethods: ["twitter"] });
   }, [authenticated, login, logout]);
 
