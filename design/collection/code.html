@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG - Collection Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#181021",
+              "surface-container-highest": "#2c2137",
+              "primary-fixed-dim": "#af7aef",
+              "on-primary-fixed": "#000000",
+              "primary": "#c799ff",
+              "secondary-container": "#006a60",
+              "on-background": "#eee1f7",
+              "surface-tint": "#c799ff",
+              "outline-variant": "#4d4456",
+              "tertiary": "#ffe792",
+              "tertiary-fixed-dim": "#efc900",
+              "outline": "#7c7185",
+              "on-secondary-fixed-variant": "#00655b",
+              "error-dim": "#d73357",
+              "surface-container": "#1e1628",
+              "primary-fixed": "#bc87fe",
+              "inverse-on-surface": "#5b5164",
+              "secondary-fixed-dim": "#33e9d5",
+              "surface-dim": "#120b1a",
+              "surface": "#120b1a",
+              "inverse-primary": "#7744b5",
+              "secondary-fixed": "#4af8e3",
+              "on-surface": "#eee1f7",
+              "inverse-surface": "#fff7ff",
+              "on-secondary-container": "#dcfff8",
+              "on-primary-fixed-variant": "#40007a",
+              "on-tertiary-fixed-variant": "#665500",
+              "on-error": "#490013",
+              "on-surface-variant": "#b3a7bc",
+              "tertiary-fixed": "#ffd709",
+              "secondary": "#4af8e3",
+              "on-error-container": "#ffb2b9",
+              "on-secondary-fixed": "#00463f",
+              "surface-bright": "#33273f",
+              "primary-container": "#bc87fe",
+              "surface-container-lowest": "#000000",
+              "error-container": "#a70138",
+              "on-primary": "#440080",
+              "tertiary-dim": "#efc900",
+              "on-secondary": "#005b51",
+              "on-tertiary-container": "#5b4b00",
+              "primary-dim": "#ba85fb",
+              "background": "#120b1a",
+              "tertiary-container": "#ffd709",
+              "on-tertiary": "#655400",
+              "on-primary-container": "#340064",
+              "on-tertiary-fixed": "#453900",
+              "error": "#ff6e84",
+              "surface-variant": "#2c2137",
+              "surface-container-high": "#251b30",
+              "secondary-dim": "#33e9d5"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 22, 40, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .card-tilt:hover {
+            transform: translateY(-12px) rotateX(4deg) rotateY(-4deg);
+        }
+        .shimmer-gradient {
+            background: linear-gradient(135deg, #c799ff 0%, #bc87fe 50%, #4af8e3 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-background font-body selection:bg-primary/30 min-h-screen overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 py-4 bg-[#120b1a]/80 backdrop-blur-xl z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#33273f]/20 to-transparent">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#c799ff] to-[#bc87fe] font-['Space_Grotesk'] tracking-tight">MCG</span>
+<div class="hidden md:flex gap-6 items-center ml-8 font-label text-xs uppercase tracking-widest text-white/60">
+<a class="hover:scale-105 hover:text-[#c799ff] transition-all" href="#">Lobby</a>
+<a class="text-[#4af8e3] drop-shadow-[0_0_8px_rgba(74,248,227,0.5)]" href="#">Collection</a>
+<a class="hover:scale-105 hover:text-[#c799ff] transition-all" href="#">Battle</a>
+<a class="hover:scale-105 hover:text-[#c799ff] transition-all" href="#">Market</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 bg-surface-container-lowest px-4 py-1.5 rounded-full border border-outline-variant/15">
+<span class="material-symbols-outlined text-tertiary text-lg" data-icon="diamond">diamond</span>
+<span class="font-label font-bold text-sm">24,500</span>
+</div>
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary overflow-hidden border-2 border-primary-dim/30 group-hover:border-secondary transition-all">
+<img alt="Player Avatar" class="w-full h-full object-cover" data-alt="Cyberpunk style glowing player avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi5Jimxhpf4veQJinzFOioOiDheVtvK_c_BeCZ8JVLwNXXVJ-rFNlwas46XwHemJRD4x4SAOAkoOj1kIyarvMUcuLFHzpQmVKmXT8JiYZn4AXZESnENv8U7Bag7bHKU83xoacnpF4uR1lI2fUVCtnjom5XCk2kF32SLdP-hA7tzMCbbHZnEcZA9ryYaCReXPs2Lp_Ctd6jcVaH4bL8lzdbS-lt3h_V1HPgu9dbwSJNMIV7ng9a1ewdSFMiGqYUneaR99fPERFIuC4"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Desktop only as per shell layout) -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full z-40 bg-[#1e1628]/90 backdrop-blur-2xl h-screen w-64 border-r border-[#4d4456]/15 shadow-[20px_0_40px_rgba(0,0,0,0.4)] pt-24 pb-8">
+<div class="px-6 mb-8">
+<h2 class="text-[#c799ff] text-xl font-black font-headline">PLAYER 1</h2>
+<p class="font-label uppercase tracking-[0.05em] text-xs font-bold text-white/40">Level 42</p>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-4 text-white/40 p-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="home">home</span>
+                Lobby
+            </a>
+<a class="flex items-center gap-4 text-white/40 p-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="redeem">redeem</span>
+                Packs
+            </a>
+<a class="flex items-center gap-4 bg-gradient-to-r from-[#c799ff]/20 to-transparent border-l-4 border-[#c799ff] text-white p-4 font-label uppercase tracking-[0.05em] text-xs font-bold" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="style">style</span>
+                Collection
+            </a>
+<a class="flex items-center gap-4 text-white/40 p-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="swords">swords</span>
+                Battle
+            </a>
+<a class="flex items-center gap-4 text-white/40 p-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="workspace_premium">workspace_premium</span>
+                Rewards
+            </a>
+<a class="flex items-center gap-4 text-white/40 p-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="person">person</span>
+                Profile
+            </a>
+</div>
+<div class="px-4">
+<button class="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-sm tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(199,153,255,0.4)]">
+                BATTLE NOW
+            </button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-24 pb-24 lg:pb-8 min-h-screen px-6">
+<div class="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8 h-full">
+<!-- Inventory Grid Section -->
+<section class="space-y-8">
+<!-- Header & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+<div>
+<h1 class="text-4xl lg:text-5xl font-headline font-black tracking-tighter text-on-surface">YOUR REPOSITORY</h1>
+<p class="text-on-surface-variant font-body mt-2">Managing 142 Digital Artifacts</p>
+</div>
+<div class="flex flex-wrap gap-2 font-label text-[10px] font-bold">
+<button class="px-6 py-2.5 rounded-full bg-surface-container-highest text-secondary border border-secondary/20 shadow-[0_0_15px_rgba(74,248,227,0.1)]">All</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-bright transition-colors">Animals</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-bright transition-colors">Crypto</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-bright transition-colors">Political</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-bright transition-colors">Abstract</button>
+</div>
+</div>
+<!-- Bento-ish Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<!-- Selected Card -->
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt border-2 border-primary/50 shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer ring-4 ring-primary/20">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Silver Doge" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Futuristic silver metallic Shiba Inu dog portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChgJm33Gz0TwKqoN03YQvVB7CHj3EULGk__jcMWCCcYBXV00twJ59GntG8vstgzP4EG67XzgiWWpkpL0n2o5pECf2aI3Ggldx-mqW4rZEU1zySNypT_6mjvCSvLGbbc2QD6Ed2g4I8FRx0lzK12ujNygKGoIw60EX4M3bfP1MAGkCZ4pwJ-CAjrnmJs1oT37SgfF0-igBuLmSPrs7AWU7VAIT0D0fo0QW-y1nZM1nEPwZwR85YtIX8J5oD04G0c06d0qvzpxOq8NU"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-tertiary text-on-tertiary text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">LEGENDARY</span>
+<h3 class="font-headline font-bold text-white leading-tight">Silver Doge</h3>
+</div>
+<div class="absolute top-4 right-4 z-20 flex flex-col items-center justify-center w-10 h-10 rounded-full glass-panel border border-white/10">
+<span class="text-secondary font-headline font-black text-xs">88</span>
+</div>
+</div>
+<!-- Other Cards -->
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt cursor-pointer hover:shadow-[0_0_30px_rgba(74,248,227,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Ethereal Peak" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract glowing purple and green digital art nodes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmJANChZR1Y2XGWJV1HCnUuNRqDTL9En31wEahegEuda_ZZCawDpzNgvQYimJ5mt1Ag_mm2AIHt__MLUhieYrSV01YBLzQm2FabaZYmO4Kv0CwiwGbJqmgXYBG_NMIH6lC17CNWhuuR1J7GvpjC96YP9ySx5IcMExu93j5VAkoZ21_p7RuJ--DEdn30wa1y0aluujWxynsbpCt6QcfQsUrhz34NyU1uEkml3kDx4DjGsWC6ljpbYtJSUPUz2y6LalXc2ce0bLw1CY"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary-container text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">EPIC</span>
+<h3 class="font-headline font-bold text-white leading-tight">Neon Node</h3>
+</div>
+</div>
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt cursor-pointer hover:shadow-[0_0_30px_rgba(74,248,227,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Digital Nomad" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract geometric dark sculpture with glowing cyan lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmQ5SzYiGQzyYbsriS_p8qjT5cvDlFmjL5PH_wEeRePv0jBGZrpeFOxjNfjdK7QamT5xpQkbAp4w9Dz54D0KWwQ6P7lnijfh_yPN8qUN_Yf-GQQR32TrNdpOOGVHUnmwOfW10dTgWR49e-llcI3j30ugSUCq4Nvo-hHGIiufoCm8PdjdKmJWFBKYPijx1wpdXUGn5oIIduXA3WEysN_VXXLopCZvGPb7ZW_i3ps2mz8K-c0v1k-WAtQNGmkGdII_Y5bZ2PILliVEU"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-outline-variant/30 text-white/60 text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">COMMON</span>
+<h3 class="font-headline font-bold text-white leading-tight">Dark Monolith</h3>
+</div>
+</div>
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt cursor-pointer hover:shadow-[0_0_30px_rgba(199,153,255,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Golden Bull" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract 3D golden liquid shapes flowing through space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5BQ8bJJf1u2EPMXqKlEH03YZZx3lySXmTdINSkLD2ec3BFK8PIsoSlEKNNYCMONAG6qxUAyNaiKvm1p7RoTNvqv0vv1HQKaIj_J05ULuUrfEdx2kWj4g3raw2w2g0B4I3837UMj4Hsrf2BwlUR86FGRV9gWjYl0LHGOV7Z63jGCaTs4o9tu_oQiFrGNRYTzegQ9XO7Upx5UOQMpMUNBElMm2boZYL4qhsEA97WJeElDcsE3WT9ANMqOU6bAnnBiJ8GhboLxUwNMA"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed-dim text-on-tertiary-fixed-variant text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">RARE</span>
+<h3 class="font-headline font-bold text-white leading-tight">Gilded Flow</h3>
+</div>
+</div>
+<!-- Repeated Patterns to fill grid -->
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt cursor-pointer hover:shadow-[0_0_30px_rgba(199,153,255,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Liquid Glass" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Wavy translucent glass texture with purple highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0UmdOmnbQEJhB6crwvu3MZTRCUINS4CmLAFJrhdJamGu66-31FNf4fTOZK57wRJTFaB1gz7p-rQ9YsR3CYTVYR3LUkMsP-hLJcFGOZW-ZgR7nxhPJceeKXWh3PVu44JYWRW7ljcHVoACNUuCXc3JBkwZDpaVqVgchTvl8nOjaNKdjFURG2X86vJagzM9LFsGaZPn8meg0JoSsOTnnlbPWjJW2h2cnfquyM1GwhAdGZmbNMhEnB2nBCYc_x3TucHm-hfePRah9pmk"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary-container text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">EPIC</span>
+<h3 class="font-headline font-bold text-white leading-tight">Violet Current</h3>
+</div>
+</div>
+<div class="group relative aspect-[3/4] rounded-lg bg-surface-container-highest overflow-hidden transition-all duration-300 card-tilt cursor-pointer hover:shadow-[0_0_30px_rgba(74,248,227,0.2)]">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10"></div>
+<img alt="Abstract Lines" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Complex 3D structure with red and pink neon lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGBKFQpHIL3ID9md-zQNqevl3xnb4xaXSSoYAoQKY99YeeP0-A41QRVZmVAVYVPrerjs_T6WQpt7SgI765_ktA8vzuO10P_mVjbtNBxG8fwMPkIoqDs61YfffdOffkGrz-SEUprWHpSQoh1jDKDw_FR7JSJf3iJnKvtGzls49B38Q9pnNNkqmFHopDW-FwyIV92waUjrrsbWehMuqiC_aqFEkjdpBN5n6sqIO6ZjV7gTB2YE52y4rGskIShd12GlRdx6GA1lfbwFw"/>
+<div class="absolute bottom-4 left-4 z-20">
+<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container text-[10px] font-black uppercase tracking-tighter mb-1 inline-block">BATTLE</span>
+<h3 class="font-headline font-bold text-white leading-tight">Crimson Mesh</h3>
+</div>
+</div>
+</div>
+</section>
+<!-- Focus Detail Panel (Side Panel) -->
+<aside class="xl:sticky xl:top-24 h-fit glass-panel rounded-lg border border-outline-variant/15 p-8 flex flex-col gap-8 shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+<div class="space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label text-xs uppercase tracking-[0.2em] text-tertiary">#0042 COLLECTION</span>
+<h2 class="text-3xl font-headline font-black text-on-surface">SILVER DOGE</h2>
+</div>
+<div class="p-2 glass-panel border border-white/5 rounded-full text-secondary">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</div>
+</div>
+<div class="aspect-[4/3] rounded-lg overflow-hidden border border-primary/20 bg-surface-container-lowest">
+<img alt="Silver Doge Detail" class="w-full h-full object-cover opacity-80" data-alt="High quality close up of a metallic silver shiba inu head" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxAhhKi83ovdNad7-RBy1KkCG6W0jzMW_zHmcjTfxrLWzM2U_GmVtDLU7fqN730NQ19_4xzjdqjLHb57ZrRWlA4CviW0iN7KSdJV90dqxmG35WU6PrG7JQ-FnwEzEH_GChEFyGb4IcWk9iHQIbpbLh8xtQCZ7OhaVPZPlNEVgx3PaKErWyeulwtw6ZPFmfK1q4kRQA7o0ZJPPy5zBuZuGo2oi7WgQCP_7n1cjz0-cr-vDPqlR5TyfEvDseHad6UlYxYNUzrCrtT4U"/>
+</div>
+</div>
+<div class="space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10">
+<span class="block font-label text-[10px] text-white/40 uppercase tracking-widest mb-1">Power</span>
+<span class="block text-2xl font-headline font-black text-secondary">88.4</span>
+<div class="w-full h-1 bg-surface-container-highest mt-2 rounded-full overflow-hidden flex gap-0.5">
+<div class="w-3/4 h-full bg-secondary"></div>
+<div class="w-1/4 h-full bg-white/10"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10">
+<span class="block font-label text-[10px] text-white/40 uppercase tracking-widest mb-1">Rarity</span>
+<span class="block text-lg font-headline font-black text-tertiary">LEGENDARY</span>
+<p class="text-[9px] text-on-surface-variant font-label mt-2">1 of 500 Total</p>
+</div>
+</div>
+<div class="space-y-3">
+<h4 class="font-label text-[11px] font-bold text-white/60 uppercase tracking-[0.15em]">Artifact Data</h4>
+<p class="text-sm font-body text-on-surface-variant leading-relaxed">
+                            A relic from the early 21st century decentralized era. This particular Doge is coated in lunar silver, representing the first "To the Moon" mission.
+                        </p>
+</div>
+<div class="pt-4 border-t border-outline-variant/15 flex flex-col gap-3">
+<button class="w-full py-4 rounded-full bg-surface-bright text-primary font-headline font-bold text-xs tracking-widest hover:bg-primary/10 transition-all uppercase border border-primary/30">
+                            Inspect Metadata
+                        </button>
+<button class="w-full py-4 rounded-full bg-gradient-to-r from-[#c799ff] to-[#bc87fe] text-on-primary font-headline font-bold text-xs tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all uppercase">
+                            Set as Profile Hero
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only as per shell layout) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#120b1a]/90 backdrop-blur-lg rounded-t-[2rem] border-t border-[#4d4456]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+<a class="flex flex-col items-center justify-center text-white/40 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Lobby</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Packs</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Battle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#4af8e3] scale-110 drop-shadow-[0_0_10px_#4af8e3]" href="#">
+<span class="material-symbols-outlined" data-icon="layers" data-weight="fill">layers</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Cards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Me</span>
+</a>
+</nav>
+</body></html>

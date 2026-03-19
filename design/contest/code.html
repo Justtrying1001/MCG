@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG - Battle Arena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Be+Vietnam+Pro:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#181021",
+              "surface-container-highest": "#2c2137",
+              "primary-fixed-dim": "#af7aef",
+              "on-primary-fixed": "#000000",
+              "primary": "#c799ff",
+              "secondary-container": "#006a60",
+              "on-background": "#eee1f7",
+              "surface-tint": "#c799ff",
+              "outline-variant": "#4d4456",
+              "tertiary": "#ffe792",
+              "tertiary-fixed-dim": "#efc900",
+              "outline": "#7c7185",
+              "on-secondary-fixed-variant": "#00655b",
+              "error-dim": "#d73357",
+              "surface-container": "#1e1628",
+              "primary-fixed": "#bc87fe",
+              "inverse-on-surface": "#5b5164",
+              "secondary-fixed-dim": "#33e9d5",
+              "surface-dim": "#120b1a",
+              "surface": "#120b1a",
+              "inverse-primary": "#7744b5",
+              "secondary-fixed": "#4af8e3",
+              "on-surface": "#eee1f7",
+              "inverse-surface": "#fff7ff",
+              "on-secondary-container": "#dcfff8",
+              "on-primary-fixed-variant": "#40007a",
+              "on-tertiary-fixed-variant": "#665500",
+              "on-error": "#490013",
+              "on-surface-variant": "#b3a7bc",
+              "tertiary-fixed": "#ffd709",
+              "secondary": "#4af8e3",
+              "on-error-container": "#ffb2b9",
+              "on-secondary-fixed": "#00463f",
+              "surface-bright": "#33273f",
+              "primary-container": "#bc87fe",
+              "surface-container-lowest": "#000000",
+              "error-container": "#a70138",
+              "on-primary": "#440080",
+              "tertiary-dim": "#efc900",
+              "on-secondary": "#005b51",
+              "on-tertiary-container": "#5b4b00",
+              "primary-dim": "#ba85fb",
+              "background": "#120b1a",
+              "tertiary-container": "#ffd709",
+              "on-tertiary": "#655400",
+              "on-primary-container": "#340064",
+              "on-tertiary-fixed": "#453900",
+              "error": "#ff6e84",
+              "surface-variant": "#2c2137",
+              "surface-container-high": "#251b30",
+              "secondary-dim": "#33e9d5"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(30, 22, 40, 0.7);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(199, 153, 255, 0.1);
+        border-left: 1px solid rgba(199, 153, 255, 0.1);
+      }
+      .vs-gradient {
+        background: linear-gradient(135deg, #c799ff 0%, #4af8e3 100%);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
+<!-- SideNavBar (Authority: Shared Components JSON) -->
+<aside class="hidden lg:flex flex-col fixed left-0 top-0 h-full z-40 bg-[#1e1628]/90 backdrop-blur-2xl h-screen w-64 border-r border-[#4d4456]/15 shadow-[20px_0_40px_rgba(0,0,0,0.4)]">
+<div class="p-8">
+<h1 class="text-xl font-black text-[#c799ff] font-headline">MCG</h1>
+</div>
+<nav class="flex-1 flex flex-col space-y-1 mt-4">
+<!-- Lobby -->
+<a class="text-white/40 p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+                Lobby
+            </a>
+<!-- Packs -->
+<a class="text-white/40 p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="redeem">redeem</span>
+                Packs
+            </a>
+<!-- Collection -->
+<a class="text-white/40 p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="style">style</span>
+                Collection
+            </a>
+<!-- Battle (ACTIVE STATE) -->
+<a class="bg-gradient-to-r from-[#c799ff]/20 to-transparent border-l-4 border-[#c799ff] text-white p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="swords">swords</span>
+                Battle
+            </a>
+<!-- Rewards -->
+<a class="text-white/40 p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="workspace_premium">workspace_premium</span>
+                Rewards
+            </a>
+<!-- Profile -->
+<a class="text-white/40 p-4 font-['Plus_Jakarta_Sans'] uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors flex items-center gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+                Profile
+            </a>
+</nav>
+<div class="p-6 mt-auto border-t border-[#4d4456]/15">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-surface-bright flex items-center justify-center border border-primary/20">
+<img alt="MCG Legend" class="w-full h-full rounded-full" data-alt="Cyberpunk avatar of a digital player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiKdbaVe_IB2d2JA3bBo2LqwRmTsqupHiegq9uY59Rya286G8BnA0M9TW4Ym2QSUa99RKALu2PS-12Y49xXir1xbfzG0qBrQx9PwW9bQiiN31jtNvfnu-70EpdhJjNSoC5KFe4cL6dU0tP1XJCukoRM7OWyUPzq8xWSMSrwX7E37wPt5mPiKvjtwSuTSWHUCZO6AY2EJgkfZXfyl44JYUx_CS0Int3_IiGl25PW0S_-DeTgLMhScKIU5fkAakSvftCW1pBfWtuWEU"/>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Player 1</p>
+<p class="text-[10px] text-primary/60 font-label tracking-widest">LEVEL 42</p>
+</div>
+</div>
+<button class="w-full py-3 px-4 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-sm tracking-tighter hover:scale-105 transition-transform">
+                BATTLE NOW
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 p-4 md:p-8 pb-32">
+<!-- Header / Status Bar -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+<div>
+<h2 class="text-4xl md:text-5xl font-headline font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                    ELITE CHAMPIONSHIP
+                </h2>
+<p class="text-on-surface-variant font-label tracking-widest text-xs mt-2 uppercase">Global Contest / Round 12</p>
+</div>
+<div class="flex items-center gap-6 bg-surface-container-low px-6 py-3 rounded-full border border-outline-variant/10 shadow-2xl">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="timer">timer</span>
+<span class="font-headline font-bold text-xl text-secondary">04:12:44</span>
+</div>
+<div class="h-6 w-px bg-outline-variant/20"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="groups">groups</span>
+<span class="font-headline font-bold text-xl">1.2K</span>
+</div>
+</div>
+</header>
+<!-- Battle Arena (VS Matchup) -->
+<section class="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-16">
+<!-- Left Side: Player 1 Arena -->
+<div class="xl:col-span-5 flex flex-col items-center">
+<div class="relative group w-full max-w-sm">
+<div class="absolute -inset-4 bg-primary/20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="glass-card rounded-lg p-6 relative z-10 overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-label font-bold tracking-widest uppercase">RARE</span>
+<div class="flex flex-col items-end">
+<span class="text-2xl font-headline font-black text-white">94</span>
+<span class="text-[8px] text-on-surface-variant font-label uppercase">POW</span>
+</div>
+</div>
+<img alt="Pepe Battle Card" class="w-full aspect-[3/4] object-cover rounded-lg mb-6 grayscale hover:grayscale-0 transition-all duration-500" data-alt="Neon stylized artistic frog character digital art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC77rs1rRuUbAQs-SKx7zFKOnZMSz2quCa1byVCWWB2p4XZe2-UQZ_eNYdP00NU9EtyzPZ7it5lzYdjQKHntnaXZRI17L_NkLEQKaBMsYdu5_65j4gny_coZwxIlSOFG0K1lfSx3Yoo_O1NYd3fXu-lp9AN8UZmGWpLvC5uAXzaRIpVAGTpaZH_OVyQHazvfU4LQkq25C2eqU7xlOizPZcH5ecVM_EzauA9octAYk_hvQ4pbumKuKpD68aW2Lm6kGgt-mjooqsin5U"/>
+<h3 class="text-2xl font-headline font-black text-white tracking-tighter text-center">PEPE THE MIGHTY</h3>
+<!-- Health Bar -->
+<div class="mt-6">
+<div class="flex justify-between text-[10px] font-label font-bold text-on-surface-variant mb-2">
+<span>HP</span>
+<span>850 / 1000</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full flex gap-[2px] p-[2px]">
+<div class="h-full w-[20%] bg-error rounded-l-full"></div>
+<div class="h-full w-[20%] bg-error"></div>
+<div class="h-full w-[20%] bg-error"></div>
+<div class="h-full w-[25%] bg-error"></div>
+<div class="h-full w-[15%] bg-outline-variant/20 rounded-r-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- VS Center Piece -->
+<div class="xl:col-span-2 flex flex-col items-center justify-center py-8">
+<div class="w-24 h-24 rounded-full vs-gradient flex items-center justify-center shadow-[0_0_50px_rgba(199,153,255,0.4)] relative">
+<span class="text-4xl font-headline font-black text-on-primary italic transform -skew-x-12">VS</span>
+<div class="absolute -top-12 h-24 w-px bg-gradient-to-t from-primary to-transparent"></div>
+<div class="absolute -bottom-12 h-24 w-px bg-gradient-to-b from-secondary to-transparent"></div>
+</div>
+<div class="mt-12 text-center">
+<button class="px-8 py-4 rounded-full bg-error shadow-[0_10px_30px_rgba(255,110,132,0.3)] hover:scale-110 active:scale-95 transition-all text-on-error font-headline font-black text-xl tracking-tighter uppercase">
+                        ATTACK
+                    </button>
+<p class="mt-4 text-[10px] font-label font-bold text-error/60 tracking-widest">COOLDOWN: 2S</p>
+</div>
+</div>
+<!-- Right Side: Player 2 Arena -->
+<div class="xl:col-span-5 flex flex-col items-center">
+<div class="relative group w-full max-w-sm">
+<div class="absolute -inset-4 bg-secondary/20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="glass-card rounded-lg p-6 relative z-10 overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-secondary/20 text-secondary px-3 py-1 rounded-full text-[10px] font-label font-bold tracking-widest uppercase">LEGENDARY</span>
+<div class="flex flex-col items-end">
+<span class="text-2xl font-headline font-black text-white">98</span>
+<span class="text-[8px] text-on-surface-variant font-label uppercase">POW</span>
+</div>
+</div>
+<img alt="GigaChad Battle Card" class="w-full aspect-[3/4] object-cover rounded-lg mb-6 hover:scale-105 transition-transform duration-500" data-alt="Abstract powerful silhouette against a high contrast neon background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATBWHYV5hFnvNstZ4Dmu0rBp3rXM-pZE9ynNOa-TPytrAjbAZW4QPCo_8sCXGkisCFD8RIqS4_Ff8eRnrEBI4ibhzoJRJ_7pGLAWpkZwA_swiFZPqKdAI8mxYU6qvKXlOqhuZZjRsU8E4X9KvK-7p2cExXWbgXg1lHyg5Ah1GwdkHmfKVhLRMlMgnbcmt1y_Lf284yWcxxhAGNg-TGR9hUlaHcHIuJMSOHd1f7-3hEHm_yAUFwnYo-IfdRXWo7AQ4VDpmLCyYOdyQ"/>
+<h3 class="text-2xl font-headline font-black text-white tracking-tighter text-center">ULTRA GIGACHAD</h3>
+<!-- Health Bar -->
+<div class="mt-6">
+<div class="flex justify-between text-[10px] font-label font-bold text-on-surface-variant mb-2">
+<span>HP</span>
+<span>920 / 1000</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full flex gap-[2px] p-[2px]">
+<div class="h-full w-[20%] bg-error rounded-l-full"></div>
+<div class="h-full w-[20%] bg-error"></div>
+<div class="h-full w-[20%] bg-error"></div>
+<div class="h-full w-[32%] bg-error"></div>
+<div class="h-full w-[8%] bg-outline-variant/20 rounded-r-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Lower Section: Leaderboard & Progress -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<!-- Contest Progress (Asymmetric Card) -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-surface-container rounded-lg p-8 border-l-4 border-secondary shadow-xl">
+<h4 class="text-sm font-label font-bold text-on-surface-variant tracking-[0.2em] mb-6 uppercase">Contest Milestones</h4>
+<div class="space-y-8">
+<div class="relative pl-6 border-l border-outline-variant/30 pb-4">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-secondary ring-4 ring-secondary/20"></div>
+<p class="text-[10px] font-label text-secondary mb-1">COMPLETED</p>
+<p class="font-bold text-white">Qualifier Phase</p>
+</div>
+<div class="relative pl-6 border-l border-outline-variant/30 pb-4">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#c799ff]"></div>
+<p class="text-[10px] font-label text-primary mb-1">IN PROGRESS</p>
+<p class="font-bold text-white">Elite Knockout</p>
+</div>
+<div class="relative pl-6 border-l border-outline-variant/30">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-outline-variant"></div>
+<p class="text-[10px] font-label text-on-surface-variant mb-1">LOCKED</p>
+<p class="font-bold text-on-surface-variant">Grand Finale</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Leaderboard (Bento Grid Style) -->
+<div class="lg:col-span-2">
+<div class="bg-surface-container-low rounded-lg p-8">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h4 class="text-2xl font-headline font-black text-white tracking-tight">TOP CONTENDERS</h4>
+<p class="text-xs text-on-surface-variant font-label tracking-widest uppercase mt-1">Global Rankings</p>
+</div>
+<button class="text-xs font-label font-bold text-primary hover:underline transition-all">VIEW ALL</button>
+</div>
+<div class="space-y-4">
+<!-- Rank 1 -->
+<div class="flex items-center gap-6 p-4 rounded-xl bg-surface-bright/50 border border-tertiary/20 hover:bg-surface-bright transition-all cursor-pointer group">
+<span class="w-8 text-2xl font-headline font-black text-tertiary italic">01</span>
+<div class="w-12 h-12 rounded-full border-2 border-tertiary p-0.5">
+<img alt="Rex Avatar" class="w-full h-full rounded-full" data-alt="Avatar of a legendary player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGmqmbMUFkSuOCzUHIJte3DPFdRrDOeULdSgOH8X-b_TBwJ0pkQrql-wa-69K2q_58FdbiMWjf2vnJ8EyS_goS1xA-jThUsEmFEzS1Z7amZc5ojRRCqmlqvmwtv6Jv-pG36L88VdCo8FO87R2e3at38kUsey2b-iGOiNky6kib36LaNYPf5pLxTR-KyH9F2gcb-B90GPw1utfGWfrBhAbvHvmCXVSbvf7KXcA8oma6mJwpsOA0EWYC5gLE4XQacFjg2fhocI1Xnoo"/>
+</div>
+<div class="flex-1">
+<p class="font-bold text-white">REX_THE_KING</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Elite League</p>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-xl text-white">48,200</p>
+<p class="text-[10px] text-tertiary font-label uppercase">SCORE</p>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center gap-6 p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+<span class="w-8 text-2xl font-headline font-black text-on-surface-variant italic">02</span>
+<div class="w-12 h-12 rounded-full border-2 border-outline-variant/30 p-0.5">
+<img alt="Luna Avatar" class="w-full h-full rounded-full" data-alt="Avatar of a female player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrwEbn184_WtlqRHM9Ci-HCYG_7A83nI7C6K0h069W8sNup79cpVSg1aFIhQ1beIDr72ZroT3TV9HIRQ8B6rUUEU2GfCsfcZNAwIF68Vr3hkAvt4twhtAWacnPr4q83KP-b6BMql9Je3SF6-1pYNWbWpWTsaqUuPMKic5NVV1V9YvCzprfQOLvcI8v5mEjWssLLdwIIxoMsZduJhHL7g7qTo3-dFe-d_Z-JYmwSZfRn44wSJQkNsjpNsG05Yv8Tt_w9r7x_Dsr7-8"/>
+</div>
+<div class="flex-1">
+<p class="font-bold text-white">LUNA_SOLARIS</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Master Division</p>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-xl text-white">45,150</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">SCORE</p>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="flex items-center gap-6 p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+<span class="w-8 text-2xl font-headline font-black text-on-surface-variant italic">03</span>
+<div class="w-12 h-12 rounded-full border-2 border-outline-variant/30 p-0.5">
+<img alt="Cryptic Avatar" class="w-full h-full rounded-full" data-alt="Avatar of a competitive player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPnKuc7C111ZXWrTwc2HDfX7qo-K6vWOkAenMoVm1zd_DJVXeRnEO9T-_VkIYCapihAcqaPEs04dmGduZf_WkBnBRKuBuByZPqgSM_RDlCASGH3KahIzKy3Rc-V26zDc-lDTppquqqrNhJ35b3nAy9oP05XkpAWQ7ybFe0-D8VtGnJZeFRnIyrM4I-bToIurpUJ9L7u6en48sT1W4TUxK-CLZXcf529ijLDakMFOqkJCOEKyIa1fEuJ_k5EzmqIWaBwIvB-e0Ih0c"/>
+</div>
+<div class="flex-1">
+<p class="font-bold text-white">CRYPTIC_WALKER</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Master Division</p>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-xl text-white">42,900</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">SCORE</p>
+</div>
+</div>
+<!-- Rank 4 -->
+<div class="flex items-center gap-6 p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+<span class="w-8 text-2xl font-headline font-black text-on-surface-variant italic">04</span>
+<div class="w-12 h-12 rounded-full border-2 border-outline-variant/30 p-0.5">
+<img alt="Zero Avatar" class="w-full h-full rounded-full" data-alt="Avatar of a high-ranked player" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBscR3BFJwVT3S_XUbtzR_JniDtjQXZ4cVHB8affjFzeJgV3wljkv2FcdqQAR9LpGtDMGuj06un7AXTRDz5QrMLwn5nfJTGK9_tCrPgGY4TQMCnBl1Mg8YpPJzOZt-Sd6cQpXQunh_mY8xNWypJiXAozldf3nUlNo2R-mevUK7m35IymUk1p7Xl_-6XEYADT--IWDD3jw__Oo7cVgIX4lpixUFnI1yZObN24zkSnPQn0rslWX8mMuULYo0o8RtwyYWO4T_fRAZPNEs"/>
+</div>
+<div class="flex-1">
+<p class="font-bold text-white">ZERO_HERO</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Platinum Tier</p>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-xl text-white">39,400</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">SCORE</p>
+</div>
+</div>
+<!-- Rank 5 -->
+<div class="flex items-center gap-6 p-4 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+<span class="w-8 text-2xl font-headline font-black text-on-surface-variant italic">05</span>
+<div class="w-12 h-12 rounded-full border-2 border-outline-variant/30 p-0.5">
+<img alt="Jade Avatar" class="w-full h-full rounded-full" data-alt="Avatar of an active contestant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzFzB9HyeBvcfkX1XqWS6BPy3-UZn5ElhOeCaFljP3LUcFKvLxV3iL7djlTBUxh1P2ofhOwRanpLLOdMDaXwxXmrkEw0aoqgCXTFegLsE_TNyVcTv6Rsfl3xXXXY9GOIGbfM6hFGGNj3BYe3ivOjrqWt3btDsZfH4mVQqSo2tCQQcTsxKg-z4VY6llyjlvQ1P-f_wj4GmfFzAjR73oD_zHODnp7FFG9rTr_b0k_Nu7sldjul4yl87ZDkIJ3OZr4lolNc0V2cdlFSc"/>
+</div>
+<div class="flex-1">
+<p class="font-bold text-white">JADE_BLADE</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Platinum Tier</p>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-xl text-white">38,100</p>
+<p class="text-[10px] text-on-surface-variant font-label uppercase">SCORE</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Authority: Shared Components JSON - Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#120b1a]/90 backdrop-blur-lg rounded-t-[2rem] border-t border-[#4d4456]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Lobby</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Packs</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#4af8e3] scale-110 drop-shadow-[0_0_10px_#4af8e3]" href="#">
+<span class="material-symbols-outlined" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Battle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Cards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-bold uppercase mt-1">Me</span>
+</a>
+</nav>
+<!-- Floating Action Button (Active Context) -->
+<div class="fixed bottom-24 right-8 lg:bottom-12 lg:right-12 z-40">
+<button class="w-16 h-16 rounded-full bg-secondary shadow-[0_0_40px_rgba(74,248,227,0.4)] flex items-center justify-center text-on-secondary-fixed hover:scale-110 transition-transform group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform" data-icon="chat">chat</span>
+</button>
+</div>
+</body></html>

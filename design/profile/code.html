@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG - Player Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Be+Vietnam+Pro:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#181021",
+              "surface-container-highest": "#2c2137",
+              "primary-fixed-dim": "#af7aef",
+              "on-primary-fixed": "#000000",
+              "primary": "#c799ff",
+              "secondary-container": "#006a60",
+              "on-background": "#eee1f7",
+              "surface-tint": "#c799ff",
+              "outline-variant": "#4d4456",
+              "outline": "#7c7185",
+              "on-secondary-fixed-variant": "#00655b",
+              "error-dim": "#d73357",
+              "surface-container": "#1e1628",
+              "primary-fixed": "#bc87fe",
+              "inverse-on-surface": "#5b5164",
+              "secondary-fixed-dim": "#33e9d5",
+              "surface-dim": "#120b1a",
+              "surface": "#120b1a",
+              "inverse-primary": "#7744b5",
+              "secondary-fixed": "#4af8e3",
+              "on-surface": "#eee1f7",
+              "inverse-surface": "#fff7ff",
+              "on-secondary-container": "#dcfff8",
+              "on-primary-fixed-variant": "#40007a",
+              "on-tertiary-fixed-variant": "#665500",
+              "on-error": "#490013",
+              "on-surface-variant": "#b3a7bc",
+              "tertiary-fixed": "#ffd709",
+              "secondary": "#4af8e3",
+              "on-error-container": "#ffb2b9",
+              "on-secondary-fixed": "#00463f",
+              "surface-bright": "#33273f",
+              "primary-container": "#bc87fe",
+              "surface-container-lowest": "#000000",
+              "error-container": "#a70138",
+              "on-primary": "#440080",
+              "tertiary-dim": "#efc900",
+              "on-secondary": "#005b51",
+              "on-tertiary-container": "#5b4b00",
+              "primary-dim": "#ba85fb",
+              "background": "#120b1a",
+              "tertiary-container": "#ffd709",
+              "on-tertiary": "#655400",
+              "on-primary-container": "#340064",
+              "on-tertiary-fixed": "#453900",
+              "error": "#ff6e84",
+              "surface-variant": "#2c2137",
+              "surface-container-high": "#251b30",
+              "secondary-dim": "#33e9d5"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        backdrop-filter: blur(20px);
+        background: rgba(44, 33, 55, 0.6);
+      }
+      .shimmer-gradient {
+        background: linear-gradient(135deg, #c799ff 0%, #bc87fe 100%);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
+<!-- SideNavBar (Desktop Shell) -->
+<aside class="hidden lg:flex flex-col fixed left-0 top-0 h-full z-40 bg-[#1e1628]/90 backdrop-blur-2xl h-screen w-64 border-r border-[#4d4456]/15 shadow-[20px_0_40px_rgba(0,0,0,0.4)]">
+<div class="px-6 py-8">
+<h1 class="text-xl font-black text-[#c799ff] font-headline tracking-tight">MCG</h1>
+</div>
+<nav class="flex-1 space-y-1 px-2">
+<!-- Lobby -->
+<a class="text-white/40 p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">home</span>
+<span>Lobby</span>
+</a>
+<!-- Packs -->
+<a class="text-white/40 p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">redeem</span>
+<span>Packs</span>
+</a>
+<!-- Collection -->
+<a class="text-white/40 p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">style</span>
+<span>Collection</span>
+</a>
+<!-- Battle -->
+<a class="text-white/40 p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">swords</span>
+<span>Battle</span>
+</a>
+<!-- Rewards -->
+<a class="text-white/40 p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">workspace_premium</span>
+<span>Rewards</span>
+</a>
+<!-- Profile (Active) -->
+<a class="bg-gradient-to-r from-[#c799ff]/20 to-transparent border-l-4 border-[#c799ff] text-white p-4 flex items-center gap-4 font-label uppercase tracking-[0.05em] text-xs font-bold" href="#">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+<span>Profile</span>
+</a>
+</nav>
+<div class="p-6 mt-auto">
+<button class="w-full py-4 rounded-full shimmer-gradient text-on-primary font-headline font-bold text-sm tracking-widest hover:scale-105 transition-transform">
+                BATTLE NOW
+            </button>
+</div>
+</aside>
+<!-- TopAppBar (Mobile & Branding) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 py-4 bg-[#120b1a]/80 backdrop-blur-xl z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)] lg:pl-72">
+<div class="flex items-center gap-3">
+<span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#c799ff] to-[#bc87fe] font-headline tracking-tight">MCG</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-[#c799ff] text-xl">toll</span>
+<span class="material-symbols-outlined text-[#c799ff] text-xl">diamond</span>
+<span class="material-symbols-outlined text-[#c799ff] text-xl">military_tech</span>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary overflow-hidden">
+<img alt="Player Avatar" class="w-full h-full object-cover" data-alt="Stylized custom character avatar profile image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_76Pd2KZO0briqWBu7Sdm4KAIwyuUFsAB5nw8wWpdVe1RKundKTbe_m7yoRq6_LeQIYqejzdiYWPw6Hlwxlm-BuxgKFRA0nsYFRo0d_Ow3kSFdD_MKLjPCITQfAlgS01ffehkEewOd4vpTKJ0uyqQEZoimPWF3Fnutm5Pdp4NXVFZnMJdSrYAXoywKX1b-jY4myEFJV6Tw-tAFq0OjyC-hfEFwdMWTfIMdG5OHAH7YrIplkXmyqZxfLHm-150kPNaE9GXyNXdl2I"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 px-6 lg:pl-72 lg:pr-12 min-h-screen">
+<!-- Hero Profile Section -->
+<section class="relative mb-12">
+<div class="h-64 w-full rounded-xl overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-surface-container/40 to-surface-container-lowest"></div>
+<div class="absolute inset-0 backdrop-blur-sm"></div>
+<!-- Abstract Background Pattern -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, #c799ff 1px, transparent 0); background-size: 32px 32px;"></div>
+</div>
+<div class="flex flex-col md:flex-row items-center md:items-end gap-8 -mt-20 relative z-10 px-8">
+<!-- Avatar Large -->
+<div class="relative">
+<div class="w-40 h-40 rounded-xl bg-surface-container-highest border-4 border-surface shadow-2xl overflow-hidden">
+<img alt="MCG Legend" class="w-full h-full object-cover" data-alt="High quality detailed meme character avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKmDHg9ltNsnrclEVr171qQWNNqMewInBJjrv_eM9d2dxgevBvPtrENEXKOsM_9TM0QzHT9TEwgF9G1dgAyMnmDisz1RGSWk1kw_ke_TSreSq0eBZu3KfC6eMBNl7WZ1rHfddoA2S38A4-FCL0hHA8jyVg689AnWOI1Izg4eqrf2N-bkIu3-Fs9lgknm3C21bpU6qr7XgeA6JZPSVQeBSu-S9x-eALCiOT5BUJxTKOUQKw_RP3coPp0m5oGM8-bEQpfm1XrmDIwpA"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-secondary text-on-secondary px-3 py-1 rounded-full text-xs font-black font-label shadow-lg">
+                        LVL 42
+                    </div>
+</div>
+<div class="flex-1 text-center md:text-left">
+<h2 class="text-4xl md:text-5xl font-black font-headline text-white tracking-tighter mb-2 drop-shadow-lg">Player 1</h2>
+<div class="flex flex-wrap justify-center md:justify-start gap-4">
+<span class="flex items-center gap-2 bg-surface-bright/50 px-4 py-1.5 rounded-full text-sm font-bold font-label text-primary-fixed border border-primary/10">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+                            GRANDMASTER RANK
+                        </span>
+<span class="flex items-center gap-2 bg-surface-bright/50 px-4 py-1.5 rounded-full text-sm font-bold font-label text-secondary border border-secondary/10">
+<span class="material-symbols-outlined text-sm">public</span>
+                            REGION: NA-WEST
+                        </span>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="px-8 py-3 rounded-full bg-surface-bright border border-outline-variant/30 text-white font-bold font-label text-xs tracking-widest hover:bg-surface-container-highest transition-colors">
+                        EDIT PROFILE
+                    </button>
+</div>
+</div>
+</section>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="glass-card p-8 rounded-lg border-t border-l border-white/10 flex flex-col items-center justify-center text-center">
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest mb-2">Packs Opened</span>
+<span class="text-4xl font-black font-headline text-white">1,248</span>
+<div class="mt-4 w-full h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full w-3/4 shimmer-gradient"></div>
+</div>
+</div>
+<div class="glass-card p-8 rounded-lg border-t border-l border-white/10 flex flex-col items-center justify-center text-center">
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest mb-2">Battles Won</span>
+<span class="text-4xl font-black font-headline text-secondary">482</span>
+<div class="mt-4 w-full h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full w-1/2 bg-secondary"></div>
+</div>
+</div>
+<div class="glass-card p-8 rounded-lg border-t border-l border-white/10 flex flex-col items-center justify-center text-center">
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest mb-2">Total Cards</span>
+<span class="text-4xl font-black font-headline text-tertiary">5,600</span>
+<div class="mt-4 w-full h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full w-4/5 bg-tertiary"></div>
+</div>
+</div>
+</section>
+<!-- Collection Highlights -->
+<section class="mb-12">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-2xl font-black font-headline text-white tracking-tight">MY BEST CARDS</h3>
+<a class="text-primary text-xs font-bold font-label tracking-widest border-b border-primary/30 pb-1" href="#">VIEW ALL</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+<!-- Card 1 -->
+<div class="group relative aspect-[3/4] bg-surface-container-highest rounded-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer">
+<img alt="Legendary Card" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Glowing purple legendary trading card artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDklz56zseFRyaePm6PMRYYrZoeDL9wnQWH8IeL4AZIZTFcDybmKZKBC4DSTB0RFuACH3r9qxEaTpRWfbVSsS7rItuJJGHyz_TwGHnHAsJnc04Wph3YLETpPdo7uwMAtWHu4GE4tCylfwA8bdMPcOZkWlnDtKvGtvFwymPpjJnY6QrNB1g1u-qQsH53MYT-r4e_CdPnfsMd3N4DgvbBy0PV0idT3vigzfixA4bYOutfebdWzPVqBEDBlTO2haOPwgWKNq9bb3uj54M"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="block text-[10px] font-black font-label text-primary mb-1 tracking-tighter uppercase">Legendary</span>
+<h4 class="text-white font-bold font-headline text-sm truncate uppercase">Void Bringer</h4>
+</div>
+<div class="absolute top-3 right-3 bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-0.5 rounded italic">RARE</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative aspect-[3/4] bg-surface-container-highest rounded-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer">
+<img alt="Legendary Card" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Golden rare trading card fantasy artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOl0uGArR_Gnvzmu9NTRvcqXXOZXLGF44Dph9ixOrUU3gye-1Um9I4V6AnYgfxphW5mZ6WoVVmM2vsoimR9W8jWh2F9Zmca4fCIM1Z5ub8ZRc3EwkFC1NJ1XmZDIDVsPZuZ5PbXENpS63plD2y6Qk7wk_oToKrikxJO6uXYSFMDNBda-5Ls6GRS4vf3r3MhcKkatPkVQlo19mju8dfejMBEC-DHwoG921IjHMuKSWEbqVwch_FEAlW9Mmpm_WNPWkcst5LKN0bnMc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="block text-[10px] font-black font-label text-primary mb-1 tracking-tighter uppercase">Legendary</span>
+<h4 class="text-white font-bold font-headline text-sm truncate uppercase">Ape Lord</h4>
+</div>
+<div class="absolute top-3 right-3 bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-0.5 rounded italic">RARE</div>
+</div>
+<!-- Card 3 -->
+<div class="group relative aspect-[3/4] bg-surface-container-highest rounded-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer">
+<img alt="Legendary Card" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Neon blue sci-fi trading card artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-ihE7EKKzBF0AGiEvCXWziEffnYZ7A9uAycJvXlDdXCB-YcdOt4x4TWCXh4UAXqEB4ikds7H6pOqPwiWZqyqpDKzZjYhzXDi33O0sWo7aRMAuQCXtESUmU3HCx1e6O12fuz9L75zatGBrJjJ4so7_nvJoIraU_F7QajOHWgj8W83F4BhYZx7Z9xLobrXA-i9v-sY8eVjm7Pav4Zivn8706d1RDXA_BiqRyw9Ut_dcBx4Bmi-XAM9K9khC8rWpUSDgRA8_mneQc4o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="block text-[10px] font-black font-label text-primary mb-1 tracking-tighter uppercase">Legendary</span>
+<h4 class="text-white font-bold font-headline text-sm truncate uppercase">Cyber Golem</h4>
+</div>
+<div class="absolute top-3 right-3 bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-0.5 rounded italic">RARE</div>
+</div>
+<!-- Card 4 -->
+<div class="hidden sm:block group relative aspect-[3/4] bg-surface-container-highest rounded-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer">
+<img alt="Legendary Card" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Dark mysterious trading card artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArxFZq15kXKPd85bVpiuydG9PDLZFZe63fZS_fbzLqxCKj3QyO1PvoC9noZMJwgRIn2jaGFIeAMuAwamqW31grXHEOn59pFongplGE9fycicaCzSJFJZHh0cDrDOexIhF1kPUeKIboRpbswQKTIutsp384AFg2qdFSMY--_rOiYfCASizYKNtSqbEBpbrTDkbJwbEQmM7YjZQB9GMso3moHJFph-tboyh1tTlORgwxdGF7I7UbN8ePpUVk0iDg2vcyAlFryeBSSrM"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="block text-[10px] font-black font-label text-primary mb-1 tracking-tighter uppercase">Legendary</span>
+<h4 class="text-white font-bold font-headline text-sm truncate uppercase">Moon Witch</h4>
+</div>
+<div class="absolute top-3 right-3 bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-0.5 rounded italic">RARE</div>
+</div>
+<!-- Card 5 -->
+<div class="hidden xl:block group relative aspect-[3/4] bg-surface-container-highest rounded-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(199,153,255,0.3)] cursor-pointer">
+<img alt="Legendary Card" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-alt="Bright golden ethereal trading card artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1NIsQY99TZbJCQU4BALiPvApxtEmVUwV1fKjqiL_zWPy_CTP7v8uGPys1AhPHywm2VQttMcduFwPC7Mjo6BafWnkv66K_4WlsLhDxCRiKkxvr8emheRMMdy6LOdFlYCyBzJqQl_E3s8SRyzFOzeWzVaC9LADZMPZrmxlJRVoG7-rqBokKlS77LmMeRv6N5g5mM5rRzkVOU6N5fsK_ducYuAh04alAbazQ_91x5rs-E1dY09cHMd5_Oy6n8NC1ZYhW3eTh6pGQZJQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4">
+<span class="block text-[10px] font-black font-label text-primary mb-1 tracking-tighter uppercase">Legendary</span>
+<h4 class="text-white font-bold font-headline text-sm truncate uppercase">Sun God</h4>
+</div>
+<div class="absolute top-3 right-3 bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-0.5 rounded italic">RARE</div>
+</div>
+</div>
+</section>
+<!-- Achievements -->
+<section>
+<h3 class="text-2xl font-black font-headline text-white tracking-tight mb-8">ACHIEVEMENTS</h3>
+<div class="flex flex-wrap gap-8">
+<!-- Achievement 1 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest border-2 border-primary p-1 shadow-[0_0_20px_rgba(199,153,255,0.2)]">
+<div class="w-full h-full rounded-full bg-surface-bright flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+</div>
+</div>
+<span class="text-xs font-bold font-label text-center text-on-background max-w-[80px]">Early Adopter</span>
+</div>
+<!-- Achievement 2 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest border-2 border-secondary p-1 shadow-[0_0_20px_rgba(74,248,227,0.2)]">
+<div class="w-full h-full rounded-full bg-surface-bright flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-secondary" style="font-variation-settings: 'FILL' 1;">mood</span>
+</div>
+</div>
+<span class="text-xs font-bold font-label text-center text-on-background max-w-[80px]">Meme Lord</span>
+</div>
+<!-- Achievement 3 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest border-2 border-tertiary p-1 shadow-[0_0_20px_rgba(255,231,146,0.2)]">
+<div class="w-full h-full rounded-full bg-surface-bright flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-tertiary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+</div>
+<span class="text-xs font-bold font-label text-center text-on-background max-w-[80px]">Top 1%</span>
+</div>
+<!-- Achievement 4 -->
+<div class="flex flex-col items-center gap-3 opacity-30 grayscale">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest border-2 border-outline-variant p-1">
+<div class="w-full h-full rounded-full bg-surface-bright flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl text-outline-variant">lock</span>
+</div>
+</div>
+<span class="text-xs font-bold font-label text-center text-outline-variant max-w-[80px]">World Eater</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Shell) -->
+<nav class="lg:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#120b1a]/90 backdrop-blur-lg border-t border-[#4d4456]/15 shadow-[0_-10px_40px_rgba(0,0,0,0.6)] rounded-t-[2rem]">
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined">sports_esports</span>
+<span class="font-label text-[10px] font-bold uppercase mt-1">Lobby</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-label text-[10px] font-bold uppercase mt-1">Packs</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined">bolt</span>
+<span class="font-label text-[10px] font-bold uppercase mt-1">Battle</span>
+</a>
+<a class="flex flex-col items-center justify-center text-white/40" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span class="font-label text-[10px] font-bold uppercase mt-1">Cards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#4af8e3] scale-110 drop-shadow-[0_0_10px_#4af8e3]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<span class="font-label text-[10px] font-bold uppercase mt-1">Me</span>
+</a>
+</nav>
+</body></html>
