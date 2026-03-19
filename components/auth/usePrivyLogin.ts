@@ -44,7 +44,7 @@ function getInviteCodeFromLocation() {
 }
 
 export function usePrivyLogin() {
-  const { authenticated, getAccessToken, login, ready } = usePrivy();
+  const { authenticated, getAccessToken, login, logout, ready } = usePrivy();
   const { me, refresh, setMe } = useSession();
   const [isSyncingSession, setIsSyncingSession] = useState(false);
 
@@ -98,10 +98,14 @@ export function usePrivyLogin() {
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
-    await fetch("/api/auth/logout", { method: "POST" });
+    writePendingInviteCode(null);
+    await Promise.allSettled([
+      fetch("/api/auth/logout", { method: "POST" }),
+      logout(),
+    ]);
     setMe(null);
     await refresh();
-  }, [refresh, setMe]);
+  }, [logout, refresh, setMe]);
 
   useEffect(() => {
     if (!ready || !authenticated || me || isSyncingSession || !hasPendingLoginRequest()) return;
