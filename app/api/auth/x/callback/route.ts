@@ -102,6 +102,13 @@ export async function GET(req: Request) {
     response.cookies.set({ name: INVITE_CODE_COOKIE, value: "", ...expiredCookie });
   };
 
+  logAuthEvent("x_callback_received", "info", {
+    requestHost: url.host,
+    hasOauthToken: Boolean(oauthToken),
+    hasOauthVerifier: Boolean(oauthVerifier),
+    denied: Boolean(deniedToken),
+  });
+
   if (configuredAppOrigin && configuredAppOrigin !== url.origin) {
     logAuthEvent("x_callback_origin_mismatch", "warn", {
       requestOrigin: url.origin,

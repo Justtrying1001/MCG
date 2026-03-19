@@ -2,6 +2,7 @@ import { createHmac, randomBytes } from "node:crypto";
 
 const REQUEST_TOKEN_URL = "https://api.x.com/oauth/request_token";
 const AUTHENTICATE_URL = "https://api.x.com/oauth/authenticate";
+const AUTHORIZE_URL = "https://api.x.com/oauth/authorize";
 const ACCESS_TOKEN_URL = "https://api.x.com/oauth/access_token";
 const VERIFY_CREDENTIALS_URL = "https://api.x.com/1.1/account/verify_credentials.json";
 
@@ -62,6 +63,11 @@ function parseFormEncoded(body: string) {
   return Object.fromEntries(params.entries());
 }
 
+function getXUserAuthPath() {
+  const configured = process.env.X_OAUTH_USER_AUTH_PATH?.trim().toLowerCase();
+  return configured === "authorize" ? "authorize" : "authenticate";
+}
+
 export async function getXRequestToken() {
   const consumerKey = requireEnv("X_CONSUMER_KEY");
   const callback = requireEnv("X_REDIRECT_URI");
@@ -106,8 +112,12 @@ export async function getXRequestToken() {
   };
 }
 
+export function getXUserAuthUrlBase() {
+  return getXUserAuthPath() === "authorize" ? AUTHORIZE_URL : AUTHENTICATE_URL;
+}
+
 export function buildXAuthenticateUrl(oauthToken: string) {
-  return `${AUTHENTICATE_URL}?oauth_token=${encodeURIComponent(oauthToken)}`;
+  return `${getXUserAuthUrlBase()}?oauth_token=${encodeURIComponent(oauthToken)}`;
 }
 
 export async function exchangeXAccessToken(oauthToken: string, oauthVerifier: string, oauthTokenSecret: string) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { logAuthEvent } from "@/lib/observability/auth-log";
-import { buildXAuthenticateUrl, getXRequestToken } from "@/lib/x-oauth";
+import { buildXAuthenticateUrl, getXRequestToken, getXUserAuthUrlBase } from "@/lib/x-oauth";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,10 @@ export async function GET(req: Request) {
 
     logAuthEvent("x_start", "info", {
       invitePresent: Boolean(inviteCode.trim()),
+      authPath: new URL(getXUserAuthUrlBase()).pathname,
       redirectHost: new URL(redirectUrl).host,
+      redirectPath: new URL(redirectUrl).pathname,
+      callbackUrl: process.env.X_REDIRECT_URI ?? null,
       requestHost: url.host,
     });
 

@@ -11,14 +11,14 @@ import { buildProgressionSummariesV2 } from "@/lib/domain/progression/profile-su
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import type { UserSessionPayload } from "@/types/session";
 
-export async function GET(request: Request) {
+export async function GET(request?: Request) {
   try {
-    const url = new URL(request.url);
+    const url = request ? new URL(request.url) : null;
     const session = await resolveSessionUser();
     if (!session.ok) {
       logAuthEvent("me_unauthorized", "info", {
         reason: session.reason,
-        requestHost: url.host,
+        requestHost: url?.host,
       });
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
         reason: "session_user_missing",
         sessionUserId: sessionUser.id,
         sessionId: session.sessionId,
-        requestHost: url.host,
+        requestHost: url?.host,
       });
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       userId: sessionUser.id,
       sessionId: session.sessionId,
       sessionExpiresAt: session.expiresAt.toISOString(),
-      requestHost: url.host,
+      requestHost: url?.host,
       openingsCount,
       ownedInstancesCount: ownedInstances.length,
     });
