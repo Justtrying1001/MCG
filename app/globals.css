@@ -1666,19 +1666,57 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   display: grid;
   place-items: center;
+  width: min(100%, 720px);
+}
+
+.card-zoom-shell {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  width: min(100%, 480px);
+}
+
+.card-zoom-chrome {
+  width: min(100%, 420px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.card-zoom-meta {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.card-zoom-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.card-zoom-meta strong {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.card-zoom-meta span:last-child {
+  font-size: 0.82rem;
+  color: var(--text-dim);
 }
 
 .card-zoom-close {
-  position: absolute;
-  top: -2.1rem;
-  right: -2.2rem;
+  position: static;
   z-index: 2;
+  flex: 0 0 auto;
 }
 
 .card-zoom-container {
   width: min(220px, 36vw);
   transform: scale(2);
-  transform-origin: center;
+  transform-origin: center top;
   transition: transform 220ms ease;
 }
 
@@ -1687,6 +1725,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 640px) {
+  .card-zoom-shell { width: min(100%, 320px); gap: 0.8rem; }
+  .card-zoom-chrome { width: 100%; align-items: center; }
+  .card-zoom-meta strong { font-size: 0.94rem; }
   .card-zoom-container { transform: scale(1.2); width: min(220px, 56vw); }
 }
 
