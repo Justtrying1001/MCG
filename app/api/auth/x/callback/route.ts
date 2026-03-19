@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+// Legacy X OAuth callback kept temporarily during the Privy auth migration.
 import { timingSafeEqual } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";

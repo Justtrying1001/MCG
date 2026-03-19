@@ -1,3 +1,4 @@
+// Legacy X OAuth route kept temporarily during the Privy auth migration.
 import { NextResponse } from "next/server";
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import { buildXAuthenticateUrl, getXRequestToken, getXUserAuthUrlBase } from "@/lib/x-oauth";

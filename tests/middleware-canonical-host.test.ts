@@ -18,13 +18,13 @@ describe("canonical host middleware", () => {
   const originalVercelEnv = process.env.VERCEL_ENV;
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
     process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
     process.env.VERCEL_ENV = originalVercelEnv;
   });
 
   it("enforces the canonical host on production when the request host differs", () => {
-    process.env.NODE_ENV = "production";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.example.com";
     delete process.env.VERCEL_ENV;
 
@@ -32,7 +32,7 @@ describe("canonical host middleware", () => {
   });
 
   it("does not enforce the canonical host on Vercel preview deployments", () => {
-    process.env.NODE_ENV = "production";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.example.com";
     process.env.VERCEL_ENV = "preview";
 
@@ -40,7 +40,7 @@ describe("canonical host middleware", () => {
   });
 
   it("does not enforce the canonical host when Vercel marks the deployment url header", () => {
-    process.env.NODE_ENV = "production";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.example.com";
     delete process.env.VERCEL_ENV;
 

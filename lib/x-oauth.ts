@@ -1,3 +1,4 @@
+// Legacy X OAuth helpers kept temporarily during the Privy auth migration.
 import { createHmac, randomBytes } from "node:crypto";
 
 const REQUEST_TOKEN_URL = "https://api.x.com/oauth/request_token";

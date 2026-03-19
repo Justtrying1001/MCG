@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { useSession } from "@/components/useSession";
 import { Footer } from "@/components/layout/Footer";
 
@@ -19,21 +20,9 @@ const navItems = [
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, loading, refresh, setMe } = useSession();
+  const { me, loading } = useSession();
+  const { isSyncingSession, loginWithPrivy, logoutFromPrivy } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
-
-  const loginWithX = () => {
-    const current = new URL(window.location.href);
-    const invite = current.searchParams.get("invite") ?? current.searchParams.get("ref");
-    const destination = invite ? `/api/auth/x/start?invite=${encodeURIComponent(invite)}` : "/api/auth/x/start";
-    window.location.href = destination;
-  };
-
-  const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setMe(null);
-    await refresh();
-  };
 
   return (
     <div className="mcg-app">
@@ -59,7 +48,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="mcg-auth">
-            {loading ? (
+            {loading || isSyncingSession ? (
               <span className="mcg-eyebrow">Loading…</span>
             ) : me ? (
               <>
@@ -67,13 +56,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <strong>{me.user.displayName}</strong>
                   <span>{me.user.points} pts</span>
                 </span>
-                <Button variant="ghost" className="btn-sm" onClick={() => void logout()}>
+                <Button variant="ghost" className="btn-sm" onClick={() => void logoutFromPrivy()}>
                   Logout
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" className="btn-sm" onClick={loginWithX}>Connect with X</Button>
+                <Button variant="ghost" className="btn-sm" onClick={() => loginWithPrivy()}>Connect with X</Button>
               </>
             )}
 
