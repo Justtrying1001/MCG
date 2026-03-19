@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContestTile } from "@/components/contests/ContestTile";
 import { ContestHeader } from "@/components/contests/ContestHeader";
 import { ContestTabs, type ContestTabKey } from "@/components/contests/ContestTabs";
@@ -45,8 +45,8 @@ export default function ContestsPage() {
   const [hasLoadedContests, setHasLoadedContests] = useState(false);
   const [hasConfirmedSession, setHasConfirmedSession] = useState(false);
   const [tab, setTab] = useState<ContestTabKey>("OPEN");
-  const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
+  const hasRequestedContestsRef = useRef(false);
 
   const loadContests = useCallback(async (options?: { showLoader?: boolean }) => {
     const showLoader = options?.showLoader ?? false;
@@ -89,10 +89,6 @@ export default function ContestsPage() {
     }
   }, [refresh]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNowTs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -100,6 +96,7 @@ export default function ContestsPage() {
     setHasConfirmedSession(true);
 
     if (!me) {
+      hasRequestedContestsRef.current = false;
       if (!hasLoadedContests) {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -107,8 +104,13 @@ export default function ContestsPage() {
       return;
     }
 
-    void loadContests({ showLoader: !hasLoadedContests && contests.length === 0 });
-  }, [contests.length, hasLoadedContests, loading, me, retryCount, loadContests]);
+    if (retryCount === 0 && hasRequestedContestsRef.current) {
+      return;
+    }
+
+    hasRequestedContestsRef.current = true;
+    void loadContests({ showLoader: !hasLoadedContests });
+  }, [hasLoadedContests, loading, me, retryCount, loadContests]);
 
   const computed = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
@@ -186,7 +188,7 @@ export default function ContestsPage() {
         ) : (
           <section key={tab} className="contest-arena-grid contest-arena-grid-enter" aria-live="polite">
             {visible.map((contest) => (
-              <ContestTile key={contest.id} contest={contest} nowTs={nowTs} />
+              <ContestTile key={contest.id} contest={contest} />
             ))}
           </section>
         )}

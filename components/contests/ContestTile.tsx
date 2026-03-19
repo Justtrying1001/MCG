@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { memo } from "react";
 import { Surface } from "@/components/ui/Surface";
+import { ContestCountdown } from "@/components/contests/ContestCountdown";
 import type { ContestListItem, ContestRule } from "@/components/contests/types";
-import { formatCountdown, getCountdownLabel, getTargetDate } from "@/components/contests/contestUtils";
 import { getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 function getContestCoverImage(rule?: ContestRule) {
@@ -41,16 +42,12 @@ function getHeroEyebrow(contest: ContestListItem) {
   return contest.seasonName ?? "Meme Card Game";
 }
 
-export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowTs: number }) {
+function ContestTileComponent({ contest }: { contest: ContestListItem }) {
   const rule = contest.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
-  const targetDate = getTargetDate(contest.status, contest.lockAt, contest.endsAt);
-  const countDown = formatCountdown(targetDate, nowTs);
   const coverImageUrl = getContestCoverImage(rule);
   const entryFee = getEntryFeeLabel(rule);
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
-  const timingLabel = getCountdownLabel(contest.status);
-  const metaItems = [`⏱ ${timingLabel} ${countDown}`, `👥 ${contest._count.entries}`, `🎟 ${entryFee}`];
   const fallbackToken = getFallbackToken(contest);
   const heroEyebrow = getHeroEyebrow(contest);
 
@@ -81,9 +78,11 @@ export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowT
           <h3 className="contest-grid-card-title">{contest.title}</h3>
         </div>
 
-        <p className="contest-grid-card-meta" aria-label="Contest quick facts">
-          {metaItems.join(" • ")}
-        </p>
+        <div className="contest-grid-card-meta" aria-label="Contest quick facts">
+          <ContestCountdown status={contest.status} lockAt={contest.lockAt} endsAt={contest.endsAt} />
+          <span>👥 {contest._count.entries}</span>
+          <span>🎟 {entryFee}</span>
+        </div>
 
         <div className="contest-grid-card-reward" aria-label="Reward highlight">
           <span className="contest-grid-card-reward-label">🏆 Reward</span>
@@ -99,3 +98,5 @@ export function ContestTile({ contest, nowTs }: { contest: ContestListItem; nowT
     </Surface>
   );
 }
+
+export const ContestTile = memo(ContestTileComponent);
