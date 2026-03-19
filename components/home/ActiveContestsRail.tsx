@@ -37,7 +37,7 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
         <SectionHeader
           eyebrow="Compete"
           title="Active contests"
-          subtitle="Jump into live windows and review where you already have an entry."
+          subtitle="Live contest windows and your current entry status."
           actions={<Link href="/contests" className="mcg-btn ghost">All contests</Link>}
         />
         {contests.length === 0 ? (
@@ -48,38 +48,31 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
               const stateMessaging = getContestStateMessaging(contest.status);
               return (
                 <Link key={contest.id} href={`/contests/${contest.id}`} className="mcg-surface mcg-contest-card active-contest-card">
-                <div className="mcg-contest-card-top active-contest-card-top">
-                  <div className="active-contest-heading">
-                    <span className="mcg-eyebrow mcg-contest-code">{contest.code}</span>
-                    <strong>{contest.title}</strong>
-                    <p className="contest-inline-note" style={{ marginTop: "0.35rem" }}>{stateMessaging.shortLabel}</p>
-                  </div>
-                  <StatusBadge tone={toTone(contest.status)} label={contest.status} />
-                </div>
-
-                <div className="active-contest-body">
-                  <div className="mcg-contest-meta active-contest-meta">
-                    <span>{contest._count.entries.toLocaleString()} entries</span>
-                    <span>{contest.lockAt ? `Locks ${new Date(contest.lockAt).toLocaleDateString()}` : "No lock"}</span>
+                  <div className="mcg-contest-card-top active-contest-card-top">
+                    <div className="active-contest-heading">
+                      <span className="mcg-eyebrow mcg-contest-code">{contest.code}</span>
+                      <strong>{contest.title}</strong>
+                      <p className="contest-inline-note">{stateMessaging.shortLabel}</p>
+                    </div>
+                    <StatusBadge tone={toTone(contest.status)} label={contest.status} />
                   </div>
 
-                  {contest.seasonName ? (
-                    <p className="active-contest-season">Season: {contest.seasonName}</p>
-                  ) : null}
+                  <div className="active-contest-body">
+                    <div className="mcg-contest-meta active-contest-meta">
+                      <span>{contest._count.entries.toLocaleString()} entries</span>
+                      <span>{contest.lockAt ? `Locks ${new Date(contest.lockAt).toLocaleDateString()}` : "No lock"}</span>
+                    </div>
 
-                  {contest.rewardPreview?.label ? (
-                    <p className="active-contest-reward">{contest.rewardPreview.label}</p>
-                  ) : null}
+                    {contest.seasonName ? <p className="active-contest-season">Season: {contest.seasonName}</p> : null}
+                    {contest.rewardPreview?.label ? <p className="active-contest-reward">{contest.rewardPreview.label}</p> : null}
 
-                  <p className="contest-inline-note" style={{ marginTop: "0.45rem" }}>{stateMessaging.helper}</p>
-                </div>
+                    <p className="contest-inline-note">{stateMessaging.helper}</p>
+                  </div>
 
-                <div className="active-contest-footer">
-                  <span className="active-contest-entry">
-                    {contest.userEntry ? `Your entry: ${contest.userEntry.status}` : "No entry yet"}
-                  </span>
-                  <span className="active-contest-cta">{getPrimaryCtaLabel(contest.status)} →</span>
-                </div>
+                  <div className="active-contest-footer">
+                    <span className="active-contest-entry">{contest.userEntry ? `Your entry: ${contest.userEntry.status}` : "No entry yet"}</span>
+                    <span className="active-contest-cta">{getPrimaryCtaLabel(contest.status)} →</span>
+                  </div>
                 </Link>
               );
             })}

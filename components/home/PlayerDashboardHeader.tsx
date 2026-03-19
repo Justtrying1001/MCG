@@ -31,14 +31,14 @@ export function PlayerDashboardHeader({
   return (
     <section className="player-dash-header">
       <div className="player-dash-hero-copy">
-        <p className="player-dash-kicker">Player hub</p>
+        <p className="player-dash-kicker">Lobby</p>
         <div className="player-dash-title-row">
           <div>
             <p className="player-dash-gm">
-              GM, <span className="player-dash-name">{shortenAddress(displayName)}</span>
+              Welcome back, <span className="player-dash-name">{shortenAddress(displayName)}</span>
             </p>
             <p className="player-dash-copy">
-              Your premium home for contests, collection progress, and the latest pack activity.
+              Your command center for active contests, collection progress, and the latest relic reveals.
             </p>
           </div>
 

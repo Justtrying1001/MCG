@@ -46,51 +46,43 @@ export function HomeHeroLanding() {
     <section className="home-hero-landing">
       <div className="home-hero-glow" aria-hidden="true" />
       <div className="home-hero-glow home-hero-glow-2" aria-hidden="true" />
-
-      <div className="home-hero-body">
-        {/* Left — copy */}
+      <div className="home-hero-grid">
         <div className="home-hero-content">
-          <p className="home-hero-eyebrow">Set 1 · Genesis · Live Now</p>
+          <div className="home-hero-kicker-wrap">
+            <p className="home-hero-eyebrow">Season 1 · Genesis pack available</p>
+          </div>
           <h1 className="home-hero-headline">
-            COLLECT.<br />
-            COMPETE.<br />
-            <span className="home-hero-headline-accent">WIN.</span>
+            THE ULTIMATE <span className="home-hero-headline-accent">MEME</span> SHOWDOWN
           </h1>
           <p className="home-hero-subline">
-            MCG is a trading card game built on meme tokens.<br />
-            Collect across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, build rosters, let the market decide.
+            Collect, battle, and own the internet&apos;s greatest relics. Build across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens,
+            open packs, and let the market decide who rules the arena.
           </p>
           <div className="home-hero-ctas">
             <button className="home-hero-cta-primary" onClick={() => loginWithPrivy()}>
-              <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{flexShrink:0}}>
-                <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z"/>
+              <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0 }}>
+                <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
               </svg>
-              CONNECT WITH X
+              Play for free
             </button>
-            <a
-              href="https://mcg-2.gitbook.io/mcg/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="home-hero-cta-secondary"
-            >
-              READ THE DOCS <span aria-hidden="true">↗</span>
+            <a href="https://mcg-2.gitbook.io/mcg/" target="_blank" rel="noopener noreferrer" className="home-hero-cta-secondary">
+              Read the docs <span aria-hidden="true">↗</span>
             </a>
+          </div>
+
+          <div className="home-hero-signal-row" aria-label="Core game promises">
+            <span className="home-hero-signal-pill">Card-first gameplay</span>
+            <span className="home-hero-signal-pill">Live contests</span>
+            <span className="home-hero-signal-pill">Persistent collection</span>
           </div>
         </div>
 
-        {/* Right — real token cards */}
         <div className="home-hero-cards-float" aria-hidden="true">
+          <div className="home-hero-cards-orbit" />
           {HERO_CARDS.map((card) => (
             <div key={card.name} className={`home-float-card ${card.cls}`}>
               <div className="home-float-card-art">
-                <Image
-                  src={card.img}
-                  alt={card.label}
-                  fill
-                  sizes="160px"
-                  className="home-float-card-img"
-                  unoptimized
-                />
+                <Image src={card.img} alt={card.label} fill sizes="(max-width: 768px) 220px, 260px" className="home-float-card-img" unoptimized />
                 <div className="home-float-card-art-overlay" />
               </div>
               <div className="home-float-card-body">

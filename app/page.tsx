@@ -5,13 +5,11 @@ import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 
-// State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { StatsBar } from "@/components/home/StatsBar";
 import { DocsLearnSection } from "@/components/home/DocsLearnSection";
 
-// State B — dashboard
 import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
@@ -97,46 +95,69 @@ export default function HomePage() {
     return typeof userInfo.ownedTemplates === "number" || typeof userInfo.missingTemplates === "number";
   }, [userInfo]);
 
-  return (
-    <SiteShell>
-      {isAuth && userInfo ? (
-        <div className="home-dashboard-layout">
-          <PlayerDashboardHeader
-            displayName={userInfo.displayName}
-            points={userInfo.points}
-            level={userInfo.level}
-            activeEntries={userInfo.activeEntries}
-            seasonRank={userInfo.seasonRank}
-          />
+  return isAuth && userInfo ? (
+    <SiteShell mode="app">
+      <div className="home-dashboard-layout">
+        <PlayerDashboardHeader
+          displayName={userInfo.displayName}
+          points={userInfo.points}
+          level={userInfo.level}
+          activeEntries={userInfo.activeEntries}
+          seasonRank={userInfo.seasonRank}
+        />
 
-          <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
-            <div className="home-dashboard-main-column">
-              <ActiveContestsRail contests={contests} />
-            </div>
+        <div className="home-dashboard-entry-grid" aria-label="Game entry points">
+          <a href="/packs" className="home-dashboard-entry-card home-dashboard-entry-card--primary">
+            <span className="home-dashboard-entry-icon" aria-hidden="true">✦</span>
+            <strong>Open packs</strong>
+            <p>Reveal fresh relics and expand your playable collection.</p>
+          </a>
+          <a href="/collection" className="home-dashboard-entry-card">
+            <span className="home-dashboard-entry-icon" aria-hidden="true">◌</span>
+            <strong>View collection</strong>
+            <p>Track your owned templates, completion, and featured cards.</p>
+          </a>
+          <a href="/contests" className="home-dashboard-entry-card">
+            <span className="home-dashboard-entry-icon" aria-hidden="true">⚔</span>
+            <strong>Enter contests</strong>
+            <p>Scout open windows, lock lineups, and chase rank.</p>
+          </a>
+          <a href="/rewards" className="home-dashboard-entry-card">
+            <span className="home-dashboard-entry-icon" aria-hidden="true">★</span>
+            <strong>Claim rewards</strong>
+            <p>Check progress, milestone unlocks, and reward tracks.</p>
+          </a>
+        </div>
 
-            {hasCollectionSummary ? (
-              <aside className="home-dashboard-side-column">
-                <CollectionProgressBlock
-                  completionPct={userInfo.completionPct}
-                  ownedCount={userInfo.ownedTemplates ?? 0}
-                  missingCount={userInfo.missingTemplates ?? 0}
-                />
-              </aside>
-            ) : null}
+        <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
+          <div className="home-dashboard-main-column">
+            <ActiveContestsRail contests={contests} />
           </div>
 
-          <RecentPullsRail pulls={recentPulls} />
-
-          <DocsLearnSection compact />
+          {hasCollectionSummary ? (
+            <aside className="home-dashboard-side-column">
+              <CollectionProgressBlock
+                completionPct={userInfo.completionPct}
+                ownedCount={userInfo.ownedTemplates ?? 0}
+                missingCount={userInfo.missingTemplates ?? 0}
+              />
+            </aside>
+          ) : null}
         </div>
-      ) : (
-        <>
-          <HomeHeroLanding />
-          <StatsBar />
-          <HowItWorks />
-          <DocsLearnSection />
-        </>
-      )}
+
+        <RecentPullsRail pulls={recentPulls} />
+
+        <DocsLearnSection compact />
+      </div>
+    </SiteShell>
+  ) : (
+    <SiteShell mode="landing">
+      <div className="landing-page-stack">
+        <HomeHeroLanding />
+        <StatsBar />
+        <HowItWorks />
+        <DocsLearnSection />
+      </div>
     </SiteShell>
   );
 }
