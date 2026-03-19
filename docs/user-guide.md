@@ -79,10 +79,12 @@ Sur le détail contest :
 - Après lock, les modifications ne sont plus possibles.
 
 ### 4.3 Scoring (résumé)
-Le score final dépend :
-- des variations marché des tokens (snapshots START/END),
-- des multiplicateurs de rareté,
-- des multiplicateurs d’édition.
+Le score final d’un lineup est la somme des scores de chaque carte. Pour chaque carte :
+- un **token score** est calculé à partir des variations marché du token entre les snapshots START et END,
+- ce token score est ensuite multiplié par le multiplicateur de rareté de la carte,
+- puis par le multiplicateur d’édition de la carte.
+
+En pratique : `cardScore = tokenScore × rarityMultiplier × editionMultiplier`, puis `finalLineupScore = somme des cardScore`.
 
 ---
 
