@@ -43,6 +43,7 @@ export default function ContestsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedContests, setHasLoadedContests] = useState(false);
+  const [hasConfirmedSession, setHasConfirmedSession] = useState(false);
   const [tab, setTab] = useState<ContestTabKey>("OPEN");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
@@ -95,12 +96,17 @@ export default function ContestsPage() {
 
   useEffect(() => {
     if (loading) return;
+
+    setHasConfirmedSession(true);
+
     if (!me) {
-      setError("");
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (!hasLoadedContests) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
       return;
     }
+
     void loadContests({ showLoader: !hasLoadedContests && contests.length === 0 });
   }, [contests.length, hasLoadedContests, loading, me, retryCount, loadContests]);
 
@@ -135,7 +141,7 @@ export default function ContestsPage() {
   }, [contests, tab]);
 
   const emptyByTab = getEmptyByTab(tab);
-  const showInitialSkeleton = isLoading && !hasLoadedContests && contests.length === 0;
+  const showInitialSkeleton = !hasConfirmedSession || (isLoading && !hasLoadedContests && contests.length === 0);
   const showBlockingError = Boolean(error) && !hasLoadedContests && contests.length === 0;
 
   return (
