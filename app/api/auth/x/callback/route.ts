@@ -102,6 +102,13 @@ export async function GET(req: Request) {
     response.cookies.set({ name: INVITE_CODE_COOKIE, value: "", ...expiredCookie });
   };
 
+  logAuthEvent("x_callback_received", "info", {
+    requestHost: url.host,
+    hasOauthToken: Boolean(oauthToken),
+    hasOauthVerifier: Boolean(oauthVerifier),
+    denied: Boolean(deniedToken),
+  });
+
   if (configuredAppOrigin && configuredAppOrigin !== url.origin) {
     logAuthEvent("x_callback_origin_mismatch", "warn", {
       requestOrigin: url.origin,
@@ -154,6 +161,8 @@ export async function GET(req: Request) {
     logAuthEvent("x_callback_started", "info", {
       requestHost: url.host,
       invitePresent: Boolean(inviteCode),
+      hasExpectedRequestToken: Boolean(expectedRequestToken),
+      hasRequestTokenSecret: Boolean(requestTokenSecret),
     });
 
     const accessToken = await exchangeXAccessToken(oauthToken, oauthVerifier, requestTokenSecret);
@@ -201,6 +210,7 @@ export async function GET(req: Request) {
       cookieName: getSessionCookieName(),
       cookieSecure: buildSessionCookieOptions().secure,
       cookieMaxAge: getSessionMaxAgeSeconds(),
+      responseRedirectHost: new URL("/", req.url).host,
     });
 
     clearCookies(response);

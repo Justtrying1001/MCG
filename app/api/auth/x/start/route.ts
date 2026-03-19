@@ -27,6 +27,8 @@ export async function GET(req: Request) {
     logAuthEvent("x_start", "info", {
       invitePresent: Boolean(inviteCode.trim()),
       redirectHost: new URL(redirectUrl).host,
+      redirectPath: new URL(redirectUrl).pathname,
+      callbackUrl: process.env.X_REDIRECT_URI ?? null,
       requestHost: url.host,
     });
 
