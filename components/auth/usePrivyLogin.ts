@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
 
 const PENDING_INVITE_STORAGE_KEY = "mcg_privy_pending_invite";
+const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
 
 function readPendingInviteCode() {
   if (typeof window === "undefined") return null;
@@ -20,6 +21,20 @@ function writePendingInviteCode(inviteCode?: string | null) {
     return;
   }
   window.sessionStorage.removeItem(PENDING_INVITE_STORAGE_KEY);
+}
+
+function hasPendingLoginRequest() {
+  if (typeof window === "undefined") return false;
+  return window.sessionStorage.getItem(LOGIN_REQUESTED_STORAGE_KEY) === "1";
+}
+
+function writePendingLoginRequest(value: boolean) {
+  if (typeof window === "undefined") return;
+  if (value) {
+    window.sessionStorage.setItem(LOGIN_REQUESTED_STORAGE_KEY, "1");
+    return;
+  }
+  window.sessionStorage.removeItem(LOGIN_REQUESTED_STORAGE_KEY);
 }
 
 function getInviteCodeFromLocation() {
@@ -62,6 +77,7 @@ export function usePrivyLogin() {
         return false;
       }
 
+      writePendingLoginRequest(false);
       writePendingInviteCode(null);
       await refresh();
       return true;
@@ -75,6 +91,7 @@ export function usePrivyLogin() {
 
   const loginWithPrivy = useCallback((inviteCode?: string | null) => {
     const resolvedInviteCode = inviteCode ?? getInviteCodeFromLocation();
+    writePendingLoginRequest(true);
     writePendingInviteCode(resolvedInviteCode);
 
     if (authenticated) {
@@ -86,6 +103,7 @@ export function usePrivyLogin() {
   }, [authenticated, login, syncSession]);
 
   const logoutFromApp = useCallback(async () => {
+    writePendingLoginRequest(false);
     await fetch("/api/auth/logout", { method: "POST" });
     setMe(null);
     await refresh();
@@ -97,7 +115,7 @@ export function usePrivyLogin() {
   }, [logout, logoutFromApp]);
 
   useEffect(() => {
-    if (!ready || !authenticated || me || isSyncingSession) return;
+    if (!ready || !authenticated || me || isSyncingSession || !hasPendingLoginRequest()) return;
     void syncSession(readPendingInviteCode());
   }, [authenticated, isSyncingSession, me, ready, syncSession]);
 
