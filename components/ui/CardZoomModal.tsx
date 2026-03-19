@@ -36,11 +36,21 @@ export function CardZoomModal({ card, quantity, open, onClose }: CardZoomModalPr
         aria-label={`Zoomed card view for ${card.displayName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="icon-btn card-zoom-close" onClick={onClose} aria-label="Close zoom">
-          ✕
-        </button>
-        <div className="card-zoom-container">
-          <MvpCardTile card={card} quantity={quantity} variant="zoom" />
+        <div className="card-zoom-shell">
+          <div className="card-zoom-chrome">
+            <div className="card-zoom-meta">
+              <span className="card-zoom-kicker">Card viewer</span>
+              <strong>{card.displayName}</strong>
+              {typeof quantity === "number" && quantity > 1 ? <span>{`Inventory: x${quantity} copies`}</span> : null}
+            </div>
+            <button className="icon-btn card-zoom-close" onClick={onClose} aria-label="Close zoom">
+              ✕
+            </button>
+          </div>
+
+          <div className="card-zoom-container">
+            <MvpCardTile card={card} quantity={quantity} variant="zoom" />
+          </div>
         </div>
       </div>
     </div>

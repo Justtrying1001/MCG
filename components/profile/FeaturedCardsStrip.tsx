@@ -16,6 +16,10 @@ export function FeaturedCardsStrip({ cards }: { cards: MvpCollectionItem[] }) {
           {cards.map((item) => (
             <div key={item.templateId} className="profile-featured-card-item">
               <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
+              <div className="profile-featured-card-meta">
+                <strong>{item.card.displayName}</strong>
+                <span>{item.instanceCount > 1 ? `x${item.instanceCount} copies` : "1 copy"}</span>
+              </div>
             </div>
           ))}
         </div>

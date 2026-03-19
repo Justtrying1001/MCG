@@ -271,19 +271,6 @@
   justify-self: end;
 }
 
-.mvp-qty-chip {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 60;
-  font-family: 'DM Mono', 'JetBrains Mono', monospace;
-  font-size: 7px;
-  padding: 1px 4px;
-  border-radius: 3px;
-  border: 1px solid var(--wire-acc);
-  background: rgba(0, 0, 0, 0.75);
-  color: var(--txt-name);
-}
 
 @keyframes mvp-brill-shift {
   0% { background-position: 0% 50%; }

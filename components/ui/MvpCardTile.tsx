@@ -160,7 +160,6 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
         </span>
       </footer>
 
-      {typeof quantity === "number" && quantity > 1 && <div className="mvp-qty-chip">x{quantity} copies</div>}
     </article>
   );
 }
