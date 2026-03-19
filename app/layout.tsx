@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { SessionProvider } from "@/components/session/SessionProvider";
 import { ensureContestLifecycleSchedulerStarted } from "@/lib/domain/contests/lifecycle-scheduler";
 import "./globals.css";
 import "../styles/tokens.css";
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
         <Analytics />
       </body>
     </html>
