@@ -4181,6 +4181,17 @@ textarea:focus {
   color: #f8fafc;
 }
 
+
+.contest-detail-reward-tier-table-head {
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.16), rgba(15, 23, 42, 0.28));
+  border-color: rgba(168, 85, 247, 0.24);
+}
+
+.contest-detail-reward-tier-table-head .contest-detail-reward-tier-rank strong,
+.contest-detail-reward-tier-table-head .contest-detail-reward-tier-value strong {
+  letter-spacing: 0.02em;
+}
+
 .contest-detail-reward-tier-table article {
   display: grid;
   grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);

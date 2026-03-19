@@ -7,16 +7,18 @@ describe("contest detail targeted correction smoke", () => {
     expect(source).toContain('contest.rules[0]?.config?.coverImageUrl?.trim()');
   });
 
-  it("keeps contest details in the support rail and removes facts panel usage", () => {
+  it("keeps rewards and leaderboard in the support rail without restoring facts panel variants", () => {
     const source = readFileSync("app/contests/[contestId]/page.tsx", "utf8");
-    expect(source).toContain("<ContestDetailsPanel");
+    expect(source).toContain("<RewardsPanel");
+    expect(source).toContain("<LeaderboardPanel");
     expect(source).not.toContain("<FactsLifecyclePanel");
     expect(source).not.toContain("<ContestDetailsAccordion");
   });
 
-  it("renders configured reward pool copy when policy data exists without visible tiers", () => {
+  it("keeps pool overview fallback scoped away from live contests", () => {
     const source = readFileSync("components/contests/ContestDetailPanels.tsx", "utf8");
     expect(source).toContain("Reward pool configured");
     expect(source).toContain("hasPolicyData && summary");
+    expect(source).toContain("isLive ?");
   });
 });

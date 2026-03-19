@@ -7,6 +7,7 @@ const {
   finalizeContestFromEndSnapshotTriggerMock,
 } = vi.hoisted(() => ({
   prismaMock: {
+    $transaction: vi.fn(),
     contest: {
       findUnique: vi.fn(),
       updateMany: vi.fn(),
@@ -41,6 +42,14 @@ describe("contest lifecycle runtime", () => {
     prismaMock.contest.updateMany.mockResolvedValue({ count: 1 });
     captureStartSnapshotMock.mockResolvedValue({ tokenCount: 3, capturedCount: 3 });
     finalizeContestFromEndSnapshotTriggerMock.mockResolvedValue({});
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn({
+      contest: { findUnique: prismaMock.contest.findUnique },
+      packDefinition: { findFirst: vi.fn().mockResolvedValue({ id: "pack-1" }) },
+      contestRewardPolicy: { create: vi.fn().mockResolvedValue({ id: "rp1", status: "PUBLISHED" }) },
+      contestRewardDistributionRule: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), create: vi.fn().mockResolvedValue({}) },
+      contestRewardComponent: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), create: vi.fn().mockResolvedValue({}) },
+      contestRewardBundle: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), create: vi.fn().mockImplementation(async ({ data }: any) => ({ id: data.name, ...data })) },
+    }));
   });
 
   it("manual validation and execution share the same allowed transition rules", async () => {
@@ -74,7 +83,21 @@ describe("contest lifecycle runtime", () => {
       _count: { entries: 2, rankings: 0, settlements: 0 },
     };
 
-    prismaMock.contest.findUnique.mockResolvedValue(contest);
+    prismaMock.contest.findUnique
+      .mockResolvedValueOnce(contest)
+      .mockResolvedValueOnce({
+        id: "c1",
+        _count: { entries: 2 },
+        rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 1, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+        rewardPolicy: { id: "rp1", status: "PUBLISHED", bundles: [], distributionRules: [] },
+      })
+      .mockResolvedValueOnce(contest)
+      .mockResolvedValueOnce({
+        id: "c1",
+        _count: { entries: 2 },
+        rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 1, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+        rewardPolicy: { id: "rp1", status: "PUBLISHED", bundles: [], distributionRules: [] },
+      });
     await executeContestTransition("c1", ContestStatus.LIVE, "manual");
     await executeContestTransition("c1", ContestStatus.LIVE, "auto");
 
@@ -94,7 +117,15 @@ describe("contest lifecycle runtime", () => {
       _count: { entries: 2, rankings: 0, settlements: 0 },
     };
 
-    prismaMock.contest.findUnique.mockResolvedValue(contest);
+    prismaMock.contest.findUnique
+      .mockResolvedValueOnce(contest)
+      .mockResolvedValueOnce({
+        id: "c-start",
+        _count: { entries: 2 },
+        rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 1, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+        rewardPolicy: { id: "rp1", status: "PUBLISHED", bundles: [], distributionRules: [] },
+      });
+    captureStartSnapshotMock.mockReset();
     captureStartSnapshotMock.mockRejectedValueOnce(new Error("snapshot down"));
 
     await expect(executeContestTransition("c-start", ContestStatus.LIVE, "auto")).rejects.toThrow(/snapshot down/i);
@@ -168,5 +199,35 @@ describe("contest lifecycle runtime", () => {
 
     await expect(executeContestTransition("c3", ContestStatus.SETTLED, "auto")).rejects.toThrow(/rewards failed/i);
     expect(prismaMock.contest.updateMany).not.toHaveBeenCalled();
+  });
+
+
+  it("materializes reward config into a fixed LIVE reward policy before entering live", async () => {
+    const contest = {
+      id: "c-mat",
+      status: ContestStatus.OPEN,
+      configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+      openAt: null,
+      liveAt: null,
+      lockAt: null,
+      endsAt: null,
+      _count: { entries: 4, rankings: 0, settlements: 0 },
+    };
+
+    prismaMock.contest.findUnique
+      .mockResolvedValueOnce(contest)
+      .mockResolvedValueOnce({
+        id: "c-mat",
+        _count: { entries: 4 },
+        rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 0, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+        rewardPolicy: { id: "rp1", status: "PUBLISHED", bundles: [], distributionRules: [] },
+      });
+    captureStartSnapshotMock.mockReset();
+    captureStartSnapshotMock.mockResolvedValue({ tokenCount: 3, capturedCount: 3 });
+
+    await executeContestTransition("c-mat", ContestStatus.LIVE, "manual");
+
+    expect(prismaMock.$transaction).toHaveBeenCalled();
+    expect(captureStartSnapshotMock).toHaveBeenCalledWith("c-mat");
   });
 });

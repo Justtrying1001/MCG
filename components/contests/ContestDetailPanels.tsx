@@ -625,6 +625,7 @@ export function RewardsPanel({
     openPool.packPool > 0 ? { label: "Pack pool", value: `${openPool.packPool.toLocaleString()} pack${openPool.packPool > 1 ? "s" : ""}` } : null,
     openPool.rewardedTopPercent ? { label: "Paid range", value: `Top ${openPool.rewardedTopPercent}% paid` } : null,
   ].filter((item): item is { label: string; value: string } => Boolean(item));
+  const hasExactTierRows = groupedTiers.length > 0;
 
   return (
     <Surface className="contest-detail-block rewards-panel" variant="raised">
@@ -651,12 +652,12 @@ export function RewardsPanel({
         ) : (
           <p className="contest-detail-empty-note">Rewards are still being published for this contest.</p>
         )
-      ) : groupedTiers.length > 0 ? (
+      ) : hasExactTierRows ? (
         <>
           <p className="contest-detail-panel-copy">
             {isSettled
               ? "Final placements are locked. Review the payout table below."
-              : "Track the current payout table while the contest is live."}
+              : "Track the current payout by placement while the contest is live."}
           </p>
 
           {isSettled && myRewards ? (
@@ -668,16 +669,26 @@ export function RewardsPanel({
             </div>
           ) : null}
 
-          <div className="contest-detail-reward-tier-list contest-detail-reward-tier-table">
+          <div className="contest-detail-reward-tier-list contest-detail-reward-tier-table" role="table" aria-label={isSettled ? "Final reward payout table" : "Live reward payout table"}>
+            <article className="contest-detail-reward-tier-table-head" role="row">
+              <div className="contest-detail-reward-tier-rank" role="columnheader">
+                <strong>Placement</strong>
+                <span>{isSettled ? "Locked finish" : "Current payout band"}</span>
+              </div>
+              <div className="contest-detail-reward-tier-value" role="columnheader">
+                <strong>Payout</strong>
+                <span>{isSettled ? "Rewards earned" : "Exact reward bundle"}</span>
+              </div>
+            </article>
             {groupedTiers.map((tier, index) => {
               const rewardParts = formatRewardParts(tier);
               return (
-                <article key={`${tier.label}-${index}`}>
-                  <div className="contest-detail-reward-tier-rank">
+                <article key={`${tier.label}-${index}`} role="row">
+                  <div className="contest-detail-reward-tier-rank" role="cell">
                     <strong>{tier.label}</strong>
                     {tier.bundleName ? <span>{tier.bundleName}</span> : null}
                   </div>
-                  <div className="contest-detail-reward-tier-value">
+                  <div className="contest-detail-reward-tier-value" role="cell">
                     <strong>{rewardParts.join(" • ") || "No rewards"}</strong>
                     {isSettled && tier.winnerLabel ? <span>{tier.winnerLabel}</span> : null}
                   </div>
@@ -686,15 +697,20 @@ export function RewardsPanel({
             })}
           </div>
         </>
-      ) : hasPolicyData && openPoolItems.length > 0 ? (
-        <div className="contest-detail-reward-pool-grid">
-          {openPoolItems.map((item) => (
-            <article key={item.label} className="contest-detail-reward-pool-card">
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </article>
-          ))}
-        </div>
+      ) : isLive ? (
+        <p className="contest-detail-empty-note">Exact live payouts are not available yet for this contest.</p>
+      ) : hasPolicyData && summary ? (
+        <>
+          <p className="contest-detail-panel-copy">Reward pool configured. Exact payout rows will appear here once rank-based tiers are published.</p>
+          <div className="contest-detail-reward-pool-grid">
+            {openPoolItems.map((item) => (
+              <article key={item.label} className="contest-detail-reward-pool-card">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </article>
+            ))}
+          </div>
+        </>
       ) : (
         <p className="contest-detail-empty-note">Rewards are still being published for this contest.</p>
       )}

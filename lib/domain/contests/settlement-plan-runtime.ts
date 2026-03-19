@@ -61,14 +61,16 @@ export async function generateSettlementPlan(contestId: string) {
 
     const rules = policy.distributionRules as unknown as RuleLike[];
     const bundles = policy.bundles;
-    if (!rewardConfig && (rules.length === 0 || bundles.length === 0)) {
+    const hasMaterializedPolicy = rules.length > 0 && bundles.length > 0;
+    const effectiveRewardConfig = hasMaterializedPolicy ? null : rewardConfig;
+    if (!effectiveRewardConfig && !hasMaterializedPolicy) {
       throw new ContestRuntimeError("Reward policy must include bundles and distribution rules", 409);
     }
 
     const rankingSize = contest.rankings.length;
 
     let defaultPackDefinitionId: string | null = null;
-    if (rewardConfig && rewardConfig.packPool > 0) {
+    if (effectiveRewardConfig && effectiveRewardConfig.packPool > 0) {
       const defaultPackDefinition = await tx.packDefinition.findFirst({
         where: { source: "REWARD", isActive: true },
         orderBy: [{ createdAt: "asc" }],
@@ -85,7 +87,7 @@ export async function generateSettlementPlan(contestId: string) {
     const items = buildContestRewardPlanItems({
       participantCount: rankingSize,
       rankingRows: contest.rankings.map((row) => ({ userId: row.userId, rank: row.rank })),
-      rewardConfig,
+      rewardConfig: effectiveRewardConfig,
       rules: rules as RuleLike[],
       bundles: bundles as unknown as RewardPlanBundleLike[],
       defaultPackDefinitionId,
@@ -121,7 +123,7 @@ export async function generateSettlementPlan(contestId: string) {
           policyId: policy.id,
           policyStatus: policy.status,
           configPublishedAt: contest.configPublishedAt?.toISOString() ?? null,
-          rewardConfig,
+          rewardConfig: effectiveRewardConfig,
           rules: rules.map((rule) => ({
             id: rule.id,
             priority: rule.priority,

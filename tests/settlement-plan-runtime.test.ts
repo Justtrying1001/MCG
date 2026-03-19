@@ -197,6 +197,59 @@ describe("settlement plan runtime", () => {
     expect(result.totals.packsGrantTotal).toBe(0);
   });
 
+  it("prefers materialized reward-policy tiers over raw reward config during settlement", async () => {
+    const tx: any = {
+      contest: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "c-frozen",
+          _count: { entries: 4 },
+          configPublishedAt: new Date("2026-03-12T00:00:00.000Z"),
+          settlements: [],
+          rules: [{ config: { rewardConfig: { pointsPool: 100, packPool: 0, rewardedTopPercent: 50, distributionProfile: "balanced" } } }],
+          rankings: [
+            { userId: "u1", rank: 1, score: 100 },
+            { userId: "u2", rank: 2, score: 90 },
+            { userId: "u3", rank: 3, score: 80 },
+            { userId: "u4", rank: 4, score: 70 },
+          ],
+          rewardPolicy: {
+            id: "rp1",
+            status: "PUBLISHED",
+            bundles: [
+              {
+                id: "bundle-a",
+                name: "Rank 1",
+                components: [
+                  { type: "POINTS", pointsAmount: 100, xpAmount: null, packDefinitionId: null, packQuantity: null },
+                ],
+              },
+            ],
+            distributionRules: [
+              { id: "rule-r1", priority: 0, ruleType: "FIXED_RANKS", rankFrom: 1, rankTo: 1, topN: null, topPercent: null, poolAmount: null, bundleId: "bundle-a" },
+            ],
+          },
+        }),
+      },
+      contestSettlementPlan: {
+        findMany: vi.fn().mockResolvedValue([]),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        create: vi.fn().mockImplementation(async ({ data }: any) => ({
+          id: "sp-frozen",
+          status: "DRAFT",
+          contestId: data.contestId,
+          items: data.items.createMany.data.map((item: any, index: number) => ({ id: `if${index + 1}`, ...item })),
+        })),
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (fn: any) => fn(tx));
+
+    const result = await generateSettlementPlan("c-frozen");
+
+    expect(result.matchedUsers).toBe(1);
+    expect(result.totals.pointsCreditTotal).toBe(100);
+  });
+
   it("previews plan with totals", async () => {
     prismaMock.contestSettlementPlan.findUnique.mockResolvedValue({
       id: "sp1",
