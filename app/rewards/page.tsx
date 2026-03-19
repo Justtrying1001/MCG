@@ -487,6 +487,8 @@ export default function RewardsPage() {
   const [completedOpen, setCompletedOpen] = useState(false);
   const [historyPage, setHistoryPage] = useState(20);
   const [hasLoadedData, setHasLoadedData] = useState(false);
+  const [hasConfirmedSession, setHasConfirmedSession] = useState(false);
+  const [stableSession, setStableSession] = useState(me);
 
   const autoTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -572,9 +574,26 @@ export default function RewardsPage() {
   };
 
   useEffect(() => {
-    if (loading || !me) return;
+    if (loading) return;
+
+    setHasConfirmedSession(true);
+
+    if (!me) {
+      if (!hasLoadedData) {
+        setLoadingData(false);
+      }
+      return;
+    }
+
     void loadData();
-  }, [loadData, loading, me]);
+  }, [hasLoadedData, loadData, loading, me]);
+
+
+  useEffect(() => {
+    if (me) {
+      setStableSession(me);
+    }
+  }, [me]);
 
   useEffect(() => () => {
     autoTimerRef.current.forEach((t) => clearTimeout(t));
@@ -705,9 +724,10 @@ export default function RewardsPage() {
   }, [ledger, quests]);
 
   const totalCredits = ledger.filter((e) => e.entryType === "CREDIT").reduce((s, e) => s + e.amount, 0);
-  const currentPoints = me?.user.points ?? 0;
-  const friendsInvited = me?.user.invitedFriendsCount ?? 0;
-  const inviteCode = me?.user.inviteCode ?? "";
+  const sessionUser = me ?? stableSession;
+  const currentPoints = sessionUser?.user.points ?? 0;
+  const friendsInvited = sessionUser?.user.invitedFriendsCount ?? 0;
+  const inviteCode = sessionUser?.user.inviteCode ?? "";
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -715,7 +735,7 @@ export default function RewardsPage() {
   const BG_CARD = "var(--color-surface-1)";
   const BORDER_COLOR = "var(--color-border-subtle)";
   const TEXT_MUTED = "var(--color-text-secondary)";
-  const showInitialLoading = loading || (!hasLoadedData && loadingData);
+  const showInitialLoading = !hasConfirmedSession || (!hasLoadedData && loadingData);
   const showRefreshNotice = hasLoadedData && loadingData;
 
   function tabStyle(id: TabId) {
@@ -741,7 +761,7 @@ export default function RewardsPage() {
   return (
     <SiteShell>
       {showInitialLoading ? <EmptyState title="Loading rewards…" /> : null}
-      {!showInitialLoading && !loading && me ? (
+      {!showInitialLoading && (me || hasLoadedData) ? (
         <div style={{ padding: "1.5rem 0" }}>
 
           {/* ── Page header ── */}
