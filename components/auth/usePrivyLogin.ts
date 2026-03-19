@@ -85,12 +85,16 @@ export function usePrivyLogin() {
     login({ loginMethods: ["twitter"] });
   }, [authenticated, login, syncSession]);
 
-  const logoutFromPrivy = useCallback(async () => {
+  const logoutFromApp = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setMe(null);
-    await logout();
     await refresh();
-  }, [logout, refresh, setMe]);
+  }, [refresh, setMe]);
+
+  const disconnectPrivy = useCallback(async () => {
+    await logoutFromApp();
+    await logout();
+  }, [logout, logoutFromApp]);
 
   useEffect(() => {
     if (!ready || !authenticated || me || isSyncingSession) return;
@@ -99,10 +103,11 @@ export function usePrivyLogin() {
 
   return useMemo(() => ({
     authenticated,
+    disconnectPrivy,
     isSyncingSession,
     loginWithPrivy,
-    logoutFromPrivy,
+    logoutFromApp,
     ready,
     syncError,
-  }), [authenticated, isSyncingSession, loginWithPrivy, logoutFromPrivy, ready, syncError]);
+  }), [authenticated, disconnectPrivy, isSyncingSession, loginWithPrivy, logoutFromApp, ready, syncError]);
 }
