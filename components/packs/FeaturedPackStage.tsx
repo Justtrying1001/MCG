@@ -27,6 +27,11 @@ type FeaturedPackStageProps = {
     cooldownSeconds: number;
     isBlocked: boolean;
   } | null;
+  statusNotice?: {
+    tone: "neutral" | "success" | "danger";
+    title: string;
+    detail?: string;
+  } | null;
   guestHeadline?: string;
   guestSupportingCopy?: string;
 };
@@ -80,6 +85,7 @@ export function FeaturedPackStage({
   userPoints,
   isGuest = false,
   purchaseLimit,
+  statusNotice,
   guestHeadline,
   guestSupportingCopy,
 }: FeaturedPackStageProps) {
@@ -147,7 +153,7 @@ export function FeaturedPackStage({
             purchaseLimit.enabled ? (
               <div style={{ marginTop: 10 }}>
                 <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#cbd5e1" }}>
-                  {purchaseLimit.used} / {purchaseLimit.limit ?? 0} pack purchases used
+                  {purchaseLimit.used} / {purchaseLimit.limit ?? 0} packs purchased
                 </span>
                 <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#86efac", display: "block" }}>
                   {isPurchaseBlocked
@@ -206,6 +212,16 @@ export function FeaturedPackStage({
           >
             {ctaLabel}
           </button>
+          {statusNotice ? (
+            <div
+              className={`packs-inline-notice packs-inline-notice--${statusNotice.tone}`}
+              role="status"
+              aria-live="polite"
+            >
+              <strong>{statusNotice.title}</strong>
+              {statusNotice.detail ? <span>{statusNotice.detail}</span> : null}
+            </div>
+          ) : null}
           {isGuest ? (
             <div className="ps-guest-copy-block">
               {guestHeadline ? <p className="ps-guest-headline">{guestHeadline}</p> : null}

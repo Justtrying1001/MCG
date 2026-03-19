@@ -257,8 +257,8 @@ export default function AdminSupplyPage() {
   return (
     <div className="admin-page admin-v2-page">
       <AdminPageHeader
-        title="Pack Supply"
-        subtitle="Canonical supply and lifecycle state for sale and reward packs."
+        title="Pack Supply & Settings"
+        subtitle="Canonical supply plus the live store purchase-cap settings for sale packs."
         actions={
           <button type="button" className="mcg-btn ghost" onClick={load} disabled={loading}>
             Refresh
