@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { useRootProvidersDebug } from "@/components/providers/RootProviders";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 
 export function PrivyTestPanel() {
+  const providerDebug = useRootProvidersDebug();
+
   if (!privyAppId) {
     return (
       <section className="privy-test-panel" aria-live="polite">
@@ -31,12 +34,36 @@ export function PrivyTestPanel() {
     );
   }
 
+  if (!providerDebug.privyProviderMounted) {
+    return (
+      <section className="privy-test-panel" aria-live="polite">
+        <div>
+          <p className="privy-test-panel__eyebrow">Privy frontend check</p>
+          <p className="privy-test-panel__title">Privy provider not mounted</p>
+          <p className="privy-test-panel__copy">RootProviders did not mount <code>PrivyProvider</code>. Check the browser console for the temporary RootProviders debug log.</p>
+        </div>
+      </section>
+    );
+  }
+
   return <PrivyTestPanelState />;
 }
 
 function PrivyTestPanelState() {
+  const providerDebug = useRootProvidersDebug();
   const { authenticated, login, ready, user } = usePrivy();
   const twitterAccount = useMemo(() => user?.linkedAccounts.find((account) => account.type === "twitter_oauth") ?? null, [user]);
+
+  useEffect(() => {
+    console.info("[PrivyTestPanel] Privy debug", {
+      appId: privyAppId ?? null,
+      clientId: privyClientId ?? null,
+      typeofWindow: typeof window,
+      privyProviderMounted: providerDebug.privyProviderMounted,
+      ready,
+      authenticated,
+    });
+  }, [authenticated, providerDebug.privyProviderMounted, ready]);
 
   return (
     <section className="privy-test-panel" aria-live="polite">
@@ -58,6 +85,14 @@ function PrivyTestPanelState() {
         <div>
           <dt>Provider ready</dt>
           <dd>{ready ? "yes" : "no"}</dd>
+        </div>
+        <div>
+          <dt>Provider mounted</dt>
+          <dd>{providerDebug.privyProviderMounted ? "yes" : "no"}</dd>
+        </div>
+        <div>
+          <dt>typeof window</dt>
+          <dd>{providerDebug.windowType}</dd>
         </div>
         <div>
           <dt>Authenticated</dt>
