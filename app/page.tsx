@@ -156,17 +156,14 @@ export default function HomePage() {
                   ownedCount={userInfo.ownedTemplates ?? 0}
                   missingCount={userInfo.missingTemplates ?? 0}
                 />
-                <DocsLearnSection compact />
               </aside>
             ) : null}
           </div>
         </section>
 
-        {!hasCollectionSummary ? (
-          <section className="home-dashboard-section home-dashboard-section--docs">
-            <DocsLearnSection compact />
-          </section>
-        ) : null}
+        <section className="home-dashboard-section home-dashboard-section--docs">
+          <DocsLearnSection compact />
+        </section>
       </div>
     </SiteShell>
   ) : (

@@ -519,14 +519,8 @@
 
 .home-hero-ctas {
   gap: var(--space-2);
-  align-items: start;
+  align-items: center;
   padding-top: 2px;
-}
-
-.home-hero-cta-stack {
-  display: grid;
-  gap: var(--space-1);
-  max-width: 380px;
 }
 
 .home-hero-cta-note {
@@ -534,7 +528,7 @@
   color: var(--color-text-muted);
   font-size: 0.9rem;
   line-height: 1.55;
-  max-width: 34ch;
+  max-width: 42ch;
 }
 
 .home-hero-cta-primary,
@@ -594,7 +588,7 @@
 }
 
 .home-hero-signal-row {
-  padding-top: var(--space-1);
+  padding-top: 4px;
 }
 
 .home-hero-signal-pill,
@@ -874,6 +868,7 @@
 }
 
 .player-dash-header {
+  grid-template-columns: minmax(0, 1.15fr) 220px minmax(0, 0.95fr);
   align-items: stretch;
   background:
     linear-gradient(115deg, rgba(30, 22, 40, 0.86), rgba(18, 11, 26, 0.82)),
@@ -882,14 +877,8 @@
 
 .player-dash-hero-copy {
   display: grid;
-  gap: 18px;
-}
-
-.player-dash-title-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: end;
+  gap: 16px;
+  align-content: center;
 }
 
 .player-dash-gm {
@@ -904,13 +893,31 @@
 .player-dash-points-panel {
   display: grid;
   gap: 4px;
-  min-width: 176px;
+  min-width: 0;
+  min-height: 100%;
   padding: var(--space-2);
   border-radius: 24px;
   align-content: center;
   background:
     linear-gradient(180deg, rgba(58, 43, 72, 0.82), rgba(36, 26, 47, 0.78));
   box-shadow: inset 1px 1px 0 rgba(199, 153, 255, 0.18);
+}
+
+.player-dash-actions-block {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+}
+
+.player-dash-actions-row {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.player-dash-actions-note {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 34ch;
 }
 
 .player-dash-points-value,
@@ -1170,7 +1177,6 @@
   .active-contests-grid,
   .home-docs-panel,
   .player-dash-header,
-  .player-dash-title-row,
   .home-hero-card-grid,
   .collection-progress-stats {
     grid-template-columns: 1fr;

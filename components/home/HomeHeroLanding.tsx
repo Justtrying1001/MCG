@@ -59,15 +59,12 @@ export function HomeHeroLanding() {
             Open packs across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, build your collection, and bring your best cards into live contests.
           </p>
           <div className="home-hero-ctas">
-            <div className="home-hero-cta-stack">
-              <button className="home-hero-cta-primary" onClick={() => loginWithPrivy()}>
-                <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0 }}>
-                  <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
-                </svg>
-                Play for free
-              </button>
-              <p className="home-hero-cta-note">Start in seconds, keep your progress, and carry the same identity across collection and competition.</p>
-            </div>
+            <button className="home-hero-cta-primary" onClick={() => loginWithPrivy()}>
+              <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0 }}>
+                <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
+              </svg>
+              Play for free
+            </button>
             <a href="https://mcg-2.gitbook.io/mcg/" target="_blank" rel="noopener noreferrer" className="home-hero-cta-secondary">
               Read the docs <span aria-hidden="true">↗</span>
             </a>
@@ -78,6 +75,7 @@ export function HomeHeroLanding() {
             <span className="home-hero-signal-pill">Live contests</span>
             <span className="home-hero-signal-pill">Persistent collection</span>
           </div>
+          <p className="home-hero-cta-note">Start in seconds, keep your progress, and carry the same identity across collection and competition.</p>
         </div>
 
         <div className="home-hero-visual" aria-hidden="true">
