@@ -788,11 +788,116 @@
 }
 
 .contest-card-grid-v3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
-.contest-grid-card { padding: var(--space-2); display: grid; gap: var(--space-2); }
-.contest-grid-card-top { display: flex; justify-content: space-between; gap: var(--space-1); align-items: flex-start; }
-.contest-grid-card-title { font-size: 1rem; line-height: 1.25; }
-.contest-grid-card-stats { display: flex; flex-wrap: wrap; gap: var(--space-1); color: var(--color-text-secondary); font-size: 0.83rem; }
-.contest-grid-card-footer { display: flex; justify-content: space-between; gap: var(--space-1); align-items: center; }
+.contest-grid-card {
+  overflow: hidden;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  background: linear-gradient(180deg, rgba(18, 24, 34, 0.98), rgba(9, 12, 18, 0.98));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.contest-grid-card-premium {
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+}
+.contest-grid-card-hero {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  isolation: isolate;
+}
+.contest-grid-card-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4, 8, 16, 0.05) 0%, rgba(4, 8, 16, 0.18) 36%, rgba(4, 8, 16, 0.84) 100%);
+  pointer-events: none;
+}
+.contest-grid-card-hero.is-fallback {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(208, 160, 92, 0.2), transparent 34%),
+    radial-gradient(circle at 80% 0%, rgba(91, 141, 239, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(17, 24, 34, 0.98), rgba(9, 13, 20, 1));
+}
+.contest-grid-card-hero-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2);
+}
+.contest-grid-card-fallback-mark {
+  position: absolute;
+  inset: auto auto var(--space-2) var(--space-2);
+  z-index: 1;
+  display: grid;
+  gap: 0.35rem;
+}
+.contest-grid-card-fallback-mark span {
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 0.92;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.94);
+}
+.contest-grid-card-fallback-mark small {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+}
+.contest-grid-card-body {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+.contest-grid-card-title-block {
+  display: grid;
+  gap: 0.35rem;
+}
+.contest-grid-card-title {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+.contest-grid-card-subtitle {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.contest-grid-card-meta {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.contest-grid-card-reward {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: calc(var(--radius-md) - 4px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+}
+.contest-grid-card-reward-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.contest-grid-card-reward strong {
+  font-size: 0.96rem;
+  line-height: 1.35;
+}
+.contest-grid-card-footer { display: flex; }
+.contest-grid-card-cta {
+  width: 100%;
+  justify-content: center;
+  font-weight: 700;
+}
 .contest-countdown-inline { font-family: 'JetBrains Mono', monospace; color: var(--color-text-primary); font-size: 0.84rem; }
 
 .contest-results-rail { display: flex; gap: var(--space-2); overflow-x: auto; }
