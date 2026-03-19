@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { getAllowedContestTransitions, lifecycleValidationState } from "@/lib/admin/contest-workbench";
@@ -48,21 +48,22 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
   const [debugLoading, setDebugLoading] = useState(false);
   const [forceBusy, setForceBusy] = useState(false);
   const [canExecute, setCanExecute] = useState(false);
-  const meta = useContestWorkbenchMeta(params.contestId);
+  const contestId = params.contestId;
+  const meta = useContestWorkbenchMeta(contestId);
 
-  const loadDebug = async () => {
+  const loadDebug = useCallback(async () => {
     setDebugLoading(true);
     try {
-      const response = await fetch(`/api/internal/contests/${params.contestId}/lifecycle-debug`, { cache: "no-store" });
+      const response = await fetch(`/api/internal/contests/${contestId}/lifecycle-debug`, { cache: "no-store" });
       const payload = (await response.json().catch(() => null)) as { debug?: LifecycleDebugPayload } | null;
       setDebug(payload?.debug ?? null);
     } finally {
       setDebugLoading(false);
     }
-  };
+  }, [contestId]);
 
   useEffect(() => {
-    void fetch(`/api/internal/contests/${params.contestId}`, { cache: "no-store" })
+    void fetch(`/api/internal/contests/${contestId}`, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         const phase = payload?.contest?.status as ContestStatus | undefined;
@@ -73,14 +74,14 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
         }
       });
     void loadDebug();
-  }, [params.contestId]);
+  }, [contestId, loadDebug]);
 
   const validateTransition = async () => {
     setMessage("");
     setIssues([]);
     setValidationToken("");
 
-    const response = await fetch(`/api/internal/contest-runs/${params.contestId}/transitions/validate`, {
+    const response = await fetch(`/api/internal/contest-runs/${contestId}/transitions/validate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ targetPhase, reasonCode: "LIFECYCLE_CONTROL" }),
@@ -116,7 +117,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
       return;
     }
 
-    const response = await fetch(`/api/internal/contests/${params.contestId}/status`, {
+    const response = await fetch(`/api/internal/contests/${contestId}/status`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey("contest-lifecycle") },
       body: JSON.stringify({ status: targetPhase, reasonCode: "LIFECYCLE_CONTROL", validationToken }),
@@ -137,7 +138,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
     setForceBusy(true);
     setMessage("");
 
-    const response = await fetch(`/api/internal/contests/${params.contestId}/force-lifecycle`, {
+    const response = await fetch(`/api/internal/contests/${contestId}/force-lifecycle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
@@ -167,7 +168,7 @@ export default function ContestLifecyclePage({ params }: { params: { contestId: 
 
   return (
     <ContestWorkbenchShell
-      contestId={params.contestId}
+      contestId={contestId}
       section="Lifecycle"
       description="Validate and execute lifecycle transitions with clear operational safeguards."
       meta={meta}

@@ -3843,7 +3843,7 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .contest-detail-hero-rules-summary {
@@ -4258,7 +4258,7 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .contest-detail-lineup-headline h3 {
@@ -4693,7 +4693,7 @@ textarea:focus {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .player-dash-kicker {
