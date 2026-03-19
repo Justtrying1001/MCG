@@ -18,6 +18,7 @@ import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
 type PackConfigPayload = {
+  purchaseLimit: PurchaseLimitStatus | null;
   exists: boolean;
   pack: null | {
     code: string;
@@ -35,6 +36,17 @@ type PackConfigPayload = {
     rarityOdds: Array<{ rarityCode: string; pct: number }>;
     rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }>;
   }>;
+};
+
+type PurchaseLimitStatus = {
+  enabled: boolean;
+  limit: number | null;
+  used: number;
+  remainingPurchases: number | null;
+  resetAt: string | null;
+  cooldownSeconds: number;
+  isBlocked: boolean;
+  windowHours: number;
 };
 
 type RewardPackGrant = {
@@ -180,7 +192,11 @@ export default function PacksPage() {
     });
 
     if (!res.ok) {
-      alert(await res.text());
+      const payload = await res.json().catch(() => null) as { error?: { message?: string; purchaseLimit?: PurchaseLimitStatus } } | null;
+      if (payload?.error?.purchaseLimit) {
+        setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.error!.purchaseLimit! } : prev);
+      }
+      alert(payload?.error?.message ?? await res.text());
       setIsOpening(false);
       setOpeningPhase("idle");
       return;
@@ -197,6 +213,7 @@ export default function PacksPage() {
       return;
     }
 
+    setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.purchaseLimit ?? prev.purchaseLimit } : prev);
     startReveal(pulledMvp, "real");
     trackEvent("packs_real_open_success", {
       source: "sale_pack",
@@ -290,6 +307,7 @@ export default function PacksPage() {
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned = packConfig?.pack?.plannedPackCount;
   const cardsPerPack = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+  const purchaseLimit = packConfig?.purchaseLimit ?? null;
 
   const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
