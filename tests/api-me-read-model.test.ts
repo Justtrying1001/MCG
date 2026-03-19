@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  getSessionUserMock,
+  resolveSessionUserMock,
   prismaMock,
   buildCollectionProjectionV2Mock,
   buildProgressionSummariesV2Mock,
   buildCanonicalCardViewOrThrowMock,
 } = vi.hoisted(() => ({
-  getSessionUserMock: vi.fn(),
+  resolveSessionUserMock: vi.fn(),
   prismaMock: {
     $transaction: vi.fn(),
     user: { findUnique: vi.fn((args:any) => ({ __op: "user.findUnique", args })) },
@@ -19,7 +19,7 @@ const {
   buildCanonicalCardViewOrThrowMock: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
+vi.mock("@/lib/auth", () => ({ resolveSessionUser: resolveSessionUserMock }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/domain/projections/collection", () => ({ buildCollectionProjectionV2: buildCollectionProjectionV2Mock }));
 vi.mock("@/lib/domain/progression/profile-summary", () => ({ buildProgressionSummariesV2: buildProgressionSummariesV2Mock }));
@@ -27,13 +27,15 @@ vi.mock("@/lib/domain/cards/canonical-card-builder", () => ({ buildCanonicalCard
 
 import { GET } from "@/app/api/me/route";
 
+const buildRequest = () => new Request("http://localhost/api/me");
+
 describe("/api/me MVP read model", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("uses instance-aware v2 payload and returns mvpCollection", async () => {
-    getSessionUserMock.mockResolvedValue({ id: "u1" });
+    resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
       { id: "u1", xUserId: "x1", xUsername: "user", displayName: "User", avatarUrl: null, authProvider: "x", points: 300, packsOpened: 3 },
       [
@@ -86,7 +88,7 @@ describe("/api/me MVP read model", () => {
       competitiveProgression: { contestsEntered: 0, activeEntries: 0, settledEntries: 0, contestsWon: 0, bestRank: null, averageRank: null, rating: null, recentResults: [] },
     });
 
-    const response = await GET();
+    const response = await GET(buildRequest());
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -96,7 +98,7 @@ describe("/api/me MVP read model", () => {
   });
 
   it("fails explicitly when canonical card dependencies are missing", async () => {
-    getSessionUserMock.mockResolvedValue({ id: "u1" });
+    resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
       { id: "u1", xUserId: "x1", xUsername: "user", displayName: "User", avatarUrl: null, authProvider: "x", points: 300, packsOpened: 3 },
       [
@@ -114,14 +116,14 @@ describe("/api/me MVP read model", () => {
       2,
     ]);
 
-    const response = await GET();
+    const response = await GET(buildRequest());
     expect(response.status).toBe(500);
   });
 
   it("returns 401 for missing session", async () => {
-    getSessionUserMock.mockResolvedValue(null);
+    resolveSessionUserMock.mockResolvedValue({ ok: false, reason: "missing_cookie" });
 
-    const response = await GET();
+    const response = await GET(buildRequest());
     expect(response.status).toBe(401);
   });
 });

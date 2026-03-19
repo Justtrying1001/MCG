@@ -11,7 +11,7 @@ import { buildProgressionSummariesV2 } from "@/lib/domain/progression/profile-su
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import type { UserSessionPayload } from "@/types/session";
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   try {
     const url = request ? new URL(request.url) : null;
     const session = await resolveSessionUser();
