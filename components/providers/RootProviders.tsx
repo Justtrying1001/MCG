@@ -27,6 +27,8 @@ export function useRootProvidersDebug() {
 
 export function RootProviders({ children }: { children: ReactNode }) {
   const hasPrivyConfig = Boolean(privyAppId && privyClientId);
+  const resolvedPrivyAppId = privyAppId ?? "";
+  const resolvedPrivyClientId = privyClientId ?? "";
   const debugState = useMemo<RootProvidersDebugState>(() => ({
     hasPrivyAppId: Boolean(privyAppId),
     hasPrivyClientId: Boolean(privyClientId),
@@ -45,8 +47,8 @@ export function RootProviders({ children }: { children: ReactNode }) {
 
   const content = hasPrivyConfig ? (
     <PrivyProvider
-      appId={privyAppId}
-      clientId={privyClientId}
+      appId={resolvedPrivyAppId}
+      clientId={resolvedPrivyClientId}
       config={{
         appearance: {
           accentColor: "#c89b3c",
