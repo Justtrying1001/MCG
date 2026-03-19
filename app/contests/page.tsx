@@ -41,13 +41,19 @@ export default function ContestsPage() {
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasLoadedContests, setHasLoadedContests] = useState(false);
   const [tab, setTab] = useState<ContestTabKey>("OPEN");
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [retryCount, setRetryCount] = useState(0);
 
   const loadContests = useCallback(async (options?: { showLoader?: boolean }) => {
     const showLoader = options?.showLoader ?? false;
-    if (showLoader) setIsLoading(true);
+    if (showLoader) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     setError("");
 
     try {
@@ -57,8 +63,6 @@ export default function ContestsPage() {
         const hasSession = await refresh();
         if (!hasSession) {
           setError("Your session expired. Please reconnect to load contests.");
-          setContests([]);
-          if (showLoader) setIsLoading(false);
           return;
         }
       }
@@ -66,19 +70,21 @@ export default function ContestsPage() {
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
         setError(payload?.error ?? "We couldn't load contests right now. Please retry in a moment.");
-        setContests([]);
-        if (showLoader) setIsLoading(false);
         return;
       }
 
       const payload = (await res.json().catch(() => null)) as ContestPayload | null;
       const rows = Array.isArray(payload?.contests) ? payload!.contests : [];
       setContests(rows);
+      setHasLoadedContests(true);
     } catch {
       setError("Network issue while loading contests. Please check your connection and retry.");
-      setContests([]);
     } finally {
-      if (showLoader) setIsLoading(false);
+      if (showLoader) {
+        setIsLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   }, [refresh]);
 
@@ -90,13 +96,13 @@ export default function ContestsPage() {
   useEffect(() => {
     if (loading) return;
     if (!me) {
-      setContests([]);
       setError("");
       setIsLoading(false);
+      setIsRefreshing(false);
       return;
     }
-    void loadContests({ showLoader: contests.length === 0 });
-  }, [contests.length, loading, me, retryCount, loadContests]);
+    void loadContests({ showLoader: !hasLoadedContests && contests.length === 0 });
+  }, [contests.length, hasLoadedContests, loading, me, retryCount, loadContests]);
 
   const computed = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
@@ -129,6 +135,8 @@ export default function ContestsPage() {
   }, [contests, tab]);
 
   const emptyByTab = getEmptyByTab(tab);
+  const showInitialSkeleton = isLoading && !hasLoadedContests && contests.length === 0;
+  const showBlockingError = Boolean(error) && !hasLoadedContests && contests.length === 0;
 
   return (
     <SiteShell>
@@ -137,16 +145,31 @@ export default function ContestsPage() {
 
         <ContestTabs active={tab} onChange={setTab} counts={computed.counts} />
 
-        {isLoading ? (
+        {error && !showBlockingError ? (
+          <section className="contest-hub-error-state" role="status" aria-live="polite" style={{ marginBottom: "1rem" }}>
+            <EmptyState title="Contest list may be out of date" description={error} />
+            <button type="button" className="mcg-btn" onClick={() => { setRetryCount((current) => current + 1); }}>
+              Retry
+            </button>
+          </section>
+        ) : null}
+
+        {isRefreshing && contests.length > 0 ? (
+          <div aria-live="polite" style={{ marginBottom: "1rem", fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
+            Refreshing contests…
+          </div>
+        ) : null}
+
+        {showInitialSkeleton ? (
           <section className="contest-arena-grid" aria-label="Loading contests">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="contest-arena-skeleton-card" />
             ))}
           </section>
-        ) : error ? (
+        ) : showBlockingError ? (
           <section className="contest-hub-error-state" role="alert">
             <EmptyState title="Unable to load contests" description={error} />
-            <button type="button" className="mcg-btn" onClick={() => { setIsLoading(true); setRetryCount((current) => current + 1); }}>
+            <button type="button" className="mcg-btn" onClick={() => { setRetryCount((current) => current + 1); }}>
               Retry
             </button>
           </section>
