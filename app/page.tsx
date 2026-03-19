@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { AuthErrorNotice } from "@/components/auth/AuthErrorNotice";
 import { useSession } from "@/components/useSession";
 
 // State A — landing
@@ -100,10 +99,6 @@ export default function HomePage() {
 
   return (
     <SiteShell>
-      <Suspense fallback={null}>
-        <AuthErrorNotice />
-      </Suspense>
-
       {isAuth && userInfo ? (
         <div className="home-dashboard-layout">
           <PlayerDashboardHeader
