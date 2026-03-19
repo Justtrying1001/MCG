@@ -8,18 +8,13 @@ export function DocsLearnSection({ compact = false }: Props) {
       <div className="home-docs-panel">
         <div className="home-docs-content">
           <p className="home-docs-eyebrow">Docs</p>
-          <h2 className="home-docs-title">Learn the game.</h2>
+          <h2 className="home-docs-title">Learn the game world.</h2>
           <p className="home-docs-desc">
-            Rules, packs, contests, and scoring in one place.
+            Read the rules, pack structure, contest flow, and collection systems in one place.
           </p>
         </div>
-        <a
-          href="https://mcg-2.gitbook.io/mcg/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="home-docs-cta"
-        >
-          Read docs <span aria-hidden="true">↗</span>
+        <a href="https://mcg-2.gitbook.io/mcg/" target="_blank" rel="noopener noreferrer" className="home-docs-cta">
+          Open handbook <span aria-hidden="true">↗</span>
         </a>
       </div>
     </section>

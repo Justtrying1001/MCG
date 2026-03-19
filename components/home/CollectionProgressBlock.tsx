@@ -13,18 +13,12 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
   return (
     <Surface variant="raised" className="collection-progress-block">
       <div className="mcg-home-section">
-        <SectionHeader
-          eyebrow="Collection"
-          title="Collection stats"
-          subtitle="Your current collection snapshot."
-        />
+        <SectionHeader eyebrow="Collection" title="Collection stats" subtitle="Your current progression snapshot." />
 
         <div className="collection-progress-hero">
           <div>
             <p className="collection-progress-label">Collection completion</p>
-            <div className="collection-progress-value">
-              {hasCompletion ? `${completionPct}%` : "—"}
-            </div>
+            <div className="collection-progress-value">{hasCompletion ? `${completionPct}%` : "—"}</div>
           </div>
 
           <div className="collection-progress-stats" aria-label="Collection summary">

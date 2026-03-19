@@ -1,17 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 
-// State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { StatsBar } from "@/components/home/StatsBar";
 import { DocsLearnSection } from "@/components/home/DocsLearnSection";
 
-// State B — dashboard
 import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
@@ -97,46 +96,75 @@ export default function HomePage() {
     return typeof userInfo.ownedTemplates === "number" || typeof userInfo.missingTemplates === "number";
   }, [userInfo]);
 
-  return (
-    <SiteShell>
-      {isAuth && userInfo ? (
-        <div className="home-dashboard-layout">
-          <PlayerDashboardHeader
-            displayName={userInfo.displayName}
-            points={userInfo.points}
-            level={userInfo.level}
-            activeEntries={userInfo.activeEntries}
-            seasonRank={userInfo.seasonRank}
-          />
+  return isAuth && userInfo ? (
+    <SiteShell mode="app">
+      <div className="home-dashboard-layout">
+        <PlayerDashboardHeader
+          displayName={userInfo.displayName}
+          points={userInfo.points}
+          level={userInfo.level}
+          activeEntries={userInfo.activeEntries}
+          seasonRank={userInfo.seasonRank}
+        />
 
-          <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
-            <div className="home-dashboard-main-column">
-              <ActiveContestsRail contests={contests} />
-            </div>
+        <div className="home-dashboard-entry-grid" aria-label="Game entry points">
+          <Link href="/packs" className="home-dashboard-entry-card home-dashboard-entry-card--hero">
+            <span className="home-dashboard-entry-chip">Featured action</span>
+            <span className="home-dashboard-entry-icon" aria-hidden="true">✦</span>
+            <strong>Open packs</strong>
+            <p>Reveal fresh relics, expand your playable inventory, and feed every other system in the app.</p>
+            <span className="home-dashboard-entry-cta">Enter the ritual →</span>
+          </Link>
+          <Link href="/contests" className="home-dashboard-entry-card home-dashboard-entry-card--contest">
+            <span className="home-dashboard-entry-chip">Competitive</span>
+            <span className="home-dashboard-entry-icon" aria-hidden="true">⚔</span>
+            <strong>Enter contests</strong>
+            <p>Scout open windows, lock lineups, and chase rank across active lobbies.</p>
+            <span className="home-dashboard-entry-cta">Browse arenas →</span>
+          </Link>
+          <Link href="/collection" className="home-dashboard-entry-card home-dashboard-entry-card--collection">
+            <span className="home-dashboard-entry-chip">Inventory</span>
+            <span className="home-dashboard-entry-icon" aria-hidden="true">◌</span>
+            <strong>View collection</strong>
+            <p>Track completion, revisit standout pulls, and monitor card depth.</p>
+          </Link>
+          <Link href="/rewards" className="home-dashboard-entry-card home-dashboard-entry-card--rewards">
+            <span className="home-dashboard-entry-chip">Progression</span>
+            <span className="home-dashboard-entry-icon" aria-hidden="true">★</span>
+            <strong>Claim rewards</strong>
+            <p>Check milestones, quest progress, and unlockable reward tracks.</p>
+          </Link>
+        </div>
 
-            {hasCollectionSummary ? (
-              <aside className="home-dashboard-side-column">
-                <CollectionProgressBlock
-                  completionPct={userInfo.completionPct}
-                  ownedCount={userInfo.ownedTemplates ?? 0}
-                  missingCount={userInfo.missingTemplates ?? 0}
-                />
-              </aside>
-            ) : null}
+        <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
+          <div className="home-dashboard-main-column">
+            <ActiveContestsRail contests={contests} />
           </div>
 
-          <RecentPullsRail pulls={recentPulls} />
-
-          <DocsLearnSection compact />
+          {hasCollectionSummary ? (
+            <aside className="home-dashboard-side-column">
+              <CollectionProgressBlock
+                completionPct={userInfo.completionPct}
+                ownedCount={userInfo.ownedTemplates ?? 0}
+                missingCount={userInfo.missingTemplates ?? 0}
+              />
+            </aside>
+          ) : null}
         </div>
-      ) : (
-        <>
-          <HomeHeroLanding />
-          <StatsBar />
-          <HowItWorks />
-          <DocsLearnSection />
-        </>
-      )}
+
+        <RecentPullsRail pulls={recentPulls} />
+
+        <DocsLearnSection compact />
+      </div>
+    </SiteShell>
+  ) : (
+    <SiteShell mode="landing">
+      <div className="landing-page-stack">
+        <HomeHeroLanding />
+        <StatsBar />
+        <HowItWorks />
+        <DocsLearnSection />
+      </div>
     </SiteShell>
   );
 }
