@@ -469,6 +469,12 @@ function MilestoneBadge({ code, category, title, objective, rewardPoints, reward
 
 type TabId = "quests" | "milestones" | "history";
 
+type MilestoneToast = {
+  key: string;
+  title: string;
+  rewardLabel: string | null;
+};
+
 export default function RewardsPage() {
   const { me, loading } = useSession();
 
@@ -489,8 +495,11 @@ export default function RewardsPage() {
   const [hasLoadedData, setHasLoadedData] = useState(false);
   const [hasConfirmedSession, setHasConfirmedSession] = useState(false);
   const [stableSession, setStableSession] = useState(me);
+  const [milestoneToast, setMilestoneToast] = useState<MilestoneToast | null>(null);
 
   const autoTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const seenCompletionRef = useRef<Map<string, string>>(new Map());
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadData = useCallback(async () => {
     setLoadingData(true);
@@ -509,7 +518,41 @@ export default function RewardsPage() {
         setQuestsError(`Cannot load quests data (${questsResult.value.status})`);
       } else {
         const payload = (await questsResult.value.json()) as { quests?: QuestRow[] };
-        setQuests(payload.quests ?? []);
+        const nextQuests = payload.quests ?? [];
+        const nextCompletionMap = new Map<string, string>();
+        const newlyCompletedMilestones: QuestRow[] = [];
+
+        for (const quest of nextQuests) {
+          const completionStamp = quest.completedAt ?? quest.claimedAt;
+          if (!completionStamp) continue;
+          nextCompletionMap.set(quest.id, completionStamp);
+
+          if (!isMilestoneQuest(quest)) continue;
+
+          const previousStamp = seenCompletionRef.current.get(quest.id);
+          if (previousStamp === undefined) continue;
+          if (previousStamp !== completionStamp) {
+            newlyCompletedMilestones.push(quest);
+          }
+        }
+
+        if (seenCompletionRef.current.size === 0) {
+          seenCompletionRef.current = nextCompletionMap;
+        } else {
+          seenCompletionRef.current = nextCompletionMap;
+          const newestMilestone = newlyCompletedMilestones
+            .sort((a, b) => new Date(b.completedAt ?? b.claimedAt ?? 0).getTime() - new Date(a.completedAt ?? a.claimedAt ?? 0).getTime())[0];
+          if (newestMilestone) {
+            const rewardLabel = formatReward(newestMilestone);
+            setMilestoneToast({
+              key: `${newestMilestone.id}:${newestMilestone.completedAt ?? newestMilestone.claimedAt ?? "completed"}`,
+              title: newestMilestone.title,
+              rewardLabel: rewardLabel === "—" ? null : rewardLabel,
+            });
+          }
+        }
+
+        setQuests(nextQuests);
       }
 
       if (ledgerResult.status === "rejected") {
@@ -595,9 +638,19 @@ export default function RewardsPage() {
     }
   }, [me]);
 
+  useEffect(() => {
+    if (!milestoneToast) return;
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setMilestoneToast(null), 4200);
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [milestoneToast]);
+
   useEffect(() => () => {
     autoTimerRef.current.forEach((t) => clearTimeout(t));
     autoTimerRef.current.clear();
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -760,6 +813,74 @@ export default function RewardsPage() {
 
   return (
     <SiteShell>
+      {milestoneToast ? (
+        <div
+          key={milestoneToast.key}
+          aria-live="polite"
+          role="status"
+          style={{
+            position: "fixed",
+            right: 20,
+            bottom: 20,
+            zIndex: 80,
+            width: "min(340px, calc(100vw - 2rem))",
+            padding: "0.9rem 1rem",
+            borderRadius: 16,
+            border: "1px solid rgba(232,131,74,0.24)",
+            background: "linear-gradient(180deg, rgba(24,24,31,0.96) 0%, rgba(18,18,24,0.98) 100%)",
+            boxShadow: "0 18px 44px rgba(0,0,0,0.36), 0 0 0 1px rgba(255,255,255,0.04) inset",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(232,131,74,0.14)",
+              border: "1px solid rgba(232,131,74,0.22)",
+              color: "#E8834A",
+              flexShrink: 0,
+              fontSize: "1rem",
+            }}
+            >
+              ✦
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#E8834A", marginBottom: "0.2rem" }}>
+                Milestone unlocked
+              </p>
+              <p style={{ fontSize: "0.98rem", fontWeight: 700, color: "var(--color-text-primary)", lineHeight: 1.3 }}>
+                {milestoneToast.title}
+              </p>
+              {milestoneToast.rewardLabel ? (
+                <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.68)", marginTop: "0.2rem" }}>
+                  {milestoneToast.rewardLabel}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => setMilestoneToast(null)}
+              aria-label="Dismiss milestone notification"
+              style={{
+                border: "none",
+                background: "transparent",
+                color: "rgba(255,255,255,0.52)",
+                cursor: "pointer",
+                fontSize: "1rem",
+                lineHeight: 1,
+                padding: 0,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      ) : null}
       {showInitialLoading ? <EmptyState title="Loading rewards…" /> : null}
       {!showInitialLoading && (me || hasLoadedData) ? (
         <div style={{ padding: "1.5rem 0" }}>

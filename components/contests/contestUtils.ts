@@ -1,4 +1,5 @@
 import type { ContestListItem, ContestStatus } from "@/components/contests/types";
+import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 const CONTEST_CACHE_KEY = "mcg_contests_cache_v1";
 
@@ -8,19 +9,20 @@ export function formatDate(value: string | null) {
 }
 
 export function getContestStatusMeta(status: ContestStatus) {
+  const messaging = getContestStateMessaging(status);
   switch (status) {
     case "OPEN":
-      return { label: "Open", icon: "🟢", cta: "Join contest", tone: "open" as const };
+      return { label: messaging.shortLabel, icon: "🟢", cta: getPrimaryCtaLabel(status), tone: "open" as const };
     case "LOCKED":
-      return { label: "Locked", icon: "🟣", cta: "View lineup", tone: "locked" as const };
+      return { label: messaging.shortLabel, icon: "🟣", cta: getPrimaryCtaLabel(status), tone: "locked" as const };
     case "LIVE":
-      return { label: "Live", icon: "🟡", cta: "Track scores", tone: "live" as const };
+      return { label: messaging.shortLabel, icon: "🟡", cta: getPrimaryCtaLabel(status), tone: "live" as const };
     case "SETTLED":
-      return { label: "Settled", icon: "🏁", cta: "See results", tone: "settled" as const };
+      return { label: messaging.shortLabel, icon: "🏁", cta: getPrimaryCtaLabel(status), tone: "settled" as const };
     case "CANCELED":
-      return { label: "Cancelled", icon: "⛔", cta: "Read details", tone: "cancelled" as const };
+      return { label: messaging.shortLabel, icon: "⛔", cta: getPrimaryCtaLabel(status), tone: "cancelled" as const };
     default:
-      return { label: "Draft", icon: "📝", cta: "Preview", tone: "draft" as const };
+      return { label: messaging.shortLabel, icon: "📝", cta: getPrimaryCtaLabel(status), tone: "draft" as const };
   }
 }
 

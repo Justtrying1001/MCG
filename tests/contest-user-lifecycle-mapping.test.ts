@@ -12,13 +12,13 @@ describe("contest user lifecycle mapping", () => {
   it("exposes clear actionability", () => {
     expect(getActionability("OPEN").editable).toBe(true);
     expect(getActionability("LOCKED").editable).toBe(false);
-    expect(getActionability("SETTLED").message).toContain("view final ranking");
+    expect(getActionability("SETTLED").message).toContain("Results are available");
     expect(getPhaseLabel("LOCKED")).toMatch(/Team Lock/);
   });
 
   it("maps status to coherent CTA labels", () => {
     expect(getPrimaryCtaLabel("OPEN")).toBe("Enter contest");
-    expect(getPrimaryCtaLabel("LIVE")).toBe("Track contest");
+    expect(getPrimaryCtaLabel("LIVE")).toBe("View live standings");
     expect(getPrimaryCtaLabel("SETTLED")).toBe("View results");
   });
 });

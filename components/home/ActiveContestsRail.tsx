@@ -3,6 +3,7 @@ import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 type ContestListItem = {
   id: string;
@@ -43,12 +44,15 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
           <EmptyState title="No active contests" description="The next contest window will appear here." />
         ) : (
           <div className="active-contests-grid">
-            {contests.map((contest) => (
-              <Link key={contest.id} href={`/contests/${contest.id}`} className="mcg-surface mcg-contest-card active-contest-card">
+            {contests.map((contest) => {
+              const stateMessaging = getContestStateMessaging(contest.status);
+              return (
+                <Link key={contest.id} href={`/contests/${contest.id}`} className="mcg-surface mcg-contest-card active-contest-card">
                 <div className="mcg-contest-card-top active-contest-card-top">
                   <div className="active-contest-heading">
                     <span className="mcg-eyebrow mcg-contest-code">{contest.code}</span>
                     <strong>{contest.title}</strong>
+                    <p className="contest-inline-note" style={{ marginTop: "0.35rem" }}>{stateMessaging.shortLabel}</p>
                   </div>
                   <StatusBadge tone={toTone(contest.status)} label={contest.status} />
                 </div>
@@ -66,16 +70,19 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
                   {contest.rewardPreview?.label ? (
                     <p className="active-contest-reward">{contest.rewardPreview.label}</p>
                   ) : null}
+
+                  <p className="contest-inline-note" style={{ marginTop: "0.45rem" }}>{stateMessaging.helper}</p>
                 </div>
 
                 <div className="active-contest-footer">
                   <span className="active-contest-entry">
                     {contest.userEntry ? `Your entry: ${contest.userEntry.status}` : "No entry yet"}
                   </span>
-                  <span className="active-contest-cta">View contest →</span>
+                  <span className="active-contest-cta">{getPrimaryCtaLabel(contest.status)} →</span>
                 </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
