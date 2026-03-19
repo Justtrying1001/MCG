@@ -3,7 +3,7 @@ const steps = [
     num: "01",
     icon: "◈",
     title: "Collect",
-    description: "Open Genesis packs and assemble meme relics with distinct rarity and set identity.",
+    description: "Open Genesis packs and build meme cards with distinct rarity and set identity.",
   },
   {
     num: "02",

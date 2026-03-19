@@ -52,11 +52,11 @@ export function HomeHeroLanding() {
             <p className="home-hero-eyebrow">Season 1 · Genesis pack available</p>
           </div>
           <h1 className="home-hero-headline">
-            Collect the internet&apos;s<br />
-            greatest <span className="home-hero-headline-accent">meme relics</span>
+            Build your edge with<br />
+            premium <span className="home-hero-headline-accent">meme cards</span>
           </h1>
           <p className="home-hero-subline">
-            Build across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, open packs, enter contests, and turn your collection into a playable edge.
+            Open packs across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, build your collection, and bring your best cards into live contests.
           </p>
           <div className="home-hero-ctas">
             <div className="home-hero-cta-stack">
@@ -66,7 +66,7 @@ export function HomeHeroLanding() {
                 </svg>
                 Play for free
               </button>
-              <p className="home-hero-cta-note">Start with a persistent wallet-connected identity and keep your progress across collection and contests.</p>
+              <p className="home-hero-cta-note">Start in seconds, keep your progress, and carry the same identity across collection and competition.</p>
             </div>
             <a href="https://mcg-2.gitbook.io/mcg/" target="_blank" rel="noopener noreferrer" className="home-hero-cta-secondary">
               Read the docs <span aria-hidden="true">↗</span>
@@ -85,7 +85,7 @@ export function HomeHeroLanding() {
           <div className="home-hero-cards-orbit" />
           <div className="home-hero-stage-copy">
             <span>Genesis pack</span>
-            <strong>4 featured relics</strong>
+            <strong>4 featured cards</strong>
           </div>
           {HERO_CARDS.map((card) => (
             <div key={card.name} className={`home-float-card ${card.cls}`}>

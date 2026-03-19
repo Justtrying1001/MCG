@@ -38,7 +38,7 @@ export function PlayerDashboardHeader({
               Welcome back, <span className="player-dash-name">{shortenAddress(displayName)}</span>
             </p>
             <p className="player-dash-copy">
-              Your command center for active contests, collection progress, and the latest relic reveals.
+              Your command center for active contests, collection progress, and the latest card activity.
             </p>
           </div>
 

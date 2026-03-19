@@ -112,7 +112,7 @@ export default function HomePage() {
             <span className="home-dashboard-entry-chip">Featured action</span>
             <span className="home-dashboard-entry-icon" aria-hidden="true">✦</span>
             <strong>Open packs</strong>
-            <p>Reveal fresh relics, expand your playable inventory, and feed every other system in the app.</p>
+            <p>Reveal fresh cards, grow your playable inventory, and fuel every other system in the app.</p>
             <span className="home-dashboard-entry-cta">Enter the ritual →</span>
           </Link>
           <Link href="/contests" className="home-dashboard-entry-card home-dashboard-entry-card--contest">

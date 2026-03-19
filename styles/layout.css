@@ -41,14 +41,13 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  padding-top: calc(var(--nav-h) + var(--space-3));
+  padding-top: calc(var(--nav-h) + 20px);
   padding-bottom: calc(var(--space-6) + 8px);
 }
 
 .mcg-app-shell.is-landing .mcg-main {
-  padding-top: calc(var(--nav-h) + var(--space-4));
+  padding-top: calc(var(--nav-h) + 18px);
 }
-
 
 .mcg-app-shell.is-app .mcg-main {
   padding-left: calc(var(--sidebar-w) + var(--space-3));
@@ -60,22 +59,18 @@
 }
 
 .mcg-page-flow--landing {
-  gap: clamp(28px, 4vw, 48px);
+  gap: clamp(24px, 3.2vw, 40px);
 }
 
 .landing-page-stack,
 .home-dashboard-layout {
   display: grid;
-  gap: clamp(26px, 3vw, 38px);
-}
-
-.landing-page-stack > .home-stats-shell {
-  margin-top: -12px;
+  gap: clamp(24px, 2.6vw, 34px);
 }
 
 .home-dashboard-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
   gap: var(--space-3);
   align-items: start;
 }
@@ -87,7 +82,7 @@
 .home-dashboard-entry-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: 14px;
 }
 
 @media (max-width: 1200px) {
