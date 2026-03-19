@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
 import { PackOddsDrawer } from "@/components/packs/PackOddsDrawer";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
+import { trackEvent } from "@/lib/analytics/track";
+import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 import type { MvpCardView } from "@/types/cards";
 import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
@@ -58,18 +59,25 @@ type RewardPackGrant = {
   };
 };
 
+type RevealMode = "real" | "guest-preview";
+
 export default function PacksPage() {
   const { me, refresh } = useSession();
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
+  const [revealMode, setRevealMode] = useState<RevealMode>("real");
   const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
   const [zoomedCard, setZoomedCard] = useState<MvpCardView | null>(null);
   const [oddsOpen, setOddsOpen] = useState(false);
   const [rewardGrants, setRewardGrants] = useState<RewardPackGrant[]>([]);
   const [loadingRewardGrants, setLoadingRewardGrants] = useState(false);
   const [openingRewardGrantId, setOpeningRewardGrantId] = useState<string | null>(null);
+
+  useEffect(() => {
+    trackEvent("packs_page_view", { state: me ? "authenticated" : "guest" });
+  }, [me]);
 
   useEffect(() => {
     let active = true;
@@ -129,9 +137,38 @@ export default function PacksPage() {
   const allRevealed = revealed.length > 0 && revealed.every(Boolean);
   const revealedCount = revealed.filter(Boolean).length;
   const nextRevealIndex = revealed.findIndex((v) => !v);
+  const isGuestPreview = revealMode === "guest-preview";
+
+  const startReveal = (cards: MvpCardView[], mode: RevealMode) => {
+    setRevealMode(mode);
+    setTimeout(() => {
+      setResultMvp(cards);
+      setRevealed(new Array(cards.length).fill(false));
+      setOpeningPhase("revealing");
+      setIsOpening(false);
+      setOpeningRewardGrantId(null);
+    }, 900);
+  };
+
+  const openGuestPreview = () => {
+    trackEvent("packs_cta_click", { state: "guest", intent: "preview" });
+    setRevealMode("guest-preview");
+    setIsOpening(true);
+    setOpeningPhase("tearing");
+    setResultMvp([]);
+    setRevealed([]);
+    startReveal(GUEST_PACK_PREVIEW_CARDS, "guest-preview");
+    trackEvent("packs_guest_preview_opened", { cards: GUEST_PACK_PREVIEW_CARDS.length });
+  };
 
   const openPack = async () => {
-    if (!me) return;
+    if (!me) {
+      openGuestPreview();
+      return;
+    }
+
+    trackEvent("packs_cta_click", { state: "authenticated", intent: "open_real_pack" });
+    setRevealMode("real");
     setIsOpening(true);
     setOpeningPhase("tearing");
     setResultMvp([]);
@@ -160,12 +197,12 @@ export default function PacksPage() {
       return;
     }
 
-    setTimeout(() => {
-      setResultMvp(pulledMvp);
-      setRevealed(new Array(pulledMvp.length).fill(false));
-      setOpeningPhase("revealing");
-      setIsOpening(false);
-    }, 900);
+    startReveal(pulledMvp, "real");
+    trackEvent("packs_real_open_success", {
+      source: "sale_pack",
+      cards: pulledMvp.length,
+      packCode: packConfig?.pack?.code ?? "unknown",
+    });
 
     await refresh();
   };
@@ -173,6 +210,7 @@ export default function PacksPage() {
   const openRewardPack = async (grantId: string) => {
     if (!me) return;
     try {
+      setRevealMode("real");
       setOpeningRewardGrantId(grantId);
       setIsOpening(true);
       setOpeningPhase("tearing");
@@ -193,7 +231,7 @@ export default function PacksPage() {
         return;
       }
 
-      const payload = (await res.json()) as { pulledCardsMvp?: MvpCardView[] };
+      const payload = (await res.json()) as { pulledCardsMvp?: MvpCardView[]; packCode?: string };
       const pulledMvp = payload.pulledCardsMvp ?? [];
 
       if (pulledMvp.length === 0) {
@@ -206,13 +244,12 @@ export default function PacksPage() {
       }
 
       setRewardGrants((prev) => prev.filter((grant) => grant.id !== grantId));
-      setTimeout(() => {
-        setResultMvp(pulledMvp);
-        setRevealed(new Array(pulledMvp.length).fill(false));
-        setOpeningPhase("revealing");
-        setIsOpening(false);
-        setOpeningRewardGrantId(null);
-      }, 900);
+      startReveal(pulledMvp, "real");
+      trackEvent("packs_real_open_success", {
+        source: "reward_pack",
+        cards: pulledMvp.length,
+        packCode: payload.packCode ?? "reward_pack",
+      });
 
       await refresh();
     } catch {
@@ -233,6 +270,12 @@ export default function PacksPage() {
     setRevealed([]);
     setOpeningPhase("idle");
     setZoomedCard(null);
+    setRevealMode("real");
+  };
+
+  const handleConnectWithX = () => {
+    trackEvent("packs_guest_preview_connect_click", { location: "preview_complete" });
+    window.location.href = "/api/auth/x/start";
   };
 
   const revealCards = useMemo(
@@ -277,7 +320,6 @@ export default function PacksPage() {
   }, [cardsPerPack, packConfig?.slots]);
 
   const rarityOddsForDisplay = useMemo(() => {
-    // Use only STANDARD slots (indices 0–2) for the display odds
     const standardSlots = (packConfig?.slots ?? []).filter((s) => s.type === "STANDARD");
     if (standardSlots.length === 0) return undefined;
     const aggregate = new Map<string, number>();
@@ -344,7 +386,14 @@ export default function PacksPage() {
   return (
     <SiteShell>
       {!me ? (
-        <EmptyState title="Connect to open packs" description="Sign in with X to reveal cards." />
+        <section className="packs-guest-intro" aria-label="Pack preview intro">
+          <p className="packs-guest-kicker">Preview first</p>
+          <h2>See what a reveal feels like before you connect.</h2>
+          <p className="packs-guest-copy">
+            Explore the pack, run a demo reveal, then connect with X when you&apos;re ready to open a real pack and keep the cards.
+          </p>
+          <p className="packs-guest-hint">Your cards unlock collection progress, contest lineups, and future rewards once you sign in.</p>
+        </section>
       ) : null}
 
       <section className="packs-main-section">
@@ -361,12 +410,15 @@ export default function PacksPage() {
           planned={packPlanned}
           isOpening={isOpening}
           openingPhase={openingPhase}
-          canOpen={Boolean(me) && !isOpening && openingPhase !== "tearing"}
+          canOpen={!isOpening && openingPhase !== "tearing"}
           onOpen={() => void openPack()}
           onOpenOdds={() => setOddsOpen(true)}
           rarityOdds={rarityOddsForDisplay}
           editionOdds={editionOddsForDisplay}
           userPoints={me?.user?.points}
+          isGuest={!me}
+          guestHeadline="Discover what can be inside"
+          guestSupportingCopy="Run a short preview reveal now. Connect with X after the demo to open a real pack and keep every card you pull."
         />
       </section>
 
@@ -438,10 +490,25 @@ export default function PacksPage() {
       ) : null}
 
       <Modal
-        title={allRevealed ? "Pack complete — all cards revealed" : "Pack reveal — flip cards in order"}
+        title={
+          isGuestPreview
+            ? allRevealed
+              ? "Preview complete — sample cards revealed"
+              : "Preview reveal — flip cards in order"
+            : allRevealed
+              ? "Pack complete — all cards revealed"
+              : "Pack reveal — flip cards in order"
+        }
         open={revealSize > 0 && openingPhase === "revealing"}
         onClose={closeReveal}
       >
+        {isGuestPreview ? (
+          <div className="packs-preview-banner">
+            <span className="packs-preview-badge">Demo reveal</span>
+            <p>This preview does not consume a pack or add cards to inventory.</p>
+          </div>
+        ) : null}
+
         <div className="reveal-progress-wrap">
           <div className="pack-reveal-head-row">
             <p className="reveal-progress-text">Revealed {revealedCount} / {revealSize}</p>
@@ -483,8 +550,19 @@ export default function PacksPage() {
 
         {allRevealed ? (
           <div className="reveal-complete-row">
-            <p className="reveal-complete-copy">Full pack revealed. Cards have been added to your collection.</p>
-            <Button onClick={closeReveal}>Done</Button>
+            <p className="reveal-complete-copy">
+              {isGuestPreview
+                ? "Preview complete. Connect with X to open a real pack, keep your pulls, and use them across collection, contests, and rewards."
+                : "Full pack revealed. Cards have been added to your collection."}
+            </p>
+            {isGuestPreview ? (
+              <div className="packs-preview-actions">
+                <Button onClick={handleConnectWithX}>Connect with X to open for real</Button>
+                <Button variant="ghost" onClick={closeReveal}>Close preview</Button>
+              </div>
+            ) : (
+              <Button onClick={closeReveal}>Done</Button>
+            )}
           </div>
         ) : null}
       </Modal>
