@@ -44,21 +44,18 @@ function getInviteCodeFromLocation() {
 }
 
 export function usePrivyLogin() {
-  const { authenticated, getAccessToken, login, logout, ready } = usePrivy();
+  const { authenticated, getAccessToken, login, ready } = usePrivy();
   const { me, refresh, setMe } = useSession();
   const [isSyncingSession, setIsSyncingSession] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   const syncSession = useCallback(async (inviteCode?: string | null) => {
     if (!ready || !authenticated) return false;
 
     setIsSyncingSession(true);
-    setSyncError(null);
 
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
-        setSyncError("Privy access token unavailable.");
         return false;
       }
 
@@ -72,8 +69,6 @@ export function usePrivyLogin() {
       });
 
       if (!response.ok) {
-        const payload = await response.json().catch(() => null) as { error?: string } | null;
-        setSyncError(payload?.error ?? "Privy exchange failed.");
         return false;
       }
 
@@ -81,8 +76,7 @@ export function usePrivyLogin() {
       writePendingInviteCode(null);
       await refresh();
       return true;
-    } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "Privy exchange failed.");
+    } catch {
       return false;
     } finally {
       setIsSyncingSession(false);
@@ -109,11 +103,6 @@ export function usePrivyLogin() {
     await refresh();
   }, [refresh, setMe]);
 
-  const disconnectPrivy = useCallback(async () => {
-    await logoutFromApp();
-    await logout();
-  }, [logout, logoutFromApp]);
-
   useEffect(() => {
     if (!ready || !authenticated || me || isSyncingSession || !hasPendingLoginRequest()) return;
     void syncSession(readPendingInviteCode());
@@ -121,11 +110,9 @@ export function usePrivyLogin() {
 
   return useMemo(() => ({
     authenticated,
-    disconnectPrivy,
     isSyncingSession,
     loginWithPrivy,
     logoutFromApp,
     ready,
-    syncError,
-  }), [authenticated, disconnectPrivy, isSyncingSession, loginWithPrivy, logoutFromApp, ready, syncError]);
+  }), [authenticated, isSyncingSession, loginWithPrivy, logoutFromApp, ready]);
 }
