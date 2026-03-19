@@ -102,6 +102,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   const slotsInitializedRef = useRef(false);
   const leaderboardSectionRef = useRef<HTMLDivElement | null>(null);
+  const lastLiveRefreshAtRef = useRef(0);
 
   const contestData = detail?.contest;
   const rule = contestData?.rules[0];
@@ -238,6 +239,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     const refresh = () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastLiveRefreshAtRef.current < 1_500) return;
+      lastLiveRefreshAtRef.current = now;
       void loadAll();
     };
 

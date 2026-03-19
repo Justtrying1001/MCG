@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 import { cookies } from "next/headers";
-import { clearSession, getSessionCookieName } from "@/lib/auth";
+import { buildSessionCookieOptions, clearSession, getSessionCookieName } from "@/lib/auth";
+import { logAuthEvent } from "@/lib/observability/auth-log";
 
 export async function POST() {
   const cookieName = getSessionCookieName();
@@ -12,15 +13,16 @@ export async function POST() {
     await clearSession(token);
   }
 
+  logAuthEvent("logout", "info", {
+    hadSessionCookie: Boolean(token),
+    cookieName,
+  });
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: cookieName,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
+    ...buildSessionCookieOptions(0),
   });
 
   return response;
