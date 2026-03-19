@@ -56,7 +56,7 @@ Le dépôt est désormais aligné sur un seul référentiel de cartes actif : **
 ## 5) API
 
 ### 5.1 API publique
-- Auth/session : `/api/auth/x/start`, `/api/auth/x/callback`, `/api/auth/logout`, `/api/me`.
+- Auth/session : `/api/auth/privy/exchange`, `/api/auth/logout`, `/api/me`.
 - Packs : `/api/pack/config`, `/api/pack/open`.
 - Contests : `/api/contests`, `/api/contests/[contestId]`, `/ranking`, `/lineup-options`, `/enter`, `/my-score-breakdown`, `/my-rewards`, `/reward-preview`.
 - Quêtes et rewards : `/api/quests`, `/api/quests/[questId]/submit`, `/api/rewards/ledger`, `/api/rewards/packs/claim`.
@@ -90,9 +90,11 @@ Les migrations sont versionnées dans `prisma/migrations/*` et appliquées via P
 
 ## 7) Authentification
 
-- Démarrage login : `GET /api/auth/x/start`.
-- Callback : `GET /api/auth/x/callback`.
-- Logout : `POST /api/auth/logout`.
+- Le frontend initialise Privy via `components/providers/RootProviders.tsx`.
+- Le login web déclenche Privy côté client avec `loginMethods: ["twitter"]`.
+- Une fois Privy authentifié, le frontend échange le `accessToken` via `POST /api/auth/privy/exchange`.
+- Le backend crée ensuite la session applicative `mcg_session`, lue par `GET /api/me`.
+- Le logout applicatif passe par `POST /api/auth/logout`.
 - Les routes admin sont protégées côté API et layouts/pages admin.
 
 ---
