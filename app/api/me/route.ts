@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { resolveSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildUserPayload } from "@/lib/serializers";
 import { handleApiError } from "@/lib/api-error";
@@ -11,13 +11,18 @@ import { buildProgressionSummariesV2 } from "@/lib/domain/progression/profile-su
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import type { UserSessionPayload } from "@/types/session";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      logAuthEvent("me_unauthorized", "info", { reason: "missing_or_invalid_session" });
+    const url = new URL(request.url);
+    const session = await resolveSessionUser();
+    if (!session.ok) {
+      logAuthEvent("me_unauthorized", "info", {
+        reason: session.reason,
+        requestHost: url.host,
+      });
       return new NextResponse("Unauthorized", { status: 401 });
     }
+    const sessionUser = session.user;
 
     const [user, ownedInstances, openingsCount] = await prisma.$transaction([
       prisma.user.findUnique({ where: { id: sessionUser.id } }),
@@ -43,6 +48,8 @@ export async function GET() {
       logAuthEvent("me_unauthorized", "warn", {
         reason: "session_user_missing",
         sessionUserId: sessionUser.id,
+        sessionId: session.sessionId,
+        requestHost: url.host,
       });
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -75,6 +82,9 @@ export async function GET() {
 
     logAuthEvent("me_loaded", "info", {
       userId: sessionUser.id,
+      sessionId: session.sessionId,
+      sessionExpiresAt: session.expiresAt.toISOString(),
+      requestHost: url.host,
       openingsCount,
       ownedInstancesCount: ownedInstances.length,
     });
