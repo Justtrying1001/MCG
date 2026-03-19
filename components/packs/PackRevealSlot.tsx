@@ -19,7 +19,7 @@ type PackRevealSlotProps = {
   onZoom: (card: MvpCardView) => void;
 };
 
-const INTRO_DURATION_MS = 900;
+const INTRO_DURATION_MS = 640;
 
 export function PackRevealSlot({
   card,
