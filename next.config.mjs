@@ -27,7 +27,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://pbs.twimg.com https://abs.twimg.com https://coin-images.coingecko.com",
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' https://auth.privy.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

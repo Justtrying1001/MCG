@@ -16,8 +16,18 @@ function getRequestHost(request: NextRequest) {
   return request.headers.get("x-forwarded-host") ?? request.nextUrl.host;
 }
 
-function shouldEnforceCanonicalHost(request: NextRequest) {
+function isVercelPreviewDeployment(request: NextRequest) {
+  if (process.env.VERCEL_ENV === "preview") {
+    return true;
+  }
+
+  const deploymentHost = request.headers.get("x-vercel-deployment-url");
+  return Boolean(deploymentHost && deploymentHost !== getCanonicalOrigin()?.host);
+}
+
+export function shouldEnforceCanonicalHost(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") return false;
+  if (isVercelPreviewDeployment(request)) return false;
 
   const canonicalUrl = getCanonicalOrigin();
   if (!canonicalUrl) return false;

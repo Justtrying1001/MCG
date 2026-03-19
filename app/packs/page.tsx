@@ -8,6 +8,7 @@ import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
 import { PackOddsDrawer } from "@/components/packs/PackOddsDrawer";
 import { PackRevealModal } from "@/components/packs/PackRevealModal";
+import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { trackEvent } from "@/lib/analytics/track";
@@ -80,6 +81,7 @@ type InlineNotice = {
 
 export default function PacksPage() {
   const { me, refresh } = useSession();
+  const { loginWithPrivy } = usePrivyLogin();
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
@@ -347,7 +349,7 @@ export default function PacksPage() {
 
   const handleConnectWithX = () => {
     trackEvent("packs_guest_preview_connect_click", { location: "preview_complete" });
-    window.location.href = "/api/auth/x/start";
+    loginWithPrivy();
   };
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
