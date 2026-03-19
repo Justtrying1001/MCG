@@ -83,18 +83,17 @@ export function usePrivyLogin() {
     }
   }, [authenticated, getAccessToken, ready, refresh]);
 
-  const loginWithPrivy = useCallback((inviteCode?: string | null) => {
+  const loginWithPrivy = useCallback(async (inviteCode?: string | null) => {
     const resolvedInviteCode = inviteCode ?? getInviteCodeFromLocation();
     writePendingLoginRequest(true);
     writePendingInviteCode(resolvedInviteCode);
 
     if (authenticated) {
-      void syncSession(resolvedInviteCode);
-      return;
+      await logout();
     }
 
     login({ loginMethods: ["twitter"] });
-  }, [authenticated, login, syncSession]);
+  }, [authenticated, login, logout]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
