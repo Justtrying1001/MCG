@@ -18,6 +18,7 @@ import officialPackImage from "../../pack.png";
 import versoImage from "../../verso.png";
 
 type PackConfigPayload = {
+  purchaseLimit: PurchaseLimitStatus | null;
   exists: boolean;
   pack: null | {
     code: string;
@@ -35,6 +36,17 @@ type PackConfigPayload = {
     rarityOdds: Array<{ rarityCode: string; pct: number }>;
     rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }>;
   }>;
+};
+
+type PurchaseLimitStatus = {
+  enabled: boolean;
+  limit: number | null;
+  used: number;
+  remainingPurchases: number | null;
+  resetAt: string | null;
+  cooldownSeconds: number;
+  isBlocked: boolean;
+  windowHours: number;
 };
 
 type RewardPackGrant = {
@@ -61,6 +73,12 @@ type RewardPackGrant = {
 
 type RevealMode = "real" | "guest-preview";
 
+type InlineNotice = {
+  tone: "neutral" | "success" | "danger";
+  title: string;
+  detail?: string;
+};
+
 export default function PacksPage() {
   const { me, refresh } = useSession();
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
@@ -74,6 +92,9 @@ export default function PacksPage() {
   const [rewardGrants, setRewardGrants] = useState<RewardPackGrant[]>([]);
   const [loadingRewardGrants, setLoadingRewardGrants] = useState(false);
   const [openingRewardGrantId, setOpeningRewardGrantId] = useState<string | null>(null);
+  const [saleNotice, setSaleNotice] = useState<InlineNotice | null>(null);
+  const [rewardNotice, setRewardNotice] = useState<InlineNotice | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     trackEvent("packs_page_view", { state: me ? "authenticated" : "guest" });
@@ -92,7 +113,19 @@ export default function PacksPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [me?.user?.id]);
+
+  useEffect(() => {
+    if (!packConfig?.purchaseLimit?.resetAt) return;
+
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [packConfig?.purchaseLimit?.resetAt]);
 
   useEffect(() => {
     if (!me) {
@@ -168,6 +201,7 @@ export default function PacksPage() {
     }
 
     trackEvent("packs_cta_click", { state: "authenticated", intent: "open_real_pack" });
+    setSaleNotice(null);
     setRevealMode("real");
     setIsOpening(true);
     setOpeningPhase("tearing");
@@ -180,7 +214,20 @@ export default function PacksPage() {
     });
 
     if (!res.ok) {
-      alert(await res.text());
+      const payload = await res.json().catch(() => null) as { error?: { message?: string; purchaseLimit?: PurchaseLimitStatus } } | null;
+      if (payload?.error?.purchaseLimit) {
+        setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.error!.purchaseLimit! } : prev);
+        setSaleNotice({
+          tone: "danger",
+          title: "Daily purchase cap reached",
+          detail: payload.error.purchaseLimit.resetAt
+            ? `Try again when the cooldown expires.`
+            : payload.error.message ?? "Purchase limit reached.",
+        });
+      } else {
+        const fallbackMessage = payload?.error?.message ?? "Unable to open pack right now. Please try again.";
+        setSaleNotice({ tone: "danger", title: "Pack purchase failed", detail: fallbackMessage });
+      }
       setIsOpening(false);
       setOpeningPhase("idle");
       return;
@@ -190,13 +237,23 @@ export default function PacksPage() {
     const pulledMvp = (payload.pulledCardsMvp ?? []) as MvpCardView[];
 
     if (pulledMvp.length === 0) {
-      alert("Pack opened but MVP reveal payload is missing. Please refresh and retry.");
+      setSaleNotice({
+        tone: "danger",
+        title: "Pack reveal unavailable",
+        detail: "Pack opened but the reveal payload is missing. Please refresh and try again.",
+      });
       setIsOpening(false);
       setOpeningPhase("idle");
       await refresh();
       return;
     }
 
+    setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.purchaseLimit ?? prev.purchaseLimit } : prev);
+    setSaleNotice({
+      tone: "success",
+      title: "Pack purchased successfully",
+      detail: "Your purchase count has been updated below.",
+    });
     startReveal(pulledMvp, "real");
     trackEvent("packs_real_open_success", {
       source: "sale_pack",
@@ -210,6 +267,7 @@ export default function PacksPage() {
   const openRewardPack = async (grantId: string) => {
     if (!me) return;
     try {
+      setRewardNotice(null);
       setRevealMode("real");
       setOpeningRewardGrantId(grantId);
       setIsOpening(true);
@@ -224,7 +282,11 @@ export default function PacksPage() {
       });
 
       if (!res.ok) {
-        alert(await res.text());
+        setRewardNotice({
+          tone: "danger",
+          title: "Reward pack unavailable",
+          detail: await res.text(),
+        });
         setOpeningRewardGrantId(null);
         setIsOpening(false);
         setOpeningPhase("idle");
@@ -235,7 +297,11 @@ export default function PacksPage() {
       const pulledMvp = payload.pulledCardsMvp ?? [];
 
       if (pulledMvp.length === 0) {
-        alert("Reward pack opened but MVP reveal payload is missing. Please refresh and retry.");
+        setRewardNotice({
+          tone: "danger",
+          title: "Reward reveal unavailable",
+          detail: "Reward pack opened but the reveal payload is missing. Please refresh and try again.",
+        });
         setOpeningRewardGrantId(null);
         setIsOpening(false);
         setOpeningPhase("idle");
@@ -244,6 +310,11 @@ export default function PacksPage() {
       }
 
       setRewardGrants((prev) => prev.filter((grant) => grant.id !== grantId));
+      setRewardNotice({
+        tone: "success",
+        title: "Reward pack opened",
+        detail: "Your reward inventory has been updated.",
+      });
       startReveal(pulledMvp, "real");
       trackEvent("packs_real_open_success", {
         source: "reward_pack",
@@ -253,7 +324,11 @@ export default function PacksPage() {
 
       await refresh();
     } catch {
-      alert("Unable to open reward pack. Please try again.");
+      setRewardNotice({
+        tone: "danger",
+        title: "Reward pack unavailable",
+        detail: "Unable to open reward pack. Please try again.",
+      });
       setOpeningRewardGrantId(null);
       setIsOpening(false);
       setOpeningPhase("idle");
@@ -290,6 +365,21 @@ export default function PacksPage() {
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned = packConfig?.pack?.plannedPackCount;
   const cardsPerPack = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+  const purchaseLimit = useMemo(() => {
+    const base = packConfig?.purchaseLimit;
+    if (!base?.resetAt) return base ?? null;
+
+    const remainingMs = new Date(base.resetAt).getTime() - nowMs;
+    const cooldownSeconds = Math.max(Math.ceil(remainingMs / 1000), 0);
+    const isBlocked = base.enabled && cooldownSeconds > 0 && (base.remainingPurchases ?? 0) <= 0;
+
+    return {
+      ...base,
+      cooldownSeconds,
+      isBlocked,
+      remainingPurchases: isBlocked ? 0 : base.remainingPurchases,
+    };
+  }, [nowMs, packConfig?.purchaseLimit]);
 
   const rarityRows = useMemo(() => {
     const totalSlots = Math.max(cardsPerPack, 1);
@@ -416,6 +506,8 @@ export default function PacksPage() {
           rarityOdds={rarityOddsForDisplay}
           editionOdds={editionOddsForDisplay}
           userPoints={me?.user?.points}
+          purchaseLimit={purchaseLimit}
+          statusNotice={saleNotice}
           isGuest={!me}
           guestHeadline="Discover what can be inside"
           guestSupportingCopy="Run a short preview reveal now. Connect with X after the demo to open a real pack and keep every card you pull."
@@ -440,6 +532,13 @@ export default function PacksPage() {
               Packs earned from contests, quests, and future rewards. Open your earned packs here.
             </p>
           </div>
+
+          {rewardNotice ? (
+            <div className={`packs-inline-notice packs-inline-notice--${rewardNotice.tone}`} role="status" aria-live="polite">
+              <strong>{rewardNotice.title}</strong>
+              {rewardNotice.detail ? <span>{rewardNotice.detail}</span> : null}
+            </div>
+          ) : null}
 
           {loadingRewardGrants ? <p className="reward-packs-status">Loading reward packs…</p> : null}
 

@@ -9,6 +9,7 @@ describe("admin navigation", () => {
     const operations = ADMIN_NAV_GROUPS.find((group) => group.id === "operations");
     expect(operations?.items.map((item) => item.href)).toEqual([
       "/admin/contests",
+      "/admin/supply",
       "/admin/moderation",
       "/admin/rewards",
       "/admin/quests",

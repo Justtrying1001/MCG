@@ -18,6 +18,20 @@ type FeaturedPackStageProps = {
   editionOdds?: Odd[];
   userPoints?: number;
   isGuest?: boolean;
+  purchaseLimit?: {
+    enabled: boolean;
+    limit: number | null;
+    used: number;
+    remainingPurchases: number | null;
+    resetAt: string | null;
+    cooldownSeconds: number;
+    isBlocked: boolean;
+  } | null;
+  statusNotice?: {
+    tone: "neutral" | "success" | "danger";
+    title: string;
+    detail?: string;
+  } | null;
   guestHeadline?: string;
   guestSupportingCopy?: string;
 };
@@ -70,6 +84,8 @@ export function FeaturedPackStage({
   editionOdds,
   userPoints,
   isGuest = false,
+  purchaseLimit,
+  statusNotice,
   guestHeadline,
   guestSupportingCopy,
 }: FeaturedPackStageProps) {
@@ -79,6 +95,7 @@ export function FeaturedPackStage({
     (o) => ({ ...o, label: o.label.replace("_", " ") }),
   );
   const canAfford = userPoints === undefined || userPoints >= packCost;
+  const isPurchaseBlocked = !isGuest && Boolean(purchaseLimit?.isBlocked);
 
   const ctaLabel =
     openingPhase === "tearing"
@@ -91,7 +108,13 @@ export function FeaturedPackStage({
           : "Preparing reveal…"
         : isGuest
           ? "Reveal a demo pack"
-          : `Reveal pack — ${packCost} pts`;
+          : isPurchaseBlocked
+            ? "Daily cap reached"
+            : `Reveal pack — ${packCost} pts`;
+
+  const hours = Math.floor((purchaseLimit?.cooldownSeconds ?? 0) / 3600);
+  const minutes = Math.floor(((purchaseLimit?.cooldownSeconds ?? 0) % 3600) / 60);
+  const cooldownLabel = `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m`;
 
   const supplyText =
     typeof remaining === "number"
@@ -126,6 +149,22 @@ export function FeaturedPackStage({
           <span className="ps-price-label">PRICE</span>
           <span className="ps-price-value">{packCost} PTS</span>
           {!canAfford && <span className="ps-price-warn">Not enough points</span>}
+          {purchaseLimit ? (
+            purchaseLimit.enabled ? (
+              <div style={{ marginTop: 10 }}>
+                <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#cbd5e1" }}>
+                  {purchaseLimit.used} / {purchaseLimit.limit ?? 0} packs purchased
+                </span>
+                <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#86efac", display: "block" }}>
+                  {isPurchaseBlocked
+                    ? `Daily purchase cap reached · Try again in ${cooldownLabel}`
+                    : `${purchaseLimit.remainingPurchases ?? 0} purchase${purchaseLimit.remainingPurchases === 1 ? "" : "s"} remaining`}
+                </span>
+              </div>
+            ) : (
+              <span className="ps-price-warn" style={{ marginTop: 10, color: "#86efac" }}>Purchase cap disabled</span>
+            )
+          ) : null}
         </div>
 
         <div className="ps-section">
@@ -169,17 +208,27 @@ export function FeaturedPackStage({
             type="button"
             className="ps-btn-primary"
             onClick={onOpen}
-            disabled={!canOpen}
+            disabled={!canOpen || isPurchaseBlocked}
           >
             {ctaLabel}
           </button>
+          {statusNotice ? (
+            <div
+              className={`packs-inline-notice packs-inline-notice--${statusNotice.tone}`}
+              role="status"
+              aria-live="polite"
+            >
+              <strong>{statusNotice.title}</strong>
+              {statusNotice.detail ? <span>{statusNotice.detail}</span> : null}
+            </div>
+          ) : null}
           {isGuest ? (
             <div className="ps-guest-copy-block">
               {guestHeadline ? <p className="ps-guest-headline">{guestHeadline}</p> : null}
               {guestSupportingCopy ? <p className="ps-guest-copy">{guestSupportingCopy}</p> : null}
             </div>
           ) : (
-            <p className="ps-cta-subcopy">Open with points, reveal instantly, and add cards directly to your collection.</p>
+            <p className="ps-cta-subcopy">Open with points, reveal instantly, and add cards directly to your collection. Reward, contest, and admin-granted packs are unaffected by this purchase cap.</p>
           )}
           <button type="button" className="ps-btn-secondary" onClick={onOpenOdds}>
             Full odds &amp; supply details

@@ -366,6 +366,13 @@ model RewardPackSupply {
   createdAt     DateTime @default(now())
 }
 
+model RuntimeConfig {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model DropTable {
   id               String   @id @default(cuid())
   packDefinitionId String
