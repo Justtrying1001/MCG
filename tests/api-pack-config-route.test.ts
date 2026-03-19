@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSalePackRuntimeConfigMock } = vi.hoisted(() => ({
+const { getSalePackRuntimeConfigMock, getSessionUserMock } = vi.hoisted(() => ({
   getSalePackRuntimeConfigMock: vi.fn(),
+  getSessionUserMock: vi.fn(),
 }));
 
 vi.mock("@/lib/domain/acquisition/pack-config", () => ({
   getSalePackRuntimeConfig: getSalePackRuntimeConfigMock,
 }));
+
+vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
 
 import { GET } from "@/app/api/pack/config/route";
 
@@ -15,26 +18,15 @@ describe("GET /api/pack/config", () => {
     vi.clearAllMocks();
   });
 
-  it("returns runtime config payload", async () => {
-    getSalePackRuntimeConfigMock.mockResolvedValue({
-      exists: true,
-      pack: {
-        code: "genesis_sale_pack",
-        displayName: "MCG Genesis Sale Pack",
-        cardsPerPack: 5,
-        plannedPackCount: 10000,
-        openedPackCount: 100,
-        remainingPackCount: 10900,
-        isActive: true,
-      },
-      slots: [{ index: 4, type: "RARITY_HIT", label: "Hit slot", rarityOdds: [{ rarityCode: "RARE", pct: 30 }] }],
-    });
+  it("returns runtime config payload using the current session user when available", async () => {
+    getSessionUserMock.mockResolvedValue({ id: "u1" });
+    getSalePackRuntimeConfigMock.mockResolvedValue({ exists: true, pack: null, slots: [], purchaseLimit: { enabled: true } });
 
-    const res = await GET();
-    const body = await res.json();
+    const response = await GET();
+    const body = await response.json();
 
-    expect(res.status).toBe(200);
-    expect(body.pack.remainingPackCount).toBe(10900);
-    expect(body.slots[0].type).toBe("RARITY_HIT");
+    expect(response.status).toBe(200);
+    expect(body.purchaseLimit.enabled).toBe(true);
+    expect(getSalePackRuntimeConfigMock).toHaveBeenCalledWith("u1");
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const { buildCanonicalCardViewOrThrowMock, prismaTransactionMock } = vi.hoisted(() => ({
   buildCanonicalCardViewOrThrowMock: vi.fn((input: any) => ({
     templateId: input.templateId,
-    tokenId: `tok_${input.tokenSlug}` ?? "tok",
+    tokenId: `tok_${input.tokenSlug}`,
     displayName: input.tokenSlug ?? "Token",
     symbol: (input.tokenSlug ?? "sym").toUpperCase(),
     slug: input.tokenSlug ?? "slug",
@@ -42,10 +42,11 @@ type InMemoryState = {
   pack: { id: string; code: string; source: string; isActive: boolean; cardSetId: string; cardsPerPack: number; plannedPackCount: number; openedPackCount: number } | null;
   templates: Array<{ id: string; plannedSupply: number; issuedSupply: number; tokenProject: { slug: string }; rarity?: { code: string }; edition?: { code: string } }>;
   cardSet: { id: string; code: string } | null;
-  openingEvents: Array<{ id: string; userId: string; packDefinitionId: string }>;
+  openingEvents: Array<{ id: string; userId: string; packDefinitionId: string; openedAt?: Date }>;
   ownedInstances: Array<{ id: string; userId: string; cardTemplateId: string; sourcePackOpeningEventId: string }>;
   ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>
   rewardSupply: { id: string; totalSupply: number; distributed: number; lastUpdatedAt: Date } | null;
+  runtimeConfig: { key: string; value: { enabled: boolean; maxPurchasesPer24h: number } } | null;
 };
 
 function createTx(state: InMemoryState) {
@@ -92,6 +93,10 @@ function createTx(state: InMemoryState) {
       }),
     },
 
+    runtimeConfig: {
+      findUnique: vi.fn(async ({ where }: any) => state.runtimeConfig && where.key === state.runtimeConfig.key ? state.runtimeConfig : null),
+    },
+
     rewardPackSupply: {
       upsert: vi.fn(async ({ where, create, update }: any) => {
         if (!state.rewardSupply || state.rewardSupply.id !== where.id) {
@@ -129,8 +134,14 @@ function createTx(state: InMemoryState) {
       }),
     },
     packOpeningEvent: {
+      findMany: vi.fn(async ({ where }: any) => state.openingEvents
+        .filter((evt) => evt.userId === where.userId)
+        .filter((evt) => !where.openedAt?.gte || new Date((evt as any).openedAt ?? 0) >= where.openedAt.gte)
+        .filter(() => where.packDefinition?.source !== "SALE" || state.pack?.source === "SALE")
+        .map((evt: any) => ({ openedAt: evt.openedAt ?? new Date() }))
+        .sort((a: any, b: any) => a.openedAt.getTime() - b.openedAt.getTime())),
       create: vi.fn(async ({ data }: any) => {
-        const created = { id: `evt_${state.openingEvents.length + 1}`, ...data };
+        const created = { id: `evt_${state.openingEvents.length + 1}`, openedAt: new Date(), ...data };
         state.openingEvents.push(created);
         return created;
       }),
@@ -176,6 +187,7 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
     ownedInstances: [],
     ledgerEntries: [],
     rewardSupply: null,
+    runtimeConfig: { key: "pack_purchase_limit", value: { enabled: true, maxPurchasesPer24h: 5 } },
     ...overrides,
   };
 }
@@ -192,6 +204,7 @@ describe("openSalePackMvpDbNative", () => {
     const result = await openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 });
 
     expect(result.pulledCardsMvp).toHaveLength(5);
+    expect(result.purchaseLimit.used).toBe(1);
     expect(state.user.points).toBe(400);
     expect(state.pack?.openedPackCount).toBe(1);
     expect(state.openingEvents).toHaveLength(1);
@@ -261,6 +274,25 @@ describe("openSalePackMvpDbNative", () => {
       message: "Pack genesis_sale_pack is not available: no active template supply remaining (cloud bootstrap missing or exhausted)",
       status: 503,
     });
+  });
+
+  it("blocks sale purchase once the rolling 24h limit is reached", async () => {
+    const state = createState({
+      openingEvents: new Array(5).fill(null).map((_, index) => ({
+        id: `evt_seed_${index + 1}`,
+        userId: "u1",
+        packDefinitionId: "p1",
+        openedAt: new Date(`2026-03-19T0${index}:00:00.000Z`),
+      })),
+    });
+    prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
+
+    await expect(openSalePackMvpDbNative({ userId: state.user.id, packCost: 100 })).rejects.toMatchObject({
+      code: "PACK_PURCHASE_LIMIT_REACHED",
+      status: 429,
+    });
+    expect(state.user.points).toBe(500);
+    expect(state.pack?.openedPackCount).toBe(0);
   });
 
   it("keeps supply and pack invariants under parallel opens", async () => {

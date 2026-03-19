@@ -86,7 +86,7 @@ describe("contest scoring engine real smoke", () => {
         liveAt: new Date(Date.now() - 60_000),
         lockAt: new Date(Date.now() + 60 * 60 * 1000),
         endsAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-        rules: { create: { maxRosterSize: 5, teamSizeMode: "EXACT", teamSizeValue: 5, eligibilityMode: "ANY", entryFeeEnabled: false } },
+        rules: { create: { maxRosterSize: 5, teamSizeMode: "EXACT", eligibilityMode: "ANY", entryFeeEnabled: false } },
       },
       include: { rules: true },
     });

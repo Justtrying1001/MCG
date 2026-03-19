@@ -14,6 +14,7 @@ import { drawWeightForTemplate, slotTypeForIndex, type PackSlotType } from "@/li
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
+import { assertPackPurchaseAllowed, getPackPurchaseLimitStatus, type PackPurchaseLimitStatus } from "@/lib/domain/acquisition/purchase-limit";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 
@@ -296,7 +297,7 @@ async function openPackByCodeDbNative(params: {
   expectedSource: PackSource;
   chargePointsAmount?: number;
   createRewardGrant?: boolean;
-}): Promise<{ pulledCardsMvp: MvpCardView[]; packCode: string; openingEventId: string; rewardGrantId: string | null }> {
+}): Promise<{ pulledCardsMvp: MvpCardView[]; packCode: string; openingEventId: string; rewardGrantId: string | null; purchaseLimit: PackPurchaseLimitStatus | null }> {
   return prisma.$transaction(async (tx) => {
     const pack = await resolvePackDefinitionByCode(tx, params.packCode);
 
@@ -309,6 +310,13 @@ async function openPackByCodeDbNative(params: {
     }
 
     await assertMvpPackReadiness(tx, pack);
+
+    if (pack.source === PackSource.SALE) {
+      await assertPackPurchaseAllowed({
+        userId: params.userId,
+        tx,
+      });
+    }
 
     if (pack.cardsPerPack <= 0) {
       throw new PackOpenRuntimeError("Pack configuration is invalid", 500);
@@ -372,16 +380,21 @@ async function openPackByCodeDbNative(params: {
 
     await applyContestEntryQuestProgressionTx(tx, params.userId);
 
+    const purchaseLimit = pack.source === PackSource.SALE
+      ? await getPackPurchaseLimitStatus({ userId: params.userId, tx })
+      : null;
+
     return {
       pulledCardsMvp,
       packCode: pack.code,
       openingEventId: openingEvent.id,
       rewardGrantId,
+      purchaseLimit,
     };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
-export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCardsMvp: MvpCardView[] }> {
+export async function openSalePackMvpDbNative(params: { userId: string; packCost: number }): Promise<{ pulledCardsMvp: MvpCardView[]; purchaseLimit: PackPurchaseLimitStatus }> {
   const result = await openPackByCodeDbNative({
     userId: params.userId,
     packCode: MVP_SALE_PACK_CODE,
@@ -389,7 +402,10 @@ export async function openSalePackMvpDbNative(params: { userId: string; packCost
     chargePointsAmount: params.packCost,
   });
 
-  return { pulledCardsMvp: result.pulledCardsMvp };
+  return {
+    pulledCardsMvp: result.pulledCardsMvp,
+    purchaseLimit: result.purchaseLimit!,
+  };
 }
 
 export async function grantRewardPackByDefinitionTx(tx: Prisma.TransactionClient, params: {

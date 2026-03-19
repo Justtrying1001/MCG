@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { handleApiError } from "@/lib/api-error";
 import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
+import { PackPurchaseLimitExceededError } from "@/lib/domain/acquisition/purchase-limit";
 
 export async function POST() {
   try {
@@ -23,6 +24,17 @@ export async function POST() {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof PackPurchaseLimitExceededError) {
+      return NextResponse.json({
+        ok: false,
+        error: {
+          code: error.code,
+          message: error.message,
+          purchaseLimit: error.details,
+        },
+      }, { status: error.status });
+    }
+
     if (error instanceof PackOpenRuntimeError) {
       return new NextResponse(error.message, { status: error.status });
     }

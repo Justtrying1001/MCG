@@ -101,6 +101,16 @@ type RecentGrant = {
   grantedAt: string;
 };
 
+type PackPurchaseLimitAdminPayload = {
+  ok: true;
+  config: {
+    enabled: boolean;
+    maxPurchasesPer24h: number;
+  };
+  preview: string;
+  helperText: string;
+};
+
 type HistoryPayload = {
   ok: true;
   perPackTotals: PerPackTotal[];
@@ -142,6 +152,12 @@ export default function AdminSupplyPage() {
   const [errorHistory, setErrorHistory] = useState("");
 
   const [historyTab, setHistoryTab] = useState<"by-source" | "recent">("by-source");
+  const [limitData, setLimitData] = useState<PackPurchaseLimitAdminPayload | null>(null);
+  const [limitEnabled, setLimitEnabled] = useState(true);
+  const [limitValue, setLimitValue] = useState("5");
+  const [limitSaving, setLimitSaving] = useState(false);
+  const [limitMessage, setLimitMessage] = useState("");
+  const [limitError, setLimitError] = useState("");
 
   const loadSupply = async () => {
     setLoadingSupply(true);
@@ -155,6 +171,21 @@ export default function AdminSupplyPage() {
     }
     setData((await response.json()) as SupplyPayload);
     setLoadingSupply(false);
+  };
+
+
+  const loadPurchaseLimit = async () => {
+    setLimitError("");
+    const response = await fetch("/api/internal/admin/pack-purchase-limit", { cache: "no-store" });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setLimitError(payload?.error ?? "Cannot load purchase limit settings");
+      return;
+    }
+    const payload = (await response.json()) as PackPurchaseLimitAdminPayload;
+    setLimitData(payload);
+    setLimitEnabled(payload.config.enabled);
+    setLimitValue(String(payload.config.maxPurchasesPer24h));
   };
 
   const loadHistory = async () => {
@@ -176,12 +207,42 @@ export default function AdminSupplyPage() {
   const load = () => {
     void loadSupply();
     void loadHistory();
+    void loadPurchaseLimit();
   };
 
   useEffect(() => {
     load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+
+  const savePurchaseLimit = async () => {
+    setLimitSaving(true);
+    setLimitError("");
+    setLimitMessage("");
+    const parsedLimit = Number(limitValue);
+    const response = await fetch("/api/internal/admin/pack-purchase-limit", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        enabled: limitEnabled,
+        maxPurchasesPer24h: Number.isInteger(parsedLimit) ? parsedLimit : -1,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as { error?: string } & Partial<PackPurchaseLimitAdminPayload> | null;
+    if (!response.ok || !payload?.ok) {
+      setLimitError(payload?.error ?? "Cannot save purchase limit settings");
+      setLimitSaving(false);
+      return;
+    }
+
+    setLimitData(payload as PackPurchaseLimitAdminPayload);
+    setLimitEnabled(payload.config!.enabled);
+    setLimitValue(String(payload.config!.maxPurchasesPer24h));
+    setLimitMessage("Purchase limit settings saved.");
+    setLimitSaving(false);
+  };
 
   const updatedLabel = useMemo(
     () => (data ? new Date(data.lastUpdatedAt).toLocaleString() : "-"),
@@ -213,6 +274,46 @@ export default function AdminSupplyPage() {
       {errorSupply ? (
         <AdminPanel>
           <AdminEmptyState title="Supply unavailable" description={errorSupply} />
+        </AdminPanel>
+      ) : null}
+
+      {limitData || limitError ? (
+        <AdminPanel>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <p className="admin-v2-section-title">PURCHASE LIMIT</p>
+              <p className="contest-inline-note">{limitData?.preview ?? "Runtime-configured rule for store pack purchases."}</p>
+              <p className="contest-inline-note" style={{ marginTop: 6 }}>{limitData?.helperText ?? "Applies only to SALE pack purchases."}</p>
+            </div>
+            <div style={{ minWidth: 280, flex: "0 0 320px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <input type="checkbox" checked={limitEnabled} onChange={(e) => setLimitEnabled(e.target.checked)} />
+                <span>Enable 24h purchase cap</span>
+              </label>
+              <label style={{ display: "grid", gap: 6 }}>
+                <span className="contest-inline-note">Max purchased packs per 24h</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={limitValue}
+                  onChange={(e) => setLimitValue(e.target.value)}
+                  className="admin-input"
+                  style={{ width: "100%" }}
+                />
+              </label>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button type="button" className="mcg-btn" onClick={savePurchaseLimit} disabled={limitSaving}>
+                  {limitSaving ? "Saving…" : "Save settings"}
+                </button>
+                <button type="button" className="mcg-btn ghost" onClick={loadPurchaseLimit} disabled={limitSaving}>
+                  Reload
+                </button>
+              </div>
+              {limitMessage ? <p className="contest-inline-note" style={{ marginTop: 8, color: "#86efac" }}>{limitMessage}</p> : null}
+              {limitError ? <p className="contest-inline-note" style={{ marginTop: 8, color: "#fca5a5" }}>{limitError}</p> : null}
+            </div>
+          </div>
         </AdminPanel>
       ) : null}
 

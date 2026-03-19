@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
 import { drawWeightForTemplate, slotLabel, slotTypeForIndex } from "@/lib/domain/acquisition/slot-weights";
+import { getPackPurchaseLimitStatus } from "@/lib/domain/acquisition/purchase-limit";
 
-export async function getSalePackRuntimeConfig() {
+export async function getSalePackRuntimeConfig(userId?: string) {
   const pack = await prisma.packDefinition.findUnique({
     where: { code: MVP_SALE_PACK_CODE },
     select: {
@@ -17,11 +18,14 @@ export async function getSalePackRuntimeConfig() {
     },
   });
 
+  const purchaseLimit = userId ? await getPackPurchaseLimitStatus({ userId }) : null;
+
   if (!pack) {
     return {
       exists: false as const,
       pack: null,
       slots: [],
+      purchaseLimit,
     };
   }
 
@@ -90,6 +94,7 @@ export async function getSalePackRuntimeConfig() {
 
   return {
     exists: true as const,
+    purchaseLimit,
     pack: {
       code: pack.code,
       displayName: pack.displayName,
