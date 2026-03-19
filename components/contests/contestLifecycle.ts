@@ -20,13 +20,13 @@ export function getPhaseLabel(status: ContestStatus) {
 }
 
 export function getActionability(status: ContestStatus) {
-  if (status === "OPEN") return { editable: true, message: "Entry is open: build or edit your lineup before lock." };
-  if (status === "LOCKED") return { editable: false, message: "Lineups are locked. You can only review your submitted team." };
-  if (status === "LIVE") return { editable: false, message: "Contest is live. Follow ranking updates until settlement." };
+  if (status === "OPEN") return { editable: true, message: "Open for entry. Build or edit your lineup before team lock." };
+  if (status === "LOCKED") return { editable: false, message: "Entry closed. Lineups are locked while the contest is about to start." };
+  if (status === "LIVE") return { editable: false, message: "Live now. Contest is in progress and new entries are closed." };
   if (status === "SETTLED") {
     return {
       editable: false,
-      message: "Settled: view final ranking, rewards status, and reuse your cards in new contests.",
+      message: "Finished. Results are available and rewards have been processed.",
     };
   }
   return { editable: false, message: "Contest lifecycle is not active yet." };
@@ -34,8 +34,57 @@ export function getActionability(status: ContestStatus) {
 
 export function getPrimaryCtaLabel(status: ContestStatus) {
   if (status === "OPEN") return "Enter contest";
-  if (status === "LOCKED") return "View team";
-  if (status === "LIVE") return "Track contest";
+  if (status === "LOCKED") return "View lineup";
+  if (status === "LIVE") return "View live standings";
   if (status === "SETTLED") return "View results";
   return "View details";
+}
+
+export function getContestStateMessaging(status: ContestStatus) {
+  if (status === "OPEN") {
+    return {
+      shortLabel: "Open for entry",
+      longLabel: "Open for entry · Build your lineup before team lock",
+      emphasis: "Entries are open right now.",
+      helper: "You can still enter and edit your lineup before the contest goes live.",
+    };
+  }
+  if (status === "LOCKED") {
+    return {
+      shortLabel: "Entry closed",
+      longLabel: "Entry closed · Lineups locked",
+      emphasis: "Registration is closed.",
+      helper: "The contest is about to start, so you can only review submitted lineups.",
+    };
+  }
+  if (status === "LIVE") {
+    return {
+      shortLabel: "Live now · Entry closed",
+      longLabel: "Live now · Entry closed · Contest in progress",
+      emphasis: "This contest is already live.",
+      helper: "New entries are closed. Follow live standings and scoring until settlement.",
+    };
+  }
+  if (status === "SETTLED") {
+    return {
+      shortLabel: "Finished · Results available",
+      longLabel: "Finished · Results available",
+      emphasis: "This contest has finished.",
+      helper: "Final rankings and rewards are ready to review.",
+    };
+  }
+  if (status === "CANCELED") {
+    return {
+      shortLabel: "Canceled",
+      longLabel: "Canceled · Contest unavailable",
+      emphasis: "This contest was canceled.",
+      helper: "Entries and results are no longer active for this contest.",
+    };
+  }
+  return {
+    shortLabel: "Draft",
+    longLabel: "Draft · Not open yet",
+    emphasis: "This contest is not open yet.",
+    helper: "Contest configuration is still being prepared.",
+  };
 }

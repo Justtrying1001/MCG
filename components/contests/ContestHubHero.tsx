@@ -3,7 +3,7 @@ import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { ContestListItem } from "@/components/contests/types";
 import { formatCountdown, getTargetDate } from "@/components/contests/contestUtils";
-import { getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
+import { getContestStateMessaging, getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 function getFeaturedSubtitle(status: ContestListItem["status"]) {
   if (status === "OPEN") return "Entries are open now. Build your lineup before team lock.";
@@ -31,6 +31,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
   const rewardTeaser = `${Math.max(100, rosterSize * 40)} pts + booster chance`;
   const countdown = formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs);
   const badge = contest.status === "LIVE" ? "Legendary Cup" : contest.status === "SETTLED" ? "Hall of Fame" : "Seasonal Clash";
+  const stateMessaging = getContestStateMessaging(contest.status);
 
   return (
     <Surface className="contest-hub-hero premium" variant="raised">
@@ -43,6 +44,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
           actions={<span className={`contest-phase-pill phase-${contest.status.toLowerCase()}`}>{getPhaseLabel(contest.status)}</span>}
         />
         <div className="contest-rarity-badge">{badge}</div>
+        <p className="contest-inline-note" style={{ marginBottom: "0.75rem" }}>{stateMessaging.longLabel}</p>
         <div className="contest-hero-meta-row">
           <span className="mcg-chip">Reward pool {rewardTeaser}</span>
           <span className="mcg-chip">Participants {contest._count.entries}</span>
@@ -54,7 +56,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
       </div>
 
       <div className="contest-hero-cta-box">
-        <p className="mcg-eyebrow">Next milestone</p>
+        <p className="mcg-eyebrow">{stateMessaging.shortLabel}</p>
         <p className="contest-hero-countdown">{countdown}</p>
         <Link href={`/contests/${contest.id}`} className="mcg-btn primary">{getPrimaryCtaLabel(contest.status)}</Link>
       </div>

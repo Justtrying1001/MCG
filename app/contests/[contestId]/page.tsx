@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-identity";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 import { useSession } from "@/components/useSession";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
@@ -491,15 +492,17 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       : isSettled
         ? (myRanking ? `Finished #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Final scoring is complete.")
         : "Lineups are locked.";
+  const stateMessaging = getContestStateMessaging(contest.status);
+  const stateContextBody = `${stateMessaging.longLabel}. ${stateBody}`;
 
   const heroAction = isOpen
     ? {
-        label: !me ? "Sign in required" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : "Build lineup",
+        label: !me ? "Sign in required" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : getPrimaryCtaLabel(contest.status),
         onClick: () => openBuilder(),
         disabled: !me,
       }
     : {
-        label: isLive ? "View leaderboard" : "Track contest",
+        label: isSettled ? getPrimaryCtaLabel(contest.status) : isLive ? getPrimaryCtaLabel(contest.status) : "Track contest",
         onClick: scrollToLeaderboard,
       };
 
@@ -533,7 +536,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           coverImageUrl={heroCoverImageUrl}
           infoLine={contestInfoLine}
           timing={heroTiming}
-          contextBody={stateBody}
+          contextBody={stateContextBody}
           primaryAction={heroAction}
           flash={builderFlash && !showBuilder ? builderFlash : null}
           error={error || builderError || null}

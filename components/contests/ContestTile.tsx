@@ -3,7 +3,7 @@ import { memo } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { ContestCountdown } from "@/components/contests/ContestCountdown";
 import type { ContestListItem, ContestRule } from "@/components/contests/types";
-import { getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
+import { getContestStateMessaging, getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 function getContestCoverImage(rule?: ContestRule) {
   const image = rule?.config?.coverImageUrl?.trim();
@@ -50,6 +50,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
   const fallbackToken = getFallbackToken(contest);
   const heroEyebrow = getHeroEyebrow(contest);
+  const stateMessaging = getContestStateMessaging(contest.status);
 
   return (
     <Surface as="article" className={`contest-grid-card contest-grid-card-premium tone-${contest.status.toLowerCase()}`} variant="raised">
@@ -76,6 +77,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
         <div className="contest-grid-card-title-block">
           <p className="contest-grid-card-subtitle">{contest.code}</p>
           <h3 className="contest-grid-card-title">{contest.title}</h3>
+          <p className="contest-inline-note" style={{ marginTop: "0.45rem" }}>{stateMessaging.longLabel}</p>
         </div>
 
         <div className="contest-grid-card-meta" aria-label="Contest quick facts">
@@ -87,6 +89,31 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
         <div className="contest-grid-card-reward" aria-label="Reward highlight">
           <span className="contest-grid-card-reward-label">🏆 Reward</span>
           <strong>{rewardHighlight}</strong>
+        </div>
+
+        <div
+          className="contest-grid-card-reward"
+          aria-label="Contest state summary"
+          style={{
+            background: contest.status === "OPEN"
+              ? "rgba(74, 170, 107, 0.1)"
+              : contest.status === "LIVE"
+                ? "rgba(232, 131, 74, 0.12)"
+                : contest.status === "SETTLED"
+                  ? "rgba(104, 137, 255, 0.12)"
+                  : "rgba(148, 163, 184, 0.12)",
+            borderColor: contest.status === "OPEN"
+              ? "rgba(74, 170, 107, 0.24)"
+              : contest.status === "LIVE"
+                ? "rgba(232, 131, 74, 0.28)"
+                : contest.status === "SETTLED"
+                  ? "rgba(104, 137, 255, 0.22)"
+                  : "rgba(148, 163, 184, 0.2)",
+          }}
+        >
+          <span className="contest-grid-card-reward-label">State</span>
+          <strong>{stateMessaging.shortLabel}</strong>
+          <span>{stateMessaging.helper}</span>
         </div>
 
         <div className="contest-grid-card-footer">
