@@ -1663,6 +1663,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .card-zoom-modal {
+  --card-zoom-base-width: min(220px, 36vw);
+  --card-zoom-scale: 2;
+  --card-zoom-visual-width: calc(var(--card-zoom-base-width) * var(--card-zoom-scale));
+  --card-zoom-close-gap: 0.85rem;
   position: relative;
   display: grid;
   place-items: center;
@@ -1676,26 +1680,26 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  width: min(100%, 480px);
+  width: min(100%, var(--card-zoom-visual-width));
   padding-top: 4.5rem;
   margin-inline: auto;
 }
 
 .card-zoom-chrome {
   position: absolute;
-  inset: 0 0 auto;
-  width: 100%;
+  inset: 0 auto auto 50%;
+  width: min(100%, var(--card-zoom-visual-width));
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 1rem;
   pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .card-zoom-meta {
   display: grid;
   gap: 0.15rem;
-  width: min(100%, 420px);
+  width: min(100%, calc(var(--card-zoom-visual-width) - 2.5rem));
   margin-inline: auto;
   text-align: center;
 }
@@ -1720,29 +1724,37 @@ a { color: inherit; text-decoration: none; }
 .card-zoom-close {
   position: absolute;
   top: 0;
-  right: 0;
+  left: calc(100% + var(--card-zoom-close-gap));
   z-index: 2;
   flex: 0 0 auto;
   pointer-events: auto;
 }
 
 .card-zoom-container {
-  width: min(220px, 36vw);
-  transform: scale(2);
+  width: var(--card-zoom-base-width);
+  transform: scale(var(--card-zoom-scale));
   transform-origin: center top;
   transition: transform 220ms ease;
   margin-inline: auto;
 }
 
 @media (max-width: 1024px) {
-  .card-zoom-container { transform: scale(1.6); }
+  .card-zoom-modal {
+    --card-zoom-scale: 1.6;
+  }
 }
 
 @media (max-width: 640px) {
-  .card-zoom-shell { width: min(100%, 320px); gap: 0.8rem; padding-top: 4rem; }
-  .card-zoom-chrome { width: 100%; align-items: center; }
+  .card-zoom-modal {
+    --card-zoom-base-width: min(220px, 56vw);
+    --card-zoom-scale: 1.2;
+    --card-zoom-close-gap: 0.65rem;
+  }
+
+  .card-zoom-shell { gap: 0.8rem; padding-top: 4rem; }
+  .card-zoom-chrome { align-items: center; }
   .card-zoom-meta strong { font-size: 0.94rem; }
-  .card-zoom-container { transform: scale(1.2); width: min(220px, 56vw); }
+  .card-zoom-close { top: -0.1rem; }
 }
 
 
