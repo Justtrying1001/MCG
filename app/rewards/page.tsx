@@ -1,7 +1,7 @@
 "use client";
 
 import type { MilestoneType } from "@/lib/domain/quests/social";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
@@ -486,10 +486,11 @@ export default function RewardsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("quests");
   const [completedOpen, setCompletedOpen] = useState(false);
   const [historyPage, setHistoryPage] = useState(20);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
 
   const autoTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoadingData(true);
     setQuestsError("");
     setLedgerError("");
@@ -517,13 +518,20 @@ export default function RewardsPage() {
         const payload = (await ledgerResult.value.json()) as { entries?: LedgerRow[] };
         setLedger(payload.entries ?? []);
       }
+
+      if (
+        (questsResult.status === "fulfilled" && questsResult.value.ok) ||
+        (ledgerResult.status === "fulfilled" && ledgerResult.value.ok)
+      ) {
+        setHasLoadedData(true);
+      }
     } catch {
       setQuestsError("Cannot load quests data (unexpected error)");
       setLedgerError("Cannot load rewards ledger (unexpected error)");
     } finally {
       setLoadingData(false);
     }
-  };
+  }, []);
 
   const submitQuest = async (quest: QuestRow, mode: "manual" | "auto") => {
     setSubmittingId(quest.id);
@@ -566,7 +574,7 @@ export default function RewardsPage() {
   useEffect(() => {
     if (loading || !me) return;
     void loadData();
-  }, [loading, me]);
+  }, [loadData, loading, me]);
 
   useEffect(() => () => {
     autoTimerRef.current.forEach((t) => clearTimeout(t));
@@ -707,6 +715,8 @@ export default function RewardsPage() {
   const BG_CARD = "var(--color-surface-1)";
   const BORDER_COLOR = "var(--color-border-subtle)";
   const TEXT_MUTED = "var(--color-text-secondary)";
+  const showInitialLoading = loading || (!hasLoadedData && loadingData);
+  const showRefreshNotice = hasLoadedData && loadingData;
 
   function tabStyle(id: TabId) {
     const active = activeTab === id;
@@ -730,14 +740,19 @@ export default function RewardsPage() {
 
   return (
     <SiteShell>
-      {loading || loadingData ? <EmptyState title="Loading rewards…" /> : null}
-      {!loading && me ? (
+      {showInitialLoading ? <EmptyState title="Loading rewards…" /> : null}
+      {!showInitialLoading && !loading && me ? (
         <div style={{ padding: "1.5rem 0" }}>
 
           {/* ── Page header ── */}
           <div style={{ marginBottom: "1.5rem" }}>
             <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "0.2rem" }}>Rewards</h1>
             <p style={{ fontSize: "0.9rem", color: TEXT_MUTED, marginBottom: "0.6rem" }}>Quests, milestones &amp; earning history</p>
+            {showRefreshNotice ? (
+              <p aria-live="polite" style={{ fontSize: "0.8rem", color: TEXT_MUTED }}>
+                Refreshing rewards…
+              </p>
+            ) : null}
           </div>
 
           {/* ── Summary strip ── */}
