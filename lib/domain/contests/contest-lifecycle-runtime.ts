@@ -2,6 +2,8 @@ import { ContestStatus } from "@prisma/client";
 
 import { getAllowedContestTransitions, type ContestLifecycleMode } from "@/lib/domain/contests/contest-lifecycle-spec";
 import { finalizeContestFromEndSnapshotTrigger } from "@/lib/domain/contests/finalization-runtime";
+import { materializeRewardPolicyFromConfig } from "@/lib/domain/contests/reward-plan";
+import { parseRewardConfig } from "@/lib/domain/contests/reward-preview";
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { captureStartSnapshot } from "@/lib/domain/contests/snapshot-runtime";
 import { prisma } from "@/lib/prisma";
@@ -246,6 +248,7 @@ export async function executeContestTransition(
 }
 
 async function runLiveTransitionSideEffects(contestId: string, mode: ContestLifecycleMode) {
+  await materializeLiveRewardPolicy(contestId);
   console.info(`[lifecycle] Contest ${contestId} START snapshot capture started mode=${mode}`);
   try {
     const result = await captureStartSnapshot(contestId);
@@ -258,4 +261,99 @@ async function runLiveTransitionSideEffects(contestId: string, mode: ContestLife
     console.error(`[lifecycle] Contest ${contestId} START snapshot capture failed: ${message}`);
     throw error;
   }
+}
+
+
+async function materializeLiveRewardPolicy(contestId: string) {
+  await prisma.$transaction(async (tx) => {
+    const contest = await tx.contest.findUnique({
+      where: { id: contestId },
+      select: {
+        id: true,
+        _count: { select: { entries: true } },
+        rules: { orderBy: { id: "asc" }, take: 1, select: { config: true } },
+        rewardPolicy: {
+          select: {
+            id: true,
+            status: true,
+            bundles: { select: { id: true } },
+            distributionRules: { select: { id: true } },
+          },
+        },
+      },
+    });
+
+    if (!contest) throw new ContestRuntimeError("Contest not found", 404);
+
+    const rewardConfig = parseRewardConfig((contest.rules[0]?.config as Record<string, unknown> | null)?.rewardConfig);
+    if (!rewardConfig) return;
+
+    let defaultPackDefinitionId: string | null = null;
+    if (rewardConfig.packPool > 0) {
+      const defaultPackDefinition = await tx.packDefinition.findFirst({
+        where: { source: "REWARD", isActive: true },
+        orderBy: [{ createdAt: "asc" }],
+        select: { id: true },
+      });
+      if (!defaultPackDefinition) {
+        throw new ContestRuntimeError("No active REWARD pack definition found for live reward materialization", 409);
+      }
+      defaultPackDefinitionId = defaultPackDefinition.id;
+    }
+
+    const materialized = materializeRewardPolicyFromConfig({
+      participantCount: contest._count.entries,
+      rewardConfig,
+      defaultPackDefinitionId,
+    });
+
+    const policy = contest.rewardPolicy
+      ? contest.rewardPolicy
+      : await tx.contestRewardPolicy.create({ data: { contestId: contest.id, status: "PUBLISHED" } });
+
+    await tx.contestRewardDistributionRule.deleteMany({ where: { rewardPolicyId: policy.id } });
+    await tx.contestRewardComponent.deleteMany({ where: { bundle: { rewardPolicyId: policy.id } } });
+    await tx.contestRewardBundle.deleteMany({ where: { rewardPolicyId: policy.id } });
+
+    const bundles = await Promise.all(materialized.bundles.map((bundle) => tx.contestRewardBundle.create({
+      data: {
+        rewardPolicyId: policy.id,
+        name: bundle.name,
+        priority: bundle.priority,
+      },
+    })));
+
+    for (const [index, bundle] of materialized.bundles.entries()) {
+      const bundleId = bundles[index]!.id;
+      for (const component of bundle.components) {
+        await tx.contestRewardComponent.create({
+          data: {
+            bundleId,
+            type: component.type,
+            pointsAmount: component.pointsAmount ?? null,
+            xpAmount: component.xpAmount ?? null,
+            packDefinitionId: component.packDefinitionId ?? null,
+            packQuantity: component.packQuantity ?? null,
+          },
+        });
+      }
+    }
+
+    const bundleMap = new Map(bundles.map((bundle) => [bundle.name, bundle.id]));
+    for (const rule of materialized.distributionRules) {
+      await tx.contestRewardDistributionRule.create({
+        data: {
+          rewardPolicyId: policy.id,
+          bundleId: bundleMap.get(rule.bundleRef)!,
+          priority: rule.priority,
+          ruleType: rule.ruleType,
+          rankFrom: rule.rankFrom,
+          rankTo: rule.rankTo,
+          topN: null,
+          topPercent: null,
+          poolAmount: null,
+        },
+      });
+    }
+  });
 }

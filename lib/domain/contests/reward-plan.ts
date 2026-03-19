@@ -36,6 +36,87 @@ export type RewardPlanRankingRow = {
   displayName?: string | null;
 };
 
+
+export type MaterializedRewardPolicy = {
+  bundles: Array<{
+    name: string;
+    priority: number;
+    components: Array<{
+      type: "POINTS" | "XP" | "PACK";
+      pointsAmount?: number;
+      xpAmount?: number;
+      packDefinitionId?: string | null;
+      packQuantity?: number;
+    }>;
+  }>;
+  distributionRules: Array<{
+    priority: number;
+    ruleType: "FIXED_RANKS";
+    bundleRef: string;
+    rankFrom: number;
+    rankTo: number;
+  }>;
+};
+
+export function materializeRewardPolicyFromConfig(input: {
+  participantCount: number;
+  rewardConfig: ContestRewardConfig;
+  defaultPackDefinitionId?: string | null;
+}): MaterializedRewardPolicy {
+  const participantCount = Math.max(0, Math.floor(input.participantCount));
+  if (participantCount === 0) {
+    return { bundles: [], distributionRules: [] };
+  }
+
+  const ranking = Array.from({ length: participantCount }, (_, index) => `rank-${index + 1}`);
+  const rewards = computeRewards({
+    participantsCount: participantCount,
+    ranking,
+    config: input.rewardConfig,
+  });
+
+  if (rewards.length === 0) {
+    return { bundles: [], distributionRules: [] };
+  }
+
+  const grouped = rewards.reduce<Array<{ rankFrom: number; rankTo: number; pointsAmount: number; packsCount: number }>>((acc, reward) => {
+    const previous = acc[acc.length - 1];
+    if (previous && previous.rankTo + 1 === reward.rank && previous.pointsAmount === reward.pointsReward && previous.packsCount === reward.packsReward) {
+      previous.rankTo = reward.rank;
+      return acc;
+    }
+
+    acc.push({
+      rankFrom: reward.rank,
+      rankTo: reward.rank,
+      pointsAmount: reward.pointsReward,
+      packsCount: reward.packsReward,
+    });
+    return acc;
+  }, []);
+
+  const bundles = grouped.map((group, index) => ({
+    name: group.rankFrom === group.rankTo ? `Rank ${group.rankFrom}` : `Ranks ${group.rankFrom}-${group.rankTo}`,
+    priority: index,
+    components: [
+      ...(group.pointsAmount > 0 ? [{ type: "POINTS" as const, pointsAmount: group.pointsAmount }] : []),
+      ...(group.packsCount > 0
+        ? [{ type: "PACK" as const, packDefinitionId: input.defaultPackDefinitionId ?? null, packQuantity: group.packsCount }]
+        : []),
+    ],
+  }));
+
+  const distributionRules = grouped.map((group, index) => ({
+    priority: index,
+    ruleType: "FIXED_RANKS" as const,
+    bundleRef: bundles[index]!.name,
+    rankFrom: group.rankFrom,
+    rankTo: group.rankTo,
+  }));
+
+  return { bundles, distributionRules };
+}
+
 export type RewardPlanItem = {
   userId: string;
   rank: number;
