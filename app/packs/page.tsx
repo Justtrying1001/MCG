@@ -4,11 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
-import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
 import { PackOddsDrawer } from "@/components/packs/PackOddsDrawer";
+import { PackRevealModal } from "@/components/packs/PackRevealModal";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { trackEvent } from "@/lib/analytics/track";
@@ -167,8 +166,6 @@ export default function PacksPage() {
   }, [me]);
 
   const revealSize = resultMvp.length;
-  const allRevealed = revealed.length > 0 && revealed.every(Boolean);
-  const revealedCount = revealed.filter(Boolean).length;
   const nextRevealIndex = revealed.findIndex((v) => !v);
   const isGuestPreview = revealMode === "guest-preview";
 
@@ -352,15 +349,6 @@ export default function PacksPage() {
     trackEvent("packs_guest_preview_connect_click", { location: "preview_complete" });
     window.location.href = "/api/auth/x/start";
   };
-
-  const revealCards = useMemo(
-    () =>
-      resultMvp.map((card, i) => ({
-        key: `${card.templateId}_${i}`,
-        render: <MvpCardTile card={card} quantity={1} variant="canonical" imageLoading="eager" />,
-      })),
-    [resultMvp],
-  );
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned = packConfig?.pack?.plannedPackCount;
@@ -588,83 +576,18 @@ export default function PacksPage() {
         </section>
       ) : null}
 
-      <Modal
-        title={
-          isGuestPreview
-            ? allRevealed
-              ? "Preview complete — sample cards revealed"
-              : "Preview reveal — flip cards in order"
-            : allRevealed
-              ? "Pack complete — all cards revealed"
-              : "Pack reveal — flip cards in order"
-        }
+      <PackRevealModal
         open={revealSize > 0 && openingPhase === "revealing"}
+        cards={resultMvp}
+        revealed={revealed}
+        nextRevealIndex={nextRevealIndex}
+        onReveal={handleReveal}
+        onZoom={setZoomedCard}
         onClose={closeReveal}
-      >
-        {isGuestPreview ? (
-          <div className="packs-preview-banner">
-            <span className="packs-preview-badge">Demo reveal</span>
-            <p>This preview does not consume a pack or add cards to inventory.</p>
-          </div>
-        ) : null}
-
-        <div className="reveal-progress-wrap">
-          <div className="pack-reveal-head-row">
-            <p className="reveal-progress-text">Revealed {revealedCount} / {revealSize}</p>
-            {!allRevealed ? <p className="reveal-next-copy">Next: click card #{nextRevealIndex + 1}</p> : null}
-          </div>
-          <div className="reveal-progress-track">
-            <div className="reveal-progress-fill" style={{ width: `${(revealedCount / Math.max(revealSize, 1)) * 100}%` }} />
-          </div>
-        </div>
-
-        <div className="pack-reveal-grid">
-          {revealCards.map((card, index) => {
-            const isCardRevealed = revealed[index];
-            const isNext = index === nextRevealIndex;
-            return (
-              <button
-                key={card.key}
-                className={`reveal-slot${isCardRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`}
-                onClick={() => {
-                  if (isCardRevealed) {
-                    setZoomedCard(resultMvp[index] ?? null);
-                    return;
-                  }
-                  handleReveal(index);
-                }}
-                disabled={!isCardRevealed && !isNext}
-              >
-                <div className="reveal-slot-inner">
-                  <div className="reveal-slot-face reveal-slot-back">
-                    <Image src={versoImage} alt="Card back" className="reveal-slot-back-image" />
-                    <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
-                  </div>
-                  <div className="reveal-slot-face reveal-slot-front">{card.render}</div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {allRevealed ? (
-          <div className="reveal-complete-row">
-            <p className="reveal-complete-copy">
-              {isGuestPreview
-                ? "Preview complete. Connect with X to open a real pack, keep your pulls, and use them across collection, contests, and rewards."
-                : "Full pack revealed. Cards have been added to your collection."}
-            </p>
-            {isGuestPreview ? (
-              <div className="packs-preview-actions">
-                <Button onClick={handleConnectWithX}>Connect with X to open for real</Button>
-                <Button variant="ghost" onClick={closeReveal}>Close preview</Button>
-              </div>
-            ) : (
-              <Button onClick={closeReveal}>Done</Button>
-            )}
-          </div>
-        ) : null}
-      </Modal>
+        isGuestPreview={isGuestPreview}
+        onConnectWithX={isGuestPreview ? handleConnectWithX : undefined}
+        cardBackSrc={versoImage}
+      />
 
       <CardZoomModal card={zoomedCard} quantity={1} open={Boolean(zoomedCard)} onClose={() => setZoomedCard(null)} />
     </SiteShell>
