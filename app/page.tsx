@@ -1,11 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { AuthErrorNotice } from "@/components/auth/AuthErrorNotice";
 import { useSession } from "@/components/useSession";
-import { PrivyTestPanel } from "@/components/auth/PrivyTestPanel";
 
 // State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
@@ -101,12 +99,6 @@ export default function HomePage() {
 
   return (
     <SiteShell>
-      <Suspense fallback={null}>
-        <AuthErrorNotice />
-      </Suspense>
-
-      <PrivyTestPanel />
-
       {isAuth && userInfo ? (
         <div className="home-dashboard-layout">
           <PlayerDashboardHeader
