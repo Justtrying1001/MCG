@@ -1657,43 +1657,61 @@ a { color: inherit; text-decoration: none; }
   z-index: 999;
   background: rgba(5, 6, 10, 0.84);
   backdrop-filter: blur(4px);
-  display: grid;
-  place-items: center;
-  padding: 2rem;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: clamp(1.25rem, 3vh, 2.5rem);
 }
 
 .card-zoom-modal {
-  --card-zoom-base-width: min(220px, 36vw);
-  --card-zoom-scale: 2;
-  --card-zoom-visual-width: calc(var(--card-zoom-base-width) * var(--card-zoom-scale));
+  --card-zoom-card-width: clamp(320px, 30vw, 440px);
+  --card-zoom-stack-width: min(100%, calc(var(--card-zoom-card-width) + 2.25rem));
   position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex: 1;
+  width: min(100%, 960px);
+  min-height: 0;
+}
+
+.card-zoom-controls {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.card-zoom-stage {
+  flex: 1;
+  min-height: 0;
   display: grid;
   place-items: center;
-  width: min(100%, 720px);
-  padding: 0 4.5rem;
+  padding: clamp(2.75rem, 7vh, 5rem) clamp(1rem, 4vw, 4rem) clamp(1.5rem, 4vh, 2.5rem);
 }
 
 .card-zoom-shell {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: min(100%, var(--card-zoom-visual-width));
+  justify-items: center;
+  gap: clamp(0.9rem, 1.6vh, 1.25rem);
+  width: var(--card-zoom-stack-width);
   margin-inline: auto;
 }
 
 .card-zoom-chrome {
-  width: min(100%, var(--card-zoom-visual-width));
+  width: 100%;
   display: flex;
   justify-content: center;
 }
 
 .card-zoom-meta {
   display: grid;
-  gap: 0.15rem;
-  width: min(100%, calc(var(--card-zoom-visual-width) - 1.5rem));
+  gap: 0.2rem;
+  width: min(100%, calc(var(--card-zoom-card-width) + 0.5rem));
   margin-inline: auto;
   text-align: center;
 }
@@ -1716,31 +1734,28 @@ a { color: inherit; text-decoration: none; }
 }
 
 .card-zoom-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
+  pointer-events: auto;
+  position: relative;
 }
 
 .card-zoom-container {
-  width: var(--card-zoom-base-width);
-  transform: scale(var(--card-zoom-scale));
-  transform-origin: center top;
-  transition: transform 220ms ease;
+  width: var(--card-zoom-card-width);
   margin-inline: auto;
 }
 
 @media (max-width: 1024px) {
   .card-zoom-modal {
-    --card-zoom-scale: 1.6;
+    --card-zoom-card-width: clamp(280px, 38vw, 390px);
   }
 }
 
 @media (max-width: 640px) {
   .card-zoom-modal {
-    --card-zoom-base-width: min(220px, 56vw);
-    --card-zoom-scale: 1.2;
-    padding: 0 3.25rem;
+    --card-zoom-card-width: min(78vw, 332px);
+  }
+
+  .card-zoom-stage {
+    padding: 3.5rem 0.35rem 1.25rem;
   }
 
   .card-zoom-shell { gap: 0.8rem; }
