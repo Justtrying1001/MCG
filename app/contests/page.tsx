@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ContestCard } from "@/components/contests/ContestCard";
+import { ContestTile } from "@/components/contests/ContestTile";
 import { ContestHeader } from "@/components/contests/ContestHeader";
 import { ContestTabs, type ContestTabKey } from "@/components/contests/ContestTabs";
 import type { ContestListItem } from "@/components/contests/types";
@@ -157,7 +157,7 @@ export default function ContestsPage() {
         ) : (
           <section key={tab} className="contest-arena-grid contest-arena-grid-enter" aria-live="polite">
             {visible.map((contest) => (
-              <ContestCard key={contest.id} contest={contest} nowTs={nowTs} />
+              <ContestTile key={contest.id} contest={contest} nowTs={nowTs} />
             ))}
           </section>
         )}

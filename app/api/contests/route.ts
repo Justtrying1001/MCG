@@ -1,3 +1,4 @@
+import type { ContestListItem } from "@/components/contests/types";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -83,10 +84,11 @@ export async function GET() {
     });
 
     const seasonByContestId = new Map(meta.map((row) => [row.id, row.season?.name ?? null]));
+    const ruleConfigByContestId = new Map(meta.map((row) => [row.id, (row.rules[0]?.config ?? null) as Record<string, unknown> | null]));
     const rewardByContestId = new Map<string, RewardPreviewModel>();
 
     for (const row of meta) {
-      const rawConfig = row.rules[0]?.config as Record<string, unknown> | null;
+      const rawConfig = ruleConfigByContestId.get(row.id) ?? null;
       const rewardConfig = rawConfig?.rewardConfig as Record<string, unknown> | undefined;
       const pointsPool = Math.max(0, Number(rewardConfig?.pointsPool ?? 0) || 0);
       const packPool = Math.max(0, Number(rewardConfig?.packPool ?? 0) || 0);
@@ -124,12 +126,13 @@ export async function GET() {
         lockAt: contest.lockAt,
         endsAt: contest.endsAt,
         rules: Array.isArray(contest.rules)
-          ? contest.rules.map((rule) => ({
+          ? contest.rules.map((rule, index) => ({
               id: rule.id,
               cardSetId: rule.cardSetId ?? null,
               maxRosterSize: rule.maxRosterSize ?? null,
               entryFeeEnabled: rule.entryFeeEnabled ?? false,
               entryFeeAmount: rule.entryFeeAmount ?? null,
+              config: index === 0 ? (ruleConfigByContestId.get(contest.id) as ContestListItem["rules"][number]["config"] ?? null) : null,
             }))
           : [],
         _count: { entries: contest._count.entries },
