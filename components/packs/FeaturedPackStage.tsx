@@ -17,6 +17,9 @@ type FeaturedPackStageProps = {
   rarityOdds?: Odd[];
   editionOdds?: Odd[];
   userPoints?: number;
+  isGuest?: boolean;
+  guestHeadline?: string;
+  guestSupportingCopy?: string;
 };
 
 const DEFAULT_RARITY_ODDS: Odd[] = [
@@ -66,6 +69,9 @@ export function FeaturedPackStage({
   rarityOdds,
   editionOdds,
   userPoints,
+  isGuest = false,
+  guestHeadline,
+  guestSupportingCopy,
 }: FeaturedPackStageProps) {
   const packCost = GAME_CONFIG.PACK_COST;
   const displayRarity = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
@@ -76,10 +82,16 @@ export function FeaturedPackStage({
 
   const ctaLabel =
     openingPhase === "tearing"
-      ? "Breaking seal…"
+      ? isGuest
+        ? "Preparing preview…"
+        : "Breaking seal…"
       : isOpening
-        ? "Preparing reveal…"
-        : `OPEN A PACK — ${packCost} PTS`;
+        ? isGuest
+          ? "Loading demo reveal…"
+          : "Preparing reveal…"
+        : isGuest
+          ? "Reveal a demo pack"
+          : `Reveal pack — ${packCost} pts`;
 
   const supplyText =
     typeof remaining === "number"
@@ -90,8 +102,6 @@ export function FeaturedPackStage({
 
   return (
     <div className="ps-layout">
-
-      {/* ── LEFT: Pack Hero ── */}
       <div className="ps-hero">
         <div className="ps-hero-glow" />
         <div className="ps-hero-inner">
@@ -111,17 +121,13 @@ export function FeaturedPackStage({
         </div>
       </div>
 
-      {/* ── RIGHT: Details Panel ── */}
       <div className="ps-panel">
-
-        {/* 1 — Price */}
         <div className="ps-price-block">
           <span className="ps-price-label">PRICE</span>
           <span className="ps-price-value">{packCost} PTS</span>
           {!canAfford && <span className="ps-price-warn">Not enough points</span>}
         </div>
 
-        {/* 2 — Pack at a glance */}
         <div className="ps-section">
           <h2 className="ps-section-title">WHAT&apos;S INSIDE</h2>
           <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
@@ -132,7 +138,6 @@ export function FeaturedPackStage({
           </div>
         </div>
 
-        {/* 3 — Odds: two columns */}
         <div className="ps-section">
           <h2 className="ps-section-title">ODDS</h2>
           <div className="ps-odds-grid">
@@ -159,7 +164,6 @@ export function FeaturedPackStage({
           </div>
         </div>
 
-        {/* 4 — CTAs */}
         <div className="ps-cta-block">
           <button
             type="button"
@@ -169,11 +173,18 @@ export function FeaturedPackStage({
           >
             {ctaLabel}
           </button>
+          {isGuest ? (
+            <div className="ps-guest-copy-block">
+              {guestHeadline ? <p className="ps-guest-headline">{guestHeadline}</p> : null}
+              {guestSupportingCopy ? <p className="ps-guest-copy">{guestSupportingCopy}</p> : null}
+            </div>
+          ) : (
+            <p className="ps-cta-subcopy">Open with points, reveal instantly, and add cards directly to your collection.</p>
+          )}
           <button type="button" className="ps-btn-secondary" onClick={onOpenOdds}>
             Full odds &amp; supply details
           </button>
         </div>
-
       </div>
     </div>
   );

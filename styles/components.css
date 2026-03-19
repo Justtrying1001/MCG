@@ -291,6 +291,45 @@
 .pack-reveal-head-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-1); margin-bottom: var(--space-1); }
 
 /* ===== Pack Store Redesign ===== */
+
+.packs-guest-intro {
+  margin-top: clamp(1rem, 2vw, 1.75rem);
+  padding: clamp(0.9rem, 2vw, 1.15rem) clamp(1rem, 2.2vw, 1.4rem);
+  border: 1px solid rgba(212, 168, 75, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(16, 20, 27, 0.72), rgba(11, 15, 21, 0.88));
+  display: grid;
+  gap: 0.4rem;
+}
+
+.packs-guest-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d4a84b;
+}
+
+.packs-guest-intro h2 {
+  margin: 0;
+  font-family: 'Rajdhani', 'Barlow Condensed', sans-serif;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.packs-guest-copy,
+.packs-guest-hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.packs-guest-hint {
+  font-size: 0.84rem;
+}
+
 .packs-main-section {
   margin-top: clamp(1rem, 2vw, 1.75rem);
   border: 1px solid rgba(212, 168, 75, 0.22);
@@ -626,6 +665,29 @@
 
 .ps-btn-secondary:hover {
   border-color: rgba(196, 113, 90, 0.50);
+  color: var(--text, #F3F1EC);
+}
+
+.ps-cta-subcopy,
+.ps-guest-copy-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ps-cta-subcopy,
+.ps-guest-copy {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-2, #8A8A84);
+}
+
+.ps-guest-headline {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text, #F3F1EC);
 }
 
