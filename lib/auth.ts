@@ -1,10 +1,15 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import type { User } from "@prisma/client";
 
 const SESSION_COOKIE = "mcg_session";
 const SESSION_TTL_DAYS = 30;
 const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+
+export type SessionResolution =
+  | { ok: true; user: User; sessionId: string; expiresAt: Date }
+  | { ok: false; reason: "missing_cookie" | "session_not_found" | "session_expired" };
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -55,9 +60,16 @@ export async function clearSession(token: string) {
 }
 
 export async function getSessionUser() {
+  const resolution = await resolveSessionUser();
+  return resolution.ok ? resolution.user : null;
+}
+
+export async function resolveSessionUser(): Promise<SessionResolution> {
   const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  if (!token) {
+    return { ok: false, reason: "missing_cookie" };
+  }
 
   const tokenHash = hashToken(token);
   const now = new Date();
@@ -67,11 +79,18 @@ export async function getSessionUser() {
     include: { user: true },
   });
 
-  if (!session) return null;
+  if (!session) {
+    return { ok: false, reason: "session_not_found" };
+  }
   if (session.expiresAt <= now) {
     await prisma.userSession.delete({ where: { id: session.id } }).catch(() => null);
-    return null;
+    return { ok: false, reason: "session_expired" };
   }
 
-  return session.user;
+  return {
+    ok: true,
+    user: session.user,
+    sessionId: session.id,
+    expiresAt: session.expiresAt,
+  };
 }

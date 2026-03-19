@@ -154,6 +154,8 @@ export async function GET(req: Request) {
     logAuthEvent("x_callback_started", "info", {
       requestHost: url.host,
       invitePresent: Boolean(inviteCode),
+      hasExpectedRequestToken: Boolean(expectedRequestToken),
+      hasRequestTokenSecret: Boolean(requestTokenSecret),
     });
 
     const accessToken = await exchangeXAccessToken(oauthToken, oauthVerifier, requestTokenSecret);
@@ -201,6 +203,7 @@ export async function GET(req: Request) {
       cookieName: getSessionCookieName(),
       cookieSecure: buildSessionCookieOptions().secure,
       cookieMaxAge: getSessionMaxAgeSeconds(),
+      responseRedirectHost: new URL("/", req.url).host,
     });
 
     clearCookies(response);
