@@ -23,8 +23,10 @@ export function HowItWorks() {
   return (
     <section className="home-how-it-works">
       <div className="home-how-header">
-        <p className="home-how-eyebrow">How it works</p>
-        <h2 className="home-how-title">Three moves. One collectible loop.</h2>
+        <div className="home-how-header-copy">
+          <p className="home-how-eyebrow">How it works</p>
+          <h2 className="home-how-title">Three moves. One collectible loop.</h2>
+        </div>
         <p className="home-how-copy">The redesign keeps the same game flow, but presents it as a richer collectible experience.</p>
       </div>
       <div className="home-how-steps">

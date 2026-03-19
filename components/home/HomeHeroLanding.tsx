@@ -80,26 +80,29 @@ export function HomeHeroLanding() {
           </div>
         </div>
 
-        <div className="home-hero-cards-float" aria-hidden="true">
-          <div className="home-hero-cards-backdrop" />
-          <div className="home-hero-cards-orbit" />
-          <div className="home-hero-stage-copy">
-            <span>Genesis pack</span>
-            <strong>4 featured cards</strong>
-          </div>
-          {HERO_CARDS.map((card) => (
-            <div key={card.name} className={`home-float-card ${card.cls}`}>
-              <div className="home-float-card-art">
-                <Image src={card.img} alt={card.label} fill sizes="(max-width: 768px) 220px, 260px" className="home-float-card-img" unoptimized />
-                <div className="home-float-card-art-overlay" />
-              </div>
-              <div className="home-float-card-body">
-                <span className="home-float-card-rarity">{card.rarity}</span>
-                <span className="home-float-card-name">{card.label}</span>
-                <span className="home-float-card-symbol">{card.symbol}</span>
-              </div>
+        <div className="home-hero-visual" aria-hidden="true">
+          <div className="home-hero-stage">
+            <div className="home-hero-stage-copy">
+              <span>Genesis pack</span>
+              <strong>4 featured cards</strong>
+              <p>Each featured card drops into the same collection and contest loop you use in the app.</p>
             </div>
-          ))}
+            <div className="home-hero-card-grid">
+              {HERO_CARDS.map((card) => (
+                <div key={card.name} className={`home-float-card ${card.cls}`}>
+                  <div className="home-float-card-art">
+                    <Image src={card.img} alt={card.label} fill sizes="(max-width: 768px) 220px, 260px" className="home-float-card-img" unoptimized />
+                    <div className="home-float-card-art-overlay" />
+                  </div>
+                  <div className="home-float-card-body">
+                    <span className="home-float-card-rarity">{card.rarity}</span>
+                    <span className="home-float-card-name">{card.label}</span>
+                    <span className="home-float-card-symbol">{card.symbol}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

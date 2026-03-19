@@ -99,62 +99,74 @@ export default function HomePage() {
   return isAuth && userInfo ? (
     <SiteShell mode="app">
       <div className="home-dashboard-layout">
-        <PlayerDashboardHeader
-          displayName={userInfo.displayName}
-          points={userInfo.points}
-          level={userInfo.level}
-          activeEntries={userInfo.activeEntries}
-          seasonRank={userInfo.seasonRank}
-        />
+        <section className="home-dashboard-section home-dashboard-section--hero">
+          <PlayerDashboardHeader
+            displayName={userInfo.displayName}
+            points={userInfo.points}
+            level={userInfo.level}
+            activeEntries={userInfo.activeEntries}
+            seasonRank={userInfo.seasonRank}
+          />
+        </section>
 
-        <div className="home-dashboard-entry-grid" aria-label="Game entry points">
-          <Link href="/packs" className="home-dashboard-entry-card home-dashboard-entry-card--hero">
-            <span className="home-dashboard-entry-chip">Featured action</span>
-            <span className="home-dashboard-entry-icon" aria-hidden="true">✦</span>
-            <strong>Open packs</strong>
-            <p>Reveal fresh cards, grow your playable inventory, and fuel every other system in the app.</p>
-            <span className="home-dashboard-entry-cta">Enter the ritual →</span>
-          </Link>
-          <Link href="/contests" className="home-dashboard-entry-card home-dashboard-entry-card--contest">
-            <span className="home-dashboard-entry-chip">Competitive</span>
-            <span className="home-dashboard-entry-icon" aria-hidden="true">⚔</span>
-            <strong>Enter contests</strong>
-            <p>Scout open windows, lock lineups, and chase rank across active lobbies.</p>
-            <span className="home-dashboard-entry-cta">Browse arenas →</span>
-          </Link>
-          <Link href="/collection" className="home-dashboard-entry-card home-dashboard-entry-card--collection">
-            <span className="home-dashboard-entry-chip">Inventory</span>
-            <span className="home-dashboard-entry-icon" aria-hidden="true">◌</span>
-            <strong>View collection</strong>
-            <p>Track completion, revisit standout pulls, and monitor card depth.</p>
-          </Link>
-          <Link href="/rewards" className="home-dashboard-entry-card home-dashboard-entry-card--rewards">
-            <span className="home-dashboard-entry-chip">Progression</span>
-            <span className="home-dashboard-entry-icon" aria-hidden="true">★</span>
-            <strong>Claim rewards</strong>
-            <p>Check milestones, quest progress, and unlockable reward tracks.</p>
-          </Link>
-        </div>
-
-        <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
-          <div className="home-dashboard-main-column">
-            <ActiveContestsRail contests={contests} />
+        <section className="home-dashboard-section home-dashboard-section--entries" aria-label="Game entry points">
+          <div className="home-dashboard-entry-grid">
+            <Link href="/packs" className="home-dashboard-entry-card home-dashboard-entry-card--hero">
+              <span className="home-dashboard-entry-chip">Featured action</span>
+              <span className="home-dashboard-entry-icon" aria-hidden="true">✦</span>
+              <strong>Open packs</strong>
+              <p>Reveal fresh cards, grow your playable inventory, and fuel every other system in the app.</p>
+              <span className="home-dashboard-entry-cta">Open packs →</span>
+            </Link>
+            <Link href="/contests" className="home-dashboard-entry-card home-dashboard-entry-card--contest">
+              <span className="home-dashboard-entry-chip">Competitive</span>
+              <span className="home-dashboard-entry-icon" aria-hidden="true">⚔</span>
+              <strong>Enter contests</strong>
+              <p>Scout open windows, lock lineups, and chase rank across active lobbies.</p>
+              <span className="home-dashboard-entry-cta">Browse contests →</span>
+            </Link>
+            <Link href="/collection" className="home-dashboard-entry-card home-dashboard-entry-card--collection">
+              <span className="home-dashboard-entry-chip">Inventory</span>
+              <span className="home-dashboard-entry-icon" aria-hidden="true">◌</span>
+              <strong>View collection</strong>
+              <p>Track completion, revisit standout pulls, and monitor card depth.</p>
+              <span className="home-dashboard-entry-cta">View collection →</span>
+            </Link>
+            <Link href="/rewards" className="home-dashboard-entry-card home-dashboard-entry-card--rewards">
+              <span className="home-dashboard-entry-chip">Progression</span>
+              <span className="home-dashboard-entry-icon" aria-hidden="true">★</span>
+              <strong>Claim rewards</strong>
+              <p>Check milestones, quest progress, and unlockable reward tracks.</p>
+              <span className="home-dashboard-entry-cta">See rewards →</span>
+            </Link>
           </div>
+        </section>
 
-          {hasCollectionSummary ? (
-            <aside className="home-dashboard-side-column">
-              <CollectionProgressBlock
-                completionPct={userInfo.completionPct}
-                ownedCount={userInfo.ownedTemplates ?? 0}
-                missingCount={userInfo.missingTemplates ?? 0}
-              />
-            </aside>
-          ) : null}
-        </div>
+        <section className={`home-dashboard-section home-dashboard-section--activity${hasCollectionSummary ? "" : " home-dashboard-section--activity-single"}`}>
+          <div className="home-dashboard-main-grid">
+            <div className="home-dashboard-main-column">
+              <ActiveContestsRail contests={contests} />
+              <RecentPullsRail pulls={recentPulls} />
+            </div>
 
-        <RecentPullsRail pulls={recentPulls} />
+            {hasCollectionSummary ? (
+              <aside className="home-dashboard-side-column">
+                <CollectionProgressBlock
+                  completionPct={userInfo.completionPct}
+                  ownedCount={userInfo.ownedTemplates ?? 0}
+                  missingCount={userInfo.missingTemplates ?? 0}
+                />
+                <DocsLearnSection compact />
+              </aside>
+            ) : null}
+          </div>
+        </section>
 
-        <DocsLearnSection compact />
+        {!hasCollectionSummary ? (
+          <section className="home-dashboard-section home-dashboard-section--docs">
+            <DocsLearnSection compact />
+          </section>
+        ) : null}
       </div>
     </SiteShell>
   ) : (

@@ -67,9 +67,9 @@
   --bp-lg: 1120px;
   --bp-xl: 1280px;
 
-  --content-max: 1380px;
-  --nav-h: 76px;
-  --sidebar-w: 228px;
+  --content-max: 1280px;
+  --nav-h: 72px;
+  --sidebar-w: 256px;
 
   --color-bg-page: var(--surface);
   --color-surface-1: rgba(30, 22, 40, 0.74);

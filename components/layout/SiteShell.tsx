@@ -127,7 +127,7 @@ export function SiteShell({ children, mode = "app" }: { children: ReactNode; mod
             </nav>
 
             <div className="mcg-app-sidebar-card">
-              <p className="mcg-eyebrow">Relic status</p>
+              <p className="mcg-eyebrow">Card status</p>
               <strong>Genesis season is live</strong>
               <span>Open packs, track active contests, and keep building your collection.</span>
             </div>
