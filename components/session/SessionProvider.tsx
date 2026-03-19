@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SessionState, UserSessionPayload } from "@/types/session";
 
 const SESSION_CHANGED_EVENT = "mcg:session-changed";
+const REFRESH_DEDUP_MS = 1_500;
 
 type SessionChangedDetail = { me: SessionState | null };
 
@@ -24,30 +25,51 @@ function emitSessionChanged(me: SessionState | null) {
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [me, setMeState] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState(true);
+  const meRef = useRef<SessionState | null>(null);
+  const inFlightRefreshRef = useRef<Promise<boolean> | null>(null);
+  const lastRefreshAtRef = useRef(0);
 
   const setMe = useCallback((value: SessionState | null) => {
+    meRef.current = value;
     setMeState(value);
     emitSessionChanged(value);
   }, []);
 
   const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/me", { cache: "no-store" });
-      if (res.ok) {
-        const payload = (await res.json()) as UserSessionPayload;
-        setMeState(payload);
-        emitSessionChanged(payload);
-        return true;
-      }
-
-      setMeState(null);
-      emitSessionChanged(null);
-      return false;
-    } catch {
-      setMeState(null);
-      emitSessionChanged(null);
-      return false;
+    const now = Date.now();
+    if (inFlightRefreshRef.current && now - lastRefreshAtRef.current < REFRESH_DEDUP_MS) {
+      return inFlightRefreshRef.current;
     }
+
+    lastRefreshAtRef.current = now;
+    const request = (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (res.ok) {
+          const payload = (await res.json()) as UserSessionPayload;
+          meRef.current = payload;
+          setMeState(payload);
+          emitSessionChanged(payload);
+          return true;
+        }
+
+        if (res.status === 401) {
+          meRef.current = null;
+          setMeState(null);
+          emitSessionChanged(null);
+          return false;
+        }
+
+        return Boolean(meRef.current);
+      } catch {
+        return Boolean(meRef.current);
+      } finally {
+        inFlightRefreshRef.current = null;
+      }
+    })();
+
+    inFlightRefreshRef.current = request;
+    return request;
   }, []);
 
   useEffect(() => {
@@ -56,7 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const hasSession = await refresh();
       if (!active) return;
-      if (!hasSession) {
+      if (!hasSession && !meRef.current) {
         setMeState(null);
       }
       setLoading(false);
@@ -70,17 +92,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onSessionChanged = (event: Event) => {
       const customEvent = event as CustomEvent<SessionChangedDetail>;
+      meRef.current = customEvent.detail?.me ?? null;
       setMeState(customEvent.detail?.me ?? null);
       setLoading(false);
     };
 
-    const refreshOnFocus = () => {
+    const refreshIfNeeded = () => {
       void refresh();
+    };
+
+    const refreshOnFocus = () => {
+      refreshIfNeeded();
     };
 
     const refreshOnVisibility = () => {
       if (document.visibilityState === "visible") {
-        void refresh();
+        refreshIfNeeded();
       }
     };
 

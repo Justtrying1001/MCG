@@ -10,6 +10,28 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function shouldUseSecureCookies() {
+  return process.env.NODE_ENV === "production";
+}
+
+export function getSessionCookieName() {
+  return SESSION_COOKIE;
+}
+
+export function getSessionMaxAgeSeconds() {
+  return Math.floor(SESSION_TTL_MS / 1000);
+}
+
+export function buildSessionCookieOptions(maxAge = getSessionMaxAgeSeconds()) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: shouldUseSecureCookies(),
+    path: "/",
+    maxAge,
+  };
+}
+
 export async function createSession(userId: string) {
   const token = randomBytes(32).toString("hex");
   const tokenHash = hashToken(token);
@@ -52,12 +74,4 @@ export async function getSessionUser() {
   }
 
   return session.user;
-}
-
-export function getSessionCookieName() {
-  return SESSION_COOKIE;
-}
-
-export function getSessionMaxAgeSeconds() {
-  return Math.floor(SESSION_TTL_MS / 1000);
 }
