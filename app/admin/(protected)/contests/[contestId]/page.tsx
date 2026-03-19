@@ -73,7 +73,7 @@ type TokenScoreDetail = {
   volumeChange: number | null;
   rankChange: number | null;
   baseScore: number;
-  rankMultiplier: number;
+  momentumMultiplier: number;
   finalScore: number;
 };
 
@@ -567,9 +567,9 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
           <thead>
             <tr>
               <Th>Token</Th>
-              <Th>Base score</Th>
-              <Th>Multiplier</Th>
-              <Th>Final score</Th>
+              <Th>Weighted component score</Th>
+              <Th>Momentum bonus</Th>
+              <Th>Token score</Th>
               <Th>Price Δ</Th>
               <Th>MC Δ</Th>
               <Th>Vol Δ</Th>
@@ -580,7 +580,7 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
               <tr key={row.id}>
                 <Td>{row.tokenProject.displayName || row.tokenProject.slug}</Td>
                 <Td>{row.baseScore.toFixed(2)}</Td>
-                <Td>×{row.rankMultiplier.toFixed(3)}</Td>
+                <Td>×{row.momentumMultiplier.toFixed(3)}</Td>
                 <Td><strong>{row.finalScore.toFixed(2)}</strong></Td>
                 <Td>{formatPercent(row.priceChange)}</Td>
                 <Td>{formatPercent(row.marketCapChange)}</Td>

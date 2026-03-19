@@ -15,7 +15,7 @@ const steps = [
     num: "03",
     icon: "◎",
     title: "WIN",
-    description: "Token performance = your score. Top roster wins.",
+    description: "Token score drives each card score. Highest total wins.",
   },
 ];
 

@@ -9,12 +9,15 @@ const { prismaMock } = vi.hoisted(() => ({
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
 import {
+  compareContestRankingRows,
   computeContestScoresFromSnapshots,
   computeTokenScore,
   marketCapScoreFromChange,
+  momentumMultiplierFromChanges,
   priceScoreFromChange,
-  rankMultiplierFromChange,
   rankScoreFromChange,
+  rarityMultiplierForCode,
+  editionMultiplierForCode,
   volumeScoreFromChange,
 } from "@/lib/domain/contests/scoring-engine-runtime";
 
@@ -23,42 +26,71 @@ describe("contest scoring engine runtime", () => {
     vi.clearAllMocks();
   });
 
-  it("implements bounded component scores and rank bonus", () => {
+  it("implements Hybrid v1 component scores with neutral missing-data handling", () => {
     expect(priceScoreFromChange(-1)).toBe(0);
     expect(priceScoreFromChange(0)).toBe(50);
-    expect(priceScoreFromChange(0.5)).toBe(100);
-    // null → 0, not 50 (missing data should not give neutral benefit)
-    expect(priceScoreFromChange(null)).toBe(0);
+    expect(priceScoreFromChange(0.45)).toBe(100);
+    expect(priceScoreFromChange(null)).toBe(50);
 
     expect(volumeScoreFromChange(-1)).toBe(0);
     expect(volumeScoreFromChange(0)).toBe(50);
-    expect(volumeScoreFromChange(1)).toBe(100);
-    expect(volumeScoreFromChange(null)).toBe(0);
+    expect(volumeScoreFromChange(0.75)).toBe(100);
+    expect(volumeScoreFromChange(null)).toBe(50);
 
     expect(marketCapScoreFromChange(-1)).toBe(0);
     expect(marketCapScoreFromChange(0)).toBe(50);
-    expect(marketCapScoreFromChange(0.5)).toBe(100);
-    expect(marketCapScoreFromChange(null)).toBe(0);
+    expect(marketCapScoreFromChange(0.7)).toBe(100);
+    expect(marketCapScoreFromChange(null)).toBe(50);
 
     expect(rankScoreFromChange(-1)).toBe(0);
     expect(rankScoreFromChange(0)).toBe(50);
     expect(rankScoreFromChange(0.3)).toBe(100);
-    expect(rankScoreFromChange(null)).toBe(0);
+    expect(rankScoreFromChange(null)).toBe(50);
 
-    expect(rankMultiplierFromChange(-0.1)).toBe(1);
-    expect(rankMultiplierFromChange(0)).toBe(1);
-    expect(rankMultiplierFromChange(0.3)).toBeCloseTo(1.1, 6);
+    expect(momentumMultiplierFromChanges(null, null)).toBe(1);
+    expect(momentumMultiplierFromChanges(0, 0)).toBe(1);
+    expect(momentumMultiplierFromChanges(0.75, 0.3)).toBeCloseTo(1.07, 6);
   });
 
-  it("keeps token score bounded to 100 and centered when no movement", () => {
+  it("keeps token score bounded to 105 and centered when no movement", () => {
     const neutral = computeTokenScore({ priceChange: 0, marketCapChange: 0, volumeChange: 0, rankChange: 0 });
     expect(neutral).toBeCloseTo(50, 6);
 
     const upper = computeTokenScore({ priceChange: 50, marketCapChange: 50, volumeChange: 50, rankChange: 50 });
-    expect(upper).toBeLessThanOrEqual(100);
+    expect(upper).toBeLessThanOrEqual(105);
 
     const lower = computeTokenScore({ priceChange: -50, marketCapChange: -50, volumeChange: -50, rankChange: -50 });
     expect(lower).toBeGreaterThanOrEqual(0);
+  });
+
+  it("makes price slightly less dominant and volume more valuable than the previous formula family on targeted scenarios", () => {
+    const priceOnly = computeTokenScore({ priceChange: 0.6, marketCapChange: 0.18, volumeChange: 0.1, rankChange: 0.05 });
+    const priceAndVolume = computeTokenScore({ priceChange: 0.6, marketCapChange: 0.35, volumeChange: 1.2, rankChange: 0.12 });
+    const volumeBreakout = computeTokenScore({ priceChange: 0.08, marketCapChange: 0.1, volumeChange: 1.1, rankChange: 0.03 });
+    const stable = computeTokenScore({ priceChange: 0.02, marketCapChange: 0.03, volumeChange: 0.05, rankChange: 0 });
+
+    expect(priceOnly).toBeCloseTo(75.9554166667, 6);
+    expect(priceAndVolume).toBeCloseTo(96.521, 3);
+    expect(volumeBreakout).toBeCloseTo(73.4031944444, 6);
+    expect(volumeBreakout).toBeGreaterThan(stable);
+    expect(priceAndVolume - priceOnly).toBeGreaterThan(20);
+  });
+
+  it("applies the new rarity and edition multipliers and reduces premium spread", () => {
+    expect(rarityMultiplierForCode("COMMON")).toBe(1);
+    expect(rarityMultiplierForCode("UNCOMMON")).toBe(1.03);
+    expect(rarityMultiplierForCode("RARE")).toBe(1.07);
+    expect(rarityMultiplierForCode("EPIC")).toBe(1.12);
+    expect(rarityMultiplierForCode("LEGENDARY")).toBe(1.18);
+
+    expect(editionMultiplierForCode("BASE")).toBe(1);
+    expect(editionMultiplierForCode("REVERSE")).toBe(1.02);
+    expect(editionMultiplierForCode("BRILLANTE")).toBe(1.04);
+    expect(editionMultiplierForCode("HOLO")).toBe(1.07);
+    expect(editionMultiplierForCode("FULL_ART")).toBe(1.11);
+
+    expect(rarityMultiplierForCode("LEGENDARY") * editionMultiplierForCode("FULL_ART")).toBeCloseTo(1.3098, 6);
+    expect(rarityMultiplierForCode("LEGENDARY") * editionMultiplierForCode("FULL_ART")).toBeLessThan(1.6875);
   });
 
   it("computes token->card->user scores as sum of card scores and rebuilds ranking", async () => {
@@ -150,5 +182,28 @@ describe("contest scoring engine runtime", () => {
     expect(u1Score).toBeCloseTo(u1CardSum, 8);
 
     expect(rankingCreates[0].userId).toBe("u1");
+  });
+
+  it("uses ranking tie-break chain: rawTokenScoreSum, then positiveTokenCount, then bestTokenScore, then userId", async () => {
+    const stats = new Map([
+      ["uA", { rawTokenScoreSum: 320, positiveTokenCount: 3, bestTokenScore: 90 }],
+      ["uB", { rawTokenScoreSum: 310, positiveTokenCount: 5, bestTokenScore: 95 }],
+      ["uC", { rawTokenScoreSum: 300, positiveTokenCount: 4, bestTokenScore: 88 }],
+      ["uD", { rawTokenScoreSum: 300, positiveTokenCount: 2, bestTokenScore: 99 }],
+      ["uE", { rawTokenScoreSum: 300, positiveTokenCount: 4, bestTokenScore: 92 }],
+      ["uF", { rawTokenScoreSum: 300, positiveTokenCount: 4, bestTokenScore: 92 }],
+    ]);
+
+    const rows = [
+      { userId: "uF", score: 500 },
+      { userId: "uD", score: 500 },
+      { userId: "uB", score: 500 },
+      { userId: "uE", score: 500 },
+      { userId: "uC", score: 500 },
+      { userId: "uA", score: 500 },
+    ];
+
+    const ordered = [...rows].sort((a, b) => compareContestRankingRows(a, b, stats)).map((row) => row.userId);
+    expect(ordered).toEqual(["uA", "uB", "uE", "uF", "uC", "uD"]);
   });
 });

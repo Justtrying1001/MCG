@@ -30,10 +30,10 @@ export function ScoreBreakdownTable({ breakdownRows }: { breakdownRows: Breakdow
             <th>Token</th>
             <th>Rarity</th>
             <th>Edition</th>
-            <th>Base Score</th>
+            <th>Token Score</th>
             <th>Rarity Mult.</th>
             <th>Edition Mult.</th>
-            <th>Final Score</th>
+            <th>Card Score</th>
           </tr>
         </thead>
         <tbody>

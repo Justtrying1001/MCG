@@ -108,7 +108,7 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
             <h3>Token performance</h3>
             <div className="table-wrapper">
               <table className="admin-table">
-                <thead><tr><th>Token</th><th>Score</th><th>Price</th><th>Volume</th><th>Marketcap</th></tr></thead>
+                <thead><tr><th>Token</th><th>Token score</th><th>Price</th><th>Volume</th><th>Market cap</th></tr></thead>
                 <tbody>
                   {payload.scoring.tokenScores.map((row) => (
                     <tr key={row.id}>
@@ -125,8 +125,8 @@ export default function ContestOperatorPage({ params }: { params: { contestId: s
           </AdminPanel>
 
           <AdminPanel>
-            <h3>Score Breakdown</h3>
-            <p className="contest-admin-muted">Formula: <code>finalScore = baseScore × rarityMultiplier × editionMultiplier</code></p>
+            <h3>Card score breakdown</h3>
+            <p className="contest-admin-muted">Formula: <code>cardScore = tokenScore × rarityMultiplier × editionMultiplier</code></p>
             <ScoreBreakdownTable breakdownRows={payload.scoring.breakdownRows} />
           </AdminPanel>
 
