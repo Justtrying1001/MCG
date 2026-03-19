@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
 
 const PENDING_INVITE_STORAGE_KEY = "mcg_privy_pending_invite";
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
+const PRIVY_LOGOUT_WAIT_TIMEOUT_MS = 1500;
+const PRIVY_LOGOUT_WAIT_INTERVAL_MS = 50;
 
 function readPendingInviteCode() {
   if (typeof window === "undefined") return null;
@@ -44,9 +46,29 @@ function getInviteCodeFromLocation() {
 }
 
 export function usePrivyLogin() {
-  const { authenticated, getAccessToken, login, logout, ready } = usePrivy();
+  const { authenticated, getAccessToken, login, logout, ready, user } = usePrivy();
   const { me, refresh, setMe } = useSession();
   const [isSyncingSession, setIsSyncingSession] = useState(false);
+  const privyStateRef = useRef({ authenticated, ready, user });
+
+  useEffect(() => {
+    privyStateRef.current = { authenticated, ready, user };
+  }, [authenticated, ready, user]);
+
+  const waitForPrivyLogout = useCallback(async () => {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < PRIVY_LOGOUT_WAIT_TIMEOUT_MS) {
+      const { authenticated: isAuthenticated, ready: isReady, user: currentUser } = privyStateRef.current;
+      if (isReady && !isAuthenticated && !currentUser) {
+        return true;
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_LOGOUT_WAIT_INTERVAL_MS));
+    }
+
+    return false;
+  }, []);
 
   const syncSession = useCallback(async (inviteCode?: string | null) => {
     if (!ready || !authenticated) return false;
@@ -86,14 +108,15 @@ export function usePrivyLogin() {
   const loginWithPrivy = useCallback(async (inviteCode?: string | null) => {
     const resolvedInviteCode = inviteCode ?? getInviteCodeFromLocation();
 
-    if (authenticated) {
+    if (privyStateRef.current.authenticated || privyStateRef.current.user) {
       await logout();
+      await waitForPrivyLogout();
     }
 
     writePendingLoginRequest(true);
     writePendingInviteCode(resolvedInviteCode);
     login({ loginMethods: ["twitter"] });
-  }, [authenticated, login, logout]);
+  }, [login, logout, waitForPrivyLogout]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
