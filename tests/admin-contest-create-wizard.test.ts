@@ -23,10 +23,12 @@ describe("contest cover options", () => {
 });
 
 describe("contest rewards step copy", () => {
-  it("surfaces bonus rewards planning and reward pack supply guidance", () => {
+  it("surfaces bonus rewards planning and exact pack preview guidance", () => {
     const source = fs.readFileSync("app/admin/(protected)/contests/create/_components/WizardSteps.tsx", "utf8");
     expect(source).toContain("Bonus rewards (optional)");
     expect(source).toContain("Reward pack supply snapshot");
     expect(source).toContain("POINTS_POOL_TOP_PERCENT");
+    expect(source).toContain("formatRewardPreviewPackLines");
+    expect(source).not.toContain('formatRewardPreviewPerWinnerRange(row.packsPerWinnerMin, row.packsPerWinnerMax, "packs")');
   });
 });

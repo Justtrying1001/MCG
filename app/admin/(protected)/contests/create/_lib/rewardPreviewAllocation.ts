@@ -14,6 +14,12 @@ export type RewardPreviewAllocationRow = {
   pointsPerWinnerMax: number;
   packsPerWinnerMin: number;
   packsPerWinnerMax: number;
+  packHighValueCount: number;
+  packPreviewSegments: Array<{
+    rankStart: number;
+    rankEnd: number;
+    packs: number;
+  }>;
 };
 
 export type RewardPreviewAllocation = {
@@ -214,6 +220,9 @@ function buildPreviewTierRanges(winnersCount: number): RewardTierRange[] {
 function buildPreviewRow(tier: RewardTierRange, perRankPoints: number[], perRankPacks: number[]): RewardPreviewAllocationRow {
   const pointSlice = perRankPoints.slice(tier.rankStart - 1, tier.rankEnd);
   const packSlice = perRankPacks.slice(tier.rankStart - 1, tier.rankEnd);
+  const packPreviewSegments = buildPackPreviewSegments(tier.rankStart, packSlice);
+  const packsPerWinnerMin = packSlice.length > 0 ? Math.min(...packSlice) : 0;
+  const packsPerWinnerMax = packSlice.length > 0 ? Math.max(...packSlice) : 0;
 
   return {
     rankStart: tier.rankStart,
@@ -224,11 +233,42 @@ function buildPreviewRow(tier: RewardTierRange, perRankPoints: number[], perRank
     packsReward: packSlice.reduce((sum, value) => sum + value, 0),
     pointsPerWinnerMin: pointSlice.length > 0 ? Math.min(...pointSlice) : 0,
     pointsPerWinnerMax: pointSlice.length > 0 ? Math.max(...pointSlice) : 0,
-    packsPerWinnerMin: packSlice.length > 0 ? Math.min(...packSlice) : 0,
-    packsPerWinnerMax: packSlice.length > 0 ? Math.max(...packSlice) : 0,
+    packsPerWinnerMin,
+    packsPerWinnerMax,
+    packHighValueCount: packSlice.filter((value) => value === packsPerWinnerMax).length,
+    packPreviewSegments,
   };
 }
 
 function formatTierLabel(rankStart: number, rankEnd: number) {
   return rankStart === rankEnd ? `#${rankStart}` : `#${rankStart}–${rankEnd}`;
+}
+
+function buildPackPreviewSegments(rankStart: number, packSlice: number[]) {
+  if (packSlice.length === 0) return [];
+
+  const segments: Array<{ rankStart: number; rankEnd: number; packs: number }> = [];
+  let segmentStart = rankStart;
+  let currentValue = packSlice[0] ?? 0;
+
+  for (let index = 1; index < packSlice.length; index += 1) {
+    const nextValue = packSlice[index] ?? 0;
+    if (nextValue === currentValue) continue;
+
+    segments.push({
+      rankStart: segmentStart,
+      rankEnd: rankStart + index - 1,
+      packs: currentValue,
+    });
+    segmentStart = rankStart + index;
+    currentValue = nextValue;
+  }
+
+  segments.push({
+    rankStart: segmentStart,
+    rankEnd: rankStart + packSlice.length - 1,
+    packs: currentValue,
+  });
+
+  return segments;
 }

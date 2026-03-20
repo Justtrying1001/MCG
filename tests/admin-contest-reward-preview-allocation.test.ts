@@ -43,6 +43,8 @@ describe("buildRewardPreviewAllocation", () => {
         pointsPerWinnerMax: 20,
         packsPerWinnerMin: 1,
         packsPerWinnerMax: 1,
+        packHighValueCount: 1,
+        packPreviewSegments: [{ rankStart: 1, rankEnd: 1, packs: 1 }],
       },
       {
         rankStart: 2,
@@ -55,6 +57,8 @@ describe("buildRewardPreviewAllocation", () => {
         pointsPerWinnerMax: 20,
         packsPerWinnerMin: 1,
         packsPerWinnerMax: 1,
+        packHighValueCount: 1,
+        packPreviewSegments: [{ rankStart: 2, rankEnd: 2, packs: 1 }],
       },
       {
         rankStart: 3,
@@ -67,6 +71,8 @@ describe("buildRewardPreviewAllocation", () => {
         pointsPerWinnerMax: 10,
         packsPerWinnerMin: 0,
         packsPerWinnerMax: 0,
+        packHighValueCount: 1,
+        packPreviewSegments: [{ rankStart: 3, rankEnd: 3, packs: 0 }],
       },
       {
         rankStart: 4,
@@ -79,6 +85,11 @@ describe("buildRewardPreviewAllocation", () => {
         pointsPerWinnerMax: 10,
         packsPerWinnerMin: 0,
         packsPerWinnerMax: 1,
+        packHighValueCount: 1,
+        packPreviewSegments: [
+          { rankStart: 4, rankEnd: 4, packs: 1 },
+          { rankStart: 5, rankEnd: 5, packs: 0 },
+        ],
       },
     ]);
     expect(preview.totalPoints).toBe(70);
@@ -108,6 +119,28 @@ describe("buildRewardPreviewAllocation", () => {
       pointsPerWinnerMin: 430,
       pointsPerWinnerMax: 440,
     });
+  });
+
+  it("exposes exact grouped pack sub-ranges with higher values assigned to better ranks first", () => {
+    const preview = buildRewardPreviewAllocation({
+      participantsCount: 100,
+      rewardConfig: {
+        pointsPool: 20_000,
+        packPool: 17,
+        rewardedTopPercent: 50,
+        distributionProfile: "balanced",
+      },
+    });
+
+    const splitTier = preview.rows.find((row) => row.label === "#26–50");
+
+    expect(splitTier?.packsPerWinnerMin).toBe(0);
+    expect(splitTier?.packsPerWinnerMax).toBe(1);
+    expect(splitTier?.packHighValueCount).toBe(4);
+    expect(splitTier?.packPreviewSegments).toEqual([
+      { rankStart: 26, rankEnd: 29, packs: 1 },
+      { rankStart: 30, rankEnd: 50, packs: 0 },
+    ]);
   });
 
   it("flattens the balanced profile for 100 participants and 50 winners", () => {
