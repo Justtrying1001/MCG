@@ -28,7 +28,7 @@ describe("canonical host middleware", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://www.example.com";
     delete process.env.VERCEL_ENV;
 
-    expect(shouldEnforceCanonicalHost(buildRequest("staging.example.com"))).toBe(true);
+    expect(shouldEnforceCanonicalHost(buildRequest("www.memecardgame.com"))).toBe(true);
   });
 
   it("does not enforce the canonical host on Vercel preview deployments", () => {

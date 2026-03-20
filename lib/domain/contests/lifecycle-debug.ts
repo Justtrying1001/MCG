@@ -10,6 +10,7 @@ import {
   type ContestLifecycleReconciliationResult,
 } from "@/lib/domain/contests/lifecycle-reconciliation";
 import { prisma } from "@/lib/prisma";
+import { getSiteOrigin } from "@/lib/site-url";
 
 const contestLifecycleDebugSelect = {
   id: true,
@@ -93,7 +94,7 @@ function iso(value: Date | null | undefined) {
 }
 
 function buildDriverState(contest: ContestLifecycleDebugRow) {
-  const qstashConfigured = Boolean(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_APP_URL);
+  const qstashConfigured = Boolean(process.env.QSTASH_TOKEN && getSiteOrigin());
   const schedulerEnabled = isContestLifecycleSchedulerEnabled();
   const hasQstashJobs = Boolean(contest.qstashOpenJobId || contest.qstashLiveJobId || contest.qstashSettleJobId);
 
