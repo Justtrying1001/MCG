@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import type { RewardPreviewAllocation } from "../_lib/rewardPreviewAllocation";
 import type { CardSet, ContestFormState, RewardCapacityCheck, RewardPackSupplySummary } from "../_hooks/types";
 
 export function ContestIdentityStep(props: {
@@ -228,7 +229,7 @@ export function ContestEntryRulesStep(props: {
 export function ContestRewardsStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
-  generatedPreview: { participantsCount: number; winnersCount: number; rows: Array<{ rankStart: number; rankEnd: number; label: string; winnersCount: number; pointsReward: number; packsReward: number; pointsPerWinnerMin: number; pointsPerWinnerMax: number; packsPerWinnerMin: number; packsPerWinnerMax: number }>; totalPoints: number; totalPacks: number };
+  generatedPreview: RewardPreviewAllocation;
   rewardIssues: string[];
   rewardCapacityCheck: RewardCapacityCheck | null;
   rewardPackSupply: RewardPackSupplySummary | null;
@@ -396,7 +397,7 @@ export function ContestRewardsStep(props: {
                     <tr key={`${row.rankStart}-${row.rankEnd}`}>
                       <td style={rewardPreviewBodyCellStyle}>
                         <strong>{row.label}</strong>
-                        {row.rankStart !== row.rankEnd ? <div className="contest-inline-note">Even split inside the tier with any +1 remainder flowing from the best rank downward.</div> : null}
+                        {row.rankStart !== row.rankEnd ? <div className="contest-inline-note">Even split inside the tier with per-winner points rounded down to the nearest 10 and any remaining +10 steps flowing from the best rank downward.</div> : null}
                       </td>
                       <td style={rewardPreviewBodyCellStyle}>{row.winnersCount.toLocaleString()}</td>
                       <td style={rewardPreviewBodyCellStyle}>
@@ -405,7 +406,9 @@ export function ContestRewardsStep(props: {
                       </td>
                       <td style={rewardPreviewBodyCellStyle}>
                         <div>{row.packsReward.toLocaleString()} total</div>
-                        <div className="contest-inline-note">{formatRewardPreviewPerWinnerRange(row.packsPerWinnerMin, row.packsPerWinnerMax, "packs")}</div>
+                        <div className="contest-inline-note" style={{ display: "grid", gap: "0.2rem" }}>
+                          {formatRewardPreviewPackLines(row).map((line) => <div key={line}>{line}</div>)}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -426,6 +429,29 @@ function formatRewardPreviewPerWinnerRange(min: number, max: number, unit: strin
   if (max <= 0) return `0 ${unit} each`;
   if (min === max) return `${max.toLocaleString()} ${unit} each`;
   return `${min.toLocaleString()}–${max.toLocaleString()} ${unit} each`;
+}
+
+function formatRewardPreviewPackLines(row: {
+  rankStart: number;
+  rankEnd: number;
+  packPreviewSegments: Array<{ rankStart: number; rankEnd: number; packs: number }>;
+}) {
+  if (row.packPreviewSegments.length <= 1) {
+    const packs = row.packPreviewSegments[0]?.packs ?? 0;
+    return [`${formatRewardPreviewRankLabel(row.rankStart, row.rankEnd)} → ${formatPackCount(packs)}${row.rankStart === row.rankEnd ? "" : " each"}`];
+  }
+
+  return row.packPreviewSegments.map((segment) =>
+    `${formatRewardPreviewRankLabel(segment.rankStart, segment.rankEnd)} → ${formatPackCount(segment.packs)}${segment.rankStart === segment.rankEnd ? "" : " each"}`
+  );
+}
+
+function formatRewardPreviewRankLabel(rankStart: number, rankEnd: number) {
+  return rankStart === rankEnd ? `#${rankStart}` : `#${rankStart}–${rankEnd}`;
+}
+
+function formatPackCount(value: number) {
+  return `${value.toLocaleString()} pack${value === 1 ? "" : "s"}`;
 }
 
 const rewardPreviewHeaderCellStyle: CSSProperties = {
