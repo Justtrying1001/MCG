@@ -6,7 +6,6 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 import { useSession } from "@/components/useSession";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
-import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
@@ -639,11 +638,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
                 emptyMessage={isOpen ? "Add a card" : "No lineup submitted"}
                 embedded
               />
-              {!me && isOpen ? (
-                <div style={{ marginTop: "1rem" }}>
-                  <ConnectXCallout layout="inline" title="Contest entry" description="Build a lineup, save your draft, and submit this roster from here once you connect." ctaLabel="Connect X to save lineup" />
-                </div>
-              ) : null}
             </div>
           </div>
 

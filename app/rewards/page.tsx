@@ -869,30 +869,24 @@ export default function RewardsPage() {
             <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "0.2rem" }}>Rewards</h1>
             <p style={{ fontSize: "0.9rem", color: TEXT_MUTED, marginBottom: "1rem" }}>Quests, milestones &amp; earning history stay organized here once you connect.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem" }}>
-              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}`, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                <div>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>Quests</p>
-                  <strong style={{ color: "var(--color-text-primary)" }}>Follow, repost, like, comment</strong>
-                  <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Social quests appear here with direct CTAs and proof submission when needed.</p>
-                </div>
-                <ConnectXCallout layout="inline" title="Quest actions" description="Start social quests and submit proof from this section once your account is connected." ctaLabel="Connect X to start quests" />
+              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}` }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>Quests</p>
+                <strong style={{ color: "var(--color-text-primary)" }}>Follow, repost, like, comment</strong>
+                <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Social quests appear here with direct CTAs and proof submission when needed.</p>
               </div>
-              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}`, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                <div>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>Milestones</p>
-                  <strong style={{ color: "var(--color-text-primary)" }}>Pack, collection, and contest progression</strong>
-                  <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Long-term reward tracks unlock as your account grows.</p>
-                </div>
-                <ConnectXCallout layout="inline" title="Milestone rewards" description="Unlock progression-based rewards here as your account, collection, and contest record grow." ctaLabel="Connect X to unlock milestones" />
+              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}` }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>Milestones</p>
+                <strong style={{ color: "var(--color-text-primary)" }}>Pack, collection, and contest progression</strong>
+                <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Long-term reward tracks unlock as your account grows.</p>
               </div>
-              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}`, display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                <div>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>History</p>
-                  <strong style={{ color: "var(--color-text-primary)" }}>Points and pack rewards ledger</strong>
-                  <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Your completed quests and credited rewards are listed in a single timeline.</p>
-                </div>
-                <ConnectXCallout layout="inline" title="Reward history" description="See your credited points, packs, and reward events here after you connect." ctaLabel="Connect X to view your reward history" />
+              <div style={{ padding: "1rem", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER_COLOR}` }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: TEXT_MUTED, marginBottom: "0.35rem" }}>History</p>
+                <strong style={{ color: "var(--color-text-primary)" }}>Points and pack rewards ledger</strong>
+                <p style={{ fontSize: "0.82rem", color: TEXT_MUTED, marginTop: "0.35rem" }}>Your completed quests and credited rewards are listed in a single timeline.</p>
               </div>
+            </div>
+            <div style={{ marginTop: "1rem" }}>
+              <ConnectXCallout layout="inline" title="Rewards access" description="Connect your account to start quests, unlock milestone rewards, and view your personal ledger in one place." ctaLabel="Connect X to access rewards" />
             </div>
           </div>
         </div>
