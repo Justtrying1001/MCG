@@ -1,16 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-function getCanonicalOrigin() {
-  const value = process.env.NEXT_PUBLIC_APP_URL;
-  if (!value) return null;
-
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
-}
+import { getCanonicalSiteUrl } from "@/lib/site-url";
 
 function getRequestHost(request: NextRequest) {
   return request.headers.get("x-forwarded-host") ?? request.nextUrl.host;
@@ -22,15 +12,14 @@ function isVercelPreviewDeployment(request: NextRequest) {
   }
 
   const deploymentHost = request.headers.get("x-vercel-deployment-url");
-  return Boolean(deploymentHost && deploymentHost !== getCanonicalOrigin()?.host);
+  return Boolean(deploymentHost && deploymentHost !== getCanonicalSiteUrl().host);
 }
 
 export function shouldEnforceCanonicalHost(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") return false;
   if (isVercelPreviewDeployment(request)) return false;
 
-  const canonicalUrl = getCanonicalOrigin();
-  if (!canonicalUrl) return false;
+  const canonicalUrl = getCanonicalSiteUrl();
 
   const requestHost = getRequestHost(request);
   return Boolean(requestHost) && requestHost !== canonicalUrl.host;
@@ -54,10 +43,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const canonicalUrl = getCanonicalOrigin();
-  if (!canonicalUrl) {
-    return NextResponse.next();
-  }
+  const canonicalUrl = getCanonicalSiteUrl();
 
   const destination = new URL(request.nextUrl.pathname + request.nextUrl.search, canonicalUrl.origin);
   logCanonicalRedirect(request, destination);

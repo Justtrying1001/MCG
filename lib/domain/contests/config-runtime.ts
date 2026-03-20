@@ -9,6 +9,7 @@ import { validateContestTransitionState } from "@/lib/domain/contests/contest-li
 import { ContestRuntimeError } from "@/lib/domain/contests/runtime";
 import { evaluateContestRewardPackCapacity } from "@/lib/domain/contests/reward-pack-capacity";
 import { prisma } from "@/lib/prisma";
+import { getSiteOrigin } from "@/lib/site-url";
 import { qstash } from "@/lib/qstash";
 
 const TEAM_SIZE_MODE_EXACT = "EXACT" as const;
@@ -303,7 +304,7 @@ export async function validateContestDraft(contestId: string) {
 }
 
 export async function publishContest(contestId: string) {
-  const hasQStash = Boolean(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_APP_URL);
+  const hasQStash = Boolean(process.env.QSTASH_TOKEN && getSiteOrigin());
   let scheduledJobs: ScheduledLifecycleJobs | null = null;
 
   console.info(`[publish] Contest ${contestId} publish requested qstashConfigured=${hasQStash}`);
@@ -798,7 +799,7 @@ async function scheduleLifecycleQStashJobs(
   liveAt: Date,
   endsAt: Date,
 ) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const baseUrl = getSiteOrigin();
   console.info(`[publish] scheduleLifecycleQStashJobs contest=${contestId} baseUrl=${baseUrl}`);
   const [openJob, liveJob, settleJob] = await Promise.all([
     lockAt
