@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { parseSocialTargetUrl } from "@/lib/domain/quests/social";
@@ -59,6 +60,8 @@ const LIFECYCLE_TONE: Record<LifecycleStatus, string> = {
 };
 
 export default function QuestLibraryPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<QuestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -78,6 +81,15 @@ export default function QuestLibraryPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("created") !== "1") return;
+    setMessage("Quest created successfully.");
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("created");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `/admin/quests?${nextQuery}` : "/admin/quests", { scroll: false });
+  }, [router, searchParams]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -186,6 +198,7 @@ export default function QuestLibraryPage() {
                   <div className="admin-quest-card-heading">
                     <span className="admin-quest-card-title" title={typeLabel}>{typeLabel}</span>
                     <span className="admin-quest-card-target" title={target.primaryLabel}>{target.primaryLabel}</span>
+                    {target.secondaryLabel ? <p className="admin-quest-secondary-line" title={target.secondaryLabel}>{target.secondaryLabel}</p> : null}
                   </div>
                 </div>
 
@@ -198,43 +211,42 @@ export default function QuestLibraryPage() {
 
               <div className="admin-quest-badge-row">
                 <span className={`admin-badge ${LIFECYCLE_TONE[lifecycle]}`}>{lifecycle}</span>
-                <span className="admin-badge neutral">{target.networkLabel}</span>
-                <span className="admin-badge neutral">{statusLabel}</span>
+                <span className={`admin-badge ${row.isActive ? "success" : "neutral"}`}>{statusLabel}</span>
                 <span className="admin-badge neutral">{row.validationMode}</span>
-                <span className="admin-badge neutral">{target.kindLabel}</span>
               </div>
 
               <div className="admin-quest-body">
-                <div className="admin-quest-primary-meta">
-                  {target.handle ? <MetaPill label="Handle" value={`@${target.handle}`} /> : null}
-                  {target.tweetId ? <MetaPill label="Tweet ID" value={target.tweetId} /> : null}
-                  {rewardCopy ? <MetaPill label="Reward" value={rewardCopy} /> : null}
+                <div className="admin-quest-main-grid">
+                  <div className="admin-quest-main-stack">
+                    {rewardCopy ? <MetaPill label="Reward" value={rewardCopy} /> : null}
+                    {target.handle ? <MetaPill label="Handle" value={`@${target.handle}`} /> : null}
+                    <MetaPill label={target.tweetId ? "Tweet target" : `${target.kindLabel} target`} value={target.primaryLabel} />
+                  </div>
+
+                  {target.url ? (
+                    <div className="admin-quest-link-card">
+                      <span className="admin-quest-link-label">Target link</span>
+                      <a href={target.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm admin-quest-open-link">
+                        {target.tweetId ? "Open tweet" : target.kindLabel === "Account" ? "Open account" : "Open target"}
+                      </a>
+                      {target.urlLabel ? <span className="admin-quest-url" title={target.url}>{target.urlLabel}</span> : null}
+                    </div>
+                  ) : null}
                 </div>
 
-                {target.url ? (
-                  <div className="admin-quest-link-row">
-                    <a href={target.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm admin-quest-open-link">
-                      {target.tweetId ? "Open tweet" : target.kindLabel === "Account" ? "Open account" : "Open target"}
-                    </a>
-                    {target.urlLabel ? <span className="admin-quest-url" title={target.url}>{target.urlLabel}</span> : null}
-                  </div>
-                ) : null}
-
-                {target.secondaryLabel ? <p className="admin-quest-secondary-line" title={target.secondaryLabel}>{target.secondaryLabel}</p> : null}
-
                 <div className="admin-quest-secondary-meta">
-                  <MetaPill label="Quest" value={row.code} />
+                  <MetaPill label="Quest ID" value={row.id} />
+                  {target.tweetId ? <MetaPill label="Tweet ID" value={target.tweetId} /> : null}
                   <MetaPill label="Window" value={formatWindow(row.startAt, row.endAt)} />
                 </div>
               </div>
 
               <div className="admin-quest-footer">
-                <span className="contest-inline-note" title={row.title}>{row.title}</span>
                 <div className="admin-quest-stats">
-                  <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Details</Link>
                   <span className="contest-inline-note">Done {row.analytics?.completedCount ?? 0}</span>
                   <span className="contest-inline-note">In progress {row.analytics?.progressCount ?? 0}</span>
                 </div>
+                <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Details</Link>
               </div>
             </article>
           );

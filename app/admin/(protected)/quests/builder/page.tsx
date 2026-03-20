@@ -240,9 +240,10 @@ export default function QuestBuilderPage() {
     setMessage(isEditMode ? "Quest updated successfully." : "Quest created successfully.");
     setSaving(false);
 
-    if (!isEditMode && payload?.quest?.id) {
-      router.replace(`/admin/quests/builder?questId=${payload.quest.id}`);
+    if (!isEditMode) {
+      router.push("/admin/quests?created=1");
       router.refresh();
+      return;
     }
   };
 
