@@ -5087,13 +5087,13 @@ a { color: inherit; text-decoration: none; }
 }
 
 .admin-quest-focus-card {
-  min-height: 220px;
+  min-height: 240px;
   align-items: stretch;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.8rem;
+  gap: 1rem;
   overflow: hidden;
-  padding: 0.85rem;
+  padding: 1rem;
 }
 
 .admin-focus-card:hover {
@@ -5120,7 +5120,13 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.4rem;
+  gap: 0.35rem;
+}
+
+.admin-quest-card-actions .btn {
+  padding-inline: 0.65rem;
+  min-height: 30px;
+  font-size: 0.72rem;
 }
 
 .admin-quest-chip-icon {
@@ -5132,7 +5138,7 @@ a { color: inherit; text-decoration: none; }
 .admin-quest-card-heading {
   min-width: 0;
   display: grid;
-  gap: 0.28rem;
+  gap: 0.32rem;
   flex: 1;
 }
 
@@ -5147,7 +5153,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .admin-quest-card-title {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: #a5b4fc;
   letter-spacing: 0.08em;
@@ -5156,9 +5162,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .admin-quest-card-target {
-  font-size: 0.98rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -5173,9 +5179,25 @@ a { color: inherit; text-decoration: none; }
   gap: 0.4rem;
 }
 
+.admin-quest-badge-row {
+  padding-bottom: 0.1rem;
+}
+
 .admin-quest-body {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.85rem;
+}
+
+.admin-quest-main-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.9fr);
+  align-items: start;
+}
+
+.admin-quest-main-stack {
+  display: grid;
+  gap: 0.45rem;
 }
 
 .admin-quest-link-row {
@@ -5185,15 +5207,34 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
 }
 
+.admin-quest-link-card {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.admin-quest-link-label {
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.55);
+}
+
 .admin-quest-open-link {
   flex: 0 0 auto;
+  justify-self: flex-start;
 }
 
 .admin-quest-secondary-line {
   margin: 0;
   color: var(--text-2);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.79rem;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -5204,11 +5245,11 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 0.35rem;
   max-width: 100%;
-  padding: 0.28rem 0.5rem;
+  padding: 0.34rem 0.58rem;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.54);
-  font-size: 0.73rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.5);
+  font-size: 0.72rem;
   color: var(--text-2);
 }
 
@@ -5227,7 +5268,7 @@ a { color: inherit; text-decoration: none; }
 .admin-quest-url {
   margin: 0;
   color: #93c5fd;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   white-space: nowrap;
   min-width: 0;
 }
@@ -5236,21 +5277,21 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.75rem;
   min-width: 0;
-  padding-top: 0.1rem;
+  padding-top: 0.8rem;
   border-top: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.admin-quest-footer > span:first-child {
-  flex: 1;
-  min-width: 0;
 }
 
 .admin-quest-stats {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.75rem;
   min-width: 0;
+  flex-wrap: wrap;
+}
+
+.admin-quest-stats .contest-inline-note {
+  font-size: 0.76rem;
 }
 
 .admin-quest-delete-btn {
@@ -5259,6 +5300,10 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 640px) {
   .admin-quest-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-quest-main-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
