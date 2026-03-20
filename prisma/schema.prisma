@@ -217,6 +217,7 @@ enum QuestValidationMode {
 enum UserQuestStatus {
   AVAILABLE
   IN_PROGRESS
+  PENDING_VALIDATION
   CLAIMABLE
   COMPLETED
   REJECTED
@@ -510,6 +511,7 @@ model UserQuestProgress {
   userId        String
   questId       String
   status        UserQuestStatus @default(AVAILABLE)
+  startedAt     DateTime?
   progressValue Int             @default(0)
   completedAt   DateTime?
   claimedAt     DateTime?
@@ -522,6 +524,7 @@ model UserQuestProgress {
   @@unique([userId, questId])
   @@index([userId])
   @@index([questId])
+  @@index([startedAt])
 }
 
 model QuestSubmission {
