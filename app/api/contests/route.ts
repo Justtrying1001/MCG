@@ -48,14 +48,15 @@ function buildRewardPreview(input: {
 export async function GET() {
   try {
     const user = await getSessionUser();
-    if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
     const contests = await listContestsMvp();
 
-    const userEntries = await prisma.contestEntry.findMany({
-      where: { userId: user.id, contestId: { in: contests.map((contest) => contest.id) } },
-      select: { id: true, contestId: true, status: true },
-    });
+    const userEntries = user
+      ? await prisma.contestEntry.findMany({
+          where: { userId: user.id, contestId: { in: contests.map((contest) => contest.id) } },
+          select: { id: true, contestId: true, status: true },
+        })
+      : [];
     const entryByContestId = new Map(userEntries.map((entry) => [entry.contestId, entry]));
 
     const meta = await prisma.contest.findMany({

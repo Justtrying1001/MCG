@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CollectorShowcase } from "@/components/profile/CollectorShowcase";
 import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
 import { SetCompletionSection } from "@/components/profile/SetCompletionSection";
@@ -79,7 +80,14 @@ export default function AccountPage() {
   return (
     <SiteShell>
       {!me ? (
-        <EmptyState title="Sign in to open your collector profile" description="Connect with X to load persistent progression and contest identity." />
+        <>
+          <ConnectXCallout title="Collector profile preview" description="Guests can review the profile layout and progression modules. Connect X to load your live level, collection completion, contest history, and rewards." ctaLabel="Connect X to open your profile" />
+          <CollectorShowcase displayName="Guest Collector" points={0} level={1} completionPct={null} />
+          <FeaturedCardsStrip cards={[]} />
+          <SetCompletionSection rows={[{ label: "Genesis Set", done: 0, total: 100 }, { label: "Arena Set", done: 0, total: 50 }, { label: "Meme Icons", done: 0, total: 50 }]} />
+          <ContestAchievements contestsEntered={0} bestRank={null} rating={null} leagueTier={null} seasonRank={null} />
+          <EmptyState title="No profile data yet" description="Connect X to start collecting cards, entering contests, and building your public MCG identity." />
+        </>
       ) : (
         <>
           <CollectorShowcase

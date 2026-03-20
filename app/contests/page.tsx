@@ -37,13 +37,12 @@ function getEmptyByTab(tab: ContestTabKey) {
 }
 
 export default function ContestsPage() {
-  const { me, loading, refresh } = useSession();
+  const { loading } = useSession();
   const [contests, setContests] = useState<ContestListItem[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedContests, setHasLoadedContests] = useState(false);
-  const [hasConfirmedSession, setHasConfirmedSession] = useState(false);
   const [tab, setTab] = useState<ContestTabKey>("OPEN");
   const [retryCount, setRetryCount] = useState(0);
   const hasRequestedContestsRef = useRef(false);
@@ -59,14 +58,6 @@ export default function ContestsPage() {
 
     try {
       const res = await fetch("/api/contests", { cache: "no-store" });
-
-      if (res.status === 401) {
-        const hasSession = await refresh();
-        if (!hasSession) {
-          setError("Your session expired. Please reconnect to load contests.");
-          return;
-        }
-      }
 
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -87,30 +78,18 @@ export default function ContestsPage() {
         setIsRefreshing(false);
       }
     }
-  }, [refresh]);
+  }, []);
 
 
   useEffect(() => {
     if (loading) return;
-
-    setHasConfirmedSession(true);
-
-    if (!me) {
-      hasRequestedContestsRef.current = false;
-      if (!hasLoadedContests) {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
-      return;
-    }
-
     if (retryCount === 0 && hasRequestedContestsRef.current) {
       return;
     }
 
     hasRequestedContestsRef.current = true;
     void loadContests({ showLoader: !hasLoadedContests });
-  }, [hasLoadedContests, loading, me, retryCount, loadContests]);
+  }, [hasLoadedContests, loading, retryCount, loadContests]);
 
   const computed = useMemo(() => {
     const open = contests.filter((contest) => contest.status === "OPEN").length;
@@ -143,7 +122,7 @@ export default function ContestsPage() {
   }, [contests, tab]);
 
   const emptyByTab = getEmptyByTab(tab);
-  const showInitialSkeleton = !hasConfirmedSession || (isLoading && !hasLoadedContests && contests.length === 0);
+  const showInitialSkeleton = isLoading && !hasLoadedContests && contests.length === 0;
   const showBlockingError = Boolean(error) && !hasLoadedContests && contests.length === 0;
 
   return (

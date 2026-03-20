@@ -5,9 +5,11 @@ import type { MvpCardView } from "@/types/cards";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { Surface } from "@/components/ui/Surface";
 import { CardGrid } from "@/components/collection/CardGrid";
 import { useSession } from "@/components/useSession";
+import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 
 type CollectionSortKey = "name" | "rarity" | "edition" | "quantity";
 
@@ -29,6 +31,7 @@ export default function CollectionPage() {
   const useMvpCollection = Array.isArray(mvpCollection);
 
   const sourceCollection = useMemo(() => (mvpCollection ?? []), [mvpCollection]);
+  const guestCollection = useMemo(() => GUEST_PACK_PREVIEW_CARDS.slice(0, 5).map((card, index) => ({ templateId: `guest-${card.templateId}-${index}`, instanceCount: index === 0 ? 2 : 1, card })), []);
 
   const visibleCards = useMemo(() => {
     const sorted = [...sourceCollection].sort((a, b) => {
@@ -87,7 +90,10 @@ export default function CollectionPage() {
       </Surface>
 
       {!me ? (
-        <EmptyState title="Connect to view your collection" description="Sign in with X for persistent ownership." />
+        <>
+          <ConnectXCallout title="Collection preview" description="Guests can browse a sample binder layout now. Connect X to unlock your real collection, ownership counts, and pack progress." ctaLabel="Connect X to view your collection" />
+          <CardGrid items={guestCollection} onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })} />
+        </>
       ) : !useMvpCollection ? (
         <EmptyState title="Collection data unavailable" description="Refresh your session and verify collection payload." />
       ) : visibleCards.length > 0 ? (
