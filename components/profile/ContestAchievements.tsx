@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -7,12 +8,14 @@ export function ContestAchievements({
   rating,
   leagueTier,
   seasonRank,
+  footer,
 }: {
   contestsEntered: number;
   bestRank: number | null;
   rating: number | null;
   leagueTier?: string | null;
   seasonRank?: number | null;
+  footer?: ReactNode;
 }) {
   const badges = [
     { label: "Entered", value: String(contestsEntered), icon: "⚔️" },
@@ -38,6 +41,7 @@ export function ContestAchievements({
             </article>
           ))}
         </div>
+        {footer ? <div style={{ marginTop: "1rem" }}>{footer}</div> : null}
       </div>
     </Surface>
   );

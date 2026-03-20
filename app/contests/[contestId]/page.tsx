@@ -5,6 +5,7 @@ import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-id
 import { SiteShell } from "@/components/layout/SiteShell";
 import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 import { useSession } from "@/components/useSession";
+import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
@@ -108,6 +109,7 @@ function formatCountdown(targetAt: string | null | undefined, nowTs: number): st
 export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
   const cachedState = contestDetailPageCache.get(params.contestId);
   const { me, loading } = useSession();
+  const { loginWithPrivy } = usePrivyLogin();
   const [detail, setDetail] = useState<ContestDetail | null>(cachedState?.detail ?? null);
   const [ranking, setRanking] = useState<RankingPayload | null>(cachedState?.ranking ?? null);
   const [rewards, setRewards] = useState<RewardPayload | null>(cachedState?.rewards ?? null);
@@ -529,6 +531,8 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     return items.filter((item, index, array) => array.findIndex((candidate) => candidate.label === item.label && candidate.value === item.value) === index);
   })();
+  const countdownTimestampValue = formatContestTimestamp(countdownTarget);
+  const countdownTimestampLabel = isLive ? "Closes at" : isLocked ? "Starts at" : "Closes at";
   const heroTiming = isSettled
     ? {
         label: "Contest settled",
@@ -540,11 +544,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       ? {
           label: "Contest ends in",
           value: formatCountdown(countdownTarget, nowTs),
+          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         }
       : {
           label: isLocked ? "Contest starts in" : "Entry closes in",
           value: formatCountdown(countdownTarget, nowTs),
+          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         };
   const rankingRows = ranking?.rankings ?? [];
@@ -560,9 +566,14 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const heroAction = isOpen
     ? {
-        label: !me ? "Sign in required" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : getPrimaryCtaLabel(contest.status),
-        onClick: () => openBuilder(),
-        disabled: !me,
+        label: !me ? "Connect X to enter contest" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : getPrimaryCtaLabel(contest.status),
+        onClick: () => {
+          if (!me) {
+            void loginWithPrivy();
+            return;
+          }
+          openBuilder();
+        },
       }
     : {
         label: isSettled ? getPrimaryCtaLabel(contest.status) : isLive ? getPrimaryCtaLabel(contest.status) : "Track contest",
@@ -576,9 +587,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       ? "Your lineup is read-only while the contest is live."
       : isLocked
         ? "Lineup changes are disabled now that the lock milestone has passed."
-        : duplicateLineupKeys.length > 0
-          ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
-          : "Fill every slot to complete your contest entry.";
+        : !me
+          ? "Connect X to build a lineup, submit your entry, and track your personal contest results."
+          : duplicateLineupKeys.length > 0
+            ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
+            : "Fill every slot to complete your contest entry.";
   const heroCoverImageUrl = contest.rules[0]?.config?.coverImageUrl?.trim()
     || slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl
     || null;

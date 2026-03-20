@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Button } from "@/components/ui/Button";
 import { GAME_CONFIG } from "@/lib/game-config";
 
 type Odd = { label: string; pct: number };
@@ -34,6 +35,8 @@ type FeaturedPackStageProps = {
   } | null;
   guestHeadline?: string;
   guestSupportingCopy?: string;
+  onConnectWithX?: () => void;
+  guestCtaLabel?: string;
 };
 
 const DEFAULT_RARITY_ODDS: Odd[] = [
@@ -88,6 +91,8 @@ export function FeaturedPackStage({
   statusNotice,
   guestHeadline,
   guestSupportingCopy,
+  onConnectWithX,
+  guestCtaLabel = "Connect X to open your pack",
 }: FeaturedPackStageProps) {
   const packCost = GAME_CONFIG.PACK_COST;
   const displayRarity = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
@@ -226,6 +231,11 @@ export function FeaturedPackStage({
             <div className="ps-guest-copy-block">
               {guestHeadline ? <p className="ps-guest-headline">{guestHeadline}</p> : null}
               {guestSupportingCopy ? <p className="ps-guest-copy">{guestSupportingCopy}</p> : null}
+              {onConnectWithX ? (
+                <div style={{ marginTop: "0.85rem" }}>
+                  <Button type="button" variant="ghost" onClick={onConnectWithX}>{guestCtaLabel}</Button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="ps-cta-subcopy">Open with points, reveal instantly, and add cards directly to your collection. Reward, contest, and admin-granted packs are unaffected by this purchase cap.</p>

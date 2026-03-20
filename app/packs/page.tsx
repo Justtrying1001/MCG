@@ -469,17 +469,6 @@ export default function PacksPage() {
 
   return (
     <SiteShell>
-      {!me ? (
-        <section className="packs-guest-intro" aria-label="Pack preview intro">
-          <p className="packs-guest-kicker">Preview first</p>
-          <h2>See what a reveal feels like before you connect.</h2>
-          <p className="packs-guest-copy">
-            Explore the pack, run a demo reveal, then connect with X when you&apos;re ready to open a real pack and keep the cards.
-          </p>
-          <p className="packs-guest-hint">Your cards unlock collection progress, contest lineups, and future rewards once you sign in.</p>
-        </section>
-      ) : null}
-
       <section className="packs-main-section">
         <div className="packs-main-header">
           <p className="packs-main-kicker">Pack store</p>
@@ -504,7 +493,9 @@ export default function PacksPage() {
           statusNotice={saleNotice}
           isGuest={!me}
           guestHeadline="Discover what can be inside"
-          guestSupportingCopy="Run a short preview reveal now. Connect with X after the demo to open a real pack and keep every card you pull."
+          guestSupportingCopy="Run a short preview reveal now, then connect with X when you want the next reveal to count toward your real inventory."
+          onConnectWithX={() => void loginWithPrivy()}
+          guestCtaLabel="Connect X to open your pack"
         />
       </section>
 
