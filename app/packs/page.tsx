@@ -11,7 +11,7 @@ import { PackRevealModal } from "@/components/packs/PackRevealModal";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
-import { trackEvent } from "@/lib/analytics/track";
+import { trackEvent, trackInternalEvent } from "@/lib/analytics/track";
 import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 import type { MvpCardView } from "@/types/cards";
 import officialPackImage from "../../pack.png";
@@ -184,6 +184,7 @@ export default function PacksPage() {
 
   const openGuestPreview = () => {
     trackEvent("packs_cta_click", { state: "guest", intent: "preview" });
+    trackInternalEvent("CLICK_OPEN_PACK");
     setRevealMode("guest-preview");
     setIsOpening(true);
     setOpeningPhase("tearing");
@@ -200,6 +201,7 @@ export default function PacksPage() {
     }
 
     trackEvent("packs_cta_click", { state: "authenticated", intent: "open_real_pack" });
+    trackInternalEvent("CLICK_OPEN_PACK");
     setSaleNotice(null);
     setRevealMode("real");
     setIsOpening(true);

@@ -23,29 +23,44 @@ model User {
   cards        UserCard[]
   packOpenings PackOpening[]
   sessions     UserSession[]
+  events       Event[]
 
   // Target-domain foundations (active)
-  ownedCardInstances     OwnedCardInstance[]
-  packOpeningEvents      PackOpeningEvent[]
-  rewardGrants           RewardGrant[]
-  rewardLedgerEntries    RewardLedgerEntry[]
-  userQuestProgress      UserQuestProgress[]
-  questSubmissions       QuestSubmission[]
-  contestEntries         ContestEntry[]
-  contestScores          ContestScore[]
-  contestRankings        ContestRanking[]
+  ownedCardInstances         OwnedCardInstance[]
+  packOpeningEvents          PackOpeningEvent[]
+  rewardGrants               RewardGrant[]
+  rewardLedgerEntries        RewardLedgerEntry[]
+  userQuestProgress          UserQuestProgress[]
+  questSubmissions           QuestSubmission[]
+  contestEntries             ContestEntry[]
+  contestScores              ContestScore[]
+  contestRankings            ContestRanking[]
   contestSettlementPlanItems ContestSettlementPlanItem[]
-  userProgression        UserProgression?
-  collectionProgressions CollectionProgression[]
-  competitiveProgression CompetitiveProgression?
-  leagueId              String?
-  league                League?                @relation(fields: [leagueId], references: [id], onDelete: SetNull)
-  seasonRatings         UserContestRating[]
-  contestRatingChanges  ContestRatingChange[]
-  seasonLeaderboards    SeasonLeaderboard[]
-  seasonRewardGrants    SeasonRewardGrant[]
-  sentInvites           UserInvite[]   @relation("UserInvitesSent")
-  receivedInvite        UserInvite?    @relation("UserInviteReceived")
+  userProgression            UserProgression?
+  collectionProgressions     CollectionProgression[]
+  competitiveProgression     CompetitiveProgression?
+  leagueId                   String?
+  league                     League?                     @relation(fields: [leagueId], references: [id], onDelete: SetNull)
+  seasonRatings              UserContestRating[]
+  contestRatingChanges       ContestRatingChange[]
+  seasonLeaderboards         SeasonLeaderboard[]
+  seasonRewardGrants         SeasonRewardGrant[]
+  sentInvites                UserInvite[]                @relation("UserInvitesSent")
+  receivedInvite             UserInvite?                 @relation("UserInviteReceived")
+}
+
+model Event {
+  id        String             @id @default(cuid())
+  type      AnalyticsEventType
+  userId    String?
+  isGuest   Boolean            @default(true)
+  createdAt DateTime           @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@index([isGuest, createdAt])
 }
 
 model UserInvite {
@@ -143,6 +158,13 @@ enum RewardLedgerReasonType {
   ADJUSTMENT
 }
 
+enum AnalyticsEventType {
+  PAGE_VIEW
+  CLICK_OPEN_PACK
+  LOGIN
+  PACK_OPEN
+}
+
 enum ContestTeamSizeMode {
   EXACT
 }
@@ -219,7 +241,6 @@ enum ContestEntryStatus {
   SETTLED
   CANCELED
 }
-
 
 enum SeasonStatus {
   UPCOMING
@@ -326,9 +347,9 @@ model OwnedCardInstance {
   acquiredAt               DateTime @default(now())
   metadata                 Json?
 
-  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cardTemplate           CardTemplate      @relation(fields: [cardTemplateId], references: [id], onDelete: Restrict)
-  sourcePackOpeningEvent PackOpeningEvent? @relation(fields: [sourcePackOpeningEventId], references: [id], onDelete: SetNull)
+  user                   User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardTemplate           CardTemplate                 @relation(fields: [cardTemplateId], references: [id], onDelete: Restrict)
+  sourcePackOpeningEvent PackOpeningEvent?            @relation(fields: [sourcePackOpeningEventId], references: [id], onDelete: SetNull)
   contestRosterLocks     RosterLock[]
   contestScoreBreakdowns ContestEntryScoreBreakdown[]
 
@@ -349,12 +370,12 @@ model PackDefinition {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  cardSet           CardSet            @relation(fields: [cardSetId], references: [id], onDelete: Restrict)
-  dropTables        DropTable[]
-  packOpeningEvents PackOpeningEvent[]
-  rewardGrants      RewardGrant[]
+  cardSet                 CardSet                  @relation(fields: [cardSetId], references: [id], onDelete: Restrict)
+  dropTables              DropTable[]
+  packOpeningEvents       PackOpeningEvent[]
+  rewardGrants            RewardGrant[]
   contestRewardComponents ContestRewardComponent[]
-  questRewards      QuestDefinition[]  @relation("QuestPackReward")
+  questRewards            QuestDefinition[]        @relation("QuestPackReward")
 
   @@index([cardSetId])
 }
@@ -441,15 +462,15 @@ model RewardGrant {
 }
 
 model RewardLedgerEntry {
-  id             String                @id @default(cuid())
+  id             String                 @id @default(cuid())
   userId         String
   entryType      RewardLedgerEntryType
   amount         Int
   reasonType     RewardLedgerReasonType
   reasonRef      String?
-  idempotencyKey String?               @unique
+  idempotencyKey String?                @unique
   metadata       Json?
-  createdAt      DateTime              @default(now())
+  createdAt      DateTime               @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -458,24 +479,24 @@ model RewardLedgerEntry {
 }
 
 model QuestDefinition {
-  id                      String              @id @default(cuid())
-  code                    String              @unique
-  type                    QuestType
-  title                   String
-  description             String?
-  rewardPoints            Int                 @default(0)
-  rewardPackDefinitionId  String?
-  rewardPackQuantity      Int                 @default(1)
-  validationMode          QuestValidationMode
-  oneTime                 Boolean             @default(true)
-  isActive                Boolean             @default(true)
-  startAt                 DateTime?
-  endAt                   DateTime?
-  config                  Json?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  id                     String              @id @default(cuid())
+  code                   String              @unique
+  type                   QuestType
+  title                  String
+  description            String?
+  rewardPoints           Int                 @default(0)
+  rewardPackDefinitionId String?
+  rewardPackQuantity     Int                 @default(1)
+  validationMode         QuestValidationMode
+  oneTime                Boolean             @default(true)
+  isActive               Boolean             @default(true)
+  startAt                DateTime?
+  endAt                  DateTime?
+  config                 Json?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
-  rewardPackDefinition PackDefinition?      @relation("QuestPackReward", fields: [rewardPackDefinitionId], references: [id], onDelete: SetNull)
+  rewardPackDefinition PackDefinition?     @relation("QuestPackReward", fields: [rewardPackDefinitionId], references: [id], onDelete: SetNull)
   userProgressions     UserQuestProgress[]
   submissions          QuestSubmission[]
 
@@ -483,15 +504,15 @@ model QuestDefinition {
 }
 
 model UserQuestProgress {
-  id           String         @id @default(cuid())
-  userId       String
-  questId      String
-  status       UserQuestStatus @default(AVAILABLE)
-  progressValue Int           @default(0)
-  completedAt  DateTime?
-  claimedAt    DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String          @id @default(cuid())
+  userId        String
+  questId       String
+  status        UserQuestStatus @default(AVAILABLE)
+  progressValue Int             @default(0)
+  completedAt   DateTime?
+  claimedAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   quest QuestDefinition @relation(fields: [questId], references: [id], onDelete: Cascade)
@@ -521,7 +542,6 @@ model QuestSubmission {
   @@index([status])
 }
 
-
 model Season {
   id        String       @id @default(cuid())
   name      String       @unique
@@ -531,23 +551,23 @@ model Season {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  contests          Contest[]
-  userRatings       UserContestRating[]
-  leaderboardRows   SeasonLeaderboard[]
-  ratingChanges     ContestRatingChange[]
-  rewardGrants      SeasonRewardGrant[]
+  contests        Contest[]
+  userRatings     UserContestRating[]
+  leaderboardRows SeasonLeaderboard[]
+  ratingChanges   ContestRatingChange[]
+  rewardGrants    SeasonRewardGrant[]
 
   @@index([status, startsAt])
 }
 
 model League {
-  id         String     @id @default(cuid())
-  name       String     @unique
-  tier       LeagueTier @unique
-  minRating  Int
-  maxRating  Int
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        String     @id @default(cuid())
+  name      String     @unique
+  tier      LeagueTier @unique
+  minRating Int
+  maxRating Int
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   users User[]
 
@@ -555,48 +575,48 @@ model League {
 }
 
 model Contest {
-  id        String        @id @default(cuid())
-  code      String        @unique
-  title     String
-  description String?
-  status    ContestStatus @default(DRAFT)
-  configPublishedAt DateTime?
-  openAt    DateTime?
-  liveAt    DateTime?
-  lockAt    DateTime?
-  endsAt    DateTime?
-  qstashOpenJobId   String?
-  qstashLiveJobId   String?
-  qstashSettleJobId String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  seasonId  String?
+  id                 String        @id @default(cuid())
+  code               String        @unique
+  title              String
+  description        String?
+  status             ContestStatus @default(DRAFT)
+  configPublishedAt  DateTime?
+  openAt             DateTime?
+  liveAt             DateTime?
+  lockAt             DateTime?
+  endsAt             DateTime?
+  qstashOpenJobId    String?
+  qstashLiveJobId    String?
+  qstashSettleJobId  String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  seasonId           String?
   leagueTierRequired LeagueTier?
 
-  season      Season?        @relation(fields: [seasonId], references: [id], onDelete: SetNull)
-  rules       ContestRule[]
-  entries     ContestEntry[]
-  scores      ContestScore[]
-  rankings    ContestRanking[]
-  settlements ContestSettlement[]
-  rewardPolicy ContestRewardPolicy?
+  season          Season?                 @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+  rules           ContestRule[]
+  entries         ContestEntry[]
+  scores          ContestScore[]
+  rankings        ContestRanking[]
+  settlements     ContestSettlement[]
+  rewardPolicy    ContestRewardPolicy?
   settlementPlans ContestSettlementPlan[]
-  tokenSnapshots ContestTokenSnapshot[]
-  tokenScores ContestTokenScore[]
-  ratingChanges ContestRatingChange[]
+  tokenSnapshots  ContestTokenSnapshot[]
+  tokenScores     ContestTokenScore[]
+  ratingChanges   ContestRatingChange[]
 }
 
 model ContestRule {
-  id            String  @id @default(cuid())
-  contestId     String
-  cardSetId     String?
-  maxRosterSize Int?
-  teamSizeMode  ContestTeamSizeMode @default(EXACT)
-  eligibilityMode ContestEligibilityMode @default(ANY)
-  entryFeeEnabled Boolean @default(false)
-  entryFeeCurrency String @default("POINTS")
-  entryFeeAmount Int?
-  config        Json?
+  id               String                 @id @default(cuid())
+  contestId        String
+  cardSetId        String?
+  maxRosterSize    Int?
+  teamSizeMode     ContestTeamSizeMode    @default(EXACT)
+  eligibilityMode  ContestEligibilityMode @default(ANY)
+  entryFeeEnabled  Boolean                @default(false)
+  entryFeeCurrency String                 @default("POINTS")
+  entryFeeAmount   Int?
+  config           Json?
 
   contest Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
   cardSet CardSet? @relation(fields: [cardSetId], references: [id], onDelete: SetNull)
@@ -605,11 +625,11 @@ model ContestRule {
 }
 
 model ContestRewardPolicy {
-  id        String   @id @default(cuid())
-  contestId String   @unique
+  id        String                    @id @default(cuid())
+  contestId String                    @unique
   status    ContestRewardPolicyStatus @default(DRAFT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
 
   contest           Contest                         @relation(fields: [contestId], references: [id], onDelete: Cascade)
   bundles           ContestRewardBundle[]
@@ -623,8 +643,8 @@ model ContestRewardBundle {
   priority       Int      @default(0)
   createdAt      DateTime @default(now())
 
-  rewardPolicy ContestRewardPolicy      @relation(fields: [rewardPolicyId], references: [id], onDelete: Cascade)
-  components   ContestRewardComponent[]
+  rewardPolicy      ContestRewardPolicy             @relation(fields: [rewardPolicyId], references: [id], onDelete: Cascade)
+  components        ContestRewardComponent[]
   distributionRules ContestRewardDistributionRule[]
 
   @@index([rewardPolicyId])
@@ -673,7 +693,7 @@ model ContestEntry {
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  rosterLocks      RosterLock[]
+  rosterLocks     RosterLock[]
   scoreBreakdowns ContestEntryScoreBreakdown[]
 
   @@unique([contestId, userId])
@@ -687,29 +707,29 @@ model RosterLock {
   ownedCardInstanceId String
   lockedAt            DateTime @default(now())
 
-  contestEntry      ContestEntry      @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
-  ownedCardInstance OwnedCardInstance @relation(fields: [ownedCardInstanceId], references: [id], onDelete: Restrict)
-  scoreBreakdowns ContestEntryScoreBreakdown[]
+  contestEntry      ContestEntry                 @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  ownedCardInstance OwnedCardInstance            @relation(fields: [ownedCardInstanceId], references: [id], onDelete: Restrict)
+  scoreBreakdowns   ContestEntryScoreBreakdown[]
 
   @@unique([contestEntryId, ownedCardInstanceId])
   @@index([ownedCardInstanceId])
 }
 
 model ContestTokenSnapshot {
-  id            String              @id @default(cuid())
-  contestId     String
-  tokenProjectId String
-  geckoId       String
-  phase         ContestSnapshotPhase
-  priceUsd      Decimal?            @db.Decimal(20, 8)
-  marketCapUsd  Decimal?            @db.Decimal(30, 8)
-  volume24hUsd  Decimal?            @db.Decimal(30, 8)
-  marketCapRank Int?
+  id                  String               @id @default(cuid())
+  contestId           String
+  tokenProjectId      String
+  geckoId             String
+  phase               ContestSnapshotPhase
+  priceUsd            Decimal?             @db.Decimal(20, 8)
+  marketCapUsd        Decimal?             @db.Decimal(30, 8)
+  volume24hUsd        Decimal?             @db.Decimal(30, 8)
+  marketCapRank       Int?
   marketDataUpdatedAt DateTime?
-  capturedAt    DateTime            @default(now())
-  provider      String              @default("COINGECKO")
-  capturedCount Int                 @default(0)
-  missingCount  Int                 @default(0)
+  capturedAt          DateTime             @default(now())
+  provider            String               @default("COINGECKO")
+  capturedCount       Int                  @default(0)
+  missingCount        Int                  @default(0)
 
   contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
   tokenProject TokenProject @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
@@ -738,22 +758,22 @@ model ContestTokenScore {
 }
 
 model ContestEntryScoreBreakdown {
-  id               String   @id @default(cuid())
-  entryId          String
-  tokenProjectId   String
-  cardInstanceId   String
-  rosterLockId     String
-  baseScore        Float
-  rarityMultiplier Float
+  id                String   @id @default(cuid())
+  entryId           String
+  tokenProjectId    String
+  cardInstanceId    String
+  rosterLockId      String
+  baseScore         Float
+  rarityMultiplier  Float
   editionMultiplier Float
-  finalScore       Float
-  dataQuality      String   @default("COMPLETE")
-  computedAt       DateTime @default(now())
+  finalScore        Float
+  dataQuality       String   @default("COMPLETE")
+  computedAt        DateTime @default(now())
 
-  entry         ContestEntry       @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  tokenProject  TokenProject       @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
-  cardInstance  OwnedCardInstance  @relation(fields: [cardInstanceId], references: [id], onDelete: Restrict)
-  rosterLock    RosterLock         @relation(fields: [rosterLockId], references: [id], onDelete: Cascade)
+  entry        ContestEntry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tokenProject TokenProject      @relation(fields: [tokenProjectId], references: [id], onDelete: Restrict)
+  cardInstance OwnedCardInstance @relation(fields: [cardInstanceId], references: [id], onDelete: Restrict)
+  rosterLock   RosterLock        @relation(fields: [rosterLockId], references: [id], onDelete: Cascade)
 
   @@unique([entryId, cardInstanceId])
   @@index([entryId])
@@ -801,18 +821,18 @@ model ContestSettlement {
 }
 
 model ContestSettlementPlan {
-  id                 String                    @id @default(cuid())
-  contestId          String
-  status             ContestSettlementPlanStatus @default(DRAFT)
-  source             String                    @default("AUTO_POLICY_V1")
-  policySnapshot     Json?
-  rankingSnapshotSize Int                      @default(0)
-  generatedAt        DateTime                  @default(now())
-  executedAt         DateTime?
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
+  id                  String                      @id @default(cuid())
+  contestId           String
+  status              ContestSettlementPlanStatus @default(DRAFT)
+  source              String                      @default("AUTO_POLICY_V1")
+  policySnapshot      Json?
+  rankingSnapshotSize Int                         @default(0)
+  generatedAt         DateTime                    @default(now())
+  executedAt          DateTime?
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
 
-  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contest Contest                     @relation(fields: [contestId], references: [id], onDelete: Cascade)
   items   ContestSettlementPlanItem[]
 
   @@index([contestId, createdAt])
@@ -834,12 +854,11 @@ model ContestSettlementPlanItem {
   createdAt        DateTime @default(now())
 
   plan ContestSettlementPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  user User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([planId, userId])
   @@index([planId, rank])
 }
-
 
 model UserContestRating {
   id            String   @id @default(cuid())
@@ -890,13 +909,13 @@ model SeasonLeaderboard {
 }
 
 model SeasonRewardGrant {
-  id        String   @id @default(cuid())
-  seasonId  String
-  userId    String
-  rank      Int
+  id         String            @id @default(cuid())
+  seasonId   String
+  userId     String
+  rank       Int
   rewardType ContestRewardType
-  amount    Int
-  createdAt DateTime @default(now())
+  amount     Int
+  createdAt  DateTime          @default(now())
 
   season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -940,7 +959,6 @@ model CompetitiveProgression {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
 enum AdminActionStatus {
   VALIDATED
   EXECUTED
@@ -948,21 +966,21 @@ enum AdminActionStatus {
 }
 
 model AdminActionLog {
-  id            String            @id @default(cuid())
-  actionType    String
-  module        String
-  targetType    String?
-  targetId      String?
-  actorType     String
-  actorId       String
-  actorLabel    String
-  authMode      String
-  status        AdminActionStatus
+  id             String            @id @default(cuid())
+  actionType     String
+  module         String
+  targetType     String?
+  targetId       String?
+  actorType      String
+  actorId        String
+  actorLabel     String
+  authMode       String
+  status         AdminActionStatus
   requestSummary Json?
   effectSummary  Json?
-  errorCode     String?
-  errorMessage  String?
-  createdAt     DateTime          @default(now())
+  errorCode      String?
+  errorMessage   String?
+  createdAt      DateTime          @default(now())
 
   @@index([module, createdAt])
   @@index([actionType, createdAt])
@@ -970,7 +988,7 @@ model AdminActionLog {
 }
 
 model AdminOpArtifact {
-  id          String   @id @default(cuid())
+  id           String   @id @default(cuid())
   artifactType String
   targetType   String?
   targetId     String?
@@ -983,7 +1001,6 @@ model AdminOpArtifact {
   @@index([expiresAt])
 }
 
-
 enum AdminRole {
   ADMIN_OPS
   ADMIN_MODERATOR
@@ -992,14 +1009,14 @@ enum AdminRole {
 }
 
 model AdminIdempotencyKey {
-  id         String   @id @default(cuid())
-  idempotencyKey String @unique
-  actionType String
-  targetType String?
-  targetId   String?
-  actorId    String
-  actionLogId String?
-  createdAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  idempotencyKey String   @unique
+  actionType     String
+  targetType     String?
+  targetId       String?
+  actorId        String
+  actionLogId    String?
+  createdAt      DateTime @default(now())
 
   @@index([actionType, createdAt])
   @@index([targetType, targetId])

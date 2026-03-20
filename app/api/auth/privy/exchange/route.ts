@@ -10,6 +10,7 @@ import {
   getSessionCookieName,
   getSessionMaxAgeSeconds,
 } from "@/lib/auth";
+import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
 import { upsertUserFromPrivyProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { syncContestEntryQuestProgression } from "@/lib/domain/quests/runtime";
 import { logAuthEvent } from "@/lib/observability/auth-log";
@@ -110,6 +111,12 @@ export async function POST(request: Request) {
       name: getSessionCookieName(),
       value: sessionToken,
       ...buildSessionCookieOptions(getSessionMaxAgeSeconds()),
+    });
+
+    await recordInternalEvent({
+      type: INTERNAL_EVENT_TYPES.login,
+      userId: user.id,
+      isGuest: false,
     });
 
     logAuthEvent("privy_exchange_succeeded", "info", {
