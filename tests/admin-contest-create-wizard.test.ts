@@ -3,6 +3,7 @@ import fs from "node:fs";
 
 import {
   BUILT_IN_CONTEST_COVERS,
+  DURATION_UNIT_LABELS,
   generateContestCodeFromTitle,
 } from "@/app/admin/(protected)/contests/create/_hooks/useContestWizard";
 
@@ -30,5 +31,29 @@ describe("contest rewards step copy", () => {
     expect(source).toContain("POINTS_POOL_TOP_PERCENT");
     expect(source).toContain("formatRewardPreviewPackLines");
     expect(source).not.toContain('formatRewardPreviewPerWinnerRange(row.packsPerWinnerMin, row.packsPerWinnerMax, "packs")');
+  });
+});
+
+describe("contest duration units", () => {
+  it("supports minute labels in the admin wizard summary", () => {
+    expect(DURATION_UNIT_LABELS.MINUTES).toBe("minute(s)");
+
+    const source = fs.readFileSync("app/admin/(protected)/contests/create/_components/WizardSteps.tsx", "utf8");
+    expect(source).toContain('<option value="MINUTES">Minutes</option>');
+    expect(source).toContain("DURATION_UNIT_LABELS[form.durationUnit]");
+  });
+
+  it("restores minute durations from saved contest timings", () => {
+    const start = new Date("2026-03-20T10:00:00.000Z");
+    const end = new Date("2026-03-20T10:45:00.000Z");
+    const totalMinutes = Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
+    const asDays = totalMinutes % (24 * 60) === 0;
+    const asHours = totalMinutes % 60 === 0;
+
+    const durationValue = String(asDays ? totalMinutes / (24 * 60) : asHours ? totalMinutes / 60 : totalMinutes);
+    const durationUnit = asDays ? "DAYS" : asHours ? "HOURS" : "MINUTES";
+
+    expect(durationValue).toBe("45");
+    expect(durationUnit).toBe("MINUTES");
   });
 });

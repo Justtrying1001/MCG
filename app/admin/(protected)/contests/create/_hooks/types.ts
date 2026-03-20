@@ -38,7 +38,7 @@ export type ContestFormState = {
   openAt: string;
   lockAt: string;
   durationValue: string;
-  durationUnit: "HOURS" | "DAYS";
+  durationUnit: "MINUTES" | "HOURS" | "DAYS";
   entryFeeEnabled: boolean;
   entryFeeAmount: string;
   maxRosterSize: string;

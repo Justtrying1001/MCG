@@ -24,6 +24,18 @@ export const BUILT_IN_CONTEST_COVERS = [
   { label: "Default contest cover", url: "/Contest.png" },
 ] as const;
 
+export const DURATION_UNIT_LABELS: Record<ContestFormState["durationUnit"], string> = {
+  MINUTES: "minute(s)",
+  HOURS: "hour(s)",
+  DAYS: "day(s)",
+};
+
+const DURATION_UNIT_TO_MINUTES: Record<ContestFormState["durationUnit"], number> = {
+  MINUTES: 1,
+  HOURS: 60,
+  DAYS: 24 * 60,
+};
+
 const INITIAL_FORM: ContestFormState = {
   code: "",
   title: "",
@@ -111,15 +123,16 @@ export function useContestWizard(initialContestId: string) {
   const derivedSchedule = useMemo(() => {
     const lockDate = form.lockAt ? new Date(form.lockAt) : null;
     const parsedValue = Number(form.durationValue);
-    const unitHours = form.durationUnit === "DAYS" ? 24 : 1;
-    const durationHours = Number.isFinite(parsedValue) ? parsedValue * unitHours : 0;
-    const hasValidDuration = Number.isFinite(durationHours) && durationHours > 0;
+    const unitMinutes = DURATION_UNIT_TO_MINUTES[form.durationUnit];
+    const durationMinutes = Number.isFinite(parsedValue) ? parsedValue * unitMinutes : 0;
+    const durationHours = durationMinutes > 0 ? durationMinutes / 60 : 0;
+    const hasValidDuration = Number.isFinite(durationMinutes) && durationMinutes > 0;
 
     if (!lockDate || Number.isNaN(lockDate.getTime()) || !hasValidDuration) {
       return { liveAtIso: null as string | null, endsAtIso: null as string | null, endAtInput: "", durationHours: hasValidDuration ? durationHours : null as number | null };
     }
 
-    const endsAtDate = new Date(lockDate.getTime() + durationHours * 3600000);
+    const endsAtDate = new Date(lockDate.getTime() + durationMinutes * 60000);
     const tz = endsAtDate.getTimezoneOffset() * 60000;
     return {
       liveAtIso: lockDate.toISOString(),
@@ -163,10 +176,11 @@ export function useContestWizard(initialContestId: string) {
 
       const startDate = contest.lockAt ? new Date(contest.lockAt) : (contest.liveAt ? new Date(contest.liveAt) : null);
       const endDate = contest.endsAt ? new Date(contest.endsAt) : null;
-      const totalHours = startDate && endDate && endDate > startDate
-        ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 3600000))
-        : 24;
-      const asDays = totalHours % 24 === 0;
+      const totalMinutes = startDate && endDate && endDate > startDate
+        ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 60000))
+        : 24 * 60;
+      const asDays = totalMinutes % (24 * 60) === 0;
+      const asHours = totalMinutes % 60 === 0;
 
       setForm((prev) => ({
         ...prev,
@@ -176,8 +190,8 @@ export function useContestWizard(initialContestId: string) {
         coverImageUrl: typeof ruleConfig.coverImageUrl === "string" ? ruleConfig.coverImageUrl : "",
         openAt: toInputDate(contest.openAt),
         lockAt: toInputDate(contest.lockAt),
-        durationValue: String(asDays ? totalHours / 24 : totalHours),
-        durationUnit: asDays ? "DAYS" : "HOURS",
+        durationValue: String(asDays ? totalMinutes / (24 * 60) : asHours ? totalMinutes / 60 : totalMinutes),
+        durationUnit: asDays ? "DAYS" : asHours ? "HOURS" : "MINUTES",
         entryFeeEnabled: Boolean(rule?.entryFeeEnabled),
         entryFeeAmount: String(rule?.entryFeeAmount ?? 10),
         maxRosterSize: String(rule?.maxRosterSize ?? 5),

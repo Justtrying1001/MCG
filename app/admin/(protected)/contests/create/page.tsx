@@ -14,7 +14,7 @@ import {
   ContestRewardsStep,
   ContestScheduleStep,
 } from "./_components/WizardSteps";
-import { useContestWizard, WIZARD_STEPS } from "./_hooks/useContestWizard";
+import { DURATION_UNIT_LABELS, useContestWizard, WIZARD_STEPS } from "./_hooks/useContestWizard";
 
 export default function AdminContestBuilderPage() {
   const params = useSearchParams();
@@ -112,7 +112,7 @@ export default function AdminContestBuilderPage() {
       {stepIndex === 1 ? <ContestScheduleStep form={form} setField={setField} computedDurationHours={computedDurationHours} computedEndAtInput={computedEndAtInput} /> : null}
       {stepIndex === 2 ? <ContestEntryRulesStep form={form} cardSets={cardSets} setField={setField} /> : null}
       {stepIndex === 3 ? <ContestRewardsStep form={form} setField={setField} generatedPreview={generatedPreview} rewardIssues={issuesByStep.rewards} rewardCapacityCheck={rewardCapacityCheck} rewardPackSupply={rewardPackSupply} addBonusReward={addBonusReward} updateBonusReward={updateBonusReward} removeBonusReward={removeBonusReward} /> : null}
-      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} scheduleDurationLabel={`${form.durationValue || "—"} ${form.durationUnit === "DAYS" ? "day(s)" : "hour(s)"}`} onGoToStep={goToStepById} /> : null}
+      {stepIndex === 4 ? <ContestReviewStep payload={payload} checklist={checklist} allIssues={allIssues} issuesByStep={issuesByStep} rewardCapacityCheck={rewardCapacityCheck} scheduleDurationLabel={`${form.durationValue || "—"} ${DURATION_UNIT_LABELS[form.durationUnit]}`} onGoToStep={goToStepById} /> : null}
 
       <section className="admin-panel" style={{ display: "grid", gap: "0.8rem" }}>
         {currentStepIssues.length > 0 ? (
