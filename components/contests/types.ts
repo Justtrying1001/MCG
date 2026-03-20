@@ -3,6 +3,14 @@ import type { MvpCardView } from "@/types/cards";
 export type ContestStatus = "DRAFT" | "OPEN" | "LOCKED" | "LIVE" | "SETTLED" | "CANCELED";
 export type ContestEntryStatus = "DRAFT" | "SUBMITTED" | "SCORED" | "SETTLED";
 
+export type ContestBonusReward = {
+  id?: string;
+  targetRank: string | number;
+  rewardType: "SOL" | "CUSTOM" | "MANUAL_PAYOUT";
+  amount: string;
+  note: string;
+};
+
 export type ContestRuleConfig = {
   coverImageUrl?: string | null;
   rewardConfig?: {
@@ -11,6 +19,7 @@ export type ContestRuleConfig = {
     rewardedTopPercent?: number | null;
     distributionProfile?: string | null;
   } | null;
+  bonusRewards?: ContestBonusReward[] | null;
 };
 
 export type ContestRule = {
