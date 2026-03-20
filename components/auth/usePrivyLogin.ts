@@ -6,8 +6,10 @@ import { useSession } from "@/components/useSession";
 import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
-const PRIVY_LOGOUT_WAIT_TIMEOUT_MS = 1500;
-const PRIVY_LOGOUT_WAIT_INTERVAL_MS = 50;
+const PRIVY_READY_WAIT_TIMEOUT_MS = 3000;
+const PRIVY_LOGOUT_WAIT_TIMEOUT_MS = 3000;
+const PRIVY_STATE_WAIT_INTERVAL_MS = 50;
+const PRIVY_POST_LOGOUT_SETTLE_MS = 150;
 
 function hasPendingLoginRequest() {
   if (typeof window === "undefined") return false;
@@ -29,10 +31,25 @@ export function usePrivyLogin() {
   const [isSyncingSession, setIsSyncingSession] = useState(false);
   const [isStartingLogin, setIsStartingLogin] = useState(false);
   const privyStateRef = useRef({ authenticated, ready, user });
+  const loginAttemptInFlightRef = useRef(false);
 
   useEffect(() => {
     privyStateRef.current = { authenticated, ready, user };
   }, [authenticated, ready, user]);
+
+  const waitForPrivyReady = useCallback(async () => {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < PRIVY_READY_WAIT_TIMEOUT_MS) {
+      if (privyStateRef.current.ready) {
+        return true;
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS));
+    }
+
+    return privyStateRef.current.ready;
+  }, []);
 
   const waitForPrivyLogout = useCallback(async () => {
     const startedAt = Date.now();
@@ -40,10 +57,11 @@ export function usePrivyLogin() {
     while (Date.now() - startedAt < PRIVY_LOGOUT_WAIT_TIMEOUT_MS) {
       const { authenticated: isAuthenticated, ready: isReady, user: currentUser } = privyStateRef.current;
       if (isReady && !isAuthenticated && !currentUser) {
-        return true;
+        await new Promise((resolve) => window.setTimeout(resolve, PRIVY_POST_LOGOUT_SETTLE_MS));
+        return !privyStateRef.current.authenticated && !privyStateRef.current.user;
       }
 
-      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_LOGOUT_WAIT_INTERVAL_MS));
+      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS));
     }
 
     return false;
@@ -81,16 +99,24 @@ export function usePrivyLogin() {
   }, [authenticated, getAccessToken, ready, refresh]);
 
   const loginWithPrivy = useCallback(async () => {
-    if (isStartingLogin) {
+    if (loginAttemptInFlightRef.current) {
       return false;
     }
 
+    loginAttemptInFlightRef.current = true;
     setIsStartingLogin(true);
 
     try {
+      const didPrivyInitialize = await waitForPrivyReady();
+      if (!didPrivyInitialize) {
+        writePendingLoginRequest(false);
+        return false;
+      }
+
       let didLogoutCleanly = true;
 
       if (privyStateRef.current.authenticated || privyStateRef.current.user) {
+        writePendingLoginRequest(false);
         await logout();
         didLogoutCleanly = await waitForPrivyLogout();
       }
@@ -104,9 +130,10 @@ export function usePrivyLogin() {
       login({ loginMethods: ["twitter"] });
       return true;
     } finally {
+      loginAttemptInFlightRef.current = false;
       setIsStartingLogin(false);
     }
-  }, [isStartingLogin, login, logout, waitForPrivyLogout]);
+  }, [login, logout, waitForPrivyLogout, waitForPrivyReady]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);

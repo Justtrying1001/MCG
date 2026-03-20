@@ -21,7 +21,7 @@ const navItems = [
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, loading } = useSession();
-  const { isSyncingSession, loginWithPrivy, logoutFromApp } = usePrivyLogin();
+  const { isStartingLogin, isSyncingSession, loginWithPrivy, logoutFromApp, ready } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
 
   return (
@@ -62,7 +62,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
               </>
             ) : (
               <>
-                <Button variant="ghost" className="btn-sm" onClick={() => loginWithPrivy()}>Connect with X</Button>
+                <Button
+                  variant="ghost"
+                  className="btn-sm"
+                  disabled={!ready || isStartingLogin}
+                  onClick={() => void loginWithPrivy()}
+                >
+                  Connect with X
+                </Button>
               </>
             )}
 

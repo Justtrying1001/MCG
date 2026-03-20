@@ -40,7 +40,7 @@ const HERO_CARDS = [
 ];
 
 export function HomeHeroLanding() {
-  const { loginWithPrivy } = usePrivyLogin();
+  const { isStartingLogin, loginWithPrivy, ready } = usePrivyLogin();
 
   return (
     <section className="home-hero-landing">
@@ -61,7 +61,11 @@ export function HomeHeroLanding() {
             Collect across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} Genesis tokens, build rosters, let the market decide.
           </p>
           <div className="home-hero-ctas">
-            <button className="home-hero-cta-primary" onClick={() => loginWithPrivy()}>
+            <button
+              className="home-hero-cta-primary"
+              disabled={!ready || isStartingLogin}
+              onClick={() => void loginWithPrivy()}
+            >
               <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{flexShrink:0}}>
                 <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z"/>
               </svg>

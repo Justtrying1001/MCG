@@ -353,7 +353,7 @@ export default function PacksPage() {
 
   const handleConnectWithX = () => {
     trackEvent("packs_guest_preview_connect_click", { location: "preview_complete" });
-    loginWithPrivy();
+    void loginWithPrivy();
   };
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
