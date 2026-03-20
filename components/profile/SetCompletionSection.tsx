@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -7,7 +8,7 @@ type SetCompletion = {
   total: number;
 };
 
-export function SetCompletionSection({ rows }: { rows: SetCompletion[] }) {
+export function SetCompletionSection({ rows, footer }: { rows: SetCompletion[]; footer?: ReactNode }) {
   return (
     <Surface>
       <div className="profile-set-completion-wrap">
@@ -29,6 +30,7 @@ export function SetCompletionSection({ rows }: { rows: SetCompletion[] }) {
             );
           })}
         </div>
+        {footer ? <div style={{ marginTop: "1rem" }}>{footer}</div> : null}
       </div>
     </Surface>
   );

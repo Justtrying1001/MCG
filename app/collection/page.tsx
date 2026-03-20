@@ -86,14 +86,16 @@ export default function CollectionPage() {
               </label>
             </div>
           </div>
+          {!me ? (
+            <div style={{ marginTop: "1rem" }}>
+              <ConnectXCallout layout="inline" title="Inventory tracking" description="Save your real pulls, rarity counts, and binder progress once you connect." ctaLabel="Connect X to open your collection" />
+            </div>
+          ) : null}
         </div>
       </Surface>
 
       {!me ? (
-        <>
-          <ConnectXCallout title="Collection preview" description="Guests can browse a sample binder layout now. Connect X to unlock your real collection, ownership counts, and pack progress." ctaLabel="Connect X to view your collection" />
-          <CardGrid items={guestCollection} onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })} />
-        </>
+        <CardGrid items={guestCollection} onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })} />
       ) : !useMvpCollection ? (
         <EmptyState title="Collection data unavailable" description="Refresh your session and verify collection payload." />
       ) : visibleCards.length > 0 ? (

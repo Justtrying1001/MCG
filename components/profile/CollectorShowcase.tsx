@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Chip } from "@/components/ui/Chip";
@@ -8,9 +9,11 @@ type Props = {
   points: number;
   level: number;
   completionPct: number | null;
+  primaryAction?: ReactNode;
+  secondaryAction?: ReactNode;
 };
 
-export function CollectorShowcase({ displayName, points, level, completionPct }: Props) {
+export function CollectorShowcase({ displayName, points, level, completionPct, primaryAction, secondaryAction }: Props) {
   return (
     <Surface className="profile-showcase" variant="raised">
       <div>
@@ -27,8 +30,8 @@ export function CollectorShowcase({ displayName, points, level, completionPct }:
       </div>
 
       <div className="profile-showcase-actions">
-        <Link href="/collection" className="mcg-btn primary">Open collection</Link>
-        <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>
+        {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open collection</Link>}
+        {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
       </div>
     </Surface>
   );
