@@ -27,6 +27,7 @@ export function usePrivyLogin() {
   const { authenticated, getAccessToken, login, logout, ready, user } = usePrivy();
   const { me, refresh, setMe } = useSession();
   const [isSyncingSession, setIsSyncingSession] = useState(false);
+  const [isStartingLogin, setIsStartingLogin] = useState(false);
   const privyStateRef = useRef({ authenticated, ready, user });
 
   useEffect(() => {
@@ -80,14 +81,32 @@ export function usePrivyLogin() {
   }, [authenticated, getAccessToken, ready, refresh]);
 
   const loginWithPrivy = useCallback(async () => {
-    if (privyStateRef.current.authenticated || privyStateRef.current.user) {
-      await logout();
-      await waitForPrivyLogout();
+    if (isStartingLogin) {
+      return false;
     }
 
-    writePendingLoginRequest(true);
-    login({ loginMethods: ["twitter"] });
-  }, [login, logout, waitForPrivyLogout]);
+    setIsStartingLogin(true);
+
+    try {
+      let didLogoutCleanly = true;
+
+      if (privyStateRef.current.authenticated || privyStateRef.current.user) {
+        await logout();
+        didLogoutCleanly = await waitForPrivyLogout();
+      }
+
+      if (!didLogoutCleanly || privyStateRef.current.authenticated || privyStateRef.current.user) {
+        writePendingLoginRequest(false);
+        return false;
+      }
+
+      writePendingLoginRequest(true);
+      login({ loginMethods: ["twitter"] });
+      return true;
+    } finally {
+      setIsStartingLogin(false);
+    }
+  }, [isStartingLogin, login, logout, waitForPrivyLogout]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
@@ -106,9 +125,10 @@ export function usePrivyLogin() {
 
   return useMemo(() => ({
     authenticated,
+    isStartingLogin,
     isSyncingSession,
     loginWithPrivy,
     logoutFromApp,
     ready,
-  }), [authenticated, isSyncingSession, loginWithPrivy, logoutFromApp, ready]);
+  }), [authenticated, isStartingLogin, isSyncingSession, loginWithPrivy, logoutFromApp, ready]);
 }
