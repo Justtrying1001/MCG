@@ -123,7 +123,7 @@ export type HeroPanelProps = {
   timing: {
     label: string;
     value: string;
-    helper: string;
+    helper?: string | null;
     details: Array<{ label: string; value: string }>;
   };
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean } | null;
@@ -183,7 +183,7 @@ export function HeroPanel({
           <div className="contest-detail-timing-header">
             <span className="contest-detail-timing-label">{timing.label}</span>
             <strong>{timing.value}</strong>
-            <p>{timing.helper}</p>
+            {timing.helper ? <p>{timing.helper}</p> : null}
           </div>
 
           {timing.details.length > 0 ? (

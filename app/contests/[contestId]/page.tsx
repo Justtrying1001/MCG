@@ -62,6 +62,19 @@ type RewardPayload = {
 type ScoreBreakdownPayload = { rows?: BreakdownRow[] };
 type MyRewardsPayload = RewardSummary & { grants: Array<{ id: string; type: string; amount: number | null; packDefinitionId: string | null }> };
 
+type ContestDetailPageCache = {
+  detail: ContestDetail | null;
+  ranking: RankingPayload | null;
+  rewards: RewardPayload | null;
+  myRewards: MyRewardsPayload | null;
+  options: LineupOption[];
+  lineupSlots: Array<string | null>;
+  scoreBreakdown: BreakdownRow[] | null;
+  lastLoadedAt: number;
+};
+
+const contestDetailPageCache = new Map<string, ContestDetailPageCache>();
+
 function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   const sanitized = roster.slice(0, rosterSize);
   while (sanitized.length < rosterSize) sanitized.push("");
@@ -93,13 +106,14 @@ function formatCountdown(targetAt: string | null | undefined, nowTs: number): st
 }
 
 export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
+  const cachedState = contestDetailPageCache.get(params.contestId);
   const { me, loading } = useSession();
-  const [detail, setDetail] = useState<ContestDetail | null>(null);
-  const [ranking, setRanking] = useState<RankingPayload | null>(null);
-  const [rewards, setRewards] = useState<RewardPayload | null>(null);
-  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(null);
-  const [options, setOptions] = useState<LineupOption[]>([]);
-  const [lineupSlots, setLineupSlots] = useState<Array<string | null>>([]);
+  const [detail, setDetail] = useState<ContestDetail | null>(cachedState?.detail ?? null);
+  const [ranking, setRanking] = useState<RankingPayload | null>(cachedState?.ranking ?? null);
+  const [rewards, setRewards] = useState<RewardPayload | null>(cachedState?.rewards ?? null);
+  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(cachedState?.myRewards ?? null);
+  const [options, setOptions] = useState<LineupOption[]>(cachedState?.options ?? []);
+  const [lineupSlots, setLineupSlots] = useState<Array<string | null>>(cachedState?.lineupSlots ?? []);
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeBuilderSlot, setActiveBuilderSlot] = useState(0);
   const [error, setError] = useState("");
@@ -107,10 +121,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(null);
-  const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
-  const slotsInitializedRef = useRef(false);
+  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(cachedState?.scoreBreakdown ?? null);
+  const [isLoadingPage, setIsLoadingPage] = useState(!cachedState);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(Boolean(cachedState));
+  const slotsInitializedRef = useRef(Boolean(cachedState && cachedState.lineupSlots.length > 0));
   const leaderboardSectionRef = useRef<HTMLDivElement | null>(null);
   const lastLiveRefreshAtRef = useRef(0);
 
@@ -118,8 +132,22 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const rule = contestData?.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
 
+  const persistPageCache = useCallback((next: Partial<ContestDetailPageCache>) => {
+    const previous = contestDetailPageCache.get(params.contestId);
+    contestDetailPageCache.set(params.contestId, {
+      detail: next.detail ?? previous?.detail ?? null,
+      ranking: next.ranking ?? previous?.ranking ?? null,
+      rewards: next.rewards ?? previous?.rewards ?? null,
+      myRewards: next.myRewards ?? previous?.myRewards ?? null,
+      options: next.options ?? previous?.options ?? [],
+      lineupSlots: next.lineupSlots ?? previous?.lineupSlots ?? [],
+      scoreBreakdown: next.scoreBreakdown ?? previous?.scoreBreakdown ?? null,
+      lastLoadedAt: next.lastLoadedAt ?? previous?.lastLoadedAt ?? Date.now(),
+    });
+  }, [params.contestId]);
+
   const loadAll = useCallback(async () => {
-    setIsLoadingPage(true);
+    setIsLoadingPage((previous) => previous && !contestDetailPageCache.has(params.contestId));
     setHasAttemptedLoad(true);
     setError("");
 
@@ -141,6 +169,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       detailPayload = (await detailRes.json()) as ContestDetail;
       setDetail(detailPayload);
+      persistPageCache({ detail: detailPayload, lastLoadedAt: Date.now() });
 
       if (!slotsInitializedRef.current) {
         slotsInitializedRef.current = true;
@@ -168,13 +197,19 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       const optionsReq = me ? fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }) : Promise.resolve<Response | null>(null);
       const [rankingRes, rewardsRes, optionsRes] = await Promise.all([rankingReq, rewardsReq, optionsReq]);
 
-      setRanking(rankingRes.ok ? ((await rankingRes.json()) as RankingPayload) : null);
-      setRewards(rewardsRes.ok ? ((await rewardsRes.json()) as RewardPayload) : null);
+      const nextRanking = rankingRes.ok ? ((await rankingRes.json()) as RankingPayload) : null;
+      const nextRewards = rewardsRes.ok ? ((await rewardsRes.json()) as RewardPayload) : null;
+      setRanking(nextRanking);
+      setRewards(nextRewards);
+      persistPageCache({ ranking: nextRanking, rewards: nextRewards, lastLoadedAt: Date.now() });
       if (optionsRes?.ok) {
         const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
-        setOptions(Array.isArray(payload?.options) ? payload.options : []);
+        const nextOptions = Array.isArray(payload?.options) ? payload.options : [];
+        setOptions(nextOptions);
+        persistPageCache({ options: nextOptions, lastLoadedAt: Date.now() });
       } else {
         setOptions([]);
+        persistPageCache({ options: [], lastLoadedAt: Date.now() });
       }
 
       const shouldLoadSettledExtras = Boolean(detailPayload.userEntry && detailPayload.contest.status === "SETTLED" && me);
@@ -186,20 +221,28 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
         if (breakdownRes.ok) {
           const payload = (await breakdownRes.json().catch(() => null)) as ScoreBreakdownPayload | null;
-          setScoreBreakdown(Array.isArray(payload?.rows) ? payload.rows : []);
+          const nextBreakdown = Array.isArray(payload?.rows) ? payload.rows : [];
+          setScoreBreakdown(nextBreakdown);
+          persistPageCache({ scoreBreakdown: nextBreakdown, lastLoadedAt: Date.now() });
         } else {
           setScoreBreakdown([]);
+          persistPageCache({ scoreBreakdown: [], lastLoadedAt: Date.now() });
         }
 
         if (myRewardsRes.ok) {
           const payload = (await myRewardsRes.json().catch(() => null)) as MyRewardsPayload | null;
-          setMyRewards(payload ?? { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] });
+          const nextRewards = payload ?? { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] };
+          setMyRewards(nextRewards);
+          persistPageCache({ myRewards: nextRewards, lastLoadedAt: Date.now() });
         } else {
-          setMyRewards({ pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] });
+          const nextRewards = { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] };
+          setMyRewards(nextRewards);
+          persistPageCache({ myRewards: nextRewards, lastLoadedAt: Date.now() });
         }
       } else {
         setScoreBreakdown(null);
         setMyRewards(null);
+        persistPageCache({ scoreBreakdown: null, myRewards: null, lastLoadedAt: Date.now() });
       }
     } catch {
       setDetail(null);
@@ -212,7 +255,20 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     } finally {
       setIsLoadingPage(false);
     }
-  }, [me, params.contestId]);
+  }, [me, params.contestId, persistPageCache]);
+
+  useEffect(() => {
+    persistPageCache({
+      detail,
+      ranking,
+      rewards,
+      myRewards,
+      options,
+      lineupSlots,
+      scoreBreakdown,
+      lastLoadedAt: Date.now(),
+    });
+  }, [detail, lineupSlots, myRewards, options, persistPageCache, ranking, rewards, scoreBreakdown]);
 
   useEffect(() => {
     if (loading) return;
@@ -473,8 +529,6 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
     return items.filter((item, index, array) => array.findIndex((candidate) => candidate.label === item.label && candidate.value === item.value) === index);
   })();
-  const countdownTimestampLabel = isLive ? "Closes at" : isLocked ? "Starts at" : "Closes at";
-  const countdownTimestampValue = formatContestTimestamp(countdownTarget);
   const heroTiming = isSettled
     ? {
         label: "Contest settled",
@@ -486,13 +540,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       ? {
           label: "Contest ends in",
           value: formatCountdown(countdownTarget, nowTs),
-          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         }
       : {
           label: isLocked ? "Contest starts in" : "Entry closes in",
           value: formatCountdown(countdownTarget, nowTs),
-          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         };
   const rankingRows = ranking?.rankings ?? [];
