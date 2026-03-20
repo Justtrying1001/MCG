@@ -162,16 +162,6 @@ export function HeroPanel({
           <div className="contest-detail-hero-copy-panel">
             <p className="contest-detail-hero-kicker">Contest spotlight</p>
             <h1>{title}</h1>
-            {helpHref ? (
-              <a
-                className="contest-detail-help-link"
-                href={helpHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                How contests work →
-              </a>
-            ) : null}
             {infoItems.length > 0 ? (
               <div className="contest-detail-hero-meta-list" aria-label="Contest quick facts">
                 {infoItems.map((item) => (
@@ -215,6 +205,19 @@ export function HeroPanel({
             <button type="button" className="mcg-btn primary contest-detail-hero-cta" onClick={primaryAction.onClick} disabled={primaryAction.disabled}>
               {primaryAction.label}
             </button>
+            {helpHref ? (
+              <div className="contest-detail-help-panel">
+                <p className="contest-detail-help-eyebrow">Not sure how it works?</p>
+                <a
+                  className="contest-detail-help-link"
+                  href={helpHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  How contests work →
+                </a>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
