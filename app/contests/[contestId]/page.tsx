@@ -68,14 +68,9 @@ function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   return sanitized.map((value) => value || null);
 }
 
-const LOCAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const UTC_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
@@ -84,8 +79,7 @@ const UTC_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
 
 function formatContestTimestamp(iso: string | null | undefined): string {
   if (!iso) return "TBD";
-  const date = new Date(iso);
-  return `${LOCAL_DATE_TIME_FORMATTER.format(date)} (local) · ${UTC_TIME_FORMATTER.format(date)} UTC`;
+  return `${UTC_DATE_TIME_FORMATTER.format(new Date(iso))} UTC`;
 }
 
 function formatCountdown(targetAt: string | null | undefined, nowTs: number): string {
