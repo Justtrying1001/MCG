@@ -39,7 +39,7 @@ describe("contest bonus rewards ui smoke", () => {
   it("shows a dedicated bonus rewards section on the contest detail rewards panel", () => {
     const source = readFileSync("components/contests/ContestDetailPanels.tsx", "utf8");
     expect(source).toContain("Bonus rewards");
-    expect(source).toContain("Configured showcase only");
+    expect(source).not.toContain("Configured showcase only");
     expect(source).toContain("formatContestPlacement");
   });
 });
