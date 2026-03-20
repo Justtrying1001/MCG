@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { computeRewards } from "@/lib/domain/contests/reward-distribution";
+import { buildRewardPreviewAllocation } from "@/app/admin/(protected)/contests/create/_lib/rewardPreviewAllocation";
 
-import type { CardSet, ContestFormState, ContestWizardStep, ContestWizardStepId, RewardCapacityCheck } from "./types";
+import type {
+  BonusRewardDraft,
+  CardSet,
+  ContestFormState,
+  ContestWizardStep,
+  ContestWizardStepId,
+  RewardCapacityCheck,
+  RewardPackSupplySummary,
+} from "./types";
 
 export const WIZARD_STEPS: ContestWizardStep[] = [
   { id: "identity", title: "Identity / Contest info" },
@@ -38,7 +46,35 @@ const INITIAL_FORM: ContestFormState = {
   rewardedTopPercent: "25",
   distributionProfile: "balanced",
   previewParticipants: "100",
+  bonusRewards: [],
 };
+
+function createBonusRewardDraft(partial?: Partial<BonusRewardDraft>): BonusRewardDraft {
+  return {
+    id: partial?.id ?? `bonus_${Math.random().toString(36).slice(2, 9)}`,
+    targetRank: partial?.targetRank ?? "1",
+    rewardType: partial?.rewardType ?? "SOL",
+    amount: partial?.amount ?? "",
+    note: partial?.note ?? "",
+  };
+}
+
+function normalizeBonusRewards(value: unknown): BonusRewardDraft[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row, index) => {
+    if (!row || typeof row !== "object") return [];
+    const raw = row as Record<string, unknown>;
+    const rewardType = raw.rewardType;
+    if (rewardType !== "SOL" && rewardType !== "CUSTOM" && rewardType !== "MANUAL_PAYOUT") return [];
+    return [createBonusRewardDraft({
+      id: typeof raw.id === "string" && raw.id.trim() ? raw.id : `bonus_${index + 1}`,
+      targetRank: typeof raw.targetRank === "string" ? raw.targetRank : String(raw.targetRank ?? "1"),
+      rewardType,
+      amount: typeof raw.amount === "string" ? raw.amount : String(raw.amount ?? ""),
+      note: typeof raw.note === "string" ? raw.note : "",
+    })];
+  });
+}
 
 function toInputDate(value: string | null) {
   if (!value) return "";
@@ -70,6 +106,7 @@ export function useContestWizard(initialContestId: string) {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [cardSets, setCardSets] = useState<CardSet[]>([]);
   const [rewardCapacityCheck, setRewardCapacityCheck] = useState<RewardCapacityCheck | null>(null);
+  const [rewardPackSupply, setRewardPackSupply] = useState<RewardPackSupplySummary | null>(null);
 
   const derivedSchedule = useMemo(() => {
     const lockDate = form.lockAt ? new Date(form.lockAt) : null;
@@ -94,10 +131,20 @@ export function useContestWizard(initialContestId: string) {
 
   useEffect(() => {
     void (async () => {
-      const res = await fetch("/api/internal/card-sets", { cache: "no-store" });
-      if (!res.ok) return;
-      const payload = (await res.json()) as { cardSets: CardSet[] };
-      setCardSets(payload.cardSets ?? []);
+      const [cardSetsRes, rewardPackSupplyRes] = await Promise.all([
+        fetch("/api/internal/card-sets", { cache: "no-store" }),
+        fetch("/api/admin/packs/supply", { cache: "no-store" }),
+      ]);
+
+      if (cardSetsRes.ok) {
+        const payload = (await cardSetsRes.json()) as { cardSets: CardSet[] };
+        setCardSets(payload.cardSets ?? []);
+      }
+
+      if (rewardPackSupplyRes.ok) {
+        const payload = (await rewardPackSupplyRes.json()) as RewardPackSupplySummary;
+        setRewardPackSupply(payload);
+      }
     })();
   }, []);
 
@@ -143,6 +190,7 @@ export function useContestWizard(initialContestId: string) {
         packPoolAmount: String((rewardConfig as any)?.packPool ?? 0),
         rewardedTopPercent: String((rewardConfig as any)?.rewardedTopPercent ?? 25),
         distributionProfile: ((rewardConfig as any)?.distributionProfile as ContestFormState["distributionProfile"]) ?? "balanced",
+        bonusRewards: normalizeBonusRewards((ruleConfig as any)?.bonusRewards),
       }));
     })();
   }, [contestId]);
@@ -186,6 +234,15 @@ export function useContestWizard(initialContestId: string) {
         rulesText: form.rulesText.trim() || null,
         infoNotes: [form.participationNotes.trim(), form.optionalClarifications.trim()].filter(Boolean).join("\n\n---\n\n") || null,
         coverImageUrl: form.coverImageUrl.trim() || null,
+        bonusRewards: form.bonusRewards
+          .filter((row) => row.targetRank.trim() || row.amount.trim() || row.note.trim())
+          .map((row) => ({
+            id: row.id,
+            targetRank: row.targetRank.trim(),
+            rewardType: row.rewardType,
+            amount: row.amount.trim(),
+            note: row.note.trim(),
+          })),
       },
     };
   }, [derivedSchedule.endsAtIso, derivedSchedule.liveAtIso, form]);
@@ -225,15 +282,10 @@ export function useContestWizard(initialContestId: string) {
   }), [allIssues]);
 
   const generatedPreview = useMemo(() => {
-    const participantsCount = Math.max(0, Math.floor(Number(form.previewParticipants) || 0));
-    const ranking = Array.from({ length: participantsCount }, (_, index) => `rank-${index + 1}`);
-    const rows = computeRewards({ participantsCount, ranking, config: payload.rewardConfig });
-    return {
-      participantsCount,
-      rows,
-      totalPoints: rows.reduce((sum, row) => sum + row.pointsReward, 0),
-      totalPacks: rows.reduce((sum, row) => sum + row.packsReward, 0),
-    };
+    return buildRewardPreviewAllocation({
+      participantsCount: Number(form.previewParticipants) || 0,
+      rewardConfig: payload.rewardConfig,
+    });
   }, [form.previewParticipants, payload.rewardConfig]);
 
   const checklist = useMemo(() => [
@@ -306,6 +358,21 @@ export function useContestWizard(initialContestId: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const addBonusReward = () => {
+    setForm((prev) => ({ ...prev, bonusRewards: [...prev.bonusRewards, createBonusRewardDraft()] }));
+  };
+
+  const updateBonusReward = (id: string, patch: Partial<BonusRewardDraft>) => {
+    setForm((prev) => ({
+      ...prev,
+      bonusRewards: prev.bonusRewards.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+    }));
+  };
+
+  const removeBonusReward = (id: string) => {
+    setForm((prev) => ({ ...prev, bonusRewards: prev.bonusRewards.filter((row) => row.id !== id) }));
+  };
+
   const currentStep = WIZARD_STEPS[stepIndex];
   const currentStepIssues = issuesByStep[currentStep.id as ContestWizardStepId] ?? [];
 
@@ -329,7 +396,11 @@ export function useContestWizard(initialContestId: string) {
     setMessage,
     publishSuccess,
     rewardCapacityCheck,
+    rewardPackSupply,
     builtInContestCovers: BUILT_IN_CONTEST_COVERS,
+    addBonusReward,
+    updateBonusReward,
+    removeBonusReward,
     saveDraft,
     publishContest,
   };

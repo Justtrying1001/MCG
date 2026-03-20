@@ -1,5 +1,13 @@
 export type CardSet = { id: string; code: string; displayName: string; isActive: boolean };
 
+export type BonusRewardDraft = {
+  id: string;
+  targetRank: string;
+  rewardType: "SOL" | "CUSTOM" | "MANUAL_PAYOUT";
+  amount: string;
+  note: string;
+};
+
 export type RewardCapacityRow = {
   packDefinitionId: string;
   packCode: string | null;
@@ -44,4 +52,30 @@ export type ContestFormState = {
   rewardedTopPercent: string;
   distributionProfile: "balanced" | "top-heavy" | "very-top-heavy";
   previewParticipants: string;
+  bonusRewards: BonusRewardDraft[];
+};
+
+export type RewardPackSupplyRow = {
+  packDefinitionId: string;
+  packCode: string;
+  displayName: string;
+  totalSupply: number;
+  attributed: number;
+  claimed: number;
+  reserved: number;
+  remaining: number;
+  isActive: boolean;
+  poolStatus: "TRACKED" | "MISSING_POOL";
+};
+
+export type RewardPackSupplySummary = {
+  reward: {
+    totalSupply: number;
+    attributed: number;
+    claimed: number;
+    reserved: number;
+    remaining: number;
+    pools: RewardPackSupplyRow[];
+  };
+  lastUpdatedAt: string;
 };
