@@ -16,27 +16,33 @@ vi.mock("@prisma/client", async () => {
 
 const {
   createMock,
-  countMock,
+  eventCountMock,
   groupByMock,
-  aggregateMock,
+  packOpeningEventCountMock,
+  getPackSupplySummaryMock,
 } = vi.hoisted(() => ({
   createMock: vi.fn(),
-  countMock: vi.fn(),
+  eventCountMock: vi.fn(),
   groupByMock: vi.fn(),
-  aggregateMock: vi.fn(),
+  packOpeningEventCountMock: vi.fn(),
+  getPackSupplySummaryMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     event: {
       create: createMock,
-      count: countMock,
+      count: eventCountMock,
       groupBy: groupByMock,
     },
-    packDefinition: {
-      aggregate: aggregateMock,
+    packOpeningEvent: {
+      count: packOpeningEventCountMock,
     },
   },
+}));
+
+vi.mock("@/lib/domain/rewards/pack-supply", () => ({
+  getPackSupplySummary: getPackSupplySummaryMock,
 }));
 
 import { getAdminAnalytics, recordInternalEvent, INTERNAL_EVENT_TYPES } from "@/lib/analytics/events";
@@ -71,15 +77,15 @@ describe("analytics events", () => {
       .mockResolvedValueOnce([{ visitorId: "v1" }, { visitorId: "v2" }])
       .mockResolvedValueOnce([{ visitorId: "v2" }])
       .mockResolvedValueOnce([{ visitorId: "v2" }]);
-    countMock
-      .mockResolvedValueOnce(4)
-      .mockResolvedValueOnce(2)
+    eventCountMock
       .mockResolvedValueOnce(1)
-      .mockResolvedValueOnce(3);
-    aggregateMock.mockResolvedValue({
-      _sum: {
-        plannedPackCount: 20,
-        openedPackCount: 5,
+      .mockResolvedValueOnce(1);
+    packOpeningEventCountMock
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(2);
+    getPackSupplySummaryMock.mockResolvedValue({
+      global: {
+        remaining: 15,
       },
     });
 
@@ -109,5 +115,6 @@ describe("analytics events", () => {
     expect(analytics.packs.totalOpened).toBe(4);
     expect(analytics.packs.guestOpened).toBe(1);
     expect(analytics.packs.loggedOpened).toBe(3);
+    expect(analytics.packs.remainingSupply).toBe(15);
   });
 });

@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionUserMock, openSalePackMvpDbNativeMock } = vi.hoisted(() => ({
+const { getSessionUserMock, openSalePackMvpDbNativeMock, recordInternalEventMock } = vi.hoisted(() => ({
   getSessionUserMock: vi.fn(),
   openSalePackMvpDbNativeMock: vi.fn(),
+  recordInternalEventMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getSessionUser: getSessionUserMock }));
+vi.mock("@/lib/analytics/events", () => ({
+  INTERNAL_EVENT_TYPES: { packOpen: "PACK_OPEN" },
+  recordInternalEvent: recordInternalEventMock,
+}));
 vi.mock("@/lib/domain/acquisition/open-pack", async () => {
   const actual = await vi.importActual<typeof import("@/lib/domain/acquisition/open-pack")>("@/lib/domain/acquisition/open-pack");
   return {
@@ -67,6 +72,7 @@ describe("POST /api/pack/open", () => {
     expect(response.status).toBe(429);
     expect(body.error.code).toBe("PACK_PURCHASE_LIMIT_REACHED");
     expect(body.error.purchaseLimit.cooldownSeconds).toBe(3600);
+    expect(recordInternalEventMock).not.toHaveBeenCalled();
   });
 
   it("returns pack payload when MVP payload is valid", async () => {
@@ -81,5 +87,11 @@ describe("POST /api/pack/open", () => {
 
     expect(response.status).toBe(200);
     expect(body.pulledCardsMvp[0].templateId).toBe("tpl_1");
+    expect(recordInternalEventMock).toHaveBeenCalledWith({
+      type: "PACK_OPEN",
+      visitorId: "visitor-1",
+      userId: "u1",
+      isGuest: false,
+    });
   });
 });

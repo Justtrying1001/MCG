@@ -6,6 +6,7 @@ describe("packs purchase-limit UX", () => {
     const source = readFileSync("app/packs/page.tsx", "utf8");
     expect(source).toContain("purchaseLimit={purchaseLimit}");
     expect(source).toContain("statusNotice={saleNotice}");
+    expect(source).toContain('trackInternalEvent("PACK_OPEN")');
     expect(source).not.toContain("alert(");
   });
 
