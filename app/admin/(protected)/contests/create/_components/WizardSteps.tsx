@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import type { CardSet, ContestFormState, RewardCapacityCheck } from "../_hooks/types";
 
 export function ContestIdentityStep(props: {
@@ -236,6 +238,7 @@ export function ContestRewardsStep(props: {
   const hasPointsRewards = pointsPool > 0;
   const hasPackRewards = packPool > 0;
   const winnersCount = generatedPreview.rows.length;
+  const showScrollableRankTable = winnersCount > 12;
 
   return (
     <section className="admin-panel contest-builder-v2-section">
@@ -302,11 +305,61 @@ export function ContestRewardsStep(props: {
         <input className="input" type="number" min={0} value={form.previewParticipants} onChange={(e) => setField("previewParticipants", e.target.value)} />
         <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {winnersCount}</p>
         <p className="contest-inline-note">Estimated distributed totals → Points: {generatedPreview.totalPoints.toLocaleString()} · Packs: {generatedPreview.totalPacks.toLocaleString()}</p>
-        <p className="contest-inline-note">This preview uses current pools + profile settings and does not override backend policy enforcement.</p>
+        <div style={{ display: "grid", gap: "0.5rem" }}>
+          <p className="contest-inline-note"><strong>Preview by rank</strong></p>
+          {generatedPreview.rows.length > 0 ? (
+            <div
+              style={{
+                border: "1px solid var(--color-border-secondary)",
+                borderRadius: "0.9rem",
+                overflow: "auto",
+                maxHeight: showScrollableRankTable ? "20rem" : undefined,
+              }}
+            >
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "20rem" }}>
+                <thead>
+                  <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+                    <th style={rewardPreviewHeaderCellStyle}>Rank</th>
+                    <th style={rewardPreviewHeaderCellStyle}>Estimated points</th>
+                    <th style={rewardPreviewHeaderCellStyle}>Estimated packs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {generatedPreview.rows.map((row) => (
+                    <tr key={row.rank}>
+                      <td style={rewardPreviewBodyCellStyle}>#{row.rank}</td>
+                      <td style={rewardPreviewBodyCellStyle}>{row.pointsReward.toLocaleString()}</td>
+                      <td style={rewardPreviewBodyCellStyle}>{row.packsReward.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="contest-inline-note">No winner rows to preview yet. Increase the preview field size or adjust reward settings to estimate rank payouts.</p>
+          )}
+          <p className="contest-inline-note">This rank-level preview is informational only and does not override backend reward policy enforcement or publish-time validation.</p>
+        </div>
       </article>
     </section>
   );
 }
+
+const rewardPreviewHeaderCellStyle: CSSProperties = {
+  textAlign: "left",
+  padding: "0.75rem 0.9rem",
+  fontSize: "0.78rem",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: "var(--color-text-secondary)",
+  borderBottom: "1px solid var(--color-border-secondary)",
+};
+
+const rewardPreviewBodyCellStyle: CSSProperties = {
+  padding: "0.7rem 0.9rem",
+  borderBottom: "1px solid rgba(255,255,255,0.06)",
+  fontVariantNumeric: "tabular-nums",
+};
 
 export function ContestReviewStep(props: {
   payload: any;

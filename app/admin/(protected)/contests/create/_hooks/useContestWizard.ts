@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { computeRewards } from "@/lib/domain/contests/reward-distribution";
+import { buildRewardPreviewAllocation } from "@/app/admin/(protected)/contests/create/_lib/rewardPreviewAllocation";
 
 import type { CardSet, ContestFormState, ContestWizardStep, ContestWizardStepId, RewardCapacityCheck } from "./types";
 
@@ -225,15 +225,10 @@ export function useContestWizard(initialContestId: string) {
   }), [allIssues]);
 
   const generatedPreview = useMemo(() => {
-    const participantsCount = Math.max(0, Math.floor(Number(form.previewParticipants) || 0));
-    const ranking = Array.from({ length: participantsCount }, (_, index) => `rank-${index + 1}`);
-    const rows = computeRewards({ participantsCount, ranking, config: payload.rewardConfig });
-    return {
-      participantsCount,
-      rows,
-      totalPoints: rows.reduce((sum, row) => sum + row.pointsReward, 0),
-      totalPacks: rows.reduce((sum, row) => sum + row.packsReward, 0),
-    };
+    return buildRewardPreviewAllocation({
+      participantsCount: Number(form.previewParticipants) || 0,
+      rewardConfig: payload.rewardConfig,
+    });
   }, [form.previewParticipants, payload.rewardConfig]);
 
   const checklist = useMemo(() => [
