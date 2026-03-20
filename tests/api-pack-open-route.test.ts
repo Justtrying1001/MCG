@@ -17,6 +17,13 @@ vi.mock("@/lib/domain/acquisition/open-pack", async () => {
 import { POST } from "@/app/api/pack/open/route";
 import { PackPurchaseLimitExceededError } from "@/lib/domain/acquisition/purchase-limit";
 
+function buildRequest() {
+  return new Request("http://localhost/api/pack/open", {
+    method: "POST",
+    headers: { "x-visitor-id": "visitor-1" },
+  });
+}
+
 describe("POST /api/pack/open", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,7 +32,7 @@ describe("POST /api/pack/open", () => {
   it("returns 401 for unauthenticated requests", async () => {
     getSessionUserMock.mockResolvedValue(null);
 
-    const response = await POST();
+    const response = await POST(buildRequest());
     expect(response.status).toBe(401);
   });
 
@@ -35,7 +42,7 @@ describe("POST /api/pack/open", () => {
       pulledCardsMvp: [],
     });
 
-    const response = await POST();
+    const response = await POST(buildRequest());
     expect(response.status).toBe(500);
     const text = await response.text();
     expect(text).toContain("Invalid MVP pack payload");
@@ -54,7 +61,7 @@ describe("POST /api/pack/open", () => {
       windowHours: 24,
     }));
 
-    const response = await POST();
+    const response = await POST(buildRequest());
     const body = await response.json();
 
     expect(response.status).toBe(429);
@@ -69,7 +76,7 @@ describe("POST /api/pack/open", () => {
       purchaseLimit: { enabled: true, limit: 5, used: 1, remainingPurchases: 4, resetAt: null, cooldownSeconds: 0, isBlocked: false, windowHours: 24 },
     });
 
-    const response = await POST();
+    const response = await POST(buildRequest());
     const body = await response.json();
 
     expect(response.status).toBe(200);

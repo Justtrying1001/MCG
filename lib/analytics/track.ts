@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "@vercel/analytics/react";
+import { getAnalyticsRequestHeaders, getOrCreateVisitorId } from "@/lib/analytics/visitor-id";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
@@ -16,10 +17,13 @@ export function trackEvent(name: string, properties?: EventProperties) {
 
 export function trackInternalEvent(type: InternalTrackableEventType) {
   try {
+    const visitorId = getOrCreateVisitorId();
+    if (!visitorId) return;
+
     void fetch("/api/analytics/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type }),
+      headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ type, visitorId }),
       keepalive: true,
     });
   } catch {
