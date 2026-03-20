@@ -251,15 +251,7 @@ function QuestCard({
   })();
 
   return (
-    <article style={{
-      background: "#1E1E24",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 12,
-      padding: "1rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.6rem",
-    }}>
+    <article className="rewards-quest-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "0.2rem" }}>
@@ -361,16 +353,7 @@ function QuestCard({
 
 function CompletedQuestCard({ quest }: { quest: QuestRow }) {
   return (
-    <article style={{
-      background: "#1E1E24",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 12,
-      padding: "1rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.5rem",
-      opacity: 0.75,
-    }}>
+    <article className="rewards-completed-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "0.15rem" }}>
@@ -452,7 +435,7 @@ function MilestoneBadge({ code, category, title, objective, rewardPoints, reward
 
       {/* Text below — only if unlocked */}
       {unlocked && (
-        <div style={{ textAlign: "center", maxWidth: 88 }}>
+        <div className="rewards-milestone-meta">
           <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-primary)", lineHeight: 1.2 }}>{title}</p>
           <p style={{ fontSize: "0.64rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.3, marginTop: "0.15rem" }}>{objective}</p>
           <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--color-accent-primary)", marginTop: "0.15rem" }}>
@@ -785,7 +768,6 @@ export default function RewardsPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   const TAB_BORDER = "var(--color-accent-primary)";
-  const BG_CARD = "var(--color-surface-1)";
   const BORDER_COLOR = "var(--color-border-subtle)";
   const TEXT_MUTED = "var(--color-text-secondary)";
   const showInitialLoading = !hasConfirmedSession || (!hasLoadedData && loadingData);
@@ -883,45 +865,35 @@ export default function RewardsPage() {
       ) : null}
       {showInitialLoading ? <EmptyState title="Loading rewards…" /> : null}
       {!showInitialLoading && (me || hasLoadedData) ? (
-        <div style={{ padding: "1.5rem 0" }}>
+        <div className="rewards-page-shell">
 
-          {/* ── Page header ── */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "0.2rem" }}>Rewards</h1>
-            <p style={{ fontSize: "0.9rem", color: TEXT_MUTED, marginBottom: "0.6rem" }}>Quests, milestones &amp; earning history</p>
-            {showRefreshNotice ? (
-              <p aria-live="polite" style={{ fontSize: "0.8rem", color: TEXT_MUTED }}>
-                Refreshing rewards…
-              </p>
-            ) : null}
-          </div>
+          <section className="rewards-hero-panel">
+            <div className="rewards-hero-copy">
+              <span className="mcg-eyebrow">Rewards hub</span>
+              <h1 className="rewards-page-title">Quests, milestones &amp; earning history</h1>
+              <p className="rewards-page-desc">Track active objectives, progression landmarks, and settled earnings while keeping the current quest and reward logic intact.</p>
+              {showRefreshNotice ? (
+                <p aria-live="polite" className="rewards-refresh-note">
+                  Refreshing rewards…
+                </p>
+              ) : null}
+            </div>
 
-          {/* ── Summary strip ── */}
-          <div style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            marginBottom: "1.25rem",
-            padding: "0.9rem 1.1rem",
-            background: BG_CARD,
-            border: `1px solid ${BORDER_COLOR}`,
-            borderRadius: 12,
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 120 }}>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Current points</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-accent-primary)" }}>{currentPoints.toLocaleString()}</span>
+            <div className="rewards-summary-grid">
+              <div className="rewards-summary-card">
+                <span>Current points</span>
+                <strong>{currentPoints.toLocaleString()}</strong>
+              </div>
+              <div className="rewards-summary-card">
+                <span>Total ever earned</span>
+                <strong>{totalCredits.toLocaleString()}</strong>
+              </div>
+              <div className="rewards-summary-card">
+                <span>Friends invited</span>
+                <strong>{friendsInvited}</strong>
+              </div>
             </div>
-            <div style={{ width: 1, background: BORDER_COLOR, alignSelf: "stretch" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 120 }}>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Total ever earned</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{totalCredits.toLocaleString()}</span>
-            </div>
-            <div style={{ width: 1, background: BORDER_COLOR, alignSelf: "stretch" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 100 }}>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Friends invited</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{friendsInvited}</span>
-            </div>
-          </div>
+          </section>
 
           {/* ── Error banners ── */}
           {questsError && <div style={{ padding: "0.6rem 0.9rem", background: "rgba(214,58,50,0.12)", border: "1px solid rgba(214,58,50,0.25)", borderRadius: 8, color: "#E05550", fontSize: "0.82rem", marginBottom: "0.75rem" }}>{questsError}</div>}
@@ -929,7 +901,7 @@ export default function RewardsPage() {
           {actionMsg && <div style={{ padding: "0.6rem 0.9rem", background: "rgba(74,170,107,0.1)", border: "1px solid rgba(74,170,107,0.25)", borderRadius: 8, color: "#4AAA6B", fontSize: "0.82rem", marginBottom: "0.75rem" }}>{actionMsg}</div>}
 
           {/* ── Tab bar ── */}
-          <div style={{ borderBottom: `1px solid ${BORDER_COLOR}`, marginBottom: "1.5rem", display: "flex", overflowX: "auto" }}>
+          <div className="rewards-tabbar">
             <button style={tabStyle("quests")} onClick={() => setActiveTab("quests")}>
               Quests
               {viewModel.openQuestCount > 0 && (
@@ -952,20 +924,10 @@ export default function RewardsPage() {
               TAB 1 — Quests
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === "quests" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div className="rewards-tab-panel">
 
               {/* Invite bar */}
-              <div style={{
-                background: BG_CARD,
-                border: `1px solid ${BORDER_COLOR}`,
-                borderRadius: 12,
-                padding: "1rem 1.1rem",
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "0.75rem",
-              }}>
+              <div className="rewards-invite-panel">
                 <div>
                   <p style={{ fontWeight: 700, color: "var(--color-text-primary)", fontSize: "0.95rem" }}>Invite friends, earn points</p>
                   <p style={{ fontSize: "0.8rem", color: TEXT_MUTED }}>+1,000 pts per friend · {friendsInvited} friend{friendsInvited !== 1 ? "s" : ""} invited</p>
@@ -1009,11 +971,7 @@ export default function RewardsPage() {
                   <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: TEXT_MUTED, marginBottom: "0.65rem" }}>
                     {group.title}
                   </p>
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                    gap: "0.75rem",
-                  }}>
+                  <div className="rewards-quest-grid">
                     {group.quests.map((quest) => (
                       <QuestCard
                         key={quest.id}
@@ -1059,15 +1017,7 @@ export default function RewardsPage() {
                   </button>
 
                   {completedOpen && (
-                    <div style={{
-                      border: `1px solid ${BORDER_COLOR}`,
-                      borderTop: "none",
-                      borderRadius: "0 0 12px 12px",
-                      padding: "0.85rem",
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                      gap: "0.65rem",
-                    }}>
+                    <div className="rewards-completed-grid">
                       {viewModel.completedSocialQuests.map((quest) => (
                         <CompletedQuestCard key={quest.id} quest={quest} />
                       ))}
@@ -1082,7 +1032,7 @@ export default function RewardsPage() {
               TAB 2 — Milestones
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === "milestones" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div className="rewards-tab-panel rewards-tab-panel--milestones">
               {viewModel.milestoneSeries.map((series) => (
                 <div key={series.category}>
                   {/* Badge row — horizontal scroll on mobile */}
@@ -1131,12 +1081,7 @@ export default function RewardsPage() {
                 </div>
               ) : (
                 <>
-                  <div style={{
-                    background: BG_CARD,
-                    border: `1px solid ${BORDER_COLOR}`,
-                    borderRadius: 12,
-                    overflow: "hidden",
-                  }}>
+                  <div className="rewards-history-panel">
                     {viewModel.historyRows.slice(0, historyPage).map((row, idx) => (
                       <div
                         key={row.id}

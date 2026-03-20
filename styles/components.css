@@ -1215,3 +1215,395 @@
     font-size: clamp(2.7rem, 12vw, 4rem);
   }
 }
+
+.collection-page-shell,
+.profile-page-shell,
+.rewards-page-shell {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.collection-hero-panel,
+.rewards-hero-panel {
+  padding: var(--space-4);
+  border-radius: 34px;
+  background: rgba(30, 22, 40, 0.72);
+  box-shadow: inset 1px 1px 0 rgba(199, 153, 255, 0.14), var(--shadow-md);
+}
+
+.collection-hero-grid,
+.rewards-hero-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.collection-hero-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: end;
+}
+
+.collection-hero-copy,
+.rewards-hero-copy,
+.profile-summary-header {
+  display: grid;
+  gap: 10px;
+}
+
+.collection-data-title,
+.rewards-page-title,
+.collection-section-title,
+.profile-summary-title {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+}
+
+.collection-data-title,
+.rewards-page-title {
+  font-size: clamp(2.6rem, 4vw, 4rem);
+}
+
+.collection-section-title,
+.profile-summary-title {
+  font-size: 1.35rem;
+}
+
+.collection-hero-desc,
+.rewards-page-desc {
+  max-width: 58ch;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.collection-hero-stats,
+.rewards-summary-grid,
+.profile-stats-grid,
+.profile-summary-stats {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.collection-hero-stats,
+.rewards-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.collection-stat-chip,
+.rewards-summary-card,
+.profile-stat-panel,
+.profile-summary-stat {
+  padding: var(--space-3);
+  border-radius: 24px;
+  background: rgba(44, 33, 55, 0.52);
+  box-shadow: inset 1px 1px 0 rgba(199, 153, 255, 0.14);
+  display: grid;
+  gap: 8px;
+}
+
+.collection-stat-chip span,
+.rewards-summary-card span,
+.profile-stat-panel span,
+.profile-summary-stat span {
+  color: var(--color-text-muted);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.collection-stat-chip strong,
+.rewards-summary-card strong,
+.profile-stat-panel strong,
+.profile-summary-stat strong {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.collection-layout-grid,
+.profile-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.collection-main-column,
+.collection-side-column,
+.profile-main-column,
+.profile-side-column {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.collection-toolbar--panel,
+.collection-grid-panel,
+.collection-focus-panel,
+.profile-summary-panel {
+  padding: var(--space-4);
+}
+
+.collection-toolbar--panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: end;
+}
+
+.collection-data-block,
+.collection-sort-block {
+  display: grid;
+  gap: 10px;
+}
+
+.collection-data-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--color-text-secondary);
+}
+
+.collection-sort-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.collection-sort-row label {
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+.collection-select {
+  min-width: 180px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(18, 11, 26, 0.72);
+  color: var(--color-text-primary);
+  padding: 12px 14px;
+}
+
+.collection-focus-panel,
+.profile-summary-panel,
+.rewards-history-panel,
+.rewards-invite-panel {
+  border-radius: 28px;
+  background: rgba(30, 22, 40, 0.72);
+  box-shadow: inset 1px 1px 0 rgba(199, 153, 255, 0.14), var(--shadow-md);
+}
+
+.collection-focus-panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.collection-focus-header {
+  display: grid;
+  gap: 8px;
+}
+
+.collection-focus-card {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.collection-focus-card-art {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: rgba(44, 33, 55, 0.44);
+  aspect-ratio: 4 / 5;
+}
+
+.collection-focus-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.collection-focus-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.collection-focus-stat {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(44, 33, 55, 0.42);
+  display: grid;
+  gap: 6px;
+}
+
+.collection-focus-stat span {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.collection-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.collection-card-tile {
+  display: grid;
+  gap: 12px;
+}
+
+.collection-card-tile-trigger {
+  border: 0;
+  background: rgba(44, 33, 55, 0.44);
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.collection-card-tile-trigger:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(4, 1, 10, 0.36), 0 0 24px rgba(199, 153, 255, 0.12);
+}
+
+.collection-card-meta {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(30, 22, 40, 0.62);
+}
+
+.collection-card-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.collection-card-meta-title {
+  font-family: var(--font-display);
+}
+
+.collection-card-meta-edition,
+.collection-card-meta-rarity,
+.collection-card-copies {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.profile-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-summary-panel {
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.rewards-hero-panel {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: end;
+}
+
+.rewards-refresh-note {
+  color: var(--secondary);
+  font-size: 0.85rem;
+}
+
+.rewards-tabbar {
+  border-bottom: 1px solid rgba(77, 68, 86, 0.2);
+  margin-bottom: var(--space-4);
+  display: flex;
+  overflow-x: auto;
+}
+
+.rewards-tab-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.rewards-invite-panel {
+  padding: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rewards-quest-grid,
+.rewards-completed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.rewards-completed-grid {
+  padding: var(--space-3);
+  border-radius: 0 0 12px 12px;
+  border: 1px solid rgba(77, 68, 86, 0.2);
+  border-top: 0;
+}
+
+.rewards-quest-card,
+.rewards-completed-card {
+  background: rgba(30, 22, 40, 0.78);
+  box-shadow: inset 1px 1px 0 rgba(199, 153, 255, 0.14), var(--shadow-sm);
+  border-radius: 22px;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rewards-completed-card {
+  opacity: 0.72;
+}
+
+.rewards-history-panel {
+  overflow: hidden;
+}
+
+.rewards-milestone-meta {
+  text-align: center;
+  max-width: 88px;
+}
+
+@media (max-width: 1200px) {
+  .collection-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .collection-hero-grid,
+  .collection-layout-grid,
+  .profile-content-grid,
+  .profile-stats-grid,
+  .rewards-hero-panel,
+  .collection-toolbar--panel,
+  .collection-sort-row,
+  .collection-focus-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .collection-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .collection-hero-stats,
+  .rewards-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .collection-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -74,14 +74,15 @@ export default function AccountPage() {
     [userQuests],
   );
 
-  const accountBreakdown = account?.progressionBreakdown;
+  const completedQuests = userQuests.filter((quest) => quest.status === "COMPLETED").length;
+  const pendingRewards = userQuests.filter((quest) => quest.status === "CLAIMABLE" || quest.status === "IN_PROGRESS").length;
 
   return (
     <SiteShell>
       {!me ? (
         <EmptyState title="Sign in to open your collector profile" description="Connect with X to load persistent progression and contest identity." />
       ) : (
-        <>
+        <div className="profile-page-shell">
           <CollectorShowcase
             displayName={me.user.displayName}
             points={me.user.points}
@@ -89,31 +90,68 @@ export default function AccountPage() {
             completionPct={collection?.completionPct ?? null}
           />
 
-          <FeaturedCardsStrip cards={featuredCards} />
-
-          <SetCompletionSection rows={setCompletionRows} />
-
-          <ContestAchievements
-            contestsEntered={competitive?.contestsEntered ?? 0}
-            bestRank={competitive?.bestRank ?? null}
-            rating={competitive?.rating ?? null}
-            leagueTier={competitive?.leagueTier ?? null}
-            seasonRank={competitive?.seasonRank ?? null}
-          />
-
-          {unlockedMilestoneCount > 0 ? (
-            <div className="mcg-surface profile-unlocked-strip">
-              <p className="mcg-eyebrow">Milestone badges unlocked</p>
-              <strong>{unlockedMilestoneCount} unlocked</strong>
+          <section className="profile-stats-grid">
+            <div className="profile-stat-panel">
+              <span className="mcg-eyebrow">Collection</span>
+              <strong>{collection?.ownedTemplateCount ?? me.mvpCollection.length}</strong>
+              <p className="contest-inline-note">Cards currently tracked across your repository.</p>
             </div>
-          ) : null}
+            <div className="profile-stat-panel">
+              <span className="mcg-eyebrow">Rewards</span>
+              <strong>{completedQuests}</strong>
+              <p className="contest-inline-note">Completed quests and milestones currently settled on your account.</p>
+            </div>
+            <div className="profile-stat-panel">
+              <span className="mcg-eyebrow">Activity</span>
+              <strong>{competitive?.contestsEntered ?? 0}</strong>
+              <p className="contest-inline-note">Contests entered across your current progression history.</p>
+            </div>
+          </section>
+
+          <section className="profile-content-grid">
+            <div className="profile-main-column">
+              <FeaturedCardsStrip cards={featuredCards} />
+              <SetCompletionSection rows={setCompletionRows} />
+            </div>
+
+            <div className="profile-side-column">
+              <div className="mcg-surface raised profile-summary-panel">
+                <div className="profile-summary-header">
+                  <span className="mcg-eyebrow">Rewards summary</span>
+                  <h2 className="profile-summary-title">Quest and milestone status</h2>
+                </div>
+                <div className="profile-summary-stats">
+                  <div className="profile-summary-stat">
+                    <span>Completed</span>
+                    <strong>{completedQuests}</strong>
+                  </div>
+                  <div className="profile-summary-stat">
+                    <span>Pending</span>
+                    <strong>{pendingRewards}</strong>
+                  </div>
+                  <div className="profile-summary-stat">
+                    <span>Unlocked milestones</span>
+                    <strong>{unlockedMilestoneCount}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <ContestAchievements
+                contestsEntered={competitive?.contestsEntered ?? 0}
+                bestRank={competitive?.bestRank ?? null}
+                rating={competitive?.rating ?? null}
+                leagueTier={competitive?.leagueTier ?? null}
+                seasonRank={competitive?.seasonRank ?? null}
+              />
+            </div>
+          </section>
 
           {recentResults.length > 0 ? (
             <RecentResults results={recentResults} />
           ) : (
             <EmptyState title="No recent contest results" description="Enter contests to build your competitive history." />
           )}
-        </>
+        </div>
       )}
     </SiteShell>
   );
