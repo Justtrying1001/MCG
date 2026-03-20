@@ -90,20 +90,20 @@ function buildPerRankAllocation(input: {
 
   const weights = buildRankWeights(input.winnersCount, input.distributionProfile);
   return {
-    points: allocatePoolByWeights(input.pointsPool, weights),
+    points: allocatePointPoolByWeights(input.pointsPool, weights),
     packs: allocatePoolByWeights(input.packsPool, weights),
   };
 }
 
 function buildBalancedPerRankAllocation(winnersCount: number, pointsPool: number, packsPool: number) {
   const tiers = buildPreviewTierRanges(winnersCount);
-  const tierPointTotals = allocatePoolByWeights(pointsPool, buildBalancedTierWeights(tiers, BALANCED_POINTS_TIER_WEIGHTS));
+  const tierPointTotals = allocatePointPoolByWeights(pointsPool, buildBalancedTierWeights(tiers, BALANCED_POINTS_TIER_WEIGHTS));
   const tierPackTotals = allocatePoolByWeights(packsPool, buildBalancedTierWeights(tiers, BALANCED_PACKS_TIER_WEIGHTS));
   const points = Array.from({ length: winnersCount }, () => 0);
   const packs = Array.from({ length: winnersCount }, () => 0);
 
   tiers.forEach((tier, tierIndex) => {
-    const pointSplit = splitTierEvenly(tierPointTotals[tierIndex] ?? 0, tier.size);
+    const pointSplit = splitTierPointsForPreview(tierPointTotals[tierIndex] ?? 0, tier.size);
     const packSplit = splitTierEvenly(tierPackTotals[tierIndex] ?? 0, tier.size);
 
     for (let offset = 0; offset < tier.size; offset += 1) {
@@ -144,11 +144,42 @@ function allocatePoolByWeights(pool: number, weights: number[]) {
   return allocated;
 }
 
+function allocatePointPoolByWeights(pool: number, weights: number[]) {
+  if (pool <= 0 || weights.length === 0) return weights.map(() => 0);
+
+  const tenPointUnits = Math.floor(pool / 10);
+  const allocatedUnits = allocatePoolByWeights(tenPointUnits, weights);
+  const allocated = allocatedUnits.map((value) => value * 10);
+  const leftover = pool - allocated.reduce((sum, value) => sum + value, 0);
+
+  if (leftover > 0) {
+    allocated[0] = (allocated[0] ?? 0) + leftover;
+  }
+
+  return allocated;
+}
+
 function splitTierEvenly(total: number, count: number) {
   if (count <= 0) return [];
   const base = Math.floor(total / count);
   let remainder = total - (base * count);
   return Array.from({ length: count }, (_, index) => base + (index < remainder ? 1 : 0));
+}
+
+function splitTierPointsForPreview(total: number, count: number) {
+  if (count <= 0) return [];
+  if (total <= 0) return Array.from({ length: count }, () => 0);
+
+  const baseRounded = Math.floor((total / count) / 10) * 10;
+  const allocated = Array.from({ length: count }, () => baseRounded);
+  let remainder = total - (baseRounded * count);
+
+  for (let index = 0; index < allocated.length && remainder >= 10; index += 1) {
+    allocated[index] += 10;
+    remainder -= 10;
+  }
+
+  return allocated;
 }
 
 function buildPreviewTierRanges(winnersCount: number): RewardTierRange[] {
