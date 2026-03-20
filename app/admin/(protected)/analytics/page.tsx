@@ -83,8 +83,8 @@ export default function AdminAnalyticsPage() {
     if (!data) return [];
     return [
       { label: "Visitors today", value: String(data.analytics.overview.visitorsToday) },
-      { label: "Visitors total", value: String(data.analytics.overview.visitorsTotal) },
-      { label: "Packs opened today", value: String(data.analytics.overview.packsOpenedToday) },
+      { label: "Unique visitors (range)", value: String(data.analytics.overview.visitorsTotal) },
+      { label: "Successful reveals today", value: String(data.analytics.overview.packsOpenedToday) },
       { label: "Packs remaining", value: String(data.analytics.overview.packsRemaining) },
     ];
   }, [data]);
@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
     <div className="admin-page admin-v2-page">
       <AdminPageHeader
         title="Analytics"
-        subtitle="Lightweight internal product analytics for acquisition, login, and pack-open conversion."
+        subtitle="Internal product analytics for unique visitors, open-pack intent, login conversion, successful reveals, and canonical remaining supply."
       />
 
       <AdminToolbar>
@@ -140,16 +140,16 @@ export default function AdminAnalyticsPage() {
                 </AdminTableRow>
               </AdminDataTable>
               <p className="contest-inline-note" style={{ marginTop: 12 }}>
-                End-to-end visitor → pack-open conversion: {formatPct(data.analytics.funnel.conversion.visitorToPackOpen)}.
+                End-to-end unique visitor → successful reveal conversion: {formatPct(data.analytics.funnel.conversion.visitorToPackOpen)}.
               </p>
             </AdminPanel>
 
             <AdminPanel>
               <p className="admin-v2-section-title">Packs</p>
               <div className="admin-v2-list-stack">
-                <div className="admin-v2-list-row"><span>Total opened</span><strong>{data.analytics.packs.totalOpened}</strong></div>
-                <div className="admin-v2-list-row"><span>Guest opens</span><strong>{data.analytics.packs.guestOpened}</strong></div>
-                <div className="admin-v2-list-row"><span>Logged opens</span><strong>{data.analytics.packs.loggedOpened}</strong></div>
+                <div className="admin-v2-list-row"><span>Total successful reveals</span><strong>{data.analytics.packs.totalOpened}</strong></div>
+                <div className="admin-v2-list-row"><span>Guest preview reveals</span><strong>{data.analytics.packs.guestOpened}</strong></div>
+                <div className="admin-v2-list-row"><span>Authenticated pack opens</span><strong>{data.analytics.packs.loggedOpened}</strong></div>
                 <div className="admin-v2-list-row"><span>Remaining supply</span><strong>{data.analytics.packs.remainingSupply}</strong></div>
               </div>
             </AdminPanel>

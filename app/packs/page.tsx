@@ -192,6 +192,7 @@ export default function PacksPage() {
     setResultMvp([]);
     setRevealed([]);
     startReveal(GUEST_PACK_PREVIEW_CARDS, "guest-preview");
+    trackInternalEvent("PACK_OPEN");
     trackEvent("packs_guest_preview_opened", { cards: GUEST_PACK_PREVIEW_CARDS.length });
   };
 

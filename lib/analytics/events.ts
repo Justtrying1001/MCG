@@ -1,4 +1,5 @@
 import { AnalyticsEventType, type Prisma } from "@prisma/client";
+import { getPackSupplySummary } from "@/lib/domain/rewards/pack-supply";
 import { prisma } from "@/lib/prisma";
 
 export const INTERNAL_EVENT_TYPES = {
@@ -50,6 +51,19 @@ function rangeWhere(range: AnalyticsRange): Prisma.EventWhereInput {
   return { createdAt: { gte: daysAgo } };
 }
 
+function rangeStart(range: AnalyticsRange): Date | undefined {
+  if (range === "all") return undefined;
+  const now = new Date();
+  const start = startOfUtcDay(now);
+  if (range === "today") {
+    return start;
+  }
+
+  const daysAgo = new Date(start);
+  daysAgo.setUTCDate(daysAgo.getUTCDate() - 6);
+  return daysAgo;
+}
+
 function ratio(current: number, previous: number) {
   if (previous <= 0) return current > 0 ? 100 : 0;
   return Number(((current / previous) * 100).toFixed(1));
@@ -70,6 +84,10 @@ async function countDistinctVisitors(where: Prisma.EventWhereInput) {
 export async function getAdminAnalytics(range: AnalyticsRange) {
   const selectedWhere = rangeWhere(range);
   const todayWhere = rangeWhere("today");
+  const selectedPackOpeningStart = rangeStart(range);
+  const todayPackOpeningStart = rangeStart("today");
+  const selectedPackOpeningWhere = selectedPackOpeningStart ? { openedAt: { gte: selectedPackOpeningStart } } : {};
+  const todayPackOpeningWhere = todayPackOpeningStart ? { openedAt: { gte: todayPackOpeningStart } } : {};
 
   const [
     visitorsInRange,
@@ -77,10 +95,10 @@ export async function getAdminAnalytics(range: AnalyticsRange) {
     clickOpenPackInRange,
     loginsInRange,
     funnelPackOpensInRange,
-    packsOpenedInRange,
-    packsOpenedToday,
     guestPackOpensInRange,
+    guestPackOpensToday,
     loggedPackOpensInRange,
+    loggedPackOpensToday,
     supply,
   ] = await Promise.all([
     countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.PAGE_VIEW }),
@@ -88,14 +106,16 @@ export async function getAdminAnalytics(range: AnalyticsRange) {
     countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.CLICK_OPEN_PACK }),
     countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.LOGIN }),
     countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.PACK_OPEN }),
-    prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN } }),
-    prisma.event.count({ where: { ...todayWhere, type: AnalyticsEventType.PACK_OPEN } }),
     prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN, isGuest: true } }),
-    prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN, isGuest: false } }),
-    prisma.packDefinition.aggregate({ _sum: { plannedPackCount: true, openedPackCount: true } }),
+    prisma.event.count({ where: { ...todayWhere, type: AnalyticsEventType.PACK_OPEN, isGuest: true } }),
+    prisma.packOpeningEvent.count({ where: selectedPackOpeningWhere }),
+    prisma.packOpeningEvent.count({ where: todayPackOpeningWhere }),
+    getPackSupplySummary(),
   ]);
 
-  const remainingSupply = Math.max((supply._sum.plannedPackCount ?? 0) - (supply._sum.openedPackCount ?? 0), 0);
+  const packsOpenedInRange = guestPackOpensInRange + loggedPackOpensInRange;
+  const packsOpenedToday = guestPackOpensToday + loggedPackOpensToday;
+  const remainingSupply = supply.global.remaining;
 
   return {
     range,
