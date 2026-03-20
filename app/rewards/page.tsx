@@ -21,7 +21,7 @@ type LedgerRow = {
   createdAt: string;
 };
 
-type QuestStatus = "AVAILABLE" | "IN_PROGRESS" | "CLAIMABLE" | "COMPLETED" | "REJECTED";
+type QuestStatus = "AVAILABLE" | "IN_PROGRESS" | "PENDING_VALIDATION" | "CLAIMABLE" | "COMPLETED" | "REJECTED";
 type SubmissionStatus = "SUBMITTED" | "APPROVED" | "REJECTED" | null;
 
 type QuestRow = {
@@ -34,6 +34,7 @@ type QuestRow = {
   rewardPackCode: string | null;
   rewardPackQuantity: number | null;
   status: QuestStatus;
+  startedAt: string | null;
   progressValue: number;
   targetValue: number | null;
   completedAt: string | null;
@@ -165,6 +166,7 @@ function isQuestCompleted(quest: QuestRow) {
 }
 
 function getQuestState(quest: QuestRow) {
+  if (quest.status === "PENDING_VALIDATION") return "PENDING_VALIDATION" as const;
   if (quest.latestSubmissionStatus === "SUBMITTED") return "PENDING_REVIEW" as const;
   if (quest.latestSubmissionStatus === "REJECTED" || quest.status === "REJECTED") return "REJECTED" as const;
   if (isQuestCompleted(quest)) {
@@ -217,8 +219,6 @@ function formatReward(quest: Pick<QuestRow, "rewardPoints" | "rewardPackCode" | 
 function QuestCard({
   quest,
   submittingId,
-  autoPendingByQuest,
-  clock,
   proofUrlByQuest,
   noteByQuest,
   onProofUrlChange,
@@ -228,8 +228,6 @@ function QuestCard({
 }: {
   quest: QuestRow;
   submittingId: string | null;
-  autoPendingByQuest: Record<string, number>;
-  clock: number;
   proofUrlByQuest: Record<string, string>;
   noteByQuest: Record<string, string>;
   onProofUrlChange: (id: string, value: string) => void;
@@ -238,13 +236,12 @@ function QuestCard({
   onManualSubmit: (quest: QuestRow) => void;
 }) {
   const state = getQuestState(quest);
-  const etaStart = autoPendingByQuest[quest.id];
-  const etaRemainingSec = etaStart ? Math.max(0, Math.ceil((etaStart + 60_000 - clock) / 1000)) : null;
   const proofRequired = Boolean(quest.configSummary.proofRequired);
-  const canAutoTrigger = quest.validationMode === "AUTO" && Boolean(quest.configSummary.targetUrl) && state !== "PENDING_REVIEW";
+  const canAutoTrigger = quest.validationMode === "AUTO" && Boolean(quest.configSummary.targetUrl) && state !== "PENDING_REVIEW" && state !== "PENDING_VALIDATION";
   const canSubmitManually = quest.validationMode !== "AUTO";
 
   const statusBadge = (() => {
+    if (state === "PENDING_VALIDATION") return { label: "VALIDATING", style: { background: "rgba(91,143,255,0.15)", color: "#5B8FFF", border: "1px solid rgba(91,143,255,0.3)" } };
     if (state === "PENDING_REVIEW") return { label: "PENDING", style: { background: "rgba(240,164,58,0.15)", color: "#F0A43A", border: "1px solid rgba(240,164,58,0.3)" } };
     if (state === "REJECTED") return { label: "REJECTED", style: { background: "rgba(214,58,50,0.15)", color: "#E05550", border: "1px solid rgba(214,58,50,0.3)" } };
     return { label: "OPEN", style: { background: "rgba(232,131,74,0.15)", color: "var(--color-accent-primary)", border: "1px solid rgba(232,131,74,0.3)" } };
@@ -279,27 +276,31 @@ function QuestCard({
       <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--color-accent-primary)" }}>{formatReward(quest)}</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        {state === "PENDING_VALIDATION" && (
+          <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)" }}>Validating... rewards will unlock automatically once the backend delay has elapsed.</p>
+        )}
+
         {state === "PENDING_REVIEW" && (
           <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)" }}>Submission pending review.</p>
         )}
 
         {canAutoTrigger && (
           <button
-            disabled={submittingId === quest.id || Boolean(etaRemainingSec)}
+            disabled={submittingId === quest.id}
             onClick={() => onAutoTrigger(quest)}
             style={{
               width: "100%",
               padding: "0.55rem 1rem",
               borderRadius: 8,
               border: "none",
-              background: submittingId === quest.id || Boolean(etaRemainingSec) ? "rgba(232,131,74,0.3)" : "#E8834A",
+              background: submittingId === quest.id ? "rgba(232,131,74,0.3)" : "#E8834A",
               color: "var(--color-text-primary)",
               fontWeight: 700,
               fontSize: "0.85rem",
-              cursor: submittingId === quest.id || Boolean(etaRemainingSec) ? "not-allowed" : "pointer",
+              cursor: submittingId === quest.id ? "not-allowed" : "pointer",
             }}
           >
-            {etaRemainingSec ? `Auto-check in ${etaRemainingSec}s` : resolveSocialCtaLabelForUserQuest(quest)}
+            {resolveSocialCtaLabelForUserQuest(quest)}
           </button>
         )}
 
@@ -487,8 +488,6 @@ export default function RewardsPage() {
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [proofUrlByQuest, setProofUrlByQuest] = useState<Record<string, string>>({});
   const [noteByQuest, setNoteByQuest] = useState<Record<string, string>>({});
-  const [clock, setClock] = useState(() => Date.now());
-  const [autoPendingByQuest, setAutoPendingByQuest] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<TabId>("quests");
   const [completedOpen, setCompletedOpen] = useState(false);
   const [historyPage, setHistoryPage] = useState(20);
@@ -497,7 +496,6 @@ export default function RewardsPage() {
   const [stableSession, setStableSession] = useState(me);
   const [milestoneToast, setMilestoneToast] = useState<MilestoneToast | null>(null);
 
-  const autoTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const seenCompletionRef = useRef<Map<string, string>>(new Map());
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -598,22 +596,15 @@ export default function RewardsPage() {
       return;
     }
 
-    setActionMsg(mode === "auto" ? "Quest auto-check submitted." : "Quest proof submitted for validation.");
+    setActionMsg(mode === "auto" ? "Quest started. Backend validation is now in progress." : "Quest proof submitted for validation.");
     await loadData();
     setSubmittingId(null);
   };
 
   const startAutoSocialQuest = (quest: QuestRow) => {
-    if (!quest.configSummary.targetUrl || autoTimerRef.current.has(quest.id) || submittingId === quest.id) return;
+    if (!quest.configSummary.targetUrl || submittingId === quest.id) return;
     window.open(quest.configSummary.targetUrl, "_blank", "noopener,noreferrer");
-    const startedAt = Date.now();
-    setAutoPendingByQuest((prev) => ({ ...prev, [quest.id]: startedAt }));
-    const timeout = setTimeout(() => {
-      autoTimerRef.current.delete(quest.id);
-      setAutoPendingByQuest((prev) => { const next = { ...prev }; delete next[quest.id]; return next; });
-      void submitQuest(quest, "auto");
-    }, 60_000);
-    autoTimerRef.current.set(quest.id, timeout);
+    void submitQuest(quest, "auto");
   };
 
   useEffect(() => {
@@ -648,16 +639,8 @@ export default function RewardsPage() {
   }, [milestoneToast]);
 
   useEffect(() => () => {
-    autoTimerRef.current.forEach((t) => clearTimeout(t));
-    autoTimerRef.current.clear();
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
-
-  useEffect(() => {
-    if (Object.keys(autoPendingByQuest).length === 0) return;
-    const timer = setInterval(() => setClock(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [autoPendingByQuest]);
 
   // ── View model ──────────────────────────────────────────────────────────────
 
@@ -1019,8 +1002,6 @@ export default function RewardsPage() {
                         key={quest.id}
                         quest={quest}
                         submittingId={submittingId}
-                        autoPendingByQuest={autoPendingByQuest}
-                        clock={clock}
                         proofUrlByQuest={proofUrlByQuest}
                         noteByQuest={noteByQuest}
                         onProofUrlChange={(id, v) => setProofUrlByQuest((p) => ({ ...p, [id]: v }))}

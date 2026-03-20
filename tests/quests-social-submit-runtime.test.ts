@@ -10,6 +10,7 @@ vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
 import {
   QuestRuntimeError,
+  listUserQuestsMvp,
   reviewQuestSubmissionMvp,
   submitSocialQuestMvp,
 } from "@/lib/domain/quests/runtime";
@@ -32,6 +33,7 @@ type Progress = {
   userId: string;
   questId: string;
   status: string;
+  startedAt?: Date | null;
   progressValue: number;
   completedAt: Date | null;
   claimedAt: Date | null;
@@ -87,7 +89,7 @@ function createTx(state: State) {
   return {
     questDefinition: {
       findUnique: vi.fn(async ({ where }: any) => (where.id === state.quest.id ? state.quest : null)),
-      findMany: vi.fn(async () => []),
+      findMany: vi.fn(async () => [state.quest]),
     },
     contestEntry: {
       count: vi.fn(async () => 0),
@@ -143,7 +145,11 @@ function createTx(state: State) {
         state.progress = { ...state.progress, ...data, updatedAt: new Date() };
         return state.progress;
       }),
-      findMany: vi.fn(async ({ where }: any) => (state.progress && state.progress.userId === where.userId ? [state.progress] : [])),
+      findMany: vi.fn(async ({ where }: any) => {
+        if (!state.progress || state.progress.userId !== where.userId) return [];
+        if (where?.status && state.progress.status !== where.status) return [];
+        return [{ ...state.progress, quest: state.quest }];
+      }),
     },
     rewardLedgerEntry: {
       findUnique: vi.fn(async ({ where }: any) => state.ledgerEntries.find((row) => row.idempotencyKey === where.idempotencyKey) ?? null),
@@ -261,7 +267,7 @@ describe("social submit runtime", () => {
 
     prismaMock.$transaction.mockImplementation(async (arg: any) => {
       if (typeof arg === "function") return arg(createTx(state), {});
-      if (Array.isArray(arg)) return Promise.all(arg);
+      if (Array.isArray(arg)) return [ [state.quest], state.progress ? [state.progress] : [], state.submissions ];
       return null;
     });
 
@@ -271,10 +277,43 @@ describe("social submit runtime", () => {
       note: "done",
     });
 
-    expect(result.status).toBe("APPROVED");
+    expect(state.progress?.status).toBe("PENDING_VALIDATION");
+    expect(state.progress?.startedAt).toBeInstanceOf(Date);
+    expect(state.ledgerEntries).toHaveLength(0);
+    expect(state.user.points).toBe(0);
+  });
+
+
+  it("lazy-validates elapsed auto quests during reads", async () => {
+    const state = createState();
+    state.quest.validationMode = "AUTO";
+    state.quest.config.proofRequired = false;
+    state.progress = {
+      id: "p1",
+      userId: state.user.id,
+      questId: state.quest.id,
+      status: "PENDING_VALIDATION",
+      startedAt: new Date(Date.now() - 61_000),
+      progressValue: 0,
+      completedAt: null,
+      claimedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    prismaMock.$transaction.mockImplementation(async (arg: any) => {
+      if (typeof arg === "function") return arg(createTx(state), {});
+      if (Array.isArray(arg)) return [ [state.quest], state.progress ? [state.progress] : [], state.submissions ];
+      return null;
+    });
+
+    const result = await listUserQuestsMvp(state.user.id);
+
     expect(state.progress?.status).toBe("COMPLETED");
     expect(state.ledgerEntries).toHaveLength(1);
     expect(state.user.points).toBe(200);
+    expect(state.submissions[0]?.status).toBe("APPROVED");
+    expect(result.quests[0]?.status).toBe("COMPLETED");
   });
 
 });

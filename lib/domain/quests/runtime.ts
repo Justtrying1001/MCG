@@ -119,6 +119,8 @@ export type InternalQuestDetail = {
   }>;
 };
 
+const AUTO_VALIDATION_DELAY_MS = 60_000;
+
 export type QuestForUserRow = {
   id: string;
   code: string;
@@ -132,6 +134,7 @@ export type QuestForUserRow = {
   oneTime: boolean;
   isActive: boolean;
   status: UserQuestStatus;
+  startedAt: string | null;
   progressValue: number;
   targetValue: number | null;
   completedAt: string | null;
@@ -162,6 +165,90 @@ function nowInActiveWindow(now: Date, quest: { startAt: Date | null; endAt: Date
   if (quest.startAt && quest.startAt > now) return false;
   if (quest.endAt && quest.endAt < now) return false;
   return true;
+}
+
+
+async function finalizeAutoValidationIfReady(params: {
+  tx: Prisma.TransactionClient;
+  userId: string;
+  now: Date;
+}) {
+  const pendingRows = await params.tx.userQuestProgress.findMany({
+    where: {
+      userId: params.userId,
+      status: UserQuestStatus.PENDING_VALIDATION,
+      startedAt: { not: null },
+      quest: {
+        isActive: true,
+        validationMode: QuestValidationMode.AUTO,
+      },
+    },
+    include: {
+      quest: true,
+    },
+  });
+
+  for (const progress of pendingRows) {
+    const startedAt = progress.startedAt;
+    if (!startedAt) continue;
+    if (params.now.getTime() < startedAt.getTime() + AUTO_VALIDATION_DELAY_MS) continue;
+
+    const existingApprovedSubmission = await params.tx.questSubmission.findFirst({
+      where: {
+        userId: progress.userId,
+        questId: progress.questId,
+        status: QuestSubmissionStatus.APPROVED,
+      },
+      orderBy: [{ createdAt: "desc" }],
+    });
+
+    if (!existingApprovedSubmission) {
+      await params.tx.questSubmission.create({
+        data: {
+          userId: progress.userId,
+          questId: progress.questId,
+          status: QuestSubmissionStatus.APPROVED,
+          reviewedByAdmin: "system:auto",
+          reviewedAt: params.now,
+        },
+      });
+    }
+
+    await params.tx.userQuestProgress.update({
+      where: { id: progress.id },
+      data: {
+        status: UserQuestStatus.COMPLETED,
+        progressValue: Math.max(progress.progressValue, 1),
+        completedAt: progress.completedAt ?? params.now,
+        claimedAt: progress.claimedAt ?? params.now,
+      },
+    });
+
+    if (progress.quest.rewardPoints > 0) {
+      await creditPointsWithLedger(params.tx, {
+        userId: progress.userId,
+        amount: progress.quest.rewardPoints,
+        reasonType: RewardLedgerReasonType.QUEST_REWARD,
+        reasonRef: LedgerConventions.questReward.reasonRef(progress.questId),
+        idempotencyKey: LedgerConventions.questReward.approvalIdempotencyKey(progress.questId, progress.userId),
+        metadata: {
+          questCode: progress.quest.code,
+          questType: progress.quest.type,
+          trigger: "social_auto_complete",
+        },
+      });
+    }
+
+    if (progress.quest.rewardPackDefinitionId) {
+      const qty = Math.max(progress.quest.rewardPackQuantity ?? 1, 1);
+      for (let i = 0; i < qty; i++) {
+        await grantRewardPackByDefinitionTx(params.tx, {
+          userId: progress.userId,
+          packDefinitionId: progress.quest.rewardPackDefinitionId,
+        });
+      }
+    }
+  }
 }
 
 function isSocialSubmitQuest(type: QuestType) {
@@ -552,68 +639,27 @@ export async function submitSocialQuestMvp(params: {
     }
 
     if (quest.validationMode === QuestValidationMode.AUTO) {
-      const approved = await tx.questSubmission.create({
-        data: {
-          userId: params.userId,
-          questId: params.questId,
-          status: QuestSubmissionStatus.APPROVED,
-          proofUrl,
-          note,
-          reviewedByAdmin: "system:auto",
-          reviewedAt: now,
-        },
-      });
-
       if (!progress) {
-        await tx.userQuestProgress.create({
+        return tx.userQuestProgress.create({
           data: {
             userId: params.userId,
             questId: params.questId,
-            status: UserQuestStatus.COMPLETED,
-            progressValue: 1,
-            completedAt: now,
-            claimedAt: now,
-          },
-        });
-      } else {
-        await tx.userQuestProgress.update({
-          where: { id: progress.id },
-          data: {
-            status: UserQuestStatus.COMPLETED,
-            progressValue: Math.max(progress.progressValue, 1),
-            completedAt: progress.completedAt ?? now,
-            claimedAt: progress.claimedAt ?? now,
+            status: UserQuestStatus.PENDING_VALIDATION,
+            startedAt: now,
+            progressValue: 0,
           },
         });
       }
 
-      if (quest.rewardPoints > 0) {
-        await creditPointsWithLedger(tx, {
-          userId: params.userId,
-          amount: quest.rewardPoints,
-          reasonType: RewardLedgerReasonType.QUEST_REWARD,
-          reasonRef: LedgerConventions.questReward.reasonRef(quest.id),
-          idempotencyKey: LedgerConventions.questReward.approvalIdempotencyKey(quest.id, params.userId),
-          metadata: {
-            questCode: quest.code,
-            questType: quest.type,
-            trigger: "social_auto_complete",
-            submissionId: approved.id,
-          },
-        });
-      }
-
-      if (quest.rewardPackDefinitionId) {
-        const qty = Math.max(quest.rewardPackQuantity ?? 1, 1);
-        for (let i = 0; i < qty; i++) {
-          await grantRewardPackByDefinitionTx(tx, {
-            userId: params.userId,
-            packDefinitionId: quest.rewardPackDefinitionId,
-          });
-        }
-      }
-
-      return approved;
+      return tx.userQuestProgress.update({
+        where: { id: progress.id },
+        data: {
+          status: UserQuestStatus.PENDING_VALIDATION,
+          startedAt: now,
+          completedAt: null,
+          claimedAt: null,
+        },
+      });
     }
 
     const submission = await tx.questSubmission.create({
@@ -764,24 +810,30 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
 
   const now = new Date();
 
-  const [quests, progressRows, submissions] = await prisma.$transaction([
-    prisma.questDefinition.findMany({
-      where: { isActive: true },
-      orderBy: [{ createdAt: "desc" }],
-      take: 200,
-      include: {
-        rewardPackDefinition: { select: { code: true } },
-      },
-    }),
-    prisma.userQuestProgress.findMany({
-      where: { userId },
-    }),
-    prisma.questSubmission.findMany({
-      where: { userId },
-      orderBy: [{ createdAt: "desc" }],
-      take: 500,
-    }),
-  ]);
+  const { quests, progressRows, submissions } = await prisma.$transaction(async (tx) => {
+    await finalizeAutoValidationIfReady({ tx, userId, now });
+
+    const [quests, progressRows, submissions] = await Promise.all([
+      tx.questDefinition.findMany({
+        where: { isActive: true },
+        orderBy: [{ createdAt: "desc" }],
+        take: 200,
+        include: {
+          rewardPackDefinition: { select: { code: true } },
+        },
+      }),
+      tx.userQuestProgress.findMany({
+        where: { userId },
+      }),
+      tx.questSubmission.findMany({
+        where: { userId },
+        orderBy: [{ createdAt: "desc" }],
+        take: 500,
+      }),
+    ]);
+
+    return { quests, progressRows, submissions };
+  });
 
   const progressByQuestId = new Map(progressRows.map((row) => [row.questId, row]));
   const latestSubmissionByQuestId = new Map<string, typeof submissions[number]>();
@@ -815,6 +867,7 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
         oneTime: quest.oneTime,
         isActive: quest.isActive,
         status: progress?.status ?? UserQuestStatus.AVAILABLE,
+        startedAt: progress?.startedAt?.toISOString() ?? null,
         progressValue: progress?.progressValue ?? 0,
         targetValue: threshold,
         completedAt: progress?.completedAt?.toISOString() ?? null,
