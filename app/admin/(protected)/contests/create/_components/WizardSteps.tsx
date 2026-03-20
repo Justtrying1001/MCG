@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import type { RewardPreviewAllocation } from "../_lib/rewardPreviewAllocation";
+import { DURATION_UNIT_LABELS } from "../_hooks/useContestWizard";
 import type { CardSet, ContestFormState, RewardCapacityCheck, RewardPackSupplySummary } from "../_hooks/types";
 
 export function ContestIdentityStep(props: {
@@ -125,6 +126,7 @@ export function ContestScheduleStep(props: {
             <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr auto" }}>
               <input id="schedule-duration-value" className="input" type="number" min={1} value={form.durationValue} onChange={(e) => setField("durationValue", e.target.value)} />
               <select className="input" value={form.durationUnit} onChange={(e) => setField("durationUnit", e.target.value as ContestFormState["durationUnit"])}>
+                <option value="MINUTES">Minutes</option>
                 <option value="HOURS">Hours</option>
                 <option value="DAYS">Days</option>
               </select>
@@ -141,7 +143,7 @@ export function ContestScheduleStep(props: {
       <article className="admin-callout" style={{ display: "grid", gap: "0.35rem" }}>
         <p className="contest-inline-note"><strong>Timeline guidance</strong></p>
         <p className="contest-inline-note">Registration opens → Lineup lock (contest starts) → Duration elapses → Contest ends / settles after end.</p>
-        <p className="contest-inline-note">Computed runtime duration: {computedDurationHours !== null ? `${computedDurationHours}h` : "—"}</p>
+        <p className="contest-inline-note">Computed runtime duration: {computedDurationHours !== null ? `${computedDurationHours}h (${form.durationValue || "—"} ${DURATION_UNIT_LABELS[form.durationUnit]})` : "—"}</p>
         {timelineHasIssue ? <p className="contest-error">Timeline is inconsistent. Keep chronological order: open &lt; lock, and duration &gt; 0.</p> : null}
       </article>
     </section>
