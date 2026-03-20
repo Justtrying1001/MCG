@@ -443,27 +443,8 @@ export const MILESTONE_SEED_DEFINITIONS: MilestoneSeedDefinition[] = [
     unique: true,
     repeatable: false,
   },
-
-  // ── Invitations ───────────────────────────────────────────────────────────
-  {
-    code: "ms_inv_1",
-    slug: "invites-1",
-    seedKey: "MILESTONE_V2_INVITED_FRIENDS_1",
-    title: "Recruiter",
-    adminTitle: "Milestone · Invites · 1",
-    category: "INVITED_FRIENDS",
-    userDescription: "Invite 1 friend.",
-    adminDescription: "Referral activation — first successful invite.",
-    metricKey: "INVITED_FRIENDS",
-    threshold: 1,
-    rewardPoints: 1000,
-    sortOrder: 510,
-    active: true,
-    unique: true,
-    repeatable: false,
-  },
 ];
 
-if (MILESTONE_SEED_DEFINITIONS.length !== 25) {
-  throw new Error(`Expected 25 milestones, found ${MILESTONE_SEED_DEFINITIONS.length}`);
+if (MILESTONE_SEED_DEFINITIONS.length !== 24) {
+  throw new Error(`Expected 24 milestones, found ${MILESTONE_SEED_DEFINITIONS.length}`);
 }

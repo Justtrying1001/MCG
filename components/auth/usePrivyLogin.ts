@@ -5,26 +5,9 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
 import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 
-const PENDING_INVITE_STORAGE_KEY = "mcg_privy_pending_invite";
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
 const PRIVY_LOGOUT_WAIT_TIMEOUT_MS = 1500;
 const PRIVY_LOGOUT_WAIT_INTERVAL_MS = 50;
-
-function readPendingInviteCode() {
-  if (typeof window === "undefined") return null;
-  const value = window.sessionStorage.getItem(PENDING_INVITE_STORAGE_KEY)?.trim() ?? "";
-  return value || null;
-}
-
-function writePendingInviteCode(inviteCode?: string | null) {
-  if (typeof window === "undefined") return;
-  const normalized = String(inviteCode ?? "").trim();
-  if (normalized) {
-    window.sessionStorage.setItem(PENDING_INVITE_STORAGE_KEY, normalized);
-    return;
-  }
-  window.sessionStorage.removeItem(PENDING_INVITE_STORAGE_KEY);
-}
 
 function hasPendingLoginRequest() {
   if (typeof window === "undefined") return false;
@@ -38,12 +21,6 @@ function writePendingLoginRequest(value: boolean) {
     return;
   }
   window.sessionStorage.removeItem(LOGIN_REQUESTED_STORAGE_KEY);
-}
-
-function getInviteCodeFromLocation() {
-  if (typeof window === "undefined") return null;
-  const url = new URL(window.location.href);
-  return url.searchParams.get("invite") ?? url.searchParams.get("ref");
 }
 
 export function usePrivyLogin() {
@@ -71,7 +48,7 @@ export function usePrivyLogin() {
     return false;
   }, []);
 
-  const syncSession = useCallback(async (inviteCode?: string | null) => {
+  const syncSession = useCallback(async () => {
     if (!ready || !authenticated) return false;
 
     setIsSyncingSession(true);
@@ -85,10 +62,7 @@ export function usePrivyLogin() {
       const response = await fetch("/api/auth/privy/exchange", {
         method: "POST",
         headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          accessToken,
-          inviteCode: inviteCode ?? readPendingInviteCode(),
-        }),
+        body: JSON.stringify({ accessToken }),
       });
 
       if (!response.ok) {
@@ -96,7 +70,6 @@ export function usePrivyLogin() {
       }
 
       writePendingLoginRequest(false);
-      writePendingInviteCode(null);
       await refresh();
       return true;
     } catch {
@@ -106,22 +79,18 @@ export function usePrivyLogin() {
     }
   }, [authenticated, getAccessToken, ready, refresh]);
 
-  const loginWithPrivy = useCallback(async (inviteCode?: string | null) => {
-    const resolvedInviteCode = inviteCode ?? getInviteCodeFromLocation();
-
+  const loginWithPrivy = useCallback(async () => {
     if (privyStateRef.current.authenticated || privyStateRef.current.user) {
       await logout();
       await waitForPrivyLogout();
     }
 
     writePendingLoginRequest(true);
-    writePendingInviteCode(resolvedInviteCode);
     login({ loginMethods: ["twitter"] });
   }, [login, logout, waitForPrivyLogout]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
-    writePendingInviteCode(null);
     await Promise.allSettled([
       fetch("/api/auth/logout", { method: "POST" }),
       logout(),
@@ -132,7 +101,7 @@ export function usePrivyLogin() {
 
   useEffect(() => {
     if (!ready || !authenticated || me || isSyncingSession || !hasPendingLoginRequest()) return;
-    void syncSession(readPendingInviteCode());
+    void syncSession();
   }, [authenticated, isSyncingSession, me, ready, syncSession]);
 
   return useMemo(() => ({

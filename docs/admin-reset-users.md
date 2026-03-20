@@ -18,7 +18,6 @@ If `ENABLE_USER_RESET` is missing or any value other than `true`, the UI shows a
 When enabled and executed by a supervisor:
 
 - Deletes all `User` rows (`prisma.user.deleteMany()`), relying on cascade rules to remove user-related child records (sessions, owned cards, rewards, quests, contests, progression, season ratings, etc.).
-- Deletes `UserInvite` rows explicitly for safety.
 - Resets `RewardPackSupply.distributed` to `0` (keeps `totalSupply` unchanged).
 - Resets `PackDefinition.openedPackCount` to `0` for every pack definition (sale + reward), restoring Genesis availability to **10,000 sale + 6,000 reward = 16,000 total packs**.
 - Writes an audit entry in `AdminActionLog` (`module=admin.resetUsers`, `actionType=RESET_USERS`).
@@ -28,7 +27,7 @@ When enabled and executed by a supervisor:
 
 The reset now includes all operations required to restore initial pack supply:
 
-- Delete all `User` rows and `UserInvite` rows.
+- Delete all `User` rows.
 - Reset the reward supply ledger via `RewardPackSupply.distributed = 0`.
 - Reset all pack-open counters via `PackDefinition.openedPackCount = 0` across every pack definition.
 

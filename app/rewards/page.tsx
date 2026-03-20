@@ -138,7 +138,6 @@ const SERIES_ICONS: Record<string, ReactNode> = {
   UNIQUE_CARDS_COLLECTED: <IconStar />,
   CONTESTS_JOINED: <IconTrophy />,
   CONTESTS_WON: <IconCrown />,
-  INVITED_FRIENDS: <IconUserPlus />,
   REWARD_POINTS_EARNED: <IconLightning />,
 };
 
@@ -762,8 +761,6 @@ export default function RewardsPage() {
   const totalCredits = ledger.filter((e) => e.entryType === "CREDIT").reduce((s, e) => s + e.amount, 0);
   const sessionUser = me ?? stableSession;
   const currentPoints = sessionUser?.user.points ?? 0;
-  const friendsInvited = sessionUser?.user.invitedFriendsCount ?? 0;
-  const inviteCode = sessionUser?.user.inviteCode ?? "";
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -900,10 +897,6 @@ export default function RewardsPage() {
               <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{totalCredits.toLocaleString()}</span>
             </div>
             <div style={{ width: 1, background: BORDER_COLOR, alignSelf: "stretch" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: 100 }}>
-              <span style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT_MUTED }}>Friends invited</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text-primary)" }}>{friendsInvited}</span>
-            </div>
           </div>
 
           {/* ── Error banners ── */}
@@ -936,48 +929,6 @@ export default function RewardsPage() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === "quests" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-
-              {/* Invite bar */}
-              <div style={{
-                background: BG_CARD,
-                border: `1px solid ${BORDER_COLOR}`,
-                borderRadius: 12,
-                padding: "1rem 1.1rem",
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "0.75rem",
-              }}>
-                <div>
-                  <p style={{ fontWeight: 700, color: "var(--color-text-primary)", fontSize: "0.95rem" }}>Invite friends, earn points</p>
-                  <p style={{ fontSize: "0.8rem", color: TEXT_MUTED }}>+1,000 pts per friend · {friendsInvited} friend{friendsInvited !== 1 ? "s" : ""} invited</p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                  <code style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: "0.85rem", color: "var(--color-text-primary)", background: "rgba(148,163,184,0.18)", padding: "0.3rem 0.7rem", borderRadius: 6 }}>
-                    {inviteCode}
-                  </code>
-                  <button
-                    onClick={() => {
-                      const url = `${window.location.origin}/?invite=${encodeURIComponent(inviteCode)}`;
-                      void navigator.clipboard.writeText(url);
-                      setActionMsg("Invite link copied to clipboard.");
-                    }}
-                    style={{
-                      padding: "0.4rem 0.9rem",
-                      borderRadius: 8,
-                      border: `1px solid ${BORDER_COLOR}`,
-                      background: "rgba(148,163,184,0.08)",
-                      color: "var(--color-text-primary)",
-                      fontWeight: 600,
-                      fontSize: "0.82rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Copy link
-                  </button>
-                </div>
-              </div>
 
               {/* Active quest groups */}
               {viewModel.activeGroups.length === 0 && (

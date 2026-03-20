@@ -26,13 +26,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const summary = await prisma.$transaction(async (tx) => {
-      const invites = await tx.userInvite.deleteMany();
       const users = await tx.user.deleteMany();
       const rewardPackSupply = await tx.rewardPackSupply.updateMany({ data: { distributed: 0 } });
       const packDefinitions = await tx.packDefinition.updateMany({ data: { openedPackCount: 0 } });
 
       return {
-        deletedInvites: invites.count,
         deletedUsers: users.count,
         resetRewardPackSupplyRows: rewardPackSupply.count,
         resetPackDefinitionsCount: packDefinitions.count,
