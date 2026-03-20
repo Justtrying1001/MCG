@@ -68,9 +68,18 @@ function toSlots(roster: string[], rosterSize: number): Array<string | null> {
   return sanitized.map((value) => value || null);
 }
 
-function fmtDate(iso: string | null | undefined): string {
+const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "UTC",
+});
+
+function formatContestTimestamp(iso: string | null | undefined): string {
   if (!iso) return "TBD";
-  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return `${UTC_DATE_TIME_FORMATTER.format(new Date(iso))} UTC`;
 }
 
 function formatCountdown(targetAt: string | null | undefined, nowTs: number): string {
@@ -452,22 +461,24 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const timingDetails = (() => {
     const items = [
       (isOpen || isLocked) && (contest.liveAt ?? contest.lockAt)
-        ? { label: "Start", value: fmtDate(contest.liveAt ?? contest.lockAt) }
+        ? { label: "Start", value: formatContestTimestamp(contest.liveAt ?? contest.lockAt) }
         : null,
       (isOpen || isLocked || isLive) && contest.endsAt
-        ? { label: "End", value: fmtDate(contest.endsAt) }
+        ? { label: "End", value: formatContestTimestamp(contest.endsAt) }
         : null,
       isSettled && contest.endsAt
-        ? { label: "Ended", value: fmtDate(contest.endsAt) }
+        ? { label: "Ended", value: formatContestTimestamp(contest.endsAt) }
         : null,
     ].filter((item): item is { label: string; value: string } => Boolean(item));
 
     return items.filter((item, index, array) => array.findIndex((candidate) => candidate.label === item.label && candidate.value === item.value) === index);
   })();
+  const countdownTimestampLabel = isLive ? "Closes at" : isLocked ? "Starts at" : "Closes at";
+  const countdownTimestampValue = formatContestTimestamp(countdownTarget);
   const heroTiming = isSettled
     ? {
         label: "Contest settled",
-        value: fmtDate(contest.endsAt ?? contest.liveAt ?? contest.lockAt),
+        value: formatContestTimestamp(contest.endsAt ?? contest.liveAt ?? contest.lockAt),
         helper: "Final scoring and rewards are now locked.",
         details: timingDetails,
       }
@@ -475,13 +486,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       ? {
           label: "Contest ends in",
           value: formatCountdown(countdownTarget, nowTs),
-          helper: "Live scoring is underway until the contest closes.",
+          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         }
       : {
           label: isLocked ? "Contest starts in" : "Entry closes in",
           value: formatCountdown(countdownTarget, nowTs),
-          helper: isLocked ? "Lineups are locked while you wait for live scoring." : "You can still edit and submit before lock.",
+          helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         };
   const rankingRows = ranking?.rankings ?? [];
