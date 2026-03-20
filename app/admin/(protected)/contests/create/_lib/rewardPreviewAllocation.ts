@@ -36,10 +36,10 @@ type RewardTierRange = {
   size: number;
 };
 
-const PREVIEW_TIER_ENDS = [1, 2, 3, 5, 10, 15, 25, 50, 75, 100, 150, 250, 500] as const;
+const PREVIEW_TIER_ENDS = [1, 2, 3, 10, 25, 50, 75, 100, 150, 250, 500] as const;
 
-const BALANCED_POINTS_TIER_WEIGHTS = [4.5, 4.2, 4.0, 7.3, 11, 10, 15, 18, 13, 13, 10, 8, 6, 4] as const;
-const BALANCED_PACKS_TIER_WEIGHTS = [3.5, 3.3, 3.2, 6.5, 10.5, 10.5, 15, 18, 14.5, 14.5, 12, 10, 8, 6] as const;
+const BALANCED_POINTS_TIER_WEIGHTS = [4.5, 4.2, 4.0, 18, 24, 18, 13, 13, 10, 8, 6, 4] as const;
+const PACK_BAND_PER_WINNER_WEIGHTS = [6, 5, 4, 3, 2, 1, 1, 0.4, 0.3, 0.2, 0.15, 0.1] as const;
 
 const PROFILE_ALPHA: Record<ContestRewardDistributionProfile, number> = {
   balanced: 0.8,
@@ -97,7 +97,7 @@ function buildPerRankAllocation(input: {
   const weights = buildRankWeights(input.winnersCount, input.distributionProfile);
   return {
     points: allocatePointPoolByWeights(input.pointsPool, weights),
-    packs: allocatePoolByWeights(input.packsPool, weights),
+    packs: allocateMonotonicBandPool(input.packsPool, buildPreviewTierRanges(input.winnersCount)),
   };
 }
 
@@ -105,7 +105,7 @@ function buildBalancedPerRankAllocation(winnersCount: number, pointsPool: number
   const tiers = buildPreviewTierRanges(winnersCount);
   const tierPointTotals = allocatePointPoolByWeights(pointsPool, buildBalancedTierWeights(tiers, BALANCED_POINTS_TIER_WEIGHTS));
   const points = Array.from({ length: winnersCount }, () => 0);
-  const packs = allocateMonotonicPoolByWeights(packsPool, buildBalancedRankWeights(tiers, BALANCED_PACKS_TIER_WEIGHTS));
+  const packs = allocateMonotonicBandPool(packsPool, tiers);
 
   tiers.forEach((tier, tierIndex) => {
     const pointSplit = splitTierPointsForPreview(tierPointTotals[tierIndex] ?? 0, tier.size);
@@ -121,13 +121,6 @@ function buildBalancedPerRankAllocation(winnersCount: number, pointsPool: number
 
 function buildBalancedTierWeights(tiers: RewardTierRange[], weightTemplate: readonly number[]) {
   return tiers.map((_, index) => weightTemplate[index] ?? weightTemplate[weightTemplate.length - 1] ?? 1);
-}
-
-function buildBalancedRankWeights(tiers: RewardTierRange[], weightTemplate: readonly number[]) {
-  return tiers.flatMap((tier, index) => {
-    const tierWeight = weightTemplate[index] ?? weightTemplate[weightTemplate.length - 1] ?? 1;
-    return Array.from({ length: tier.size }, () => tierWeight);
-  });
 }
 
 function buildRankWeights(winnersCount: number, distributionProfile: ContestRewardDistributionProfile) {
@@ -154,14 +147,19 @@ function allocatePoolByWeights(pool: number, weights: number[]) {
   return allocated;
 }
 
-function allocateMonotonicPoolByWeights(pool: number, weights: number[]) {
-  if (pool <= 0 || weights.length === 0) return weights.map(() => 0);
+function allocateMonotonicBandPool(pool: number, tiers: RewardTierRange[]) {
+  if (pool <= 0 || tiers.length === 0) return tiers.flatMap((tier) => Array.from({ length: tier.size }, () => 0));
 
-  const totalWeight = weights.reduce((sum, value) => sum + value, 0);
-  if (totalWeight <= 0) return weights.map(() => 0);
+  const perRankWeights = tiers.flatMap((tier, index) => {
+    const perWinnerWeight = PACK_BAND_PER_WINNER_WEIGHTS[index] ?? PACK_BAND_PER_WINNER_WEIGHTS[PACK_BAND_PER_WINNER_WEIGHTS.length - 1] ?? 0.1;
+    return Array.from({ length: tier.size }, () => perWinnerWeight);
+  });
 
-  const desired = weights.map((weight) => (weight / totalWeight) * pool);
-  const allocated = Array.from({ length: weights.length }, () => 0);
+  const totalWeight = perRankWeights.reduce((sum, value) => sum + value, 0);
+  if (totalWeight <= 0) return perRankWeights.map(() => 0);
+
+  const desired = perRankWeights.map((weight) => (weight / totalWeight) * pool);
+  const allocated = Array.from({ length: desired.length }, () => 0);
 
   for (let packIndex = 0; packIndex < pool; packIndex += 1) {
     let bestIndex = -1;
@@ -178,11 +176,7 @@ function allocateMonotonicPoolByWeights(pool: number, weights: number[]) {
       }
     }
 
-    if (bestIndex === -1) {
-      allocated[0] = (allocated[0] ?? 0) + 1;
-      continue;
-    }
-
+    if (bestIndex === -1) break;
     allocated[bestIndex] = (allocated[bestIndex] ?? 0) + 1;
   }
 

@@ -374,6 +374,7 @@ export function ContestRewardsStep(props: {
         <p className="contest-inline-note">Estimated distributed totals → Points: {generatedPreview.totalPoints.toLocaleString()} · Packs: {generatedPreview.totalPacks.toLocaleString()}</p>
         <div style={{ display: "grid", gap: "0.5rem" }}>
           <p className="contest-inline-note"><strong>Preview by placement tier</strong></p>
+          <p className="contest-inline-note">Pack preview uses dedicated podium rows for #1, #2, and #3, then grouped winner bands (#4–10, #11–25, #26–50, and larger ranges as needed) to keep the table compact and readable.</p>
           {generatedPreview.rows.length > 0 ? (
             <div
               style={{
