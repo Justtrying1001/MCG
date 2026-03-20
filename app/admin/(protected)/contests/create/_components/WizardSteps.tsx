@@ -228,7 +228,7 @@ export function ContestEntryRulesStep(props: {
 export function ContestRewardsStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
-  generatedPreview: { participantsCount: number; rows: Array<{ rank: number; pointsReward: number; packsReward: number }>; totalPoints: number; totalPacks: number };
+  generatedPreview: { participantsCount: number; winnersCount: number; rows: Array<{ rankStart: number; rankEnd: number; label: string; winnersCount: number; pointsReward: number; packsReward: number; pointsPerWinnerMin: number; pointsPerWinnerMax: number; packsPerWinnerMin: number; packsPerWinnerMax: number }>; totalPoints: number; totalPacks: number };
   rewardIssues: string[];
   rewardCapacityCheck: RewardCapacityCheck | null;
   rewardPackSupply: RewardPackSupplySummary | null;
@@ -241,8 +241,8 @@ export function ContestRewardsStep(props: {
   const packPool = Number(form.packPoolAmount) || 0;
   const hasPointsRewards = pointsPool > 0;
   const hasPackRewards = packPool > 0;
-  const winnersCount = generatedPreview.rows.length;
-  const showScrollableRankTable = winnersCount > 12;
+  const winnersCount = generatedPreview.winnersCount;
+  const showScrollableRankTable = generatedPreview.rows.length > 10;
   const remainingRewardPacksAfterDraft = rewardPackSupply ? Math.max(rewardPackSupply.reward.remaining - packPool, 0) : null;
 
   return (
@@ -372,7 +372,7 @@ export function ContestRewardsStep(props: {
         <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {winnersCount}</p>
         <p className="contest-inline-note">Estimated distributed totals → Points: {generatedPreview.totalPoints.toLocaleString()} · Packs: {generatedPreview.totalPacks.toLocaleString()}</p>
         <div style={{ display: "grid", gap: "0.5rem" }}>
-          <p className="contest-inline-note"><strong>Preview by rank</strong></p>
+          <p className="contest-inline-note"><strong>Preview by placement tier</strong></p>
           {generatedPreview.rows.length > 0 ? (
             <div
               style={{
@@ -385,17 +385,28 @@ export function ContestRewardsStep(props: {
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "20rem" }}>
                 <thead>
                   <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <th style={rewardPreviewHeaderCellStyle}>Rank</th>
+                    <th style={rewardPreviewHeaderCellStyle}>Placement</th>
+                    <th style={rewardPreviewHeaderCellStyle}>Winners</th>
                     <th style={rewardPreviewHeaderCellStyle}>Estimated points</th>
                     <th style={rewardPreviewHeaderCellStyle}>Estimated packs</th>
                   </tr>
                 </thead>
                 <tbody>
                   {generatedPreview.rows.map((row) => (
-                    <tr key={row.rank}>
-                      <td style={rewardPreviewBodyCellStyle}>#{row.rank}</td>
-                      <td style={rewardPreviewBodyCellStyle}>{row.pointsReward.toLocaleString()}</td>
-                      <td style={rewardPreviewBodyCellStyle}>{row.packsReward.toLocaleString()}</td>
+                    <tr key={`${row.rankStart}-${row.rankEnd}`}>
+                      <td style={rewardPreviewBodyCellStyle}>
+                        <strong>{row.label}</strong>
+                        {row.rankStart !== row.rankEnd ? <div className="contest-inline-note">Even split inside the tier with any +1 remainder flowing from the best rank downward.</div> : null}
+                      </td>
+                      <td style={rewardPreviewBodyCellStyle}>{row.winnersCount.toLocaleString()}</td>
+                      <td style={rewardPreviewBodyCellStyle}>
+                        <div>{row.pointsReward.toLocaleString()} total</div>
+                        <div className="contest-inline-note">{formatRewardPreviewPerWinnerRange(row.pointsPerWinnerMin, row.pointsPerWinnerMax, "pts")}</div>
+                      </td>
+                      <td style={rewardPreviewBodyCellStyle}>
+                        <div>{row.packsReward.toLocaleString()} total</div>
+                        <div className="contest-inline-note">{formatRewardPreviewPerWinnerRange(row.packsPerWinnerMin, row.packsPerWinnerMax, "packs")}</div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -404,11 +415,17 @@ export function ContestRewardsStep(props: {
           ) : (
             <p className="contest-inline-note">No winner rows to preview yet. Increase the preview field size or adjust reward settings to estimate rank payouts.</p>
           )}
-          <p className="contest-inline-note">This rank-level preview is informational only and does not override backend reward policy enforcement or publish-time validation.</p>
+          <p className="contest-inline-note">This tiered frontend preview is informational only and does not override backend reward policy enforcement or publish-time validation.</p>
         </div>
       </article>
     </section>
   );
+}
+
+function formatRewardPreviewPerWinnerRange(min: number, max: number, unit: string) {
+  if (max <= 0) return `0 ${unit} each`;
+  if (min === max) return `${max.toLocaleString()} ${unit} each`;
+  return `${min.toLocaleString()}–${max.toLocaleString()} ${unit} each`;
 }
 
 const rewardPreviewHeaderCellStyle: CSSProperties = {

@@ -644,7 +644,6 @@ export function RewardsPanel({
         <div className="contest-detail-earned-rewards">
           <div className="contest-detail-earned-rewards-head">
             <strong>Bonus rewards</strong>
-            <span>Configured showcase only — payout is handled separately.</span>
           </div>
           <div className="contest-detail-reward-tier-list">
             {parsedBonusRewards.map((reward) => (

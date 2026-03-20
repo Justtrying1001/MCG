@@ -4449,7 +4449,6 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
-.contest-detail-earned-rewards-head strong:last-child,
 .contest-detail-earned-rewards-head span {
   color: rgba(248, 250, 252, 0.84);
 }
