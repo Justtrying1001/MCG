@@ -6605,21 +6605,38 @@ a { color: inherit; text-decoration: none; }
 }
 
 
+.contest-detail-help-panel {
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  margin-top: 0.85rem;
+}
+
+.contest-detail-help-eyebrow {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-2) 78%, #fff 22%);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
 .contest-detail-help-link {
   width: fit-content;
-  color: var(--text-2);
-  font-size: 0.82rem;
-  font-weight: 600;
+  color: color-mix(in srgb, var(--text) 80%, #9fc4ff 20%);
+  font-size: 0.9rem;
+  font-weight: 700;
   line-height: 1.4;
   text-decoration: none;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.16em;
   transition: color 140ms ease, text-decoration-color 140ms ease, opacity 140ms ease;
 }
 
 .contest-detail-help-link:hover,
 .contest-detail-help-link:focus-visible {
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 92%, #ffffff 8%);
   text-decoration: underline;
-  text-underline-offset: 0.14em;
 }
 
 .contest-detail-kpis {

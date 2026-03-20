@@ -21,4 +21,17 @@ describe("contest detail targeted correction smoke", () => {
     expect(source).toContain("hasPolicyData && summary");
     expect(source).toContain("isLive ?");
   });
+
+  it("moves the how contests work link into the action panel below the primary CTA", () => {
+    const source = readFileSync("components/contests/ContestDetailPanels.tsx", "utf8");
+    const titleIndex = source.indexOf("<h1>{title}</h1>");
+    const helperIndex = source.indexOf("Not sure how it works?");
+    const actionPanelIndex = source.indexOf('className="contest-detail-hero-action-panel"');
+    expect(helperIndex).toBeGreaterThan(actionPanelIndex);
+    expect(helperIndex).toBeGreaterThan(titleIndex);
+    expect(source).toContain('className="contest-detail-help-panel"');
+    expect(source).toContain('target="_blank"');
+    expect(source).toContain('rel="noopener noreferrer"');
+  });
+
 });
