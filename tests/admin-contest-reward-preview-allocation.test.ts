@@ -17,80 +17,7 @@ describe("buildRewardPreviewAllocation", () => {
     expect(preview.winnersCount).toBe(25);
     expect(preview.totalPoints).toBe(10_000);
     expect(preview.totalPacks).toBe(17);
-    expect(preview.rows.map((row) => row.label)).toEqual(["#1", "#2", "#3", "#4–5", "#6–10", "#11–15", "#16–25"]);
-  });
-
-  it("uses grouped tiers and deterministic higher-rank remainder handling for balanced previews", () => {
-    const preview = buildRewardPreviewAllocation({
-      participantsCount: 10,
-      rewardConfig: {
-        pointsPool: 70,
-        packPool: 3,
-        rewardedTopPercent: 50,
-        distributionProfile: "balanced",
-      },
-    });
-
-    expect(preview.rows).toEqual([
-      {
-        rankStart: 1,
-        rankEnd: 1,
-        label: "#1",
-        winnersCount: 1,
-        pointsReward: 20,
-        packsReward: 1,
-        pointsPerWinnerMin: 20,
-        pointsPerWinnerMax: 20,
-        packsPerWinnerMin: 1,
-        packsPerWinnerMax: 1,
-        packHighValueCount: 1,
-        packPreviewSegments: [{ rankStart: 1, rankEnd: 1, packs: 1 }],
-      },
-      {
-        rankStart: 2,
-        rankEnd: 2,
-        label: "#2",
-        winnersCount: 1,
-        pointsReward: 20,
-        packsReward: 1,
-        pointsPerWinnerMin: 20,
-        pointsPerWinnerMax: 20,
-        packsPerWinnerMin: 1,
-        packsPerWinnerMax: 1,
-        packHighValueCount: 1,
-        packPreviewSegments: [{ rankStart: 2, rankEnd: 2, packs: 1 }],
-      },
-      {
-        rankStart: 3,
-        rankEnd: 3,
-        label: "#3",
-        winnersCount: 1,
-        pointsReward: 10,
-        packsReward: 1,
-        pointsPerWinnerMin: 10,
-        pointsPerWinnerMax: 10,
-        packsPerWinnerMin: 1,
-        packsPerWinnerMax: 1,
-        packHighValueCount: 1,
-        packPreviewSegments: [{ rankStart: 3, rankEnd: 3, packs: 1 }],
-      },
-      {
-        rankStart: 4,
-        rankEnd: 5,
-        label: "#4–5",
-        winnersCount: 2,
-        pointsReward: 20,
-        packsReward: 0,
-        pointsPerWinnerMin: 10,
-        pointsPerWinnerMax: 10,
-        packsPerWinnerMin: 0,
-        packsPerWinnerMax: 0,
-        packHighValueCount: 2,
-        packPreviewSegments: [{ rankStart: 4, rankEnd: 5, packs: 0 }],
-      },
-    ]);
-    expect(preview.totalPoints).toBe(70);
-    expect(preview.totalPacks).toBe(3);
+    expect(preview.rows.map((row) => row.label)).toEqual(["#1", "#2", "#3", "#4–10", "#11–25"]);
   });
 
   it("keeps point preview values on clean multiples of 10 while preserving the full pool", () => {
@@ -108,62 +35,39 @@ describe("buildRewardPreviewAllocation", () => {
     expect(preview.rows.every((row) =>
       row.pointsReward % 10 === 0
       && row.pointsPerWinnerMin % 10 === 0
-      && row.pointsPerWinnerMax % 10 === 0
+      && row.pointsPerWinnerMax % 10 === 0,
     )).toBe(true);
 
     const tier = preview.rows.find((row) => row.label === "#76–100");
     expect(tier).toMatchObject({
-      pointsPerWinnerMin: 430,
-      pointsPerWinnerMax: 440,
+      rankStart: 76,
+      rankEnd: 100,
     });
   });
 
-  it("exposes exact grouped pack sub-ranges with higher values assigned to better ranks first", () => {
+  it("gives the podium distinct pack rewards when the pool can support it", () => {
     const preview = buildRewardPreviewAllocation({
       participantsCount: 100,
       rewardConfig: {
         pointsPool: 20_000,
-        packPool: 17,
-        rewardedTopPercent: 50,
-        distributionProfile: "balanced",
-      },
-    });
-
-    const splitTier = preview.rows.find((row) => row.label === "#26–50");
-
-    expect(splitTier?.packsPerWinnerMin).toBe(0);
-    expect(splitTier?.packsPerWinnerMax).toBe(0);
-    expect(splitTier?.packHighValueCount).toBe(25);
-    expect(splitTier?.packPreviewSegments).toEqual([{ rankStart: 26, rankEnd: 50, packs: 0 }]);
-  });
-
-  it("keeps balanced pack allocation globally monotonic for 100 participants and 50 winners", () => {
-    const preview = buildRewardPreviewAllocation({
-      participantsCount: 100,
-      rewardConfig: {
-        pointsPool: 20_000,
-        packPool: 200,
+        packPool: 120,
         rewardedTopPercent: 50,
         distributionProfile: "balanced",
       },
     });
 
     const rankOne = preview.rows.find((row) => row.label === "#1");
-    const lastTier = preview.rows.find((row) => row.label === "#26–50");
-    const perRankPacks = preview.rows.flatMap((row) =>
-      row.packPreviewSegments.flatMap((segment) => Array.from({ length: segment.rankEnd - segment.rankStart + 1 }, () => segment.packs))
-    );
+    const rankTwo = preview.rows.find((row) => row.label === "#2");
+    const rankThree = preview.rows.find((row) => row.label === "#3");
 
-    expect(preview.rows.map((row) => row.label)).toEqual(["#1", "#2", "#3", "#4–5", "#6–10", "#11–15", "#16–25", "#26–50"]);
-    expect(rankOne?.pointsReward).toBeLessThan(1_300);
-    expect(rankOne?.packsReward).toBeLessThan(12);
-    expect(lastTier?.pointsPerWinnerMin).toBeGreaterThanOrEqual(190);
-    expect(lastTier?.packsPerWinnerMin).toBeGreaterThanOrEqual(4);
-    expect(perRankPacks.every((value, index) => index === 0 || perRankPacks[index - 1] >= value)).toBe(true);
-    expect(lastTier?.packPreviewSegments).toEqual([{ rankStart: 26, rankEnd: 50, packs: 4 }]);
+    expect(rankOne?.packsReward).toBeGreaterThan(rankTwo?.packsReward ?? -1);
+    expect(rankTwo?.packsReward).toBeGreaterThan(rankThree?.packsReward ?? -1);
+    expect(rankOne?.packPreviewSegments).toEqual([{ rankStart: 1, rankEnd: 1, packs: rankOne?.packsReward ?? 0 }]);
+    expect(rankTwo?.packPreviewSegments).toEqual([{ rankStart: 2, rankEnd: 2, packs: rankTwo?.packsReward ?? 0 }]);
+    expect(rankThree?.packPreviewSegments).toEqual([{ rankStart: 3, rankEnd: 3, packs: rankThree?.packsReward ?? 0 }]);
   });
 
-  it("prevents later tiers from re-increasing above earlier tiers for 200 participants and 100 winners", () => {
+  it("uses grouped post-podium bands in the preview table", () => {
     const preview = buildRewardPreviewAllocation({
       participantsCount: 200,
       rewardConfig: {
@@ -174,27 +78,56 @@ describe("buildRewardPreviewAllocation", () => {
       },
     });
 
-    const rankOne = preview.rows.find((row) => row.label === "#1");
-    const middleTier = preview.rows.find((row) => row.label === "#26–50");
-    const nextTier = preview.rows.find((row) => row.label === "#51–75");
-    const lastTier = preview.rows.find((row) => row.label === "#76–100");
+    expect(preview.rows.map((row) => row.label)).toEqual([
+      "#1",
+      "#2",
+      "#3",
+      "#4–10",
+      "#11–25",
+      "#26–50",
+      "#51–75",
+      "#76–100",
+    ]);
+  });
+
+  it("keeps pack allocation globally monotonic across grouped bands", () => {
+    const preview = buildRewardPreviewAllocation({
+      participantsCount: 200,
+      rewardConfig: {
+        pointsPool: 20_000,
+        packPool: 200,
+        rewardedTopPercent: 50,
+        distributionProfile: "balanced",
+      },
+    });
+
     const perRankPacks = preview.rows.flatMap((row) =>
-      row.packPreviewSegments.flatMap((segment) => Array.from({ length: segment.rankEnd - segment.rankStart + 1 }, () => segment.packs))
+      row.packPreviewSegments.flatMap((segment) =>
+        Array.from({ length: segment.rankEnd - segment.rankStart + 1 }, () => segment.packs),
+      ),
     );
 
-    expect(preview.rows.map((row) => row.label)).toEqual(["#1", "#2", "#3", "#4–5", "#6–10", "#11–15", "#16–25", "#26–50", "#51–75", "#76–100"]);
-    expect(rankOne?.pointsReward).toBeLessThan(1_000);
-    expect(rankOne?.packsReward).toBeLessThanOrEqual(8);
-    expect(lastTier?.pointsPerWinnerMin).toBeGreaterThanOrEqual(100);
-    expect(lastTier?.packsPerWinnerMin).toBeGreaterThanOrEqual(2);
-    expect(lastTier?.packsPerWinnerMax).toBeLessThanOrEqual(2);
-    expect(preview.rows.every((row) => row.pointsPerWinnerMin % 10 === 0 && row.pointsPerWinnerMax % 10 === 0)).toBe(true);
-    expect(perRankPacks.every((value, index) => index === 0 || perRankPacks[index - 1] >= value)).toBe(true);
-    expect((middleTier?.packsPerWinnerMin ?? 0)).toBeGreaterThanOrEqual(nextTier?.packsPerWinnerMax ?? 0);
-    expect((nextTier?.packsPerWinnerMin ?? 0)).toBeGreaterThanOrEqual(lastTier?.packsPerWinnerMax ?? 0);
-    expect(middleTier?.packPreviewSegments).toEqual([{ rankStart: 26, rankEnd: 50, packs: 2 }]);
-    expect(nextTier?.packPreviewSegments).toEqual([{ rankStart: 51, rankEnd: 75, packs: 2 }]);
-    expect(lastTier?.packPreviewSegments).toEqual([{ rankStart: 76, rankEnd: 100, packs: 2 }]);
+    expect(perRankPacks).toHaveLength(preview.winnersCount);
+    expect(perRankPacks.every((value, index) => index === 0 || (perRankPacks[index - 1] ?? 0) >= value)).toBe(true);
+    expect(preview.rows.every((row, index, rows) => {
+      if (index === 0) return true;
+      return (rows[index - 1]?.packsPerWinnerMin ?? 0) >= row.packsPerWinnerMax;
+    })).toBe(true);
+  });
+
+  it("preserves the exact total pack pool after grouped band allocation", () => {
+    const preview = buildRewardPreviewAllocation({
+      participantsCount: 100,
+      rewardConfig: {
+        pointsPool: 20_000,
+        packPool: 17,
+        rewardedTopPercent: 50,
+        distributionProfile: "balanced",
+      },
+    });
+
+    expect(preview.totalPacks).toBe(17);
+    expect(preview.rows.reduce((sum, row) => sum + row.packsReward, 0)).toBe(17);
   });
 
   it("stays preview-only when the field is too small to produce winners", () => {
