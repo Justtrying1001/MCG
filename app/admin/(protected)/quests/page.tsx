@@ -65,7 +65,6 @@ export default function QuestLibraryPage() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [selected, setSelected] = useState<QuestRow | null>(null);
 
   const load = async () => {
     const response = await fetch("/api/internal/quests/library", { cache: "no-store" });
@@ -120,7 +119,7 @@ export default function QuestLibraryPage() {
     );
   }, [rows]);
 
-  const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "DELETE_SOFT") => {
+  const applyLifecycle = async (questId: string, action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT") => {
     if (action === "DELETE_SOFT") {
       const confirmed = window.confirm("Delete this quest? It will be soft deleted.");
       if (!confirmed) return;
@@ -175,13 +174,25 @@ export default function QuestLibraryPage() {
           const rewardCopy = getRewardCopy(row);
           const statusLabel = row.isActive ? "Enabled" : "Disabled";
           const lifecycle = row.lifecycleStatus ?? "ACTIVE";
+          const isBusy = busyId === row.id;
+          const canRestore = lifecycle !== "ACTIVE";
+          const lifecycleActionLabel = canRestore ? "Restore" : "Archive";
+          const lifecycleAction = canRestore ? "RESTORE" : "ARCHIVE";
           return (
-            <button key={row.id} type="button" className="admin-focus-card admin-quest-focus-card" onClick={() => setSelected(row)}>
-              <div className="admin-quest-card-header-row">
-                <span className="milestone-chip-icon admin-quest-chip-icon" style={getQuestAccentStyle(row)}>{target.icon}</span>
-                <div className="admin-quest-card-heading">
-                  <span className="admin-quest-card-title" title={typeLabel}>{typeLabel}</span>
-                  <span className="admin-quest-card-target" title={target.primaryLabel}>{target.primaryLabel}</span>
+            <article key={row.id} className="admin-focus-card admin-quest-focus-card">
+              <div className="admin-quest-card-topline">
+                <div className="admin-quest-card-header-row">
+                  <span className="milestone-chip-icon admin-quest-chip-icon" style={getQuestAccentStyle(row)}>{target.icon}</span>
+                  <div className="admin-quest-card-heading">
+                    <span className="admin-quest-card-title" title={typeLabel}>{typeLabel}</span>
+                    <span className="admin-quest-card-target" title={target.primaryLabel}>{target.primaryLabel}</span>
+                  </div>
+                </div>
+
+                <div className="admin-quest-card-actions" onClick={(event) => event.stopPropagation()}>
+                  <Link href={`/admin/quests/builder?questId=${row.id}`} className="btn btn-ghost btn-sm">Edit</Link>
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={isBusy} onClick={() => void applyLifecycle(row.id, lifecycleAction)}>{lifecycleActionLabel}</button>
+                  <button type="button" className="btn btn-danger btn-sm admin-quest-delete-btn" disabled={isBusy} onClick={() => void applyLifecycle(row.id, "DELETE_SOFT")}>Delete</button>
                 </div>
               </div>
 
@@ -190,60 +201,46 @@ export default function QuestLibraryPage() {
                 <span className="admin-badge neutral">{target.networkLabel}</span>
                 <span className="admin-badge neutral">{statusLabel}</span>
                 <span className="admin-badge neutral">{row.validationMode}</span>
+                <span className="admin-badge neutral">{target.kindLabel}</span>
               </div>
 
-              {target.secondaryLabel ? <p className="admin-quest-secondary-line" title={target.secondaryLabel}>{target.secondaryLabel}</p> : null}
+              <div className="admin-quest-body">
+                <div className="admin-quest-primary-meta">
+                  {target.handle ? <MetaPill label="Handle" value={`@${target.handle}`} /> : null}
+                  {target.tweetId ? <MetaPill label="Tweet ID" value={target.tweetId} /> : null}
+                  {rewardCopy ? <MetaPill label="Reward" value={rewardCopy} /> : null}
+                </div>
 
-              <div className="admin-quest-meta-stack">
-                {target.handle ? <MetaPill label="Handle" value={`@${target.handle}`} /> : null}
-                {target.tweetId ? <MetaPill label="Tweet" value={target.tweetId} /> : null}
-                <MetaPill label="Quest" value={row.code} />
-                {rewardCopy ? <MetaPill label="Reward" value={rewardCopy} /> : null}
+                {target.url ? (
+                  <div className="admin-quest-link-row">
+                    <a href={target.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm admin-quest-open-link">
+                      {target.tweetId ? "Open tweet" : target.kindLabel === "Account" ? "Open account" : "Open target"}
+                    </a>
+                    {target.urlLabel ? <span className="admin-quest-url" title={target.url}>{target.urlLabel}</span> : null}
+                  </div>
+                ) : null}
+
+                {target.secondaryLabel ? <p className="admin-quest-secondary-line" title={target.secondaryLabel}>{target.secondaryLabel}</p> : null}
+
+                <div className="admin-quest-secondary-meta">
+                  <MetaPill label="Quest" value={row.code} />
+                  <MetaPill label="Window" value={formatWindow(row.startAt, row.endAt)} />
+                </div>
               </div>
-
-              {target.urlLabel ? (
-                <p className="admin-quest-url" title={target.url ?? target.urlLabel}>
-                  {target.urlLabel}
-                </p>
-              ) : null}
 
               <div className="admin-quest-footer">
                 <span className="contest-inline-note" title={row.title}>{row.title}</span>
-                <span className="contest-inline-note">{formatWindow(row.startAt, row.endAt)}</span>
+                <div className="admin-quest-stats">
+                  <Link href={`/admin/quests/${row.id}`} className="admin-badge neutral">Details</Link>
+                  <span className="contest-inline-note">Done {row.analytics?.completedCount ?? 0}</span>
+                  <span className="contest-inline-note">In progress {row.analytics?.progressCount ?? 0}</span>
+                </div>
               </div>
-            </button>
+            </article>
           );
         })}
         {!loading && filtered.length === 0 ? <section className="admin-panel"><p className="contest-inline-note">No quests found.</p></section> : null}
       </section>
-
-      {selected ? (
-        <div className="contest-modal-overlay" role="presentation" onClick={() => setSelected(null)}>
-          <div className="contest-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <div className="contest-modal-head">
-              <div>
-                <h4>{selected.title}</h4>
-                <p className="contest-inline-note">{selected.code}</p>
-              </div>
-              <button type="button" className="btn btn-ghost" onClick={() => setSelected(null)}>Close</button>
-            </div>
-            <div style={{ display: "grid", gap: "0.35rem" }}>
-              <p className="contest-inline-note">Lifecycle: {selected.lifecycleStatus ?? "ACTIVE"}</p>
-              <p className="contest-inline-note">Validation: {selected.validationMode}</p>
-              <p className="contest-inline-note">Reward: {getRewardCopy(selected) ?? `${selected.rewardPoints} pts`}</p>
-              <p className="contest-inline-note">Completed users: {selected.analytics?.completedCount ?? 0}</p>
-              <p className="contest-inline-note">Progress rows: {selected.analytics?.progressCount ?? 0}</p>
-              <p className="contest-inline-note">Distributed points: {selected.analytics?.totalPointsDistributed ?? 0}</p>
-              <div className="admin-actions-row">
-                <Link href={`/admin/quests/builder?questId=${selected.id}`} className="admin-badge neutral">Edit</Link>
-                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, selected.isActive ? "DISABLE" : "ENABLE")}>{selected.isActive ? "Disable" : "Enable"}</button>
-                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, "ARCHIVE")}>Archive</button>
-                <button className="admin-badge neutral" disabled={busyId === selected.id} onClick={() => void applyLifecycle(selected.id, "DELETE_SOFT")}>Delete</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
