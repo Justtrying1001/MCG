@@ -104,18 +104,15 @@ function buildPerRankAllocation(input: {
 function buildBalancedPerRankAllocation(winnersCount: number, pointsPool: number, packsPool: number) {
   const tiers = buildPreviewTierRanges(winnersCount);
   const tierPointTotals = allocatePointPoolByWeights(pointsPool, buildBalancedTierWeights(tiers, BALANCED_POINTS_TIER_WEIGHTS));
-  const tierPackTotals = allocatePoolByWeights(packsPool, buildBalancedTierWeights(tiers, BALANCED_PACKS_TIER_WEIGHTS));
   const points = Array.from({ length: winnersCount }, () => 0);
-  const packs = Array.from({ length: winnersCount }, () => 0);
+  const packs = allocateMonotonicPoolByWeights(packsPool, buildBalancedRankWeights(tiers, BALANCED_PACKS_TIER_WEIGHTS));
 
   tiers.forEach((tier, tierIndex) => {
     const pointSplit = splitTierPointsForPreview(tierPointTotals[tierIndex] ?? 0, tier.size);
-    const packSplit = splitTierEvenly(tierPackTotals[tierIndex] ?? 0, tier.size);
 
     for (let offset = 0; offset < tier.size; offset += 1) {
       const rankIndex = tier.rankStart - 1 + offset;
       points[rankIndex] = pointSplit[offset] ?? 0;
-      packs[rankIndex] = packSplit[offset] ?? 0;
     }
   });
 
@@ -124,6 +121,13 @@ function buildBalancedPerRankAllocation(winnersCount: number, pointsPool: number
 
 function buildBalancedTierWeights(tiers: RewardTierRange[], weightTemplate: readonly number[]) {
   return tiers.map((_, index) => weightTemplate[index] ?? weightTemplate[weightTemplate.length - 1] ?? 1);
+}
+
+function buildBalancedRankWeights(tiers: RewardTierRange[], weightTemplate: readonly number[]) {
+  return tiers.flatMap((tier, index) => {
+    const tierWeight = weightTemplate[index] ?? weightTemplate[weightTemplate.length - 1] ?? 1;
+    return Array.from({ length: tier.size }, () => tierWeight);
+  });
 }
 
 function buildRankWeights(winnersCount: number, distributionProfile: ContestRewardDistributionProfile) {
@@ -150,6 +154,41 @@ function allocatePoolByWeights(pool: number, weights: number[]) {
   return allocated;
 }
 
+function allocateMonotonicPoolByWeights(pool: number, weights: number[]) {
+  if (pool <= 0 || weights.length === 0) return weights.map(() => 0);
+
+  const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+  if (totalWeight <= 0) return weights.map(() => 0);
+
+  const desired = weights.map((weight) => (weight / totalWeight) * pool);
+  const allocated = Array.from({ length: weights.length }, () => 0);
+
+  for (let packIndex = 0; packIndex < pool; packIndex += 1) {
+    let bestIndex = -1;
+    let bestDeficit = Number.NEGATIVE_INFINITY;
+
+    for (let index = 0; index < allocated.length; index += 1) {
+      const previousValue = index === 0 ? Number.POSITIVE_INFINITY : allocated[index - 1] ?? 0;
+      if ((allocated[index] ?? 0) + 1 > previousValue) continue;
+
+      const deficit = (desired[index] ?? 0) - (allocated[index] ?? 0);
+      if (deficit > bestDeficit) {
+        bestDeficit = deficit;
+        bestIndex = index;
+      }
+    }
+
+    if (bestIndex === -1) {
+      allocated[0] = (allocated[0] ?? 0) + 1;
+      continue;
+    }
+
+    allocated[bestIndex] = (allocated[bestIndex] ?? 0) + 1;
+  }
+
+  return allocated;
+}
+
 function allocatePointPoolByWeights(pool: number, weights: number[]) {
   if (pool <= 0 || weights.length === 0) return weights.map(() => 0);
 
@@ -165,12 +204,6 @@ function allocatePointPoolByWeights(pool: number, weights: number[]) {
   return allocated;
 }
 
-function splitTierEvenly(total: number, count: number) {
-  if (count <= 0) return [];
-  const base = Math.floor(total / count);
-  let remainder = total - (base * count);
-  return Array.from({ length: count }, (_, index) => base + (index < remainder ? 1 : 0));
-}
 
 function splitTierPointsForPreview(total: number, count: number) {
   if (count <= 0) return [];
