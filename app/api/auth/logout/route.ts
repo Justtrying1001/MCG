@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 import { cookies } from "next/headers";
-import { buildSessionCookieOptions, clearSession, getSessionCookieName } from "@/lib/auth";
+import {
+  buildSessionCookieOptions,
+  buildSessionHintCookieOptions,
+  clearSession,
+  getSessionCookieName,
+  getSessionHintCookieName,
+} from "@/lib/auth";
 import { logAuthEvent } from "@/lib/observability/auth-log";
 
 export async function POST() {
@@ -23,6 +29,11 @@ export async function POST() {
     name: cookieName,
     value: "",
     ...buildSessionCookieOptions(0),
+  });
+  response.cookies.set({
+    name: getSessionHintCookieName(),
+    value: "",
+    ...buildSessionHintCookieOptions(0),
   });
 
   return response;

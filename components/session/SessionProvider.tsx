@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { SessionState, UserSessionPayload } from "@/types/session";
 
 const SESSION_CHANGED_EVENT = "mcg:session-changed";
+const SESSION_HINT_COOKIE = "mcg_has_session";
 const REFRESH_DEDUP_MS = 1_500;
 
 type SessionChangedDetail = { me: SessionState | null };
@@ -22,6 +23,18 @@ function emitSessionChanged(me: SessionState | null) {
   window.dispatchEvent(new CustomEvent<SessionChangedDetail>(SESSION_CHANGED_EVENT, { detail: { me } }));
 }
 
+function hasSessionHintCookie() {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((entry) => entry.trim().startsWith(`${SESSION_HINT_COOKIE}=`));
+}
+
+function clearSessionHintCookie() {
+  if (typeof document === "undefined") return;
+  document.cookie = `${SESSION_HINT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [me, setMeState] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +49,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
+    if (!hasSessionHintCookie()) {
+      meRef.current = null;
+      setMeState(null);
+      emitSessionChanged(null);
+      return false;
+    }
+
     const now = Date.now();
     if (inFlightRefreshRef.current && now - lastRefreshAtRef.current < REFRESH_DEDUP_MS) {
       return inFlightRefreshRef.current;
@@ -54,6 +74,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         }
 
         if (res.status === 401) {
+          clearSessionHintCookie();
           meRef.current = null;
           setMeState(null);
           emitSessionChanged(null);
