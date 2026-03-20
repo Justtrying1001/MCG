@@ -7108,19 +7108,22 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   z-index: 120;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
   padding: clamp(0.75rem, 2vw, 1.25rem);
   background: rgba(4, 7, 16, 0.76);
   backdrop-filter: blur(10px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .bldr-modal {
   width: min(1440px, 100%);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-height: calc(100vh - clamp(1.5rem, 4vw, 2.5rem));
+  min-height: calc(100dvh - clamp(1.5rem, 4vw, 2.5rem));
+  max-height: calc(100dvh - clamp(1.5rem, 4vw, 2.5rem));
   overflow: hidden;
   min-width: 0;
   background: linear-gradient(180deg, rgba(14,16,26,0.98), rgba(9,10,17,0.99));
@@ -7193,7 +7196,8 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem 1.25rem 0;
   gap: 0.9rem;
 }
@@ -7291,16 +7295,41 @@ a { color: inherit; text-decoration: none; }
   background: rgba(8, 12, 22, 0.82);
   color: var(--text);
   padding: 0.8rem 0.9rem;
+  color-scheme: dark;
+}
+
+.bldr-select:hover {
+  border-color: rgba(123, 97, 255, 0.4);
+}
+
+.bldr-search:focus,
+.bldr-select:focus {
+  outline: none;
+  border-color: rgba(123, 97, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(123, 97, 255, 0.18);
+}
+
+.bldr-select option,
+.bldr-select optgroup {
+  background: #0b1120;
+  color: #f5f7ff;
+}
+
+.bldr-select option:hover,
+.bldr-select option:focus,
+.bldr-select option:checked,
+.bldr-select option:selected {
+  background: #1b2540;
+  color: #ffffff;
 }
 
 .bldr-pool-scroll {
   flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
   min-height: 0;
   min-width: 0;
   padding-right: 0.2rem;
-  padding-bottom: 6.5rem;
+  padding-bottom: 1rem;
 }
 
 .bldr-pool-grid {
@@ -7436,7 +7465,8 @@ a { color: inherit; text-decoration: none; }
 
   .bldr-modal {
     width: 100%;
-    max-height: 100vh;
+    min-height: 100dvh;
+    max-height: 100dvh;
     border-radius: 0;
     border-inline: 0;
   }
