@@ -3,6 +3,7 @@ import { memo } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { ContestCountdown } from "@/components/contests/ContestCountdown";
 import type { ContestListItem, ContestRule } from "@/components/contests/types";
+import { buildContestBonusRewardSummary, parseContestBonusRewards } from "@/components/contests/bonusRewards";
 import { getContestStateMessaging, getPhaseLabel, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
 
 function getContestCoverImage(rule?: ContestRule) {
@@ -48,6 +49,8 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
   const coverImageUrl = getContestCoverImage(rule);
   const entryFee = getEntryFeeLabel(rule);
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
+  const bonusRewards = parseContestBonusRewards(rule?.config?.bonusRewards);
+  const bonusRewardSummary = buildContestBonusRewardSummary(bonusRewards);
   const fallbackToken = getFallbackToken(contest);
   const heroEyebrow = getHeroEyebrow(contest);
   const stateMessaging = getContestStateMessaging(contest.status);
@@ -89,6 +92,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
         <div className="contest-grid-card-reward" aria-label="Reward highlight">
           <span className="contest-grid-card-reward-label">🏆 Reward</span>
           <strong>{rewardHighlight}</strong>
+          {bonusRewardSummary ? <span>Bonus rewards: {bonusRewardSummary}</span> : null}
         </div>
 
         <div

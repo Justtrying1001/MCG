@@ -4,7 +4,8 @@ import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import { ScoreBreakdownPanel, type BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
 import { ContestResultPanel } from "@/components/contests/ContestResultPanel";
-import type { ContestStatus, LineupOption } from "@/components/contests/types";
+import type { ContestBonusReward as ContestBonusRewardInput, ContestStatus, LineupOption } from "@/components/contests/types";
+import { formatContestBonusRewardValue, formatContestPlacement, parseContestBonusRewards } from "@/components/contests/bonusRewards";
 
 
 function formatRewardParts(input: { pointsAmount: number; xpAmount: number; packsCount: number }) {
@@ -601,6 +602,7 @@ export function RewardsPanel({
   summary,
   hasPolicyData = false,
   myRewards,
+  bonusRewards,
 }: {
   status: ContestStatus;
   tiers: RewardTier[];
@@ -613,6 +615,7 @@ export function RewardsPanel({
   } | null;
   hasPolicyData?: boolean;
   myRewards?: RewardSummary | null;
+  bonusRewards?: ContestBonusRewardInput[] | null;
 }) {
   const isOpen = status === "OPEN" || status === "LOCKED";
   const isLive = status === "LIVE";
@@ -626,6 +629,7 @@ export function RewardsPanel({
     openPool.rewardedTopPercent ? { label: "Paid range", value: `Top ${openPool.rewardedTopPercent}% paid` } : null,
   ].filter((item): item is { label: string; value: string } => Boolean(item));
   const hasExactTierRows = groupedTiers.length > 0;
+  const parsedBonusRewards = parseContestBonusRewards(bonusRewards);
 
   return (
     <Surface className="contest-detail-block rewards-panel" variant="raised">
@@ -635,6 +639,29 @@ export function RewardsPanel({
           <h3>{isOpen ? "Reward pool" : isLive ? "Live reward distribution" : "Final reward distribution"}</h3>
         </div>
       </div>
+
+      {parsedBonusRewards.length > 0 ? (
+        <div className="contest-detail-earned-rewards">
+          <div className="contest-detail-earned-rewards-head">
+            <strong>Bonus rewards</strong>
+            <span>Configured showcase only — payout is handled separately.</span>
+          </div>
+          <div className="contest-detail-reward-tier-list">
+            {parsedBonusRewards.map((reward) => (
+              <article key={`${reward.targetRank}-${reward.rewardType}-${reward.id ?? reward.note ?? reward.amount}`}>
+                <div className="contest-detail-reward-tier-rank">
+                  <strong>{formatContestPlacement(reward.targetRank)}</strong>
+                  <span>{reward.rewardType === "SOL" ? "SOL bonus" : reward.rewardType === "CUSTOM" ? "Custom reward" : "Manual payout"}</span>
+                </div>
+                <div className="contest-detail-reward-tier-value">
+                  <strong>{formatContestBonusRewardValue(reward)}</strong>
+                  {reward.note && reward.rewardType !== "CUSTOM" && reward.note !== reward.amount ? <span>{reward.note}</span> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {isOpen ? (
         openPoolItems.length > 0 ? (

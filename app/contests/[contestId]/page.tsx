@@ -571,6 +571,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
               summary={rewards?.summary ?? null}
               hasPolicyData={rewards?.hasPolicyData ?? false}
               myRewards={myRewards ?? null}
+              bonusRewards={contest.rules[0]?.config?.bonusRewards ?? null}
             />
             <LeaderboardPanel
               rows={rankingRows}
