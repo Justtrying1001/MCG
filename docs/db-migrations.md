@@ -7,24 +7,23 @@ Au moment de l'audit, le dossier `prisma/migrations/` contenait **21 migrations*
 1. `20260312114000_contest_config_phase1`
 2. `20260312132000_contest_settlement_plan_phase2`
 3. `20260313120000_contest_scoring_engine_phase1`
-4. `20260314130500_referral_invites`
-5. `20260314170000_reward_pack_supply_tracking`
-6. `20260314180000_seasons_leagues_phase1`
-7. `20260314180000_update_pack_supply_split`
-8. `20260315000001_rename_contest_starts_at_to_live_at`
-9. `20260315000002_remove_owned_card_instance_lock_state`
-10. `20260315000003_remove_settlement_plan_approved_enum`
-11. `20260315000004_snapshot_captured_missing_counts`
-12. `20260315000005_score_breakdown_data_quality`
-13. `20260315000006_reward_type_xp`
-14. `20260315000007_remove_contest_entry_status_locked`
-15. `20260315000008_remove_contest_rule_team_size_value`
-16. `20260315000009_contest_qstash_fields`
-17. `20260315001000_reward_pack_claim_tracking`
-18. `20260316000001_rename_mvp_set_to_genesis`
-19. `20260316000002_disable_booster_packs`
-20. `20260316000002_fix_genesis_reward_pool_tracking`
-21. `20260316000003_quest_pack_rewards`
+4. `20260314170000_reward_pack_supply_tracking`
+5. `20260314180000_seasons_leagues_phase1`
+6. `20260314180000_update_pack_supply_split`
+7. `20260315000001_rename_contest_starts_at_to_live_at`
+8. `20260315000002_remove_owned_card_instance_lock_state`
+9. `20260315000003_remove_settlement_plan_approved_enum`
+10. `20260315000004_snapshot_captured_missing_counts`
+11. `20260315000005_score_breakdown_data_quality`
+12. `20260315000006_reward_type_xp`
+13. `20260315000007_remove_contest_entry_status_locked`
+14. `20260315000008_remove_contest_rule_team_size_value`
+15. `20260315000009_contest_qstash_fields`
+16. `20260315001000_reward_pack_claim_tracking`
+17. `20260316000001_rename_mvp_set_to_genesis`
+18. `20260316000002_disable_booster_packs`
+19. `20260316000002_fix_genesis_reward_pool_tracking`
+20. `20260316000003_quest_pack_rewards`
 
 ### Vérification des migrations appliquées (_prisma_migrations)
 

@@ -18,12 +18,6 @@ const MILESTONES = [
   ["ms_legendary_1", "MILESTONE_V1_LEGENDARY_1", "Legend awakened", "LEGENDARY_CARDS_OWNED", "LEGENDARY_CARDS_OWNED", 1, 1500, 130],
   ["ms_rewards_claimed_5", "MILESTONE_V1_REWARDS_CLAIMED_5", "Quest closer", "REWARDS_CLAIMED", "REWARDS_CLAIMED", 5, 600, 140],
   ["ms_reward_points_5000", "MILESTONE_V1_REWARD_POINTS_5000", "Points powerhouse", "REWARD_POINTS_EARNED", "REWARD_POINTS_EARNED", 5000, 1200, 150],
-  ["ms_invites_5_bronze", "MILESTONE_V1_INVITED_FRIENDS_5_BRONZE", "Invite Bronze", "INVITED_FRIENDS", "INVITED_FRIENDS", 5, 1500, 160],
-  ["ms_invites_10_iron", "MILESTONE_V1_INVITED_FRIENDS_10_IRON", "Invite Iron", "INVITED_FRIENDS", "INVITED_FRIENDS", 10, 2500, 170],
-  ["ms_invites_20_silver", "MILESTONE_V1_INVITED_FRIENDS_20_SILVER", "Invite Silver", "INVITED_FRIENDS", "INVITED_FRIENDS", 20, 5000, 180],
-  ["ms_invites_50_gold", "MILESTONE_V1_INVITED_FRIENDS_50_GOLD", "Invite Gold", "INVITED_FRIENDS", "INVITED_FRIENDS", 50, 12000, 190],
-  ["ms_invites_100_platinum", "MILESTONE_V1_INVITED_FRIENDS_100_PLATINUM", "Invite Platinum", "INVITED_FRIENDS", "INVITED_FRIENDS", 100, 25000, 200],
-  ["ms_invites_200_diamond", "MILESTONE_V1_INVITED_FRIENDS_200_DIAMOND", "Invite Diamond", "INVITED_FRIENDS", "INVITED_FRIENDS", 200, 60000, 210],
 ];
 
 async function run() {
@@ -66,41 +60,7 @@ async function run() {
   }
 
 
-
-  const inviteQuestCode = "quest_invite_friend_1";
-  const inviteQuest = await prisma.questDefinition.findUnique({ where: { code: inviteQuestCode } });
-  if (inviteQuest) {
-    existing.push(inviteQuestCode);
-  } else {
-    await prisma.questDefinition.create({
-      data: {
-        code: inviteQuestCode,
-        type: QuestType.CONTEST_COUNT_MILESTONE,
-        title: "Invite 1 friend",
-        description: "Invite 1 friend and unlock 1000 points.",
-        rewardPoints: 1000,
-        validationMode: QuestValidationMode.AUTO,
-        oneTime: true,
-        isActive: true,
-        config: {
-          seedKey: "INVITE_QUEST_V1_INVITE_1_FRIEND",
-          category: "INVITED_FRIENDS",
-          metricKey: "INVITED_FRIENDS",
-          milestoneType: "INVITED_FRIENDS",
-          targetValue: 1,
-          threshold: 1,
-          sortOrder: 155,
-          unique: true,
-          repeatable: false,
-          lifecycleStatus: "ACTIVE",
-          source: "invite_program_seed_v1",
-        },
-      },
-    });
-    created.push(inviteQuestCode);
-  }
-
-  console.log(JSON.stringify({ expectedCount: MILESTONES.length + 1, createdCount: created.length, existingCount: existing.length, created, existing }, null, 2));
+  console.log(JSON.stringify({ expectedCount: MILESTONES.length, createdCount: created.length, existingCount: existing.length, created, existing }, null, 2));
 }
 
 run()

@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 
 import { grantWelcomeReward } from "@/lib/domain/rewards/welcome";
-import { generateUniqueInviteCodeTx, registerUserInviteTx } from "@/lib/domain/referrals/service";
 
 export type XProfileIdentity = {
   id: string;
@@ -21,7 +20,6 @@ export type PrivyProfileIdentity = {
 export async function upsertUserFromXProfileWithWelcome(
   tx: Prisma.TransactionClient,
   profile: XProfileIdentity,
-  referralInviteCode?: string | null,
 ) {
   const existing = await tx.user.findUnique({
     where: { xUserId: profile.id },
@@ -38,13 +36,12 @@ export async function upsertUserFromXProfileWithWelcome(
       },
     });
 
-    return { user, created: false as const, invitedByUserId: null };
+    return { user, created: false as const };
   }
 
   const user = await tx.user.create({
     data: {
       xUserId: profile.id,
-      inviteCode: await generateUniqueInviteCodeTx(tx),
       xUsername: profile.username,
       displayName: profile.name,
       avatarUrl: profile.profile_image_url ?? null,
@@ -52,14 +49,9 @@ export async function upsertUserFromXProfileWithWelcome(
     },
   });
 
-  const inviteLink = await registerUserInviteTx(tx, {
-    inviteCode: referralInviteCode ?? "",
-    inviteeUserId: user.id,
-  });
-
   await grantWelcomeReward(tx, user.id);
 
-  return { user, created: true as const, invitedByUserId: inviteLink?.inviterId ?? null };
+  return { user, created: true as const };
 }
 
 function buildFallbackXIdentity(privyUserId: string) {
@@ -73,7 +65,6 @@ function buildFallbackXIdentity(privyUserId: string) {
 export async function upsertUserFromPrivyProfileWithWelcome(
   tx: Prisma.TransactionClient,
   profile: PrivyProfileIdentity,
-  referralInviteCode?: string | null,
 ) {
   const fallbackIdentity = buildFallbackXIdentity(profile.privyUserId);
   const resolvedXUserId = profile.xUserId ?? fallbackIdentity.xUserId;
@@ -110,7 +101,7 @@ export async function upsertUserFromPrivyProfileWithWelcome(
       },
     });
 
-    return { user, created: false as const, invitedByUserId: null };
+    return { user, created: false as const };
   }
 
   if (profile.xUserId) {
@@ -131,7 +122,7 @@ export async function upsertUserFromPrivyProfileWithWelcome(
         },
       });
 
-      return { user, created: false as const, invitedByUserId: null };
+      return { user, created: false as const };
     }
   }
 
@@ -139,7 +130,6 @@ export async function upsertUserFromPrivyProfileWithWelcome(
     data: {
       privyUserId: profile.privyUserId,
       xUserId: resolvedXUserId,
-      inviteCode: await generateUniqueInviteCodeTx(tx),
       xUsername: resolvedXUsername,
       displayName: resolvedDisplayName,
       avatarUrl: resolvedAvatarUrl,
@@ -148,12 +138,7 @@ export async function upsertUserFromPrivyProfileWithWelcome(
     },
   });
 
-  const inviteLink = await registerUserInviteTx(tx, {
-    inviteCode: referralInviteCode ?? "",
-    inviteeUserId: user.id,
-  });
-
   await grantWelcomeReward(tx, user.id);
 
-  return { user, created: true as const, invitedByUserId: inviteLink?.inviterId ?? null };
+  return { user, created: true as const };
 }

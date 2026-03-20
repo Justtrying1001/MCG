@@ -13,20 +13,13 @@ import {
 import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
 import { readVisitorIdFromRequest } from "@/lib/analytics/visitor-id";
 import { upsertUserFromPrivyProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
-import { syncContestEntryQuestProgression } from "@/lib/domain/quests/runtime";
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import { prisma } from "@/lib/prisma";
 import { resolvePrivyIdentityFromAccessToken } from "@/lib/privy-auth";
 
 type ExchangeRequestBody = {
   accessToken?: string;
-  inviteCode?: string | null;
 };
-
-function normalizeInviteCode(inviteCode?: string | null) {
-  const normalized = String(inviteCode ?? "").trim().toUpperCase();
-  return normalized || null;
-}
 
 function logPrismaExchangeError(stage: string, error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -50,11 +43,9 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   const visitorId = readVisitorIdFromRequest(request);
 
-
   try {
     const body = (await request.json().catch(() => null)) as ExchangeRequestBody | null;
     const accessToken = body?.accessToken?.trim();
-    const inviteCode = normalizeInviteCode(body?.inviteCode);
 
     if (!accessToken) {
       logAuthEvent("privy_exchange_rejected", "warn", {
@@ -67,7 +58,6 @@ export async function POST(request: Request) {
     const identity = await resolvePrivyIdentityFromAccessToken(accessToken);
 
     let user;
-    let invitedByUserId: string | null = null;
 
     try {
       user = await prisma.$transaction(async (tx) => {
@@ -77,20 +67,12 @@ export async function POST(request: Request) {
           xUsername: identity.twitterUsername,
           displayName: identity.displayName,
           avatarUrl: identity.avatarUrl,
-        }, inviteCode);
-        invitedByUserId = result.invitedByUserId;
+        });
         return result.user;
       });
     } catch (error) {
       logPrismaExchangeError("user.upsert", error);
       throw error;
-    }
-
-    if (invitedByUserId) {
-      await Promise.allSettled([
-        syncContestEntryQuestProgression(invitedByUserId),
-        syncContestEntryQuestProgression(user.id),
-      ]);
     }
 
     const existingToken = cookies().get(getSessionCookieName())?.value;
@@ -131,7 +113,6 @@ export async function POST(request: Request) {
       privyUserId: identity.privyUserId,
       linkedXUserId: identity.twitterUserId,
       linkedXUsername: identity.twitterUsername,
-      invitePresent: Boolean(inviteCode),
     });
 
     return response;

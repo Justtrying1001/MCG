@@ -17,7 +17,6 @@ type OwnedInstanceWithTemplate = OwnedCardInstance & {
 export function buildUserPayload(params: {
   user: User;
   ownedInstances: OwnedInstanceWithTemplate[];
-  invitedFriendsCount?: number;
 }) {
   const mvpTemplateAgg = new Map<string, {
     count: number;
@@ -76,8 +75,6 @@ export function buildUserPayload(params: {
       displayName: params.user.displayName,
       avatarUrl: params.user.avatarUrl,
       authProvider: params.user.authProvider,
-      inviteCode: params.user.inviteCode,
-      invitedFriendsCount: params.invitedFriendsCount ?? 0,
       points: params.user.points,
       packsOpened: params.user.packsOpened,
     },

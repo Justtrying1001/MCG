@@ -271,7 +271,6 @@ function parseMilestoneType(value: unknown): MilestoneType | null {
     "ROSTER_SUBMISSIONS_COUNT",
     "CONTESTS_SETTLED_COUNT",
     "POINTS_BALANCE_REACHED",
-    "INVITED_FRIENDS",
   ];
 
   return allowed.includes(value as MilestoneType) ? (value as MilestoneType) : null;
@@ -400,8 +399,6 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
 }
 
 async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: string) {
-  const userInviteDelegate = getModelDelegate<{ count: (args: { where: { inviterId: string } }) => Promise<number> }>(tx, "userInvite");
-
   const [
     contestParticipations,
     packOpenCount,
@@ -449,7 +446,6 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
     ROSTER_SUBMISSIONS_COUNT: rosterSubmissions,
     CONTESTS_SETTLED_COUNT: contestsSettled,
     POINTS_BALANCE_REACHED: user?.points ?? 0,
-    INVITED_FRIENDS: 0,
   } as const;
 }
 
@@ -555,7 +551,7 @@ async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient
 
 export async function applyContestEntryQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
   const maybeTx = tx as unknown as Record<string, unknown>;
-  if (!maybeTx.contestEntry || !maybeTx.packOpeningEvent || !maybeTx.questDefinition || !maybeTx.userQuestProgress || !maybeTx.rewardLedgerEntry || !maybeTx.userInvite) {
+  if (!maybeTx.contestEntry || !maybeTx.packOpeningEvent || !maybeTx.questDefinition || !maybeTx.userQuestProgress || !maybeTx.rewardLedgerEntry) {
     return;
   }
   await applyAutoMilestoneQuestProgressionTx(tx, userId);
