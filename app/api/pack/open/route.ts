@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 import { getSessionUser } from "@/lib/auth";
+import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { handleApiError } from "@/lib/api-error";
 import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
@@ -21,6 +22,12 @@ export async function POST() {
     if (result.pulledCardsMvp.length === 0) {
       throw new PackOpenRuntimeError("Invalid MVP pack payload", 500);
     }
+
+    await recordInternalEvent({
+      type: INTERNAL_EVENT_TYPES.packOpen,
+      userId: user.id,
+      isGuest: false,
+    });
 
     return NextResponse.json(result);
   } catch (error) {

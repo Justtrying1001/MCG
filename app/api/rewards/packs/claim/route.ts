@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
 import { handleApiError } from "@/lib/api-error";
 import { claimRewardPackGrantDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 import { prisma } from "@/lib/prisma";
@@ -45,6 +46,12 @@ export async function POST(request: Request) {
     const result = await claimRewardPackGrantDbNative({
       userId: user.id,
       rewardGrantId: grant.id,
+    });
+
+    await recordInternalEvent({
+      type: INTERNAL_EVENT_TYPES.packOpen,
+      userId: user.id,
+      isGuest: false,
     });
 
     return NextResponse.json(result);
