@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   buildSessionCookieOptions,
+  buildSessionHintCookieOptions,
   clearSession,
   createSession,
   getSessionCookieName,
+  getSessionHintCookieName,
   getSessionMaxAgeSeconds,
 } from "@/lib/auth";
 import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
@@ -96,6 +98,11 @@ export async function POST(request: Request) {
       name: getSessionCookieName(),
       value: sessionToken,
       ...buildSessionCookieOptions(getSessionMaxAgeSeconds()),
+    });
+    response.cookies.set({
+      name: getSessionHintCookieName(),
+      value: "1",
+      ...buildSessionHintCookieOptions(getSessionMaxAgeSeconds()),
     });
 
     if (visitorId) {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { User } from "@prisma/client";
 
 const SESSION_COOKIE = "mcg_session";
+const SESSION_HINT_COOKIE = "mcg_has_session";
 const SESSION_TTL_DAYS = 30;
 const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
 
@@ -23,6 +24,10 @@ export function getSessionCookieName() {
   return SESSION_COOKIE;
 }
 
+export function getSessionHintCookieName() {
+  return SESSION_HINT_COOKIE;
+}
+
 export function getSessionMaxAgeSeconds() {
   return Math.floor(SESSION_TTL_MS / 1000);
 }
@@ -30,6 +35,16 @@ export function getSessionMaxAgeSeconds() {
 export function buildSessionCookieOptions(maxAge = getSessionMaxAgeSeconds()) {
   return {
     httpOnly: true,
+    sameSite: "lax" as const,
+    secure: shouldUseSecureCookies(),
+    path: "/",
+    maxAge,
+  };
+}
+
+export function buildSessionHintCookieOptions(maxAge = getSessionMaxAgeSeconds()) {
+  return {
+    httpOnly: false,
     sameSite: "lax" as const,
     secure: shouldUseSecureCookies(),
     path: "/",
