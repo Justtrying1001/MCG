@@ -120,6 +120,7 @@ export type HeroPanelProps = {
   coverImageUrl?: string | null;
   infoLine: string;
   contextBody: string;
+  helpHref?: string | null;
   timing: {
     label: string;
     value: string;
@@ -137,6 +138,7 @@ export function HeroPanel({
   coverImageUrl,
   infoLine,
   contextBody,
+  helpHref,
   timing,
   primaryAction,
   flash,
@@ -160,6 +162,16 @@ export function HeroPanel({
           <div className="contest-detail-hero-copy-panel">
             <p className="contest-detail-hero-kicker">Contest spotlight</p>
             <h1>{title}</h1>
+            {helpHref ? (
+              <a
+                className="contest-detail-help-link"
+                href={helpHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                How contests work →
+              </a>
+            ) : null}
             {infoItems.length > 0 ? (
               <div className="contest-detail-hero-meta-list" aria-label="Contest quick facts">
                 {infoItems.map((item) => (

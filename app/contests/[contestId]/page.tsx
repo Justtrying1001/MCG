@@ -600,6 +600,7 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           infoLine={contestInfoLine}
           timing={heroTiming}
           contextBody={stateContextBody}
+          helpHref="https://mcg-2.gitbook.io/mcg/contests/how-contests-work"
           primaryAction={heroAction}
           flash={builderFlash && !showBuilder ? builderFlash : null}
           error={error || builderError || null}
