@@ -396,7 +396,7 @@ export function ContestRewardsStep(props: {
                     <tr key={`${row.rankStart}-${row.rankEnd}`}>
                       <td style={rewardPreviewBodyCellStyle}>
                         <strong>{row.label}</strong>
-                        {row.rankStart !== row.rankEnd ? <div className="contest-inline-note">Even split inside the tier with any +1 remainder flowing from the best rank downward.</div> : null}
+                        {row.rankStart !== row.rankEnd ? <div className="contest-inline-note">Even split inside the tier with per-winner points rounded down to the nearest 10 and any remaining +10 steps flowing from the best rank downward.</div> : null}
                       </td>
                       <td style={rewardPreviewBodyCellStyle}>{row.winnersCount.toLocaleString()}</td>
                       <td style={rewardPreviewBodyCellStyle}>

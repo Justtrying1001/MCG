@@ -24,7 +24,7 @@ describe("buildRewardPreviewAllocation", () => {
     const preview = buildRewardPreviewAllocation({
       participantsCount: 10,
       rewardConfig: {
-        pointsPool: 7,
+        pointsPool: 70,
         packPool: 3,
         rewardedTopPercent: 50,
         distributionProfile: "balanced",
@@ -37,10 +37,10 @@ describe("buildRewardPreviewAllocation", () => {
         rankEnd: 1,
         label: "#1",
         winnersCount: 1,
-        pointsReward: 2,
+        pointsReward: 20,
         packsReward: 1,
-        pointsPerWinnerMin: 2,
-        pointsPerWinnerMax: 2,
+        pointsPerWinnerMin: 20,
+        pointsPerWinnerMax: 20,
         packsPerWinnerMin: 1,
         packsPerWinnerMax: 1,
       },
@@ -49,10 +49,10 @@ describe("buildRewardPreviewAllocation", () => {
         rankEnd: 2,
         label: "#2",
         winnersCount: 1,
-        pointsReward: 2,
+        pointsReward: 20,
         packsReward: 1,
-        pointsPerWinnerMin: 2,
-        pointsPerWinnerMax: 2,
+        pointsPerWinnerMin: 20,
+        pointsPerWinnerMax: 20,
         packsPerWinnerMin: 1,
         packsPerWinnerMax: 1,
       },
@@ -61,10 +61,10 @@ describe("buildRewardPreviewAllocation", () => {
         rankEnd: 3,
         label: "#3",
         winnersCount: 1,
-        pointsReward: 1,
+        pointsReward: 10,
         packsReward: 0,
-        pointsPerWinnerMin: 1,
-        pointsPerWinnerMax: 1,
+        pointsPerWinnerMin: 10,
+        pointsPerWinnerMax: 10,
         packsPerWinnerMin: 0,
         packsPerWinnerMax: 0,
       },
@@ -73,16 +73,41 @@ describe("buildRewardPreviewAllocation", () => {
         rankEnd: 5,
         label: "#4–5",
         winnersCount: 2,
-        pointsReward: 2,
+        pointsReward: 20,
         packsReward: 1,
-        pointsPerWinnerMin: 1,
-        pointsPerWinnerMax: 1,
+        pointsPerWinnerMin: 10,
+        pointsPerWinnerMax: 10,
         packsPerWinnerMin: 0,
         packsPerWinnerMax: 1,
       },
     ]);
-    expect(preview.totalPoints).toBe(7);
+    expect(preview.totalPoints).toBe(70);
     expect(preview.totalPacks).toBe(3);
+  });
+
+  it("keeps point preview values on clean multiples of 10 while preserving the full pool", () => {
+    const preview = buildRewardPreviewAllocation({
+      participantsCount: 200,
+      rewardConfig: {
+        pointsPool: 84_000,
+        packPool: 20,
+        rewardedTopPercent: 50,
+        distributionProfile: "balanced",
+      },
+    });
+
+    expect(preview.totalPoints).toBe(84_000);
+    expect(preview.rows.every((row) =>
+      row.pointsReward % 10 === 0
+      && row.pointsPerWinnerMin % 10 === 0
+      && row.pointsPerWinnerMax % 10 === 0
+    )).toBe(true);
+
+    const tier = preview.rows.find((row) => row.label === "#76–100");
+    expect(tier).toMatchObject({
+      pointsPerWinnerMin: 430,
+      pointsPerWinnerMax: 440,
+    });
   });
 
   it("flattens the balanced profile for 100 participants and 50 winners", () => {
@@ -126,6 +151,7 @@ describe("buildRewardPreviewAllocation", () => {
     expect(lastTier?.pointsPerWinnerMin).toBeGreaterThanOrEqual(100);
     expect(lastTier?.packsPerWinnerMin).toBeGreaterThanOrEqual(1);
     expect(lastTier?.packsPerWinnerMax).toBeLessThanOrEqual(2);
+    expect(preview.rows.every((row) => row.pointsPerWinnerMin % 10 === 0 && row.pointsPerWinnerMax % 10 === 0)).toBe(true);
   });
 
   it("stays preview-only when the field is too small to produce winners", () => {
