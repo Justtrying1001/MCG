@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import type { CardSet, ContestFormState, RewardCapacityCheck } from "../_hooks/types";
+import type { CardSet, ContestFormState, RewardCapacityCheck, RewardPackSupplySummary } from "../_hooks/types";
 
 export function ContestIdentityStep(props: {
   form: ContestFormState;
@@ -231,14 +231,19 @@ export function ContestRewardsStep(props: {
   generatedPreview: { participantsCount: number; rows: Array<{ rank: number; pointsReward: number; packsReward: number }>; totalPoints: number; totalPacks: number };
   rewardIssues: string[];
   rewardCapacityCheck: RewardCapacityCheck | null;
+  rewardPackSupply: RewardPackSupplySummary | null;
+  addBonusReward: () => void;
+  updateBonusReward: (id: string, patch: Partial<ContestFormState["bonusRewards"][number]>) => void;
+  removeBonusReward: (id: string) => void;
 }) {
-  const { form, setField, generatedPreview, rewardIssues, rewardCapacityCheck } = props;
+  const { form, setField, generatedPreview, rewardIssues, rewardCapacityCheck, rewardPackSupply, addBonusReward, updateBonusReward, removeBonusReward } = props;
   const pointsPool = Number(form.pointsPoolAmount) || 0;
   const packPool = Number(form.packPoolAmount) || 0;
   const hasPointsRewards = pointsPool > 0;
   const hasPackRewards = packPool > 0;
   const winnersCount = generatedPreview.rows.length;
   const showScrollableRankTable = winnersCount > 12;
+  const remainingRewardPacksAfterDraft = rewardPackSupply ? Math.max(rewardPackSupply.reward.remaining - packPool, 0) : null;
 
   return (
     <section className="admin-panel contest-builder-v2-section">
@@ -287,7 +292,50 @@ export function ContestRewardsStep(props: {
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
-        <p className="contest-inline-note"><strong>D. Capacity / validation signals</strong></p>
+        <p className="contest-inline-note"><strong>D. Bonus rewards (optional)</strong></p>
+        <p className="contest-inline-note">Current backend contest publish flow does <strong>not</strong> combine the simple pool-based <code>rewardConfig</code> with extra automated fixed-rank rules yet.</p>
+        <p className="contest-inline-note">Backend primitives already exist for <strong>FIXED_RANKS</strong>, <strong>TOP_N</strong>, <strong>TOP_PERCENT</strong>, and <strong>POINTS_POOL_TOP_PERCENT</strong>, but mixed-mode publish/materialization would still require backend work. Use these rows as admin planning metadata for now.</p>
+        <div style={{ display: "grid", gap: "0.75rem" }}>
+          {form.bonusRewards.length === 0 ? <p className="contest-inline-note">No bonus reward rows added yet.</p> : null}
+          {form.bonusRewards.map((row) => (
+            <article key={row.id} className="contest-builder-v2-entry-card" style={{ display: "grid", gap: "0.65rem" }}>
+              <div className="contest-builder-v2-entry-grid">
+                <label style={{ display: "grid", gap: "0.35rem" }}>
+                  <span className="contest-inline-note"><strong>Target rank</strong></span>
+                  <input className="input" type="number" min={1} value={row.targetRank} onChange={(e) => updateBonusReward(row.id, { targetRank: e.target.value })} />
+                </label>
+                <label style={{ display: "grid", gap: "0.35rem" }}>
+                  <span className="contest-inline-note"><strong>Reward type</strong></span>
+                  <select className="input" value={row.rewardType} onChange={(e) => updateBonusReward(row.id, { rewardType: e.target.value as ContestFormState["bonusRewards"][number]["rewardType"] })}>
+                    <option value="SOL">SOL</option>
+                    <option value="CUSTOM">Custom</option>
+                    <option value="MANUAL_PAYOUT">Manual payout</option>
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: "0.35rem" }}>
+                  <span className="contest-inline-note"><strong>Amount</strong></span>
+                  <input className="input" type="text" inputMode="decimal" placeholder="e.g. 0.2" value={row.amount} onChange={(e) => updateBonusReward(row.id, { amount: e.target.value })} />
+                </label>
+              </div>
+              <label style={{ display: "grid", gap: "0.35rem" }}>
+                <span className="contest-inline-note"><strong>Admin note</strong></span>
+                <input className="input" type="text" placeholder="Optional payout routing or ops note" value={row.note} onChange={(e) => updateBonusReward(row.id, { note: e.target.value })} />
+              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", flexWrap: "wrap" }}>
+                <p className="contest-inline-note">Draft bonus: rank #{row.targetRank || "1"} · {row.rewardType === "SOL" ? "SOL payout" : row.rewardType === "CUSTOM" ? "custom reward" : "manual payout"}{row.amount ? ` · amount ${row.amount}` : ""}</p>
+                <button type="button" className="admin-v2-link-chip" onClick={() => removeBonusReward(row.id)}>Remove bonus row</button>
+              </div>
+            </article>
+          ))}
+          <div>
+            <button type="button" className="admin-v2-link-chip" onClick={addBonusReward}>+ Add bonus reward</button>
+          </div>
+          <p className="contest-inline-note">Smallest safe automation path later: convert the main pool into a <code>POINTS_POOL_TOP_PERCENT</code> policy rule, convert each rank-specific bonus into a <code>FIXED_RANKS</code> bundle+rule, and update publish/materialization to preserve both together.</p>
+        </div>
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
+        <p className="contest-inline-note"><strong>E. Capacity / validation signals</strong></p>
         {rewardIssues.length > 0 ? rewardIssues.map((issue) => <p key={issue} className="contest-error">• {issue}</p>) : <p className="contest-inline-note">No frontend blocking issue detected for rewards.</p>}
         {rewardCapacityCheck ? (
           <>
@@ -300,7 +348,25 @@ export function ContestRewardsStep(props: {
       </article>
 
       <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
-        <p className="contest-inline-note"><strong>E. Reward summary preview</strong></p>
+        <p className="contest-inline-note"><strong>F. Reward pack supply snapshot</strong></p>
+        {rewardPackSupply ? (
+          <>
+            <p className="contest-inline-note">Current available reward packs: {rewardPackSupply.reward.remaining.toLocaleString()} · Current pack pool requested by this draft: {packPool.toLocaleString()} · Estimated remaining after this draft: {(remainingRewardPacksAfterDraft ?? 0).toLocaleString()}</p>
+            <p className="contest-inline-note">Reward packs already attributed: {rewardPackSupply.reward.attributed.toLocaleString()} · claimed: {rewardPackSupply.reward.claimed.toLocaleString()} · reserved: {rewardPackSupply.reward.reserved.toLocaleString()}.</p>
+            <div style={{ display: "grid", gap: "0.35rem" }}>
+              {rewardPackSupply.reward.pools.length === 0 ? <p className="contest-inline-note">No reward pack pools found.</p> : rewardPackSupply.reward.pools.map((pool) => (
+                <p key={pool.packDefinitionId} className={`contest-inline-note ${pool.poolStatus === "MISSING_POOL" ? "contest-error" : ""}`}>
+                  {pool.displayName} ({pool.packCode}) · remaining {pool.remaining}/{pool.totalSupply} · attributed {pool.attributed} · reserved {pool.reserved} · pool {pool.poolStatus}
+                </p>
+              ))}
+            </div>
+            <p className="contest-inline-note">This is an informational inventory snapshot only. Backend publish validation remains authoritative for actual reward pack feasibility.</p>
+          </>
+        ) : <p className="contest-inline-note">Reward pack supply snapshot unavailable right now.</p>}
+      </article>
+
+      <article className="admin-callout" style={{ display: "grid", gap: "0.5rem" }}>
+        <p className="contest-inline-note"><strong>G. Reward summary preview</strong></p>
         <p className="contest-inline-note"><strong>Preview field size</strong></p>
         <input className="input" type="number" min={0} value={form.previewParticipants} onChange={(e) => setField("previewParticipants", e.target.value)} />
         <p className="contest-inline-note">Participants: {generatedPreview.participantsCount} · Winners: {winnersCount}</p>

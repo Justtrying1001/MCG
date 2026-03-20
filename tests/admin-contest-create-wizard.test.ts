@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import fs from "node:fs";
 
 import {
   BUILT_IN_CONTEST_COVERS,
@@ -18,5 +19,14 @@ describe("contest cover options", () => {
     expect(BUILT_IN_CONTEST_COVERS.length).toBeGreaterThan(0);
     expect(BUILT_IN_CONTEST_COVERS[0]?.url).toBe("/Contest.png");
     expect(BUILT_IN_CONTEST_COVERS.every((cover) => cover.url.startsWith("/"))).toBe(true);
+  });
+});
+
+describe("contest rewards step copy", () => {
+  it("surfaces bonus rewards planning and reward pack supply guidance", () => {
+    const source = fs.readFileSync("app/admin/(protected)/contests/create/_components/WizardSteps.tsx", "utf8");
+    expect(source).toContain("Bonus rewards (optional)");
+    expect(source).toContain("Reward pack supply snapshot");
+    expect(source).toContain("POINTS_POOL_TOP_PERCENT");
   });
 });
