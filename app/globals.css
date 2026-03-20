@@ -5087,12 +5087,13 @@ a { color: inherit; text-decoration: none; }
 }
 
 .admin-quest-focus-card {
-  min-height: 192px;
+  min-height: 220px;
   align-items: stretch;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.72rem;
+  gap: 0.8rem;
   overflow: hidden;
+  padding: 0.85rem;
 }
 
 .admin-focus-card:hover {
@@ -5100,21 +5101,38 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(96,165,250,0.6);
 }
 
+.admin-quest-card-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .admin-quest-card-header-row {
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-quest-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
 }
 
 .admin-quest-chip-icon {
   width: 40px;
   height: 40px;
+  flex: 0 0 auto;
 }
 
 .admin-quest-card-heading {
   min-width: 0;
   display: grid;
-  gap: 0.22rem;
+  gap: 0.28rem;
   flex: 1;
 }
 
@@ -5122,38 +5140,59 @@ a { color: inherit; text-decoration: none; }
 .admin-quest-card-target,
 .admin-quest-secondary-line,
 .admin-quest-url,
-.admin-quest-footer > span {
+.admin-quest-footer > span,
+.admin-quest-stats > span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .admin-quest-card-title {
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  color: var(--text);
+  color: #a5b4fc;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .admin-quest-card-target {
-  font-size: 0.84rem;
-  line-height: 1.35;
-  color: var(--text-2);
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .admin-quest-badge-row,
-.admin-quest-meta-stack {
+.admin-quest-primary-meta,
+.admin-quest-secondary-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
 
+.admin-quest-body {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.admin-quest-link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.admin-quest-open-link {
+  flex: 0 0 auto;
+}
+
 .admin-quest-secondary-line {
   margin: 0;
-  color: var(--text);
-  font-size: 0.82rem;
+  color: var(--text-2);
+  font-size: 0.8rem;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -5190,6 +5229,7 @@ a { color: inherit; text-decoration: none; }
   color: #93c5fd;
   font-size: 0.76rem;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .admin-quest-footer {
@@ -5198,6 +5238,8 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
+  padding-top: 0.1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .admin-quest-footer > span:first-child {
@@ -5205,9 +5247,35 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
 }
 
+.admin-quest-stats {
+  display: flex;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.admin-quest-delete-btn {
+  box-shadow: none;
+}
+
 @media (max-width: 640px) {
   .admin-quest-card-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-quest-card-topline,
+  .admin-quest-link-row,
+  .admin-quest-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-quest-card-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-quest-stats {
+    flex-wrap: wrap;
   }
 }
 
