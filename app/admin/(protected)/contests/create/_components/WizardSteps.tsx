@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import type { RewardPreviewAllocation } from "../_lib/rewardPreviewAllocation";
 import type { CardSet, ContestFormState, RewardCapacityCheck, RewardPackSupplySummary } from "../_hooks/types";
 
 export function ContestIdentityStep(props: {
@@ -228,7 +229,7 @@ export function ContestEntryRulesStep(props: {
 export function ContestRewardsStep(props: {
   form: ContestFormState;
   setField: <K extends keyof ContestFormState>(field: K, value: ContestFormState[K]) => void;
-  generatedPreview: { participantsCount: number; winnersCount: number; rows: Array<{ rankStart: number; rankEnd: number; label: string; winnersCount: number; pointsReward: number; packsReward: number; pointsPerWinnerMin: number; pointsPerWinnerMax: number; packsPerWinnerMin: number; packsPerWinnerMax: number }>; totalPoints: number; totalPacks: number };
+  generatedPreview: RewardPreviewAllocation;
   rewardIssues: string[];
   rewardCapacityCheck: RewardCapacityCheck | null;
   rewardPackSupply: RewardPackSupplySummary | null;
