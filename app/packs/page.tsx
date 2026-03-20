@@ -12,6 +12,7 @@ import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { useSession } from "@/components/useSession";
 import { GAME_CONFIG } from "@/lib/game-config";
 import { trackEvent, trackInternalEvent } from "@/lib/analytics/track";
+import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 import type { MvpCardView } from "@/types/cards";
 import officialPackImage from "../../pack.png";
@@ -211,7 +212,7 @@ export default function PacksPage() {
 
     const res = await fetch("/api/pack/open", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
     });
 
     if (!res.ok) {
@@ -278,7 +279,7 @@ export default function PacksPage() {
 
       const res = await fetch("/api/rewards/packs/claim", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ grantId }),
       });
 

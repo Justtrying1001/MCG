@@ -13,6 +13,7 @@ export type AnalyticsRange = "today" | "7d" | "all";
 
 export async function recordInternalEvent(input: {
   type: InternalEventType;
+  visitorId: string;
   userId?: string | null;
   isGuest?: boolean;
   createdAt?: Date;
@@ -21,6 +22,7 @@ export async function recordInternalEvent(input: {
     await prisma.event.create({
       data: {
         type: input.type,
+        visitorId: input.visitorId,
         userId: input.userId ?? null,
         isGuest: input.isGuest ?? !input.userId,
         createdAt: input.createdAt,
@@ -53,6 +55,18 @@ function ratio(current: number, previous: number) {
   return Number(((current / previous) * 100).toFixed(1));
 }
 
+async function countDistinctVisitors(where: Prisma.EventWhereInput) {
+  const rows = await prisma.event.groupBy({
+    by: ["visitorId"],
+    where: {
+      ...where,
+      visitorId: { not: null },
+    },
+  });
+
+  return rows.length;
+}
+
 export async function getAdminAnalytics(range: AnalyticsRange) {
   const selectedWhere = rangeWhere(range);
   const todayWhere = rangeWhere("today");
@@ -60,20 +74,22 @@ export async function getAdminAnalytics(range: AnalyticsRange) {
   const [
     visitorsInRange,
     visitorsToday,
-    packsOpenedInRange,
-    packsOpenedToday,
     clickOpenPackInRange,
     loginsInRange,
+    funnelPackOpensInRange,
+    packsOpenedInRange,
+    packsOpenedToday,
     guestPackOpensInRange,
     loggedPackOpensInRange,
     supply,
   ] = await Promise.all([
-    prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PAGE_VIEW } }),
-    prisma.event.count({ where: { ...todayWhere, type: AnalyticsEventType.PAGE_VIEW } }),
+    countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.PAGE_VIEW }),
+    countDistinctVisitors({ ...todayWhere, type: AnalyticsEventType.PAGE_VIEW }),
+    countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.CLICK_OPEN_PACK }),
+    countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.LOGIN }),
+    countDistinctVisitors({ ...selectedWhere, type: AnalyticsEventType.PACK_OPEN }),
     prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN } }),
     prisma.event.count({ where: { ...todayWhere, type: AnalyticsEventType.PACK_OPEN } }),
-    prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.CLICK_OPEN_PACK } }),
-    prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.LOGIN } }),
     prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN, isGuest: true } }),
     prisma.event.count({ where: { ...selectedWhere, type: AnalyticsEventType.PACK_OPEN, isGuest: false } }),
     prisma.packDefinition.aggregate({ _sum: { plannedPackCount: true, openedPackCount: true } }),
@@ -94,12 +110,12 @@ export async function getAdminAnalytics(range: AnalyticsRange) {
       visitors: visitorsInRange,
       clickOpenPack: clickOpenPackInRange,
       login: loginsInRange,
-      packOpen: packsOpenedInRange,
+      packOpen: funnelPackOpensInRange,
       conversion: {
         visitorToClickOpenPack: ratio(clickOpenPackInRange, visitorsInRange),
         clickOpenPackToLogin: ratio(loginsInRange, clickOpenPackInRange),
-        loginToPackOpen: ratio(packsOpenedInRange, loginsInRange),
-        visitorToPackOpen: ratio(packsOpenedInRange, visitorsInRange),
+        loginToPackOpen: ratio(funnelPackOpensInRange, loginsInRange),
+        visitorToPackOpen: ratio(funnelPackOpensInRange, visitorsInRange),
       },
     },
     packs: {

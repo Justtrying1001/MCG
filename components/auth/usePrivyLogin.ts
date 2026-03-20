@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
+import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 
 const PENDING_INVITE_STORAGE_KEY = "mcg_privy_pending_invite";
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
@@ -83,7 +84,7 @@ export function usePrivyLogin() {
 
       const response = await fetch("/api/auth/privy/exchange", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           accessToken,
           inviteCode: inviteCode ?? readPendingInviteCode(),

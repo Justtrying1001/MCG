@@ -11,6 +11,7 @@ import {
   getSessionMaxAgeSeconds,
 } from "@/lib/auth";
 import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
+import { readVisitorIdFromRequest } from "@/lib/analytics/visitor-id";
 import { upsertUserFromPrivyProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { syncContestEntryQuestProgression } from "@/lib/domain/quests/runtime";
 import { logAuthEvent } from "@/lib/observability/auth-log";
@@ -47,6 +48,8 @@ function logPrismaExchangeError(stage: string, error: unknown) {
 
 export async function POST(request: Request) {
   const url = new URL(request.url);
+  const visitorId = readVisitorIdFromRequest(request);
+
 
   try {
     const body = (await request.json().catch(() => null)) as ExchangeRequestBody | null;
@@ -113,11 +116,14 @@ export async function POST(request: Request) {
       ...buildSessionCookieOptions(getSessionMaxAgeSeconds()),
     });
 
-    await recordInternalEvent({
-      type: INTERNAL_EVENT_TYPES.login,
-      userId: user.id,
-      isGuest: false,
-    });
+    if (visitorId) {
+      await recordInternalEvent({
+        type: INTERNAL_EVENT_TYPES.login,
+        visitorId,
+        userId: user.id,
+        isGuest: false,
+      });
+    }
 
     logAuthEvent("privy_exchange_succeeded", "info", {
       requestHost: url.host,

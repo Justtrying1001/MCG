@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
+import { readVisitorIdFromRequest } from "@/lib/analytics/visitor-id";
 import { handleApiError } from "@/lib/api-error";
 import { claimRewardPackGrantDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    const visitorId = readVisitorIdFromRequest(request);
+    if (!visitorId) return NextResponse.json({ ok: false, error: "Missing visitorId" }, { status: 400 });
+
     const user = await getSessionUser();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
@@ -50,6 +54,7 @@ export async function POST(request: Request) {
 
     await recordInternalEvent({
       type: INTERNAL_EVENT_TYPES.packOpen,
+      visitorId,
       userId: user.id,
       isGuest: false,
     });
