@@ -12117,3 +12117,266 @@ button.mcg-chip:hover {
     min-height: 370px;
   }
 }
+
+/* ===== Packs second pass ===== */
+.stitch-packs-screen {
+  gap: 1.45rem;
+  padding-bottom: 2.75rem;
+}
+
+.stitch-packs-screen .packs-main-section {
+  gap: 1.2rem;
+  border: 4px solid #111;
+  border-radius: 34px;
+  background: linear-gradient(180deg, #fff5b7 0%, #ffd4e7 38%, #c9f8ff 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.stitch-packs-screen .packs-main-header,
+.stitch-packs-screen .packs-shop-header,
+.stitch-packs-screen .reward-packs-header {
+  box-shadow: 8px 8px 0 #111;
+}
+
+.packs-shop-marquee {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.75rem 1rem;
+  border: 4px solid #111;
+  border-radius: 999px;
+  background: #2437ff;
+  box-shadow: 8px 8px 0 #111;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.stitch-pack-stage .ps-layout {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+  gap: 1rem;
+}
+
+.stitch-pack-stage .ps-hero {
+  position: relative;
+  min-height: 620px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 239, 85, 0.26), transparent 24%),
+    linear-gradient(135deg, #2739ff 0%, #fd5f99 62%, #ffef55 100%);
+}
+
+.ps-hero-rays {
+  position: absolute;
+  inset: -8%;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.18) 0deg 14deg, transparent 14deg 28deg);
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.ps-hero-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #ffef55;
+  box-shadow: 6px 6px 0 #111;
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stitch-pack-stage .ps-hero-inner {
+  gap: 1rem;
+}
+
+.ps-hero-pack-frame {
+  display: grid;
+  place-items: center;
+  width: min(340px, 82vw);
+  aspect-ratio: 4 / 5.2;
+  padding: 1rem;
+  border: 4px solid #111;
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,245,195,0.92));
+  box-shadow: 10px 10px 0 rgba(17, 17, 17, 0.96);
+}
+
+.stitch-pack-stage .ps-hero-image {
+  width: min(260px, 74vw);
+  filter: drop-shadow(0 24px 26px rgba(0,0,0,0.3)) drop-shadow(0 14px 0 rgba(17,17,17,0.42));
+}
+
+.stitch-pack-stage .ps-edition-badge {
+  border: 3px solid #111;
+  background: rgba(255, 255, 255, 0.88);
+  color: #111;
+  box-shadow: 4px 4px 0 #111;
+}
+
+.stitch-pack-stage .ps-pack-name,
+.stitch-pack-stage .ps-supply-counter {
+  color: #111;
+}
+
+.ps-desire-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+}
+
+.ps-desire-strip span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 4px 4px 0 #111;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #111;
+}
+
+.stitch-pack-stage .ps-panel {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+  padding: 0.9rem;
+  border-width: 4px;
+  background: linear-gradient(180deg, #fffef8 0%, #dbf9ff 100%);
+}
+
+.stitch-pack-stage .ps-price-block,
+.stitch-pack-stage .ps-section,
+.stitch-pack-stage .ps-cta-block {
+  border: 3px solid #111;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.78);
+  box-shadow: 6px 6px 0 #111;
+}
+
+.stitch-pack-stage .ps-price-block,
+.stitch-pack-stage .ps-section {
+  border-bottom-width: 3px;
+}
+
+.stitch-pack-stage .ps-btn-primary {
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff75a0 0%, #ff4f8f 100%);
+  color: #fff;
+  box-shadow: 6px 6px 0 #111;
+}
+
+.ps-guest-connect-wrap {
+  margin-top: 0.85rem;
+}
+
+.stitch-packs-screen .packs-shop-section {
+  gap: 1.2rem;
+}
+
+.stitch-packs-screen .packs-shop-grid {
+  grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 0.875fr));
+  gap: 1.1rem;
+}
+
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child {
+  grid-row: span 2;
+  align-content: start;
+  background: linear-gradient(180deg, #2739ff 0%, #4c5fff 32%, #ff82b4 100%);
+}
+
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-body,
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-description,
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-info,
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-eyebrow,
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child h3 {
+  color: #fff;
+}
+
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-meta-row,
+.stitch-packs-screen .packs-shop-grid .pack-card:first-child .pack-card-tag-row .mcg-chip {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.stitch-packs-screen .pack-card {
+  border: 4px solid #111;
+  border-radius: 30px;
+  box-shadow: 8px 8px 0 #111;
+}
+
+.stitch-packs-screen .pack-card-art-shell {
+  min-height: 250px;
+}
+
+.stitch-packs-screen .pack-card-cta {
+  border-width: 3px;
+  box-shadow: 5px 5px 0 #111;
+}
+
+.stitch-packs-screen .reward-packs-section {
+  border: 4px solid #111;
+  border-radius: 34px;
+  background: linear-gradient(180deg, #dbfbff 0%, #fff5b7 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.stitch-packs-screen .reward-pack-grid {
+  gap: 1.1rem;
+}
+
+.stitch-packs-screen .reward-pack-grid .pack-card {
+  background: linear-gradient(180deg, #fff 0%, #f4ebff 100%);
+}
+
+@media (max-width: 1080px) {
+  .stitch-packs-screen .packs-shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stitch-packs-screen .packs-shop-grid .pack-card:first-child {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  .packs-shop-marquee {
+    justify-content: flex-start;
+  }
+
+  .stitch-pack-stage .ps-hero {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 680px) {
+  .stitch-packs-screen .packs-shop-grid,
+  .stitch-packs-screen .reward-pack-grid {
+    grid-template-columns: 1fr;
+  }
+}

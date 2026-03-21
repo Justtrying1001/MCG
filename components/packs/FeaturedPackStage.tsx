@@ -135,19 +135,27 @@ export function FeaturedPackStage({
     <div className="ps-layout">
       <div className="ps-hero">
         <div className="ps-hero-glow" />
+        <div className="ps-hero-rays" />
+        <div className="ps-hero-badge">Featured booster</div>
         <div className="ps-hero-inner">
           <div className="ps-hero-image-wrap">
-            <Image
-              src={packImageSrc as Parameters<typeof Image>[0]["src"]}
-              alt="MCG booster pack"
-              className="ps-hero-image"
-              priority
-            />
+            <div className="ps-hero-pack-frame">
+              <Image
+                src={packImageSrc as Parameters<typeof Image>[0]["src"]}
+                alt="MCG booster pack"
+                className="ps-hero-image"
+                priority
+              />
+            </div>
           </div>
           <div className="ps-hero-meta">
             <span className="ps-edition-badge">GENESIS</span>
             <h1 className="ps-pack-name">{packName.toUpperCase()}</h1>
             <p className="ps-supply-counter">{supplyText}</p>
+            <div className="ps-desire-strip">
+              <span>Rip for instant reveal</span>
+              <span>Odds panel below</span>
+            </div>
           </div>
         </div>
       </div>
@@ -268,12 +276,8 @@ export function FeaturedPackStage({
                 <p className="ps-guest-copy">{guestSupportingCopy}</p>
               ) : null}
               {onConnectWithX ? (
-                <div style={{ marginTop: "0.85rem" }}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onConnectWithX}
-                  >
+                <div className="ps-guest-connect-wrap">
+                  <Button type="button" variant="ghost" onClick={onConnectWithX}>
                     {guestCtaLabel}
                   </Button>
                 </div>

@@ -544,14 +544,34 @@ export default function PacksPage() {
         <section className="packs-main-section stitch-pack-stage-shell">
           <div className="packs-main-header">
             <div>
-              <p className="packs-main-kicker">Pack store</p>
+              <p className="packs-main-kicker">Booster shop</p>
               <h2>Featured drop</h2>
             </div>
             <p className="packs-main-intro">
-              A collectible-first storefront for live drops and reward
-              inventory, using the exact same pack actions and reveal flow
-              already wired into the page.
+              The main pack-opening destination, using the exact same live
+              inventory, pricing, and reveal actions already wired into this
+              page.
             </p>
+          </div>
+
+          <div className="packs-shop-marquee" aria-label="Featured pack summary">
+            <span>{cardsPerPack} cards per pack</span>
+            <span>•</span>
+            <span>
+              {typeof packRemaining === "number"
+                ? `${packRemaining.toLocaleString()} packs left`
+                : typeof packPlanned === "number"
+                  ? `${packPlanned.toLocaleString()} planned`
+                  : "Supply pending"}
+            </span>
+            <span>•</span>
+            <span>
+              {purchaseLimit?.enabled
+                ? purchaseLimit.isBlocked
+                  ? "Cooldown active"
+                  : `${purchaseLimit.remainingPurchases ?? 0} purchases left`
+                : "Cap off"}
+            </span>
           </div>
 
           <FeaturedPackStage
@@ -581,12 +601,12 @@ export default function PacksPage() {
         <section className="packs-shop-section stitch-pack-gallery-shell">
           <div className="packs-shop-header">
             <div>
-              <p className="packs-main-kicker">Collectible shop</p>
-              <h2>Browse packs</h2>
+              <p className="packs-main-kicker">Browse the shelf</p>
+              <h2>Shop packs</h2>
             </div>
             <p>
-              Every card below reuses the current live data, pricing, ownership,
-              and opening actions already available on this page.
+              Supporting pack cards stay available here, but the featured drop
+              remains the hero destination above.
             </p>
           </div>
 
@@ -618,53 +638,6 @@ export default function PacksPage() {
               accent="gold"
             />
 
-            {me &&
-              !loadingRewardGrants &&
-              groupedRewardGrants.map((group) => {
-                const quantity = group.grants.length;
-                const nextGrantId = group.grants[0]?.id;
-                const isOpeningThisGroup = Boolean(
-                  openingRewardGrantId &&
-                  group.grants.some(
-                    (grant) => grant.id === openingRewardGrantId,
-                  ),
-                );
-
-                return (
-                  <PackCard
-                    key={group.key}
-                    imageSrc={officialPackImage}
-                    imageAlt={`${group.displayName} pack`}
-                    eyebrow={group.sourceLabel}
-                    name={group.displayName}
-                    description={
-                      group.description ??
-                      "Special pack awarded for your progress in MCG."
-                    }
-                    priceLabel="Reward pack"
-                    infoLabel={`${quantity} ready to open`}
-                    ctaLabel={
-                      isOpeningThisGroup ? "Opening…" : "Open reward pack"
-                    }
-                    onAction={() => {
-                      if (!nextGrantId) return;
-                      void openRewardPack(nextGrantId);
-                    }}
-                    disabled={
-                      isOpening ||
-                      !nextGrantId ||
-                      isOpeningThisGroup ||
-                      openingPhase === "tearing"
-                    }
-                    quantityLabel={quantity > 1 ? `x${quantity}` : undefined}
-                    tags={[
-                      quantity > 1 ? `${quantity} copies` : "Single pack",
-                      "Earned inventory",
-                    ]}
-                    accent="violet"
-                  />
-                );
-              })}
           </div>
 
           {me ? (
@@ -700,6 +673,52 @@ export default function PacksPage() {
                   No reward packs yet. Win events and complete quests to build
                   your inventory.
                 </p>
+              ) : null}
+
+              {!loadingRewardGrants && groupedRewardGrants.length > 0 ? (
+                <div className="reward-pack-grid">
+                  {groupedRewardGrants.map((group) => {
+                    const quantity = group.grants.length;
+                    const nextGrantId = group.grants[0]?.id;
+                    const isOpeningThisGroup = Boolean(
+                      openingRewardGrantId &&
+                      group.grants.some((grant) => grant.id === openingRewardGrantId),
+                    );
+
+                    return (
+                      <PackCard
+                        key={group.key}
+                        imageSrc={officialPackImage}
+                        imageAlt={`${group.displayName} pack`}
+                        eyebrow={group.sourceLabel}
+                        name={group.displayName}
+                        description={
+                          group.description ??
+                          "Special pack awarded for your progress in MCG."
+                        }
+                        priceLabel="Reward pack"
+                        infoLabel={`${quantity} ready to open`}
+                        ctaLabel={isOpeningThisGroup ? "Opening…" : "Open reward pack"}
+                        onAction={() => {
+                          if (!nextGrantId) return;
+                          void openRewardPack(nextGrantId);
+                        }}
+                        disabled={
+                          isOpening ||
+                          !nextGrantId ||
+                          isOpeningThisGroup ||
+                          openingPhase === "tearing"
+                        }
+                        quantityLabel={quantity > 1 ? `x${quantity}` : undefined}
+                        tags={[
+                          quantity > 1 ? `${quantity} copies` : "Single pack",
+                          "Earned inventory",
+                        ]}
+                        accent="violet"
+                      />
+                    );
+                  })}
+                </div>
               ) : null}
             </section>
           ) : null}
