@@ -27,7 +27,7 @@ describe("POST /api/quests/[questId]/submit", () => {
   it("returns 401 when not authenticated", async () => {
     getSessionUserMock.mockResolvedValue(null);
 
-    const response = await POST(new Request("http://localhost/api/quests/q1/submit", { method: "POST" }), { params: { questId: "q1" } });
+    const response = await POST(new Request("http://localhost/api/quests/q1/submit", { method: "POST", headers: { origin: "http://localhost" } }), { params: { questId: "q1" } });
 
     expect(response.status).toBe(401);
   });
@@ -39,7 +39,7 @@ describe("POST /api/quests/[questId]/submit", () => {
     const response = await POST(
       new Request("http://localhost/api/quests/q1/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", origin: "http://localhost" },
         body: JSON.stringify({ proofUrl: "https://x.com/u1", note: "done" }),
       }),
       { params: { questId: "q1" } }

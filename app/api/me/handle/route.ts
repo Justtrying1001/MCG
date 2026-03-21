@@ -7,12 +7,16 @@ import { resolveSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 import { logAuthEvent } from "@/lib/observability/auth-log";
+import { enforceSameOrigin } from "@/lib/csrf";
 
 const handleSchema = z.object({
   handle: z.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, "Handle must use only letters, numbers, or underscores"),
 });
 
 export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
+
   try {
     const url = new URL(request.url);
     const session = await resolveSessionUser();

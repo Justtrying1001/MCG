@@ -30,7 +30,7 @@ describe("POST /api/rewards/packs/claim", () => {
   it("returns 401 without session", async () => {
     getSessionUserMock.mockResolvedValue(null);
 
-    const response = await POST(new Request("http://localhost/api/rewards/packs/claim", { method: "POST" }));
+    const response = await POST(new Request("http://localhost/api/rewards/packs/claim", { method: "POST", headers: { origin: "http://localhost", "x-visitor-id": "visitor-1" } }));
     expect(response.status).toBe(401);
   });
 
@@ -44,7 +44,7 @@ describe("POST /api/rewards/packs/claim", () => {
       pulledCardsMvp: [{ templateId: "tpl_1" }],
     });
 
-    const response = await POST(new Request("http://localhost/api/rewards/packs/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }));
+    const response = await POST(new Request("http://localhost/api/rewards/packs/claim", { method: "POST", headers: { "Content-Type": "application/json", origin: "http://localhost", "x-visitor-id": "visitor-1" }, body: JSON.stringify({}) }));
     const payload = await response.json();
 
     expect(response.status).toBe(200);

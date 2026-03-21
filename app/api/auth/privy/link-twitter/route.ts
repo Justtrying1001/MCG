@@ -6,12 +6,16 @@ import { prisma } from "@/lib/prisma";
 import { IdentityConflictError, IdentityLinkingError, linkTwitterIdentityToExistingUser } from "@/lib/domain/rewards/onboarding";
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import { resolvePrivyIdentityFromAccessToken } from "@/lib/privy-auth";
+import { enforceSameOrigin } from "@/lib/csrf";
 
 type LinkTwitterRequestBody = {
   accessToken?: string;
 };
 
 export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
+
   const url = new URL(request.url);
   const session = await resolveSessionUser();
 

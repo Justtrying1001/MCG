@@ -9,8 +9,12 @@ import { GAME_CONFIG } from "@/lib/game-config";
 import { handleApiError } from "@/lib/api-error";
 import { openSalePackMvpDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 import { PackPurchaseLimitExceededError } from "@/lib/domain/acquisition/purchase-limit";
+import { enforceSameOrigin } from "@/lib/csrf";
 
 export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
+
   try {
     const visitorId = readVisitorIdFromRequest(request);
     if (!visitorId) return NextResponse.json({ ok: false, error: "Missing visitorId" }, { status: 400 });
