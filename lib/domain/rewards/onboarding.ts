@@ -12,6 +12,15 @@ export class IdentityConflictError extends Error {
   }
 }
 
+export class IdentityLinkingError extends Error {
+  readonly status = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "IdentityLinkingError";
+  }
+}
+
 export type PrivyIdentityGraph = {
   privyUserId: string;
   displayName: string | null;
@@ -42,6 +51,57 @@ function resolveDisplayName(profile: PrivyIdentityGraph, userDisplayName?: strin
 function buildIdentityMetadata(identity: ResolvedIdentityAccount) {
   if (!identity.metadata) return Prisma.JsonNull;
   return identity.metadata as Prisma.InputJsonValue;
+}
+
+async function upsertIdentities(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  identities: ResolvedIdentityAccount[],
+  existingIdentities: Array<{ id: string; userId: string; provider: UserIdentityProvider; providerUserId: string }>,
+) {
+  for (const identity of identities) {
+    const matchingIdentity = existingIdentities.find(
+      (candidate) => candidate.provider === identity.provider && candidate.providerUserId === identity.providerUserId,
+    );
+
+    if (matchingIdentity && matchingIdentity.userId !== userId) {
+      throw new IdentityConflictError(
+        "Resolved identity is already linked to another user",
+        [matchingIdentity.provider],
+      );
+    }
+
+    await tx.userIdentity.upsert({
+      where: {
+        provider_providerUserId: {
+          provider: identity.provider,
+          providerUserId: identity.providerUserId,
+        },
+      },
+      update: {
+        userId,
+        username: identity.username ?? undefined,
+        displayName: identity.displayName ?? undefined,
+        walletAddress: identity.walletAddress ?? undefined,
+        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
+        isVerified: true,
+        lastSeenAt: new Date(),
+        metadata: buildIdentityMetadata(identity),
+      },
+      create: {
+        userId,
+        provider: identity.provider,
+        providerUserId: identity.providerUserId,
+        username: identity.username ?? null,
+        displayName: identity.displayName ?? null,
+        walletAddress: identity.walletAddress ?? null,
+        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
+        isVerified: true,
+        lastSeenAt: new Date(),
+        metadata: buildIdentityMetadata(identity),
+      },
+    });
+  }
 }
 
 export async function upsertUserFromPrivyIdentityGraphWithWelcome(
@@ -102,53 +162,69 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
         },
       });
 
-  for (const identity of identities) {
-    const matchingIdentity = existingIdentities.find(
-      (candidate) => candidate.provider === identity.provider && candidate.providerUserId === identity.providerUserId,
-    );
-
-    if (matchingIdentity && matchingIdentity.userId !== user.id) {
-      throw new IdentityConflictError(
-        "Resolved identity is already linked to another user",
-        [matchingIdentity.provider],
-      );
-    }
-
-    await tx.userIdentity.upsert({
-      where: {
-        provider_providerUserId: {
-          provider: identity.provider,
-          providerUserId: identity.providerUserId,
-        },
-      },
-      update: {
-        userId: user.id,
-        username: identity.username ?? undefined,
-        displayName: identity.displayName ?? undefined,
-        walletAddress: identity.walletAddress ?? undefined,
-        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
-        isVerified: true,
-        lastSeenAt: new Date(),
-        metadata: buildIdentityMetadata(identity),
-      },
-      create: {
-        userId: user.id,
-        provider: identity.provider,
-        providerUserId: identity.providerUserId,
-        username: identity.username ?? null,
-        displayName: identity.displayName ?? null,
-        walletAddress: identity.walletAddress ?? null,
-        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
-        isVerified: true,
-        lastSeenAt: new Date(),
-        metadata: buildIdentityMetadata(identity),
-      },
-    });
-  }
+  await upsertIdentities(tx, user.id, identities, existingIdentities);
 
   if (!existingUser) {
     await grantWelcomeReward(tx, user.id);
   }
 
   return { user, created: !existingUser };
+}
+
+export async function linkWalletIdentitiesToExistingUser(
+  tx: Prisma.TransactionClient,
+  params: {
+    userId: string;
+    privyUserId: string;
+    identities: ResolvedIdentityAccount[];
+  },
+) {
+  const identities = uniqueIdentityAccounts(
+    params.identities.filter((identity) => identity.provider === UserIdentityProvider.WALLET_SOLANA),
+  );
+
+  if (identities.length === 0) {
+    throw new IdentityLinkingError("No Solana wallet found on the Privy user");
+  }
+
+  const user = await tx.user.findUnique({
+    where: { id: params.userId },
+    select: { id: true },
+  });
+  if (!user) {
+    throw new IdentityLinkingError("Authenticated user no longer exists");
+  }
+
+  const privyIdentity = await tx.userIdentity.findUnique({
+    where: {
+      provider_providerUserId: {
+        provider: UserIdentityProvider.PRIVY,
+        providerUserId: params.privyUserId,
+      },
+    },
+    select: { userId: true },
+  });
+
+  if (!privyIdentity || privyIdentity.userId !== params.userId) {
+    throw new IdentityLinkingError("Privy user is not linked to the active application session");
+  }
+
+  const existingIdentities = await tx.userIdentity.findMany({
+    where: {
+      OR: identities.map((identity) => ({
+        provider: identity.provider,
+        providerUserId: identity.providerUserId,
+      })),
+    },
+    select: {
+      id: true,
+      userId: true,
+      provider: true,
+      providerUserId: true,
+    },
+  });
+
+  await upsertIdentities(tx, params.userId, identities, existingIdentities);
+
+  return identities;
 }

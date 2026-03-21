@@ -7523,3 +7523,65 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 }
+
+.profile-wallet-card {
+  display: grid;
+  gap: 0.9rem;
+}
+.profile-wallet-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.profile-wallet-card__header h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.1rem;
+}
+.profile-wallet-badge {
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.profile-wallet-badge.is-linked {
+  background: rgba(85, 221, 170, 0.14);
+  color: #79f0c1;
+}
+.profile-wallet-badge.is-empty {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-2);
+}
+.profile-wallet-card__copy,
+.profile-wallet-card__empty,
+.profile-wallet-card__feedback {
+  margin: 0;
+  color: var(--text-2);
+}
+.profile-wallet-card__address {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  word-break: break-all;
+}
+.profile-wallet-card__address strong {
+  font-size: 1rem;
+}
+.profile-wallet-card__address span {
+  color: var(--text-2);
+  font-size: 0.86rem;
+}
+.profile-wallet-card__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+.profile-wallet-card__feedback.is-error {
+  color: #ff8c8c;
+}
+.profile-wallet-card__feedback.is-success {
+  color: #79f0c1;
+}
