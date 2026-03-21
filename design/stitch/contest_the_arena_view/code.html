@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG Contest Detail: The Battle Arena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Be+Vietnam+Pro:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dadddf",
+              "on-secondary-fixed": "#004145",
+              "on-primary-fixed": "#000000",
+              "surface-tint": "#0e0dfe",
+              "surface-container-low": "#eff1f2",
+              "surface": "#f5f6f7",
+              "on-secondary-fixed-variant": "#006066",
+              "surface-bright": "#f5f6f7",
+              "outline-variant": "#abadae",
+              "secondary-fixed": "#12f1ff",
+              "surface-container-highest": "#dadddf",
+              "error": "#b02500",
+              "secondary-container": "#12f1ff",
+              "tertiary-container": "#ff8eae",
+              "on-background": "#2c2f30",
+              "on-primary-fixed-variant": "#02009f",
+              "on-primary": "#d8d8ff",
+              "on-primary-container": "#010083",
+              "error-container": "#f95630",
+              "background": "#f5f6f7",
+              "primary-fixed": "#9097ff",
+              "on-error": "#ffefec",
+              "on-surface-variant": "#595c5d",
+              "surface-container-lowest": "#ffffff",
+              "tertiary": "#a92759",
+              "secondary-fixed-dim": "#00e1ef",
+              "surface-dim": "#d1d5d7",
+              "surface-container-high": "#e0e3e4",
+              "outline": "#757778",
+              "on-tertiary-fixed-variant": "#760037",
+              "inverse-surface": "#0c0f10",
+              "on-secondary-container": "#00555b",
+              "error-dim": "#b92902",
+              "inverse-primary": "#7c84ff",
+              "tertiary-fixed": "#ff8eae",
+              "secondary": "#00666c",
+              "inverse-on-surface": "#9b9d9e",
+              "primary-dim": "#0400e1",
+              "surface-container": "#e6e8ea",
+              "primary": "#0e0dfe",
+              "on-tertiary-fixed": "#380017",
+              "on-surface": "#2c2f30",
+              "tertiary-fixed-dim": "#ff75a0",
+              "primary-fixed-dim": "#8087ff",
+              "primary-container": "#9097ff",
+              "tertiary-dim": "#98194d",
+              "on-tertiary-container": "#66002f",
+              "on-error-container": "#520c00",
+              "on-secondary": "#cefbff",
+              "secondary-dim": "#00595e",
+              "on-tertiary": "#ffeff1"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+        }
+        .hard-shadow-lg {
+            box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+        }
+        .active-press:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed overflow-x-hidden">
+<!-- TopAppBar from JSON -->
+<header class="bg-blue-600 dark:bg-blue-700 docked full-width top-0 border-b-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center w-full px-6 py-4 z-50 sticky">
+<div class="flex items-center gap-4">
+<span class="text-3xl italic font-black text-yellow-400 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] font-['Space_Grotesk'] uppercase tracking-tighter">MCG</span>
+</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="font-['Space_Grotesk'] font-black uppercase tracking-tighter text-blue-100 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Home</a>
+<a class="font-['Space_Grotesk'] font-black uppercase tracking-tighter text-blue-100 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Collection</a>
+<a class="font-['Space_Grotesk'] font-black uppercase tracking-tighter text-white underline decoration-4 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Battle</a>
+<a class="font-['Space_Grotesk'] font-black uppercase tracking-tighter text-blue-100 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Shop</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-yellow-400 text-2xl hover:scale-110 hover:rotate-2 transition-transform" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-yellow-400 text-2xl hover:scale-110 hover:rotate-2 transition-transform" data-icon="settings">settings</button>
+<img class="w-10 h-10 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" data-alt="Trainer Avatar profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOPo3eg3oKef3kIOl9Ld3n4MrmDjnYTR1Ho6oyd_ID6hc0WN6oBWhHmbUzv7fKYHsWIbQKSL96sBZPM9AXYpWoyUKi4XLTRqk48I3z5K60q0abaUrBZwmJCOBhedz9Ym4aFaqpNchMOruPb0h-7ONOdfK8ADkMdnNPbHpFF6N1GwCxk3LmpU1yV78Udim366gbd8TM9n7PFIITaY1A2kLCTwxz6Yh94dFgctbXPx0n1b-iooNXleQz7FeENV-k_KBKld20R1Y7zNE"/>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-4 pt-8 pb-32">
+<!-- Hero Header Section -->
+<section class="relative mb-12 rounded-xl border-4 border-black overflow-hidden bg-tertiary hard-shadow-lg">
+<div class="absolute inset-0 opacity-30 mix-blend-overlay">
+<img class="w-full h-full object-cover" data-alt="Futuristic high energy battle arena background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwXV8HLJV_HALvG5YPzmvg7to4QkS7EhShJ05jn6wRefndRdPeQ-wFQkiCmcAt7-tsZDucXEb7VGnkAWa8x8DCFwM2xcMWazYnl59hCsMaXguHQu1L6fKTW0Iy_wLPNXy7DNtBIXvDu89hdrD2ZVZXz0cM2YWIqyqXLA8D1rwEbsIbsy4VZSVzyR0cfAn3DZDDClwvsGupQFJ_n0xLTTpxEapyCNAkAGK72mHyN8sKC8LUnwW4fk6WQY67Q92QPhmz9540qSSyUDQ"/>
+</div>
+<div class="relative z-10 p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12">
+<div class="flex-1 text-center md:text-left">
+<div class="inline-block bg-yellow-400 text-black px-4 py-1 rounded-full border-2 border-black mb-6 font-label font-bold text-sm uppercase tracking-wider">Active Tournament</div>
+<h1 class="font-headline text-5xl md:text-7xl font-black text-on-tertiary leading-none mb-6 tracking-tighter drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">DOGE WORLD SERIES</h1>
+<p class="font-body text-xl text-on-tertiary max-w-xl mb-8 font-medium">The ultimate showdown in the Battle Arena. Only the most strategic trainers will rise to the top of the global rankings.</p>
+<button class="bg-yellow-400 text-black px-12 py-6 rounded-full border-4 border-black hard-shadow active-press font-headline font-black text-2xl uppercase tracking-tight flex items-center gap-4 hover:scale-105 transition-transform mx-auto md:mx-0">
+                        BUILD YOUR LINEUP
+                        <span class="material-symbols-outlined font-black" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+<div class="w-full md:w-1/3 aspect-square bg-surface-container-lowest rounded-xl border-4 border-black hard-shadow flex items-center justify-center p-4 relative overflow-hidden">
+<img class="w-full h-full object-contain rotate-3 scale-110" data-alt="Stylized battle championship trophy illustration" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7iSJq0HbiMAgAANJall_XHEapfe0Mbmy_vRTxfkQrU_1YRco9bZintk5IUEeDVZi2X6fvGFPS5ZdLkZN2dNDTv2cu0EtY7P0GiTmK_sV6fg4mDREN5FM23MuzvXqzQi7YnE7lxT6D6ONkPvrEGH83xBYRHXSPRLBGIwksLf84n0nmlgiKu1Dv_wqKiFtrgUx3iqIj01k0va9RwcBxH5Fo-NFFo_dxjih003w0VtxZ01myQRfPnjDQ5KgVRzWQEwWadK4dDoSBol4"/>
+<div class="absolute bottom-4 left-4 right-4 bg-primary text-white p-3 border-2 border-black rounded-lg text-center font-headline font-bold">CHAMPIONSHIP TROPHY</div>
+</div>
+</div>
+</section>
+<!-- Stats Grid (Rules & Protocol) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+<!-- Rules Column -->
+<div class="md:col-span-2 space-y-8">
+<div class="bg-surface-container-lowest p-8 rounded-xl border-4 border-black hard-shadow">
+<h2 class="font-headline text-3xl font-black mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-4xl">gavel</span>
+                        TOURNAMENT PROTOCOL
+                    </h2>
+<div class="flex flex-wrap gap-4">
+<div class="flex items-center gap-4 bg-secondary-container p-4 rounded-xl border-2 border-black">
+<span class="material-symbols-outlined text-on-secondary-container bg-white p-2 rounded-full border-2 border-black">style</span>
+<div>
+<p class="font-label text-xs font-bold uppercase text-secondary-dim">Deck Limit</p>
+<p class="font-headline font-black text-xl text-on-secondary-container leading-none">12 CARDS</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-tertiary-container p-4 rounded-xl border-2 border-black">
+<span class="material-symbols-outlined text-on-tertiary-container bg-white p-2 rounded-full border-2 border-black">diamond</span>
+<div>
+<p class="font-label text-xs font-bold uppercase text-tertiary-dim">Rarity Restrictions</p>
+<p class="font-headline font-black text-xl text-on-tertiary-container leading-none">LEGENDARY+</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-primary-container p-4 rounded-xl border-2 border-black">
+<span class="material-symbols-outlined text-on-primary-container bg-white p-2 rounded-full border-2 border-black">payments</span>
+<div>
+<p class="font-label text-xs font-bold uppercase text-primary-dim">Prize Pool</p>
+<p class="font-headline font-black text-xl text-on-primary-container leading-none">50,000 MCG</p>
+</div>
+</div>
+</div>
+<div class="mt-8 p-6 bg-surface-container rounded-xl border-2 border-black border-dashed">
+<h3 class="font-label text-sm font-black mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">info</span>
+                            PREPARATION NOTES
+                        </h3>
+<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ensure all cards in your lineup are fully charged before the arena opens. Once the tournament begins, lineups are locked until the final round of the protocol.</p>
+</div>
+</div>
+<!-- Strategic Focus Areas -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="bg-white p-6 rounded-xl border-4 border-black hard-shadow flex items-start gap-4">
+<div class="bg-secondary p-3 rounded-lg border-2 border-black text-white">
+<span class="material-symbols-outlined">shield</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-xl mb-1">DEFENSIVE META</h4>
+<p class="font-body text-sm text-on-surface-variant">Shield-type cards get a 15% bonus in the current arena cycle.</p>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border-4 border-black hard-shadow flex items-start gap-4">
+<div class="bg-error p-3 rounded-lg border-2 border-black text-white">
+<span class="material-symbols-outlined">swords</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-xl mb-1">STRIKE WINDOW</h4>
+<p class="font-body text-sm text-on-surface-variant">Critical hits are 2x more likely during the final 30 seconds.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Leaderboard Column -->
+<aside class="bg-surface-container-highest p-8 rounded-xl border-4 border-black hard-shadow flex flex-col">
+<h2 class="font-headline text-3xl font-black mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-4xl">leaderboard</span>
+                    RANKINGS
+                </h2>
+<div class="space-y-4 flex-1">
+<!-- Rank 1 -->
+<div class="bg-yellow-400 p-4 rounded-xl border-2 border-black flex items-center gap-4">
+<span class="font-headline font-black text-2xl italic">1st</span>
+<img class="w-12 h-12 rounded-full border-2 border-black" data-alt="Leaderboard top trainer portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqdAchGgx9TXq5D3CMyjOpF-S2ZBtoqq6bT4c9u_q665TkKDaVy72qEOGhdj-JzGTh0SYL8Po9-qeFJ6tdAeqT0LSaBdfxZXZwfQE0amfMa_p7T0L-Jn0WsaR_RnGCHwhtieY_ks9PXoGZGi1Vgbr8hoHZoecKIDT_yM-M6Oicit0AGIDhP_cYLsucJI4etEignlNxAycd43fYUjJYgRxF50cO96FXktvqOkILPBV2NPJHVbRyfFA5BTxh1J55cf8-ibn-dQLcIi0"/>
+<div class="flex-1">
+<p class="font-headline font-bold text-lg leading-none">Vortex99</p>
+<p class="font-label text-xs font-bold uppercase">4,820 PTS</p>
+</div>
+<span class="material-symbols-outlined text-black font-black" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<!-- Rank 2 -->
+<div class="bg-white p-4 rounded-xl border-2 border-black flex items-center gap-4">
+<span class="font-headline font-black text-2xl italic text-on-surface-variant">2nd</span>
+<img class="w-12 h-12 rounded-full border-2 border-black" data-alt="Leaderboard second place trainer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdl_36MjMmJPRthCtk9oDhv763wf9M4IQDvXA9FmFCgVYjY2Au8-tq5T8SHWFftxAUXuF29NJaxpE_uQK3H2piTnH_DlV4QN_AfYIRHhy_DfUfwnUiem0mIf8UzZH3bGngveQ4sO18R7MCeXMI6qrObSyQYHfn2b1wR9av-LxFSCnMvz34xYGGssTieImBNp5HxzzC8JiqXydDlUO5iBcKK0QST3sa22SVuxrjGotvnD5dJ5uyadSmozvXaKq2YIMd_Ey8E1CNSP0"/>
+<div class="flex-1">
+<p class="font-headline font-bold text-lg leading-none">Lunar_Cat</p>
+<p class="font-label text-xs font-bold uppercase text-on-surface-variant">4,650 PTS</p>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="bg-white p-4 rounded-xl border-2 border-black flex items-center gap-4">
+<span class="font-headline font-black text-2xl italic text-on-surface-variant">3rd</span>
+<img class="w-12 h-12 rounded-full border-2 border-black" data-alt="Leaderboard third place trainer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_UHdgS38rpxMPqQkUs5_8n8M9MvT0tVu47fVJfUb5OdnoDvcyDO59OuXsWU7ol3T0VnsTc4-8bQxBP--dZhIoeir2zSG-jN6ZkwYSs3MrqZ87QgR6QGNQoX5VY5xLRoFQfGuDO3CPl2rhBcUHLyrKZQoISMzz_F5jusazfBYBCivpSWG1IjNreeOaPTU7joP3C5Jrq88opojdIYApiGBDwg9M0wT_cO2yWJ6nMyx4CLrfBbbW8FC1lo9_8yopRM7h6nvnZGxi1xg"/>
+<div class="flex-1">
+<p class="font-headline font-bold text-lg leading-none">NeonPulse</p>
+<p class="font-label text-xs font-bold uppercase text-on-surface-variant">4,400 PTS</p>
+</div>
+</div>
+<!-- You (The User) -->
+<div class="mt-8 border-t-4 border-black pt-8">
+<div class="bg-primary p-4 rounded-xl border-2 border-black flex items-center gap-4 text-white">
+<span class="font-headline font-black text-2xl italic">84th</span>
+<img class="w-12 h-12 rounded-full border-2 border-black" data-alt="Current user avatar on leaderboard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvZP8meXAA4izjfO9wF2AuBeWLn9_MkrF6d2AdT3t3LxqL9kCTvmjEvaR43IIa45fYLbvxXNiSs7ZvJksO7fkycHA23gLf17T1UNqssyVrtX-f-SDygVQuRX3JGqT7NIzSCC_yiAnuBEr-kh0haKYwrXHIJ-87GtiYRYK3eiuirete2rcDs8lukGT1-whDKiZeRtwcvI2rwvctIpEpciAeTWqkNQTjVZ4-2VkCn38H_lx0gsSD8tZEYftNs2MWgDgh0HGpZqJbUAg"/>
+<div class="flex-1">
+<p class="font-headline font-bold text-lg leading-none">YOU</p>
+<p class="font-label text-xs font-bold uppercase text-on-primary">1,210 PTS</p>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-4 bg-surface-container-lowest border-2 border-black rounded-xl font-headline font-bold hover:bg-secondary-fixed transition-colors active-press hard-shadow">
+                    VIEW FULL STANDINGS
+                </button>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar from JSON -->
+<nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-50 flex justify-around items-center h-20 bg-white dark:bg-gray-800 rounded-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] px-2">
+<div class="flex flex-col items-center justify-center text-gray-500 px-2 py-1">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="font-['Space_Grotesk'] font-bold text-[10px]">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-500 px-2 py-1">
+<span class="material-symbols-outlined text-2xl">style</span>
+<span class="font-['Space_Grotesk'] font-bold text-[10px]">Collection</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-yellow-400 text-black border-2 border-black rounded-full scale-110 -translate-y-2 px-4 py-2">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">swords</span>
+<span class="font-['Space_Grotesk'] font-bold text-[10px]">Battle</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-500 px-2 py-1">
+<span class="material-symbols-outlined text-2xl">shopping_bag</span>
+<span class="font-['Space_Grotesk'] font-bold text-[10px]">Shop</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-500 px-2 py-1">
+<span class="material-symbols-outlined text-2xl">group</span>
+<span class="font-['Space_Grotesk'] font-bold text-[10px]">Social</span>
+</div>
+</nav>
+</body></html>
