@@ -24,7 +24,7 @@ type QueueItem = {
   evidenceCompleteness: "HAS_URL" | "NOTE_ONLY" | "EMPTY";
   createdAt: string;
   quest: { id: string; code: string; title: string; rewardPoints: number };
-  user: { id: string; xUsername: string | null; displayName: string | null };
+  user: { id: string; handle: string | null; displayName: string | null };
 };
 
 export default function ModerationQueuePage() {
@@ -109,7 +109,7 @@ export default function ModerationQueuePage() {
                 </div>
                 <div>
                   <strong>{item.user.displayName || "Unknown"}</strong>
-                  <p className="contest-inline-note">@{item.user.xUsername || "—"} · {item.ageHours}h</p>
+                  <p className="contest-inline-note">@{item.user.handle || "—"} · {item.ageHours}h</p>
                 </div>
                 <AdminStatusBadge tone={item.status === "SUBMITTED" ? "warn" : item.status === "APPROVED" ? "success" : "danger"} label={item.status} />
                 <AdminStatusBadge tone={item.slaLevel === "BREACH" ? "danger" : item.slaLevel === "AT_RISK" ? "warn" : "success"} label={item.slaLevel} />

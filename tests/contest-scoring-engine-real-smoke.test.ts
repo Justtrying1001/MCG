@@ -51,10 +51,10 @@ describe("contest scoring engine real smoke", () => {
 
     const [userA, userB] = await Promise.all([
       prisma.user.create({
-        data: { xUserId: `smoke_a_${suffix}`, xUsername: `smoke_a_${suffix}`, displayName: "Smoke A", points: 1000 },
+        data: { handle: `smoke_a_${suffix}`, displayName: "Smoke A", points: 1000 },
       }),
       prisma.user.create({
-        data: { xUserId: `smoke_b_${suffix}`, xUsername: `smoke_b_${suffix}`, displayName: "Smoke B", points: 1000 },
+        data: { handle: `smoke_b_${suffix}`, displayName: "Smoke B", points: 1000 },
       }),
     ]);
     createdUserIds.push(userA.id, userB.id);

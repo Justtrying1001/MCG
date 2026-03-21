@@ -179,7 +179,7 @@ export async function getSettlementPlan(planId: string, contestId?: string) {
     include: {
       items: {
         orderBy: [{ rank: "asc" }],
-        include: { user: { select: { id: true, displayName: true, xUsername: true } } },
+        include: { user: { select: { id: true, displayName: true, handle: true } } },
       },
       contest: { select: { id: true, code: true, title: true, status: true } },
     },

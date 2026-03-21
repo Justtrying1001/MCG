@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
     const userIds = [...new Set(rewards.map((row) => row.userId))];
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, displayName: true, xUsername: true, points: true },
+      select: { id: true, displayName: true, handle: true, points: true },
     });
     const userMap = new Map(users.map((user) => [user.id, user]));
 

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
         where: { contestId: params.contestId },
         orderBy: [{ submittedAt: "asc" }],
         include: {
-          user: { select: { id: true, xUsername: true, displayName: true } },
+          user: { select: { id: true, handle: true, displayName: true } },
           rosterLocks: {
             orderBy: [{ lockedAt: "asc" }],
             include: {
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
         where: { contestId: params.contestId },
         orderBy: [{ rank: "asc" }],
         include: {
-          user: { select: { id: true, xUsername: true, displayName: true } },
+          user: { select: { id: true, handle: true, displayName: true } },
         },
         take: 500,
       }),
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
             select: {
               id: true,
               userId: true,
-              user: { select: { xUsername: true, displayName: true } },
+              user: { select: { handle: true, displayName: true } },
             },
           },
           cardInstance: {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
       return {
         entryId: entry.id,
         userId: entry.user.id,
-        username: entry.user.xUsername,
+        username: entry.user.handle,
         displayName: entry.user.displayName,
         entryStatus: entry.status,
         submittedAt: entry.submittedAt,

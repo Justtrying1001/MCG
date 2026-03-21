@@ -70,11 +70,10 @@ export function buildUserPayload(params: {
     mode: "user" as const,
     user: {
       id: params.user.id,
-      xUserId: params.user.xUserId,
-      username: params.user.xUsername,
       displayName: params.user.displayName,
+      handle: params.user.handle,
+      username: params.user.handle,
       avatarUrl: params.user.avatarUrl,
-      authProvider: params.user.authProvider,
       points: params.user.points,
       packsOpened: params.user.packsOpened,
     },

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         quest: { select: { id: true, code: true, title: true, rewardPoints: true } },
-        user: { select: { id: true, xUsername: true, displayName: true } },
+        user: { select: { id: true, handle: true, displayName: true } },
       },
       orderBy: [{ createdAt: "asc" }],
       take: 200,

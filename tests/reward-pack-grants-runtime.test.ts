@@ -30,8 +30,8 @@ describe("reward pack grants runtime", () => {
 
   it("grants and opens reward pack", async () => {
     prismaMock.user.findUnique
-      .mockResolvedValueOnce({ id: "u1", points: 100, displayName: "U", xUsername: "u" })
-      .mockResolvedValueOnce({ id: "u1", points: 100, displayName: "U", xUsername: "u" });
+      .mockResolvedValueOnce({ id: "u1", points: 100, displayName: "U", handle: "u" })
+      .mockResolvedValueOnce({ id: "u1", points: 100, displayName: "U", handle: "u" });
 
     grantRewardPackMvpDbNativeMock.mockResolvedValue({
       mode: "GRANT_AND_OPEN",

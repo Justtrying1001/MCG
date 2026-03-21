@@ -246,7 +246,7 @@ describe("quests runtime phase 3", () => {
         reviewedByAdmin: null,
         reviewedAt: null,
         createdAt: new Date("2026-03-01T10:00:00.000Z"),
-        user: { id: "u1", xUsername: "alice", displayName: "Alice" },
+        user: { id: "u1", handle: "alice", displayName: "Alice" },
       },
     ]);
     prismaMock.userQuestProgress.findMany.mockResolvedValue([
@@ -255,7 +255,7 @@ describe("quests runtime phase 3", () => {
         progressValue: 2,
         completedAt: new Date("2026-03-02T10:00:00.000Z"),
         updatedAt: new Date("2026-03-02T10:00:00.000Z"),
-        user: { id: "u1", xUsername: "alice", displayName: "Alice" },
+        user: { id: "u1", handle: "alice", displayName: "Alice" },
       },
     ]);
     prismaMock.rewardLedgerEntry.findMany.mockResolvedValue([
@@ -266,7 +266,7 @@ describe("quests runtime phase 3", () => {
         idempotencyKey: "quest:q1:user:u1",
         createdAt: new Date("2026-03-02T10:00:00.000Z"),
         metadata: null,
-        user: { id: "u1", xUsername: "alice", displayName: "Alice" },
+        user: { id: "u1", handle: "alice", displayName: "Alice" },
       },
     ]);
     prismaMock.$transaction.mockImplementation(async (arg: any) => {

@@ -49,7 +49,7 @@ describe("/api/internal/contest-runs/:contestId/scoring/detail", () => {
         finalScore: 71.61,
         dataQuality: "COMPLETE",
         tokenProject: { displayName: "Bitcoin", slug: "bitcoin" },
-        entry: { id: "e1", userId: "u1", user: { xUsername: "alice", displayName: "Alice" } },
+        entry: { id: "e1", userId: "u1", user: { handle: "alice", displayName: "Alice" } },
         cardInstance: { id: "ci1", cardTemplate: { name: "BTC Card", imageUrl: null, rarity: { code: "RARE" }, edition: { code: "BASE" } } },
       },
     ]);

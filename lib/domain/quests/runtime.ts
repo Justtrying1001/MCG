@@ -100,13 +100,13 @@ export type InternalQuestDetail = {
     reviewedByAdmin: string | null;
     reviewedAt: string | null;
     createdAt: string;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
   recentlyCompletedUsers: Array<{
     userId: string;
     completedAt: string;
     progressValue: number;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
   latestLedgerCredits: Array<{
     id: string;
@@ -115,7 +115,7 @@ export type InternalQuestDetail = {
     idempotencyKey: string | null;
     createdAt: string;
     metadata: Prisma.JsonValue | null;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
 };
 
@@ -793,7 +793,7 @@ export async function listQuestSubmissionsMvp(params?: { status?: QuestSubmissio
       ...(params?.status ? { status: params.status } : {}),
     },
     include: {
-      user: { select: { id: true, xUsername: true, displayName: true } },
+      user: { select: { id: true, handle: true, displayName: true } },
       quest: { select: { id: true, code: true, type: true, title: true, rewardPoints: true } },
     },
     orderBy: [{ createdAt: "desc" }],
@@ -1185,13 +1185,13 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
     }),
     prisma.questSubmission.findMany({
       where: { questId },
-      include: { user: { select: { id: true, xUsername: true, displayName: true } } },
+      include: { user: { select: { id: true, handle: true, displayName: true } } },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
     }),
     prisma.userQuestProgress.findMany({
       where: { questId, status: UserQuestStatus.COMPLETED },
-      include: { user: { select: { id: true, xUsername: true, displayName: true } } },
+      include: { user: { select: { id: true, handle: true, displayName: true } } },
       orderBy: [{ completedAt: "desc" }],
       take: 20,
     }),
@@ -1201,7 +1201,7 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
         reasonType: RewardLedgerReasonType.QUEST_REWARD,
         reasonRef: questId,
       },
-      include: { user: { select: { id: true, xUsername: true, displayName: true } } },
+      include: { user: { select: { id: true, handle: true, displayName: true } } },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
     }),

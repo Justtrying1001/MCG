@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       select: {
         id: true,
         acquiredAt: true,
-        user: { select: { displayName: true, xUsername: true } },
+        user: { select: { displayName: true, handle: true } },
         cardTemplate: {
           select: {
             id: true,
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
       return {
         id: row.id,
         openedAt: row.acquiredAt.toISOString(),
-        playerName: row.user.displayName || row.user.xUsername || "Anonymous",
+        playerName: row.user.displayName || row.user.handle || "Anonymous",
         card,
       };
     });

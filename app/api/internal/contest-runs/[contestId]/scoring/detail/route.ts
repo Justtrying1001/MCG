@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: { contestI
             select: {
               id: true,
               userId: true,
-              user: { select: { xUsername: true, displayName: true } },
+              user: { select: { handle: true, displayName: true } },
             },
           },
           cardInstance: {

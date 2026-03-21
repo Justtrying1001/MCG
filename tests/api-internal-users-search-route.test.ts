@@ -27,8 +27,7 @@ describe("GET /api/internal/users/search", () => {
     searchUsersForAdminMvpMock.mockResolvedValue([
       {
         id: "u1",
-        xUserId: "x1",
-        xUsername: "alice",
+        handle: "alice",
         displayName: "Alice",
         points: 1200,
         createdAt: new Date("2026-03-01T10:00:00.000Z"),

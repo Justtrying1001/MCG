@@ -74,7 +74,7 @@ describe("/api/internal/rewards/manual-grant", () => {
       {
         id: "led1",
         userId: "u1",
-        user: { id: "u1", displayName: "A", xUsername: "a" },
+        user: { id: "u1", displayName: "A", handle: "a" },
         amount: 500,
         reasonRef: "community-event",
         metadata: { reasonLabel: "community-event" },

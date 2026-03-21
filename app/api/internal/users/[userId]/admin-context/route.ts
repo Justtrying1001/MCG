@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
   try {
     const user = await prisma.user.findUnique({
       where: { id: params.userId },
-      select: { id: true, displayName: true, xUsername: true, createdAt: true, points: true },
+      select: { id: true, displayName: true, handle: true, createdAt: true, points: true },
     });
 
     if (!user) {
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
       user: {
         id: user.id,
         displayName: user.displayName,
-        xUsername: user.xUsername,
+        handle: user.handle,
         createdAt: user.createdAt.toISOString(),
         points: user.points,
       },

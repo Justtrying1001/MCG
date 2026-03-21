@@ -85,7 +85,7 @@ type ScoringBreakdownDetail = {
   finalScore: number;
   dataQuality: string;
   tokenProject: { displayName: string; slug: string };
-  entry: { id: string; userId: string; user: { xUsername: string | null; displayName: string | null } };
+  entry: { id: string; userId: string; user: { handle: string | null; displayName: string | null } };
   cardInstance: { id: string; cardTemplate: { name: string; imageUrl: string | null; rarity: { code: string } | null; edition: { code: string } | null } };
 };
 
@@ -551,7 +551,7 @@ function ScoringDetailPanel({ payload, loading, error }: { payload: ScoringDetai
   if (!payload) return null;
 
   const groupedRows = payload.breakdownRows.reduce<Record<string, { label: string; rows: ScoringBreakdownDetail[] }>>((acc, row) => {
-    const label = row.entry.user.displayName || row.entry.user.xUsername || row.entry.userId;
+    const label = row.entry.user.displayName || row.entry.user.handle || row.entry.userId;
     if (!acc[row.entry.userId]) {
       acc[row.entry.userId] = { label, rows: [] };
     }

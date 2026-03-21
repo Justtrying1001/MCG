@@ -12,15 +12,27 @@ export async function searchUsersForAdminMvp(termRaw: string, limitRaw?: number)
     where: {
       OR: [
         { id: { contains: term, mode: "insensitive" } },
-        { xUserId: { contains: term, mode: "insensitive" } },
-        { xUsername: { contains: term, mode: "insensitive" } },
+        { handle: { contains: term, mode: "insensitive" } },
         { displayName: { contains: term, mode: "insensitive" } },
+        {
+          identities: {
+            some: {
+              providerUserId: { contains: term, mode: "insensitive" },
+            },
+          },
+        },
+        {
+          identities: {
+            some: {
+              username: { contains: term, mode: "insensitive" },
+            },
+          },
+        },
       ],
     },
     select: {
       id: true,
-      xUserId: true,
-      xUsername: true,
+      handle: true,
       displayName: true,
       points: true,
       createdAt: true,
