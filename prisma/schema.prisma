@@ -10,7 +10,7 @@ datasource db {
 model User {
   id           String         @id @default(cuid())
   displayName  String
-  handle       String?
+  handle       String?        @unique
   avatarUrl    String?
   points       Int            @default(300)
   packsOpened  Int            @default(0)

@@ -1,4 +1,5 @@
-import type { OwnedCardInstance, User } from "@prisma/client";
+import type { OwnedCardInstance, User, UserIdentity } from "@prisma/client";
+import { UserIdentityProvider } from "@prisma/client";
 import type { MvpCollectionItem } from "@/types/cards";
 
 import { buildCanonicalCardViewOrThrow } from "@/lib/domain/cards/canonical-card-builder";
@@ -14,9 +15,43 @@ type OwnedInstanceWithTemplate = OwnedCardInstance & {
   };
 };
 
+function serializeLinkedWallets(identities: UserIdentity[]) {
+  const solanaWallets = identities
+    .filter((identity) => identity.provider === UserIdentityProvider.WALLET_SOLANA)
+    .map((identity) => ({
+      address: identity.walletAddress ?? identity.providerUserId,
+      providerUserId: identity.providerUserId,
+      linkedAt: identity.linkedAt.toISOString(),
+      lastSeenAt: identity.lastSeenAt?.toISOString() ?? null,
+      isVerified: identity.isVerified,
+    }));
+
+  return {
+    solanaWallets,
+  };
+}
+
+function serializeLinkedSocials(identities: UserIdentity[]) {
+  const twitter = identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER) ?? null;
+
+  return {
+    twitter: twitter
+      ? {
+          providerUserId: twitter.providerUserId,
+          username: twitter.username,
+          displayName: twitter.displayName,
+          linkedAt: twitter.linkedAt.toISOString(),
+          lastSeenAt: twitter.lastSeenAt?.toISOString() ?? null,
+          isVerified: twitter.isVerified,
+        }
+      : null,
+  };
+}
+
 export function buildUserPayload(params: {
   user: User;
   ownedInstances: OwnedInstanceWithTemplate[];
+  identities?: UserIdentity[];
 }) {
   const mvpTemplateAgg = new Map<string, {
     count: number;
@@ -77,6 +112,11 @@ export function buildUserPayload(params: {
       points: params.user.points,
       packsOpened: params.user.packsOpened,
     },
+    onboarding: {
+      needsHandle: !params.user.handle,
+    },
+    linkedWallets: serializeLinkedWallets(params.identities ?? []),
+    linkedSocials: serializeLinkedSocials(params.identities ?? []),
     mvpCollection,
   };
 }

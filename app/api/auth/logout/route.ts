@@ -10,8 +10,11 @@ import {
   getSessionHintCookieName,
 } from "@/lib/auth";
 import { logAuthEvent } from "@/lib/observability/auth-log";
+import { enforceSameOrigin } from "@/lib/csrf";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
   const cookieName = getSessionCookieName();
   const token = cookies().get(cookieName)?.value;
 

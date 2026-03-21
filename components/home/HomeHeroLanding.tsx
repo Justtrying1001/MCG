@@ -69,7 +69,7 @@ export function HomeHeroLanding() {
               <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{flexShrink:0}}>
                 <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z"/>
               </svg>
-              CONNECT WITH X
+              CONNECT
             </button>
             <a
               href="https://mcg-2.gitbook.io/mcg/"

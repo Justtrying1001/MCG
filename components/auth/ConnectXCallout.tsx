@@ -9,7 +9,7 @@ type Layout = "stacked" | "inline";
 export function ConnectXCallout({
   title,
   description,
-  ctaLabel = "Connect X",
+  ctaLabel = "Connect",
   layout = "stacked",
 }: {
   title: string;

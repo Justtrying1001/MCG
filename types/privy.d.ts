@@ -31,6 +31,18 @@ declare module "@privy-io/react-auth" {
     logout: () => Promise<void>;
     getAccessToken: () => Promise<string | null>;
   };
+
+  export function useLinkAccount(callbacks?: {
+    onSuccess?: () => void;
+    onError?: (error: unknown) => void;
+  }): {
+    linkWallet: (options?: Record<string, unknown>) => void;
+    linkTwitter: (options?: Record<string, unknown>) => void;
+  };
+}
+
+declare module "@privy-io/react-auth/solana" {
+  export function toSolanaWalletConnectors(options?: { shouldAutoConnect?: boolean }): unknown;
 }
 
 declare module "@privy-io/server-auth" {

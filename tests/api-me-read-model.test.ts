@@ -11,6 +11,7 @@ const {
   prismaMock: {
     $transaction: vi.fn(),
     user: { findUnique: vi.fn((args:any) => ({ __op: "user.findUnique", args })) },
+    userIdentity: { findMany: vi.fn((args:any) => ({ __op: "userIdentity.findMany", args })) },
     ownedCardInstance: { findMany: vi.fn((args:any) => ({ __op: "ownedCardInstance.findMany", args })) },
     packOpeningEvent: { count: vi.fn((args:any) => ({ __op: "packOpeningEvent.count", args })) },
   },
@@ -38,6 +39,7 @@ describe("/api/me MVP read model", () => {
     resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
       { id: "u1", handle: "user", displayName: "User", avatarUrl: null, points: 300, packsOpened: 3 },
+      [],
       [
         {
           cardTemplate: {
@@ -101,6 +103,7 @@ describe("/api/me MVP read model", () => {
     resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
       { id: "u1", handle: "user", displayName: "User", avatarUrl: null, points: 300, packsOpened: 3 },
+      [],
       [
         {
           cardTemplate: {

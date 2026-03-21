@@ -10,6 +10,7 @@ import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
 import { SetCompletionSection } from "@/components/profile/SetCompletionSection";
 import { ContestAchievements } from "@/components/profile/ContestAchievements";
 import { RecentResults } from "@/components/profile/RecentResults";
+import { SolanaWalletCard } from "@/components/profile/SolanaWalletCard";
 
 type UserQuestRow = {
   id: string;
@@ -86,7 +87,7 @@ export default function AccountPage() {
             points={0}
             level={1}
             completionPct={null}
-            primaryAction={<ConnectXCallout layout="inline" title="Collection access" description="Open your real collector vault, saved cards, and ownership counts once you connect." ctaLabel="Connect X to open your collection" />}
+            primaryAction={<ConnectXCallout layout="inline" title="Collection access" description="Open your real collector vault, saved cards, and ownership counts once you connect." ctaLabel="Connect to open your collection" />}
           />
           <FeaturedCardsStrip cards={[]} />
           <SetCompletionSection rows={[{ label: "Genesis Set", done: 0, total: 100 }, { label: "Arena Set", done: 0, total: 50 }, { label: "Meme Icons", done: 0, total: 50 }]} />
@@ -97,7 +98,7 @@ export default function AccountPage() {
             leagueTier={null}
             seasonRank={null}
           />
-          <EmptyState title="No profile data yet" description="Connect X to start collecting cards, entering contests, and building your public MCG identity." />
+          <EmptyState title="No profile data yet" description="Connect with X or a Solana wallet to start collecting cards, entering contests, and building your public MCG identity." />
         </>
       ) : (
         <>
@@ -107,6 +108,8 @@ export default function AccountPage() {
             level={account?.level ?? 1}
             completionPct={collection?.completionPct ?? null}
           />
+
+          <SolanaWalletCard />
 
           <FeaturedCardsStrip cards={featuredCards} />
 
