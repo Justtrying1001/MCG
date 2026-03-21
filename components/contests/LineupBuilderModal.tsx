@@ -203,8 +203,9 @@ export function LineupBuilderModal({
         onClick={(event) => event.stopPropagation()}
       >
         <header className="bldr-head">
-          <div>
+          <div className="bldr-head-copy">
             <p className="bldr-head-kicker">Lineup Builder</p>
+            <div className="bldr-head-stamp">Squad prep room</div>
             <h2>{contestTitle}</h2>
             <p className="bldr-head-helper">
               Select {rosterSize} cards from your eligible collection.
@@ -234,51 +235,68 @@ export function LineupBuilderModal({
         </header>
 
         <div className="bldr-body">
-          <div className="bldr-selected-tray">
-            {Array.from({ length: rosterSize }).map((_, index) => {
-              const instanceId = lineupSlots[index];
-              const card = instanceId ? optionById.get(instanceId) : null;
-              const isActive = index === activeSlot;
-              const cardView = card ? toMvpCardView(card) : null;
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  className={`bldr-tray-slot ${isActive ? "active" : ""} ${card ? "filled" : ""}`}
-                  onClick={() => {
-                    setActiveSlot(index);
-                    onSelectSlot(index);
-                  }}
-                >
-                  <span className="bldr-tray-slot-label">Slot {index + 1}</span>
-                  {card ? (
-                    cardView ? (
-                      <MvpCardTile
-                        card={cardView}
-                        variant="canonical"
-                        interactive={false}
-                      />
-                    ) : (
-                      <strong>Card unavailable</strong>
-                    )
-                  ) : (
-                    <strong>Add card</strong>
-                  )}
-                  {card && canEdit ? (
-                    <span
-                      className="bldr-slot-remove"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onRemoveSlot(index);
-                      }}
-                    >
-                      Remove
+          <section className="bldr-selected-stage">
+            <div className="bldr-section-head">
+              <div>
+                <p className="bldr-section-kicker">Selected squad</p>
+                <h3>Build your lineup</h3>
+              </div>
+              <div className="bldr-stage-summary">
+                <strong>
+                  {selectedCount}/{rosterSize}
+                </strong>
+                <span>slots filled</span>
+              </div>
+            </div>
+
+            <div className="bldr-selected-tray">
+              {Array.from({ length: rosterSize }).map((_, index) => {
+                const instanceId = lineupSlots[index];
+                const card = instanceId ? optionById.get(instanceId) : null;
+                const isActive = index === activeSlot;
+                const cardView = card ? toMvpCardView(card) : null;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`bldr-tray-slot ${isActive ? "active" : ""} ${card ? "filled" : ""}`}
+                    onClick={() => {
+                      setActiveSlot(index);
+                      onSelectSlot(index);
+                    }}
+                  >
+                    <span className="bldr-tray-slot-label">
+                      Slot {index + 1}
                     </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+                    {card ? (
+                      cardView ? (
+                        <MvpCardTile
+                          card={cardView}
+                          variant="canonical"
+                          interactive={false}
+                        />
+                      ) : (
+                        <strong>Card unavailable</strong>
+                      )
+                    ) : (
+                      <strong>Add card</strong>
+                    )}
+                    {card && canEdit ? (
+                      <span
+                        className="bldr-slot-remove"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRemoveSlot(index);
+                        }}
+                      >
+                        Remove
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           <div className="bldr-rule-strip">
             <span>
@@ -289,160 +307,177 @@ export function LineupBuilderModal({
             <span>Lineup can only be submitted while contest is OPEN</span>
           </div>
 
-          <div className="bldr-controls">
-            <input
-              className="bldr-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by card name, project or set"
-            />
-            <select
-              className="bldr-select"
-              value={rarityFilter}
-              onChange={(event) => setRarityFilter(event.target.value)}
-            >
-              {rarityOptions.map((value) => (
-                <option key={value} value={value}>
-                  {value === "all" ? "All rarities" : value}
-                </option>
-              ))}
-            </select>
-            <select
-              className="bldr-select"
-              value={editionFilter}
-              onChange={(event) => setEditionFilter(event.target.value)}
-            >
-              {editionOptions.map((value) => (
-                <option key={value} value={value}>
-                  {value === "all" ? "All editions" : value}
-                </option>
-              ))}
-            </select>
-            <select
-              className="bldr-select"
-              value={setFilter}
-              onChange={(event) => setSetFilter(event.target.value)}
-            >
-              {setOptions.map((value) => (
-                <option key={value} value={value}>
-                  {value === "all" ? "All sets" : value}
-                </option>
-              ))}
-            </select>
-            <select
-              className="bldr-select"
-              value={availabilityFilter}
-              onChange={(event) =>
-                setAvailabilityFilter(
-                  event.target.value as "all" | "eligible" | "unavailable",
-                )
-              }
-            >
-              <option value="all">All cards</option>
-              <option value="eligible">Eligible</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-            <select
-              className="bldr-select"
-              value={sortMode}
-              onChange={(event) => setSortMode(event.target.value as SortMode)}
-            >
-              <option value="rarity">Sort: Rarity</option>
-              <option value="name">Sort: Name</option>
-            </select>
-          </div>
-
-          <div className="bldr-pool-scroll">
-            <div className="bldr-pool-grid" aria-live="polite">
-              {filtered.map((item) => {
-                const slotIndex = lineupSlots.findIndex(
-                  (value) => value === item.instanceId,
-                );
-                const isSelected = slotIndex >= 0;
-                const atCapacity = selectedCount >= rosterSize && !isSelected;
-                const tokenKey = getLogicalTokenKey({
-                  tokenProjectId: item.tokenProjectId,
-                  cardTemplateId: item.cardTemplateId,
-                });
-                const tokenConflict =
-                  selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
-                const tokenAlreadyUsed = tokenConflict;
-                const cardView = toMvpCardView(item);
-                const isUnavailable =
-                  !canEdit ||
-                  atCapacity ||
-                  item.isLockedByActiveContest ||
-                  tokenAlreadyUsed ||
-                  !cardView;
-
-                return (
-                  <article
-                    key={item.instanceId}
-                    className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}
-                  >
-                    <button
-                      type="button"
-                      className="bldr-card-btn"
-                      onClick={() => {
-                        if (isUnavailable) return;
-                        onSelectCard(item.instanceId, activeSlot);
-                      }}
-                      disabled={isUnavailable}
-                    >
-                      {cardView ? (
-                        <MvpCardTile
-                          card={cardView}
-                          variant="canonical"
-                          interactive={false}
-                        />
-                      ) : (
-                        <div className="bldr-card-missing">
-                          Card preview unavailable
-                        </div>
-                      )}
-                    </button>
-                    <div className="bldr-card-meta">
-                      <strong>{item.name}</strong>
-                      <p>{item.tokenProjectName}</p>
-                      <div>
-                        <span>{item.rarityCode}</span>
-                        <span>{item.editionCode}</span>
-                        <span>{item.cardSetCode}</span>
-                      </div>
-                    </div>
-                    {isSelected ? (
-                      <span className="bldr-chip selected">
-                        Selected · Slot {slotIndex + 1}
-                      </span>
-                    ) : null}
-                    {item.isLockedByActiveContest ? (
-                      <span className="bldr-chip warn">
-                        Unavailable: locked in active contest
-                      </span>
-                    ) : null}
-                    {tokenAlreadyUsed ? (
-                      <span className="bldr-chip warn">
-                        Already used in this lineup
-                      </span>
-                    ) : null}
-                    {!cardView ? (
-                      <span className="bldr-chip warn">
-                        Unavailable: missing canonical card data
-                      </span>
-                    ) : null}
-                  </article>
-                );
-              })}
-              {options.length === 0 ? (
-                <p className="bldr-pool-empty">
-                  No eligible cards available for this contest.
-                </p>
-              ) : null}
-              {options.length > 0 && filtered.length === 0 ? (
-                <p className="bldr-pool-empty">No cards match these filters.</p>
-              ) : null}
+          <section className="bldr-pool-stage">
+            <div className="bldr-section-head">
+              <div>
+                <p className="bldr-section-kicker">Card pool</p>
+                <h3>Meme gallery</h3>
+              </div>
+              <div className="bldr-stage-summary">
+                <strong>{filtered.length}</strong>
+                <span>cards shown</span>
+              </div>
             </div>
-          </div>
+
+            <div className="bldr-controls">
+              <input
+                className="bldr-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by card name, project or set"
+              />
+              <select
+                className="bldr-select"
+                value={rarityFilter}
+                onChange={(event) => setRarityFilter(event.target.value)}
+              >
+                {rarityOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value === "all" ? "All rarities" : value}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="bldr-select"
+                value={editionFilter}
+                onChange={(event) => setEditionFilter(event.target.value)}
+              >
+                {editionOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value === "all" ? "All editions" : value}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="bldr-select"
+                value={setFilter}
+                onChange={(event) => setSetFilter(event.target.value)}
+              >
+                {setOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {value === "all" ? "All sets" : value}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="bldr-select"
+                value={availabilityFilter}
+                onChange={(event) =>
+                  setAvailabilityFilter(
+                    event.target.value as "all" | "eligible" | "unavailable",
+                  )
+                }
+              >
+                <option value="all">All cards</option>
+                <option value="eligible">Eligible</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+              <select
+                className="bldr-select"
+                value={sortMode}
+                onChange={(event) =>
+                  setSortMode(event.target.value as SortMode)
+                }
+              >
+                <option value="rarity">Sort: Rarity</option>
+                <option value="name">Sort: Name</option>
+              </select>
+            </div>
+
+            <div className="bldr-pool-scroll">
+              <div className="bldr-pool-grid" aria-live="polite">
+                {filtered.map((item) => {
+                  const slotIndex = lineupSlots.findIndex(
+                    (value) => value === item.instanceId,
+                  );
+                  const isSelected = slotIndex >= 0;
+                  const atCapacity = selectedCount >= rosterSize && !isSelected;
+                  const tokenKey = getLogicalTokenKey({
+                    tokenProjectId: item.tokenProjectId,
+                    cardTemplateId: item.cardTemplateId,
+                  });
+                  const tokenConflict =
+                    selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
+                  const tokenAlreadyUsed = tokenConflict;
+                  const cardView = toMvpCardView(item);
+                  const isUnavailable =
+                    !canEdit ||
+                    atCapacity ||
+                    item.isLockedByActiveContest ||
+                    tokenAlreadyUsed ||
+                    !cardView;
+
+                  return (
+                    <article
+                      key={item.instanceId}
+                      className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}
+                    >
+                      <button
+                        type="button"
+                        className="bldr-card-btn"
+                        onClick={() => {
+                          if (isUnavailable) return;
+                          onSelectCard(item.instanceId, activeSlot);
+                        }}
+                        disabled={isUnavailable}
+                      >
+                        {cardView ? (
+                          <MvpCardTile
+                            card={cardView}
+                            variant="canonical"
+                            interactive={false}
+                          />
+                        ) : (
+                          <div className="bldr-card-missing">
+                            Card preview unavailable
+                          </div>
+                        )}
+                      </button>
+                      <div className="bldr-card-meta">
+                        <strong>{item.name}</strong>
+                        <p>{item.tokenProjectName}</p>
+                        <div>
+                          <span>{item.rarityCode}</span>
+                          <span>{item.editionCode}</span>
+                          <span>{item.cardSetCode}</span>
+                        </div>
+                      </div>
+                      {isSelected ? (
+                        <span className="bldr-chip selected">
+                          Selected · Slot {slotIndex + 1}
+                        </span>
+                      ) : null}
+                      {item.isLockedByActiveContest ? (
+                        <span className="bldr-chip warn">
+                          Unavailable: locked in active contest
+                        </span>
+                      ) : null}
+                      {tokenAlreadyUsed ? (
+                        <span className="bldr-chip warn">
+                          Already used in this lineup
+                        </span>
+                      ) : null}
+                      {!cardView ? (
+                        <span className="bldr-chip warn">
+                          Unavailable: missing canonical card data
+                        </span>
+                      ) : null}
+                    </article>
+                  );
+                })}
+                {options.length === 0 ? (
+                  <p className="bldr-pool-empty">
+                    No eligible cards available for this contest.
+                  </p>
+                ) : null}
+                {options.length > 0 && filtered.length === 0 ? (
+                  <p className="bldr-pool-empty">
+                    No cards match these filters.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </section>
         </div>
 
         <footer className="bldr-footer">
