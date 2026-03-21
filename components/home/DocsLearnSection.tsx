@@ -3,7 +3,7 @@ type Props = {
 };
 
 export function DocsLearnSection({ compact = false }: Props) {
-  const eyebrow = compact ? "Docs" : "Get started";
+  const eyebrow = compact ? "Lobby intel" : "Get started";
   const title = compact ? "Learn the game." : "Join the collection obsession.";
   const description = compact
     ? "Rules, packs, contests, and scoring in one place."
@@ -22,7 +22,13 @@ export function DocsLearnSection({ compact = false }: Props) {
               <span className="mcg-chip">Docs always available</span>
               <span className="mcg-chip">Responsive onboarding</span>
             </div>
-          ) : null}
+          ) : (
+            <div className="home-docs-points home-docs-points--compact" aria-label="Dashboard support highlights">
+              <span className="mcg-chip">Contest rules</span>
+              <span className="mcg-chip">Pack odds</span>
+              <span className="mcg-chip">Scoring guide</span>
+            </div>
+          )}
         </div>
         {!compact ? (
           <div className="home-docs-art" aria-hidden="true">
@@ -35,7 +41,17 @@ export function DocsLearnSection({ compact = false }: Props) {
               </div>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="home-docs-art home-docs-art--compact" aria-hidden="true">
+            <div className="home-docs-art-card home-docs-art-card--front home-docs-art-card--compact">
+              <div className="home-docs-art-badge">Lobby guide</div>
+              <div className="home-docs-art-body">
+                <strong>Need a refresher?</strong>
+                <span>Open the docs for scoring, contest timing, and pack fundamentals.</span>
+              </div>
+            </div>
+          </div>
+        )}
         <a
           href="https://mcg-2.gitbook.io/mcg/"
           target="_blank"

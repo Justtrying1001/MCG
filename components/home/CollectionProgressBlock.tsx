@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Surface } from "@/components/ui/Surface";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -9,14 +10,16 @@ type Props = {
 
 export function CollectionProgressBlock({ completionPct, ownedCount, missingCount }: Props) {
   const hasCompletion = typeof completionPct === "number" && Number.isFinite(completionPct);
+  const width = hasCompletion ? Math.max(6, Math.min(100, completionPct)) : 18;
 
   return (
     <Surface variant="raised" className="collection-progress-block">
       <div className="mcg-home-section">
         <SectionHeader
           eyebrow="Collection"
-          title="Collection stats"
+          title="Album progress"
           subtitle="Your current collection snapshot."
+          actions={<Link href="/collection" className="mcg-btn ghost">Open album</Link>}
         />
 
         <div className="collection-progress-hero">
@@ -25,6 +28,10 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
             <div className="collection-progress-value">
               {hasCompletion ? `${completionPct}%` : "—"}
             </div>
+          </div>
+
+          <div className="collection-progress-track" aria-hidden="true">
+            <span style={{ width: `${width}%` }} />
           </div>
 
           <div className="collection-progress-stats" aria-label="Collection summary">

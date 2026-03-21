@@ -31,20 +31,26 @@ export function PlayerDashboardHeader({
   return (
     <section className="player-dash-header">
       <div className="player-dash-hero-copy">
-        <p className="player-dash-kicker">Player hub</p>
+        <p className="player-dash-kicker">Lobby main menu</p>
         <div className="player-dash-title-row">
-          <div>
-            <p className="player-dash-gm">
-              GM, <span className="player-dash-name">{shortenAddress(displayName)}</span>
-            </p>
-            <p className="player-dash-copy">
-              Your premium home for contests, collection progress, and the latest pack activity.
-            </p>
+          <div className="player-dash-identity-block">
+            <div className="player-dash-avatar" aria-hidden="true">
+              <span>{displayName.slice(0, 1).toUpperCase()}</span>
+              {typeof level === "number" ? <strong>Lvl {level}</strong> : null}
+            </div>
+            <div>
+              <p className="player-dash-gm">
+                Trainer <span className="player-dash-name">{shortenAddress(displayName)}</span>
+              </p>
+              <p className="player-dash-copy">
+                Your lobby for contests, collection momentum, and the freshest activity across MCG.
+              </p>
+            </div>
           </div>
 
           <div className="player-dash-points-panel" aria-label="Player points">
             <span className="player-dash-points-value">{points.toLocaleString()}</span>
-            <span className="player-dash-points-label">Points</span>
+            <span className="player-dash-points-label">Points bank</span>
           </div>
         </div>
 

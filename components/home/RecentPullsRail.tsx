@@ -36,7 +36,7 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
     <Surface className="mcg-anim-fade-up recent-pulls-panel" variant="raised">
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Live activity"
+          eyebrow="Live feed"
           title="Recent pulls"
           subtitle="Fresh reveals from active players across the game."
           actions={<Link href="/packs" className="mcg-btn ghost">Open packs</Link>}
@@ -44,11 +44,11 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
         {hasPulls ? (
           <div className="mcg-recent-pulls-rail" aria-label="Recent pulls feed">
             {pulls.map((pull) => (
-              <article key={pull.id} className="mcg-recent-pull-item">
+              <article key={pull.id} className="mcg-recent-pull-item lobby-pull-item">
                 <div className="mcg-recent-pull-card-wrap">
                   <MvpCardTile card={pull.card} variant="canonical" interactive={false} />
                 </div>
-                <div className="mcg-recent-pull-meta">
+                <div className="mcg-recent-pull-meta lobby-pull-meta">
                   <strong>{pull.card.displayName}</strong>
                   <span>
                     {pull.card.rarity} · {pull.card.setEditionLabel ?? pull.card.edition}
