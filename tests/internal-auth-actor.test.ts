@@ -69,4 +69,30 @@ describe("internal-auth actor normalization", () => {
     expect(result.actor.role).toBe("ADMIN_SUPERVISOR");
   });
 
+  it("rejects cross-site mutation requests for admin sessions", () => {
+    getAdminSessionFromRequestMock.mockReturnValue({ username: "alice" });
+
+    const req = new Request("http://localhost/api/internal/admin/reset-users", {
+      method: "POST",
+      headers: { origin: "https://evil.example" },
+    });
+
+    const result = requireInternalAdminAccess(req as any);
+    expect(result).toEqual({ ok: false, status: 403, error: "Cross-site admin request blocked" });
+  });
+
+  it("allows same-origin mutation requests for admin sessions", () => {
+    getAdminSessionFromRequestMock.mockReturnValue({ username: "alice" });
+
+    const req = new Request("http://localhost/api/internal/admin/reset-users", {
+      method: "POST",
+      headers: { origin: "http://localhost" },
+    });
+
+    const result = requireInternalAdminAccess(req as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mode).toBe("session");
+  });
+
 });
