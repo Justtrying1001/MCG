@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG Lineup Builder</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;family=Plus+Jakarta+Sans:wght@400;600;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dadddf",
+              "on-secondary-fixed": "#004145",
+              "on-primary-fixed": "#000000",
+              "surface-tint": "#0e0dfe",
+              "surface-container-low": "#eff1f2",
+              "surface": "#f5f6f7",
+              "on-secondary-fixed-variant": "#006066",
+              "surface-bright": "#f5f6f7",
+              "outline-variant": "#abadae",
+              "secondary-fixed": "#12f1ff",
+              "surface-container-highest": "#dadddf",
+              "error": "#b02500",
+              "secondary-container": "#12f1ff",
+              "tertiary-container": "#ff8eae",
+              "on-background": "#2c2f30",
+              "on-primary-fixed-variant": "#02009f",
+              "on-primary": "#d8d8ff",
+              "on-primary-container": "#010083",
+              "error-container": "#f95630",
+              "background": "#f5f6f7",
+              "primary-fixed": "#9097ff",
+              "on-error": "#ffefec",
+              "on-surface-variant": "#595c5d",
+              "surface-container-lowest": "#ffffff",
+              "tertiary": "#a92759",
+              "secondary-fixed-dim": "#00e1ef",
+              "surface-dim": "#d1d5d7",
+              "surface-container-high": "#e0e3e4",
+              "outline": "#757778",
+              "on-tertiary-fixed-variant": "#760037",
+              "inverse-surface": "#0c0f10",
+              "on-secondary-container": "#00555b",
+              "error-dim": "#b92902",
+              "inverse-primary": "#7c84ff",
+              "tertiary-fixed": "#ff8eae",
+              "secondary": "#00666c",
+              "inverse-on-surface": "#9b9d9e",
+              "primary-dim": "#0400e1",
+              "surface-container": "#e6e8ea",
+              "primary": "#0e0dfe",
+              "on-tertiary-fixed": "#380017",
+              "on-surface": "#2c2f30",
+              "tertiary-fixed-dim": "#ff75a0",
+              "primary-fixed-dim": "#8087ff",
+              "primary-container": "#9097ff",
+              "tertiary-dim": "#98194d",
+              "on-tertiary-container": "#66002f",
+              "on-error-container": "#520c00",
+              "on-secondary": "#cefbff",
+              "secondary-dim": "#00595e",
+              "on-tertiary": "#ffeff1",
+              "electric-yellow": "#FFEF00",
+              "acid-green": "#CCFF00"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grid-pattern {
+            background-image: radial-gradient(#abadae 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 z-50 flex justify-between items-center w-full px-6 py-4 bg-blue-600 dark:bg-blue-700 border-b-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex items-center gap-4">
+<span class="text-3xl italic font-black text-yellow-400 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] font-headline uppercase tracking-tighter">MCG</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-white underline decoration-4 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Collection</a>
+<a class="text-blue-100 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Battle</a>
+<a class="text-blue-100 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Shop</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-yellow-400 text-2xl hover:scale-110 transition-transform">notifications</button>
+<button class="material-symbols-outlined text-yellow-400 text-2xl hover:scale-110 transition-transform">settings</button>
+<div class="w-10 h-10 rounded-full border-2 border-black overflow-hidden bg-yellow-400">
+<img alt="Trainer Avatar" data-alt="Stylized character avatar profile icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY8vHRREqr4Ubigva4_D0pZTGxv1IaLR44n3rTh1vMccAcAvN3TzITw_9Fwk13EKYIb5z_H6Uu2GjOkgqQR7AF95cN0dzF9nAeRYtvTU3UM7hnJxi4Vgp-Fio8bqA2HFwL0Ovx5vm5EAbTpu_w5oy7EyAy_p_C6DkfF4KkyChlxhy66_PmbKHW1Ihc-_MXlfNrM5Vi7q8VS-VhdxROQoFs8Dg4FTPk7LH43HJwY_5rrIwrAKQrZufKX_2UGzV7Hn-AbhH78Z1foD4"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 min-h-screen grid-pattern px-4 md:px-8">
+<!-- Strategy Header -->
+<section class="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
+<div class="space-y-2">
+<h1 class="font-headline font-black text-5xl md:text-7xl uppercase tracking-tighter text-primary drop-shadow-[2px_2px_0px_white]">
+                    Tactical Lineup
+                </h1>
+<p class="font-body font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+                    SQUAD POWER: <span class="text-primary text-2xl">4,850</span>
+</p>
+</div>
+<div class="flex flex-wrap gap-2 justify-end">
+<div class="bg-acid-green border-2 border-black rounded-full px-4 py-1 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<span class="font-label font-extrabold text-[10px] uppercase">+10 ATTACK</span>
+</div>
+<div class="bg-secondary-fixed border-2 border-black rounded-full px-4 py-1 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<span class="font-label font-extrabold text-[10px] uppercase">+5 SPEED</span>
+</div>
+<div class="bg-tertiary-fixed border-2 border-black rounded-full px-4 py-1 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+<span class="font-label font-extrabold text-[10px] uppercase">SYNERGY BONUS: ACTIVE</span>
+</div>
+</div>
+</section>
+<!-- MY SQUAD Slots -->
+<section class="max-w-6xl mx-auto mb-16">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+<!-- Card Slot 1 (Occupied) -->
+<div class="relative group aspect-[3/4] bg-surface-container-lowest border-4 border-black rounded-xl shadow-[8px_8px_0px_0px_rgba(14,13,254,1)] overflow-hidden flex flex-col items-center justify-center p-2 text-center transition-all hover:-translate-y-2">
+<div class="w-full h-3/4 rounded-lg bg-surface-container-high overflow-hidden border-2 border-black mb-2">
+<img alt="Meme Card" class="w-full h-full object-cover" data-alt="Golden Retriever meme character card" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZsKi5fpS6PJVaBkvdOgUXHCVQH5XjrU1pNhdtvheVi7zjbj32mKW-hvrY58MM_w84d0Re_gERZDeNkXZ6tHFvoM4k04JVjBrtQ11wBBL4-cdMCZlpYLlw0wQm5Cei892YpruloSTVax9FOVrY4y_J2H7-EyITLn8wBIo3w7yvV96codpdkERFOS6RSIKYDouD9X0BTjjAfRRwimW-IPxw_ptPBv_ji0HeSOsxf42xvrJE41fvJpBvGM9mkTYikYUg5z76T7X4K_M"/>
+</div>
+<span class="font-headline font-black text-xs uppercase text-primary truncate w-full">Doge General</span>
+<div class="absolute -top-2 -right-2 bg-acid-green border-2 border-black p-1 rounded-full">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+</div>
+<!-- Card Slot 2 (Occupied) -->
+<div class="relative group aspect-[3/4] bg-surface-container-lowest border-4 border-black rounded-xl shadow-[8px_8px_0px_0px_rgba(14,13,254,1)] overflow-hidden flex flex-col items-center justify-center p-2 text-center transition-all hover:-translate-y-2">
+<div class="w-full h-3/4 rounded-lg bg-surface-container-high overflow-hidden border-2 border-black mb-2">
+<img alt="Meme Card" class="w-full h-full object-cover" data-alt="Grumpy cat meme character card" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADTf3Pt_a-3regW6uJUE9T7BscgB7jwV_YbhGkq3u8Q0wFOb1BIycdTjJHL_95hXW4n7Z2LqobldEEKREk_b5k-tamEFFBqd7AKwvGCHJZOx6WnsBBO5lkPhC57ammHu2nbvd08n-mz6NnjIwR34NT7_K_5EeQOX5ID9IaaUcImbszsAbI2H6sc7zdi2bauzihaMPAHD6u6SB8tVwaZ97e_Jf6uEFHuE7bJz8gb91bJt8Sil7w2LQM3XVDZTytwS4x4822DE6Q0ns"/>
+</div>
+<span class="font-headline font-black text-xs uppercase text-primary truncate w-full">Grumpy Mage</span>
+<div class="absolute -top-2 -right-2 bg-acid-green border-2 border-black p-1 rounded-full">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+</div>
+<!-- Card Slot 3 (Empty) -->
+<div class="aspect-[3/4] bg-surface-container-low border-4 border-black border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center group cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-4xl text-outline mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="font-label font-extrabold text-[10px] uppercase text-outline">Assign Meme</span>
+</div>
+<!-- Card Slot 4 (Empty) -->
+<div class="aspect-[3/4] bg-surface-container-low border-4 border-black border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center group cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-4xl text-outline mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="font-label font-extrabold text-[10px] uppercase text-outline">Assign Meme</span>
+</div>
+<!-- Card Slot 5 (Empty) -->
+<div class="aspect-[3/4] bg-surface-container-low border-4 border-black border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center group cursor-pointer hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-4xl text-outline mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="font-label font-extrabold text-[10px] uppercase text-outline">Assign Meme</span>
+</div>
+</div>
+</section>
+<!-- MEME GALLERY & FILTERS -->
+<section class="max-w-6xl mx-auto">
+<div class="bg-white border-4 border-black rounded-xl p-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+<h2 class="font-headline font-black text-3xl uppercase tracking-tight italic">MEME GALLERY</h2>
+<div class="flex gap-4 items-center">
+<select class="bg-surface-container-low border-2 border-black font-label font-bold text-xs rounded-lg px-4 py-2 focus:ring-0">
+<option>RARITY: ALL</option>
+<option>MYTHIC ONLY</option>
+<option>COMMON</option>
+</select>
+<select class="bg-surface-container-low border-2 border-black font-label font-bold text-xs rounded-lg px-4 py-2 focus:ring-0">
+<option>TYPE: ALL</option>
+<option>ATTACK</option>
+<option>DEFENSE</option>
+</select>
+</div>
+</div>
+<!-- Scrolling List -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<!-- Gallery Item 1 -->
+<div class="flex flex-col gap-2 group cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="Cool cat with sunglasses meme character" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjA05L5Q1My1QnZ6rZM1EiLkFtj-DIQht7Z6jc2IvaFVfYyK57vjwyE4LyZsROuZQDzyaAFSoyWMrDAhVzLLPHdCX34MuEw1tkVaoWEJP7K4o-hkIQfk8EJIs7pa5i2LHB0JTz6IqeLioab7dby9ZuVmzps3bphGFASG6bhJFiez651xDIkN8BSLgFUBkpMFeDsBkpgbvNLEoIJtzu8QcsLxQOaKd8WwKth1uspVkqrFgrnHA0TWrUWwizrHlbat1fzJtAaRLC_-k"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Cool Cat</span>
+<span class="font-label text-[8px] bg-tertiary-fixed border border-black px-2 rounded-full font-bold">MYTHIC</span>
+</div>
+</div>
+<!-- Gallery Item 2 -->
+<div class="flex flex-col gap-2 group cursor-pointer opacity-70 hover:opacity-100">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="Surprised pug meme character" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4iAYho0QjHW4MgtuH6Z5-uWeri1cPuEM1S2Hewp8Azp8ImBc-hjrjkBrLsv-O5QoSAN2JHbsHfxMkwG8E8hEDCAcQkLpxsrQ6vRiIXCOdsMc-09mOakNjhLMFpDIAgcThdnfVU1tMMwXuhuU8vMY5CQ_L7DMzVsXeEhVkzmr0wi3s94L06psmxs0bGBBmjBKxyfGJzQiKlfXWK-0hNwxTTUjFUCAXyIkxS_updlxM4bYyG59YzeHy1usuc1A9HhDXmLhkQfYo4go"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Confused Pug</span>
+<span class="font-label text-[8px] bg-acid-green border border-black px-2 rounded-full font-bold">COMMON</span>
+</div>
+</div>
+<!-- Gallery Item 3 -->
+<div class="flex flex-col gap-2 group cursor-pointer opacity-70 hover:opacity-100">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="Elegant cat meme character" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoYWQXPS82Hr5HmzLc440Ivt5CKlATCvD3C7NU4xCN3abOs4_KLvQa5VgjzPZOnvowaJYjDAUq3t3u1G5DiTIJ136pRbnVuT7QSzlWVWMKWYoKGtWgJ53DUo02JFYkJVgg_85MJoGlBJBqscHYPDl_-yz2Go_64tEuTwQPSvirYyRJvCFxjXkZvUWWkvkE7jNF0Kz4VNGK14TjiK902hAvAYBuj-ewGmq6zjySL_2ah5e9wJdpvWI90io3DCNRd6uD3Xwbnapc_jo"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Sir Purrsalot</span>
+<span class="font-label text-[8px] bg-secondary-fixed border border-black px-2 rounded-full font-bold">RARE</span>
+</div>
+</div>
+<!-- Gallery Item 4 -->
+<div class="flex flex-col gap-2 group cursor-pointer opacity-70 hover:opacity-100">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="Smug cat meme character" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDal82VXk48HuvSkqTv0jtLUbO4rLo5RiG6gYjo_Pdkx0sBQY5_eRpybxBeVD1SXpROWrZZs2WMmpDvFiiZfSWIDNE3wcNbInHdPhx10uf9HAij8wS_AcWO1ze1NkEbr_sBcnJbcs5jbEY1B3WptiJgG0HO-VCefE5lkMwp61HPNmEtxGqlEGfknOTD2nDckUoqTqBEcSC2KgXCRmoaB_mRm038td1mGsxX89872joWQUQspmm-MMyhK-U-0ExHQOZgVEVZxfPwvGw"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Smug Felix</span>
+<span class="font-label text-[8px] bg-acid-green border border-black px-2 rounded-full font-bold">COMMON</span>
+</div>
+</div>
+<!-- Gallery Item 5 -->
+<div class="flex flex-col gap-2 group cursor-pointer opacity-70 hover:opacity-100">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="A funny hamster meme" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHZYjER2KztguzT4KsQFWu9toRo0eatx9UzwNnLHZu1tzI2JuGBdwqsPvsEd5lmMR1Z9ng6Y4ndEIqnNaFq9lz67DeEqRmmK_PbI85tSCt48Q_hWnjizDyeea2uoARMyPkAjzzSxaVYo2L0cEd4yfCjItOvk6BW1UjxVblR015YjSV-g8E4l1rg0X-Vs_ZKwMM6Dpgl03R7nI9QsiSfXHu86AfH_qYvOa5dwnRIUR1182_md5rM3mEYdoMvmStXn3nDw0ylONAEzw"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Hamter Lord</span>
+<span class="font-label text-[8px] bg-secondary-fixed border border-black px-2 rounded-full font-bold">RARE</span>
+</div>
+</div>
+<!-- Gallery Item 6 -->
+<div class="flex flex-col gap-2 group cursor-pointer opacity-70 hover:opacity-100">
+<div class="aspect-[3/4] bg-surface-container-lowest border-2 border-black rounded-lg overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:shadow-[6px_6px_0px_0px_rgba(18,241,255,1)] group-hover:-translate-y-1 transition-all">
+<img alt="Meme" class="w-full h-full object-cover" data-alt="Funny capybara meme" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAf0FSJcp9ifQqJuRlHF1qyxnau4o_mtG1r3FYxzul38OnT6ZVZn4PkKcZP_VE5wYLtahZi5o-9u5xlSOlMqD_m4Rk8XAfXnaHeeiVfFoZOZ0oJbv6EqCLOstR1gdtifW680sYB4JBWdTfFiQcckVzLbDQqHQZvIRdtqUdwrOzEtNIgtQ9ku7vEmQgdfVW8sNffTrM02FVSJzVYpE9eszN2p-fWCntnv7gd3qD8Rk8P17r9h4ceX102BrAKLDxDMqCbJ8yX76I1pjY"/>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-headline font-bold text-[10px] uppercase">Chill Bara</span>
+<span class="font-label text-[8px] bg-tertiary-fixed border border-black px-2 rounded-full font-bold">MYTHIC</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Confirm Action Area (Floating) -->
+<div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-6">
+<button class="w-full bg-electric-yellow text-black border-4 border-black py-4 rounded-full font-headline font-black text-2xl uppercase tracking-tighter shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:translate-x-2 active:translate-y-2 active:shadow-none transition-all flex items-center justify-center gap-4">
+            CONFIRM SQUAD
+            <span class="material-symbols-outlined text-4xl">swords</span>
+</button>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center h-20 mx-4 bg-white dark:bg-gray-800 rounded-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hidden">
+<button class="flex flex-col items-center gap-1 text-gray-500 font-headline font-bold text-xs">
+<span class="material-symbols-outlined">home</span>
+<span>Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 bg-yellow-400 text-black border-2 border-black rounded-full scale-110 -translate-y-2 px-4 py-2 font-headline font-bold text-xs">
+<span class="material-symbols-outlined">style</span>
+<span>Collection</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-500 font-headline font-bold text-xs">
+<span class="material-symbols-outlined">swords</span>
+<span>Battle</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-500 font-headline font-bold text-xs">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span>Shop</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-500 font-headline font-bold text-xs">
+<span class="material-symbols-outlined">group</span>
+<span>Social</span>
+</button>
+</nav>
+</body></html>

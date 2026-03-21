@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG Lobby - The Central Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dadddf",
+              "on-secondary-fixed": "#004145",
+              "on-primary-fixed": "#000000",
+              "surface-tint": "#0e0dfe",
+              "surface-container-low": "#eff1f2",
+              "surface": "#f5f6f7",
+              "on-secondary-fixed-variant": "#006066",
+              "surface-bright": "#f5f6f7",
+              "outline-variant": "#abadae",
+              "secondary-fixed": "#12f1ff",
+              "surface-container-highest": "#dadddf",
+              "error": "#b02500",
+              "secondary-container": "#12f1ff",
+              "tertiary-container": "#ff8eae",
+              "on-background": "#2c2f30",
+              "on-primary-fixed-variant": "#02009f",
+              "on-primary": "#d8d8ff",
+              "on-primary-container": "#010083",
+              "error-container": "#f95630",
+              "background": "#f5f6f7",
+              "primary-fixed": "#9097ff",
+              "on-error": "#ffefec",
+              "on-surface-variant": "#595c5d",
+              "surface-container-lowest": "#ffffff",
+              "tertiary": "#a92759",
+              "secondary-fixed-dim": "#00e1ef",
+              "surface-dim": "#d1d5d7",
+              "surface-container-high": "#e0e3e4",
+              "outline": "#757778",
+              "on-tertiary-fixed-variant": "#760037",
+              "inverse-surface": "#0c0f10",
+              "on-secondary-container": "#00555b",
+              "error-dim": "#b92902",
+              "inverse-primary": "#7c84ff",
+              "tertiary-fixed": "#ff8eae",
+              "secondary": "#00666c",
+              "inverse-on-surface": "#9b9d9e",
+              "primary-dim": "#0400e1",
+              "surface-container": "#e6e8ea",
+              "primary": "#0e0dfe",
+              "on-tertiary-fixed": "#380017",
+              "on-surface": "#2c2f30",
+              "tertiary-fixed-dim": "#ff75a0",
+              "primary-fixed-dim": "#8087ff",
+              "primary-container": "#9097ff",
+              "tertiary-dim": "#98194d",
+              "on-tertiary-container": "#66002f",
+              "on-error-container": "#520c00",
+              "on-secondary": "#cefbff",
+              "secondary-dim": "#00595e",
+              "on-tertiary": "#ffeff1"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: radial-gradient(circle, #abadae 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col overflow-x-hidden bg-grid-pattern">
+<!-- TopAppBar -->
+<header class="bg-blue-600 dark:bg-blue-700 docked full-width top-0 border-b-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50 sticky">
+<div class="flex justify-between items-center w-full px-6 py-4">
+<div class="flex items-center gap-4">
+<span class="text-3xl italic font-black text-yellow-400 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] font-['Space_Grotesk'] uppercase tracking-tighter">MCG</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white underline decoration-4 font-['Space_Grotesk'] font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none" href="#">Lobby</a>
+<a class="text-blue-100 font-['Space_Grotesk'] font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none" href="#">Market</a>
+<a class="text-blue-100 font-['Space_Grotesk'] font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none" href="#">Guilds</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-yellow-400 dark:text-yellow-300 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-yellow-400 dark:text-yellow-300 hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" data-icon="settings">settings</button>
+<div class="h-10 w-10 rounded-full border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white">
+<img alt="Trainer Avatar" data-alt="Stylized character avatar for player profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdqEgzyTzxIqS8-67Wu9UIuDEAL6M5JDrMZ3ivzlkckzo8KHEDa-iPE7TB8T1wuXcCF4QpTQORwAUDlXlj2I0FPUXqpsYClbNY_neZK6fEnwQjZEiyiIfW9ebZJwZ0i5zGUPhz_fql4RFWeBI3HLOXUaIKNyV4CEu5gaSXwblYPOdXSHX_1Pz6Uqru8sxayO8amaEMTzxiYhaccMq4fbTRS_dV46gHiD1mGPwBvpOAIzo3ErRrSU8gsrc51yZA3JwRUr-hW_UlGGs"/>
+</div>
+</div>
+</div>
+</header>
+<!-- LIVE NOW Ticker -->
+<div class="bg-yellow-400 border-b-4 border-black py-2 overflow-hidden whitespace-nowrap z-40 relative">
+<div class="inline-block animate-marquee font-headline font-black uppercase italic tracking-wider text-black text-sm">
+            LIVE NOW: TOURNAMENT "CYBER DUST" STARTS IN 14:20 • PLAYER_X JUST PULLED A MYTHIC [GIGA-DRAKE]! • 2X COINS EVENT ACTIVE • JOIN THE LOBBY NOW • 
+            LIVE NOW: TOURNAMENT "CYBER DUST" STARTS IN 14:20 • PLAYER_X JUST PULLED A MYTHIC [GIGA-DRAKE]! • 2X COINS EVENT ACTIVE • JOIN THE LOBBY NOW • 
+        </div>
+</div>
+<main class="flex-grow container mx-auto px-4 pt-8 pb-32">
+<!-- Player Identity Card -->
+<section class="mb-10 relative">
+<div class="bg-surface-container-lowest border-4 border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto flex flex-col md:flex-row items-center gap-6">
+<div class="relative">
+<div class="w-24 h-24 rounded-full border-4 border-black bg-primary flex items-center justify-center overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="Cartoon style player avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdwKnnmd43ltEbT0atlWxVVd8LZEoDv__1UuEDc_4pB-rdvDK3rQqfyS7tixT-6W1y23aJwNOSt3o_t2yR9p_eZDwU7X_zDRGjhupY4TMvKdYiA7JS3_03fWFF3RQY8n4h8RwFUcaBBbBhO-LmdAWBDrMgBzfTELD5VLAxz_dvn4sdFHc0JyUb4MBDXXUd_fa9yzfkhNsSwJOchW7E2G4PPnb0bFzWxcsYwIrgMZI69kkrKiFi-XEgMto3nNzpHW-iec4fjsNSevA"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-yellow-400 border-2 border-black rounded-full px-2 py-0.5 font-headline font-black text-xs">LVL 42</div>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h1 class="font-headline text-3xl font-black uppercase tracking-tight text-on-surface">TRAINER_NEO</h1>
+<p class="font-label text-xs uppercase font-bold tracking-widest text-outline mb-4">Rank: Platinum Elite</p>
+<!-- XP Bar -->
+<div class="w-full bg-surface-container-high rounded-full h-6 border-2 border-black relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-secondary-fixed w-[75%]"></div>
+<span class="absolute inset-0 flex items-center justify-center font-headline font-black text-[10px] text-black">12,450 / 15,000 XP</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full md:w-auto">
+<div class="bg-white border-2 border-black rounded-full px-4 py-2 flex items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-yellow-500 text-lg" data-icon="database" style="font-variation-settings: 'FILL' 1;">database</span>
+<span class="font-headline font-black">2,450</span>
+</div>
+<span class="font-label text-[10px] font-bold text-outline uppercase">GEMS</span>
+</div>
+<div class="bg-white border-2 border-black rounded-full px-4 py-2 flex items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-500 text-lg" data-icon="monetization_on" style="font-variation-settings: 'FILL' 1;">monetization_on</span>
+<span class="font-headline font-black">84,100</span>
+</div>
+<span class="font-label text-[10px] font-bold text-outline uppercase">COINS</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Mode Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+<!-- BATTLE ARENA - Hero Card -->
+<button class="md:col-span-2 md:row-span-2 group relative overflow-hidden bg-tertiary border-4 border-black rounded-xl p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none flex flex-col justify-end min-h-[400px]">
+<div class="absolute top-4 right-4 bg-white border-2 border-black rounded-full px-3 py-1 font-headline font-bold text-xs uppercase">Queue: 1.2s</div>
+<div class="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[200px] text-white" data-icon="swords" style="font-variation-settings: 'FILL' 1;">swords</span>
+</div>
+<div class="relative z-10 text-left">
+<span class="material-symbols-outlined text-white text-6xl mb-4" data-icon="swords" style="font-variation-settings: 'FILL' 1;">swords</span>
+<h2 class="font-headline text-5xl font-black text-white uppercase leading-none mb-2">BATTLE ARENA</h2>
+<p class="font-body text-on-tertiary text-lg font-medium">Climb the leaderboard in Ranked 1v1</p>
+</div>
+</button>
+<!-- MY COLLECTION -->
+<button class="md:col-span-2 group relative overflow-hidden bg-secondary-fixed border-4 border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none flex items-center gap-6 text-left">
+<div class="bg-white border-4 border-black rounded-full p-4 flex-shrink-0 group-hover:rotate-12 transition-transform">
+<span class="material-symbols-outlined text-secondary-dim text-4xl" data-icon="menu_book" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+</div>
+<div>
+<h2 class="font-headline text-3xl font-black text-on-secondary-fixed uppercase leading-none">MY COLLECTION</h2>
+<div class="flex gap-4 mt-2">
+<div class="flex flex-col">
+<span class="font-label text-[10px] font-black uppercase text-secondary-dim">CARDS</span>
+<span class="font-headline font-black text-lg">142/500</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[10px] font-black uppercase text-secondary-dim">DECKS</span>
+<span class="font-headline font-black text-lg">04</span>
+</div>
+</div>
+</div>
+</button>
+<!-- BOOSTER SHOP -->
+<button class="md:col-span-2 group relative overflow-hidden bg-yellow-400 border-4 border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none flex items-center gap-6 text-left">
+<div class="bg-black border-4 border-yellow-400 rounded-xl p-4 flex-shrink-0 group-hover:scale-110 transition-transform shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+<span class="material-symbols-outlined text-yellow-400 text-4xl" data-icon="featured_seasonal_and_gifts" style="font-variation-settings: 'FILL' 1;">featured_seasonal_and_gifts</span>
+</div>
+<div>
+<h2 class="font-headline text-3xl font-black text-black uppercase leading-none">BOOSTER SHOP</h2>
+<p class="font-label text-xs font-bold text-black opacity-70 uppercase tracking-tighter mt-1">NEW: "GALACTIC OMEN" PACK AVAILABLE</p>
+</div>
+<div class="ml-auto">
+<span class="bg-error text-white font-headline font-black text-xs px-3 py-1 rounded-full border-2 border-black">SALE</span>
+</div>
+</button>
+<!-- DAILY QUESTS -->
+<div class="md:col-span-4 bg-surface-container-lowest border-4 border-black rounded-xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline text-xl font-black uppercase tracking-tight">DAILY QUESTS</h3>
+<span class="font-label text-[10px] font-bold text-outline">REFRESH IN 08H 12M</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border-2 border-black">
+<span class="material-symbols-outlined text-green-600" data-icon="check_circle">check_circle</span>
+<div class="flex-grow">
+<p class="font-headline text-sm font-black uppercase">Win 3 Battles</p>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden mt-1">
+<div class="bg-green-500 h-full w-full"></div>
+</div>
+</div>
+<span class="font-headline font-black text-xs text-secondary-dim">+500</span>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border-2 border-black">
+<span class="material-symbols-outlined text-outline" data-icon="pending">pending</span>
+<div class="flex-grow">
+<p class="font-headline text-sm font-black uppercase">Open 1 Pack</p>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden mt-1">
+<div class="bg-primary h-full w-0"></div>
+</div>
+</div>
+<span class="font-headline font-black text-xs text-secondary-dim">+200</span>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border-2 border-black">
+<span class="material-symbols-outlined text-outline" data-icon="pending">pending</span>
+<div class="flex-grow">
+<p class="font-headline text-sm font-black uppercase">Level Up 1 Card</p>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden mt-1">
+<div class="bg-primary h-full w-1/2"></div>
+</div>
+</div>
+<span class="font-headline font-black text-xs text-secondary-dim">+350</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center h-20 mx-4 bg-white dark:bg-gray-800 rounded-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:hidden">
+<button class="flex flex-col items-center justify-center bg-yellow-400 text-black border-2 border-black rounded-full scale-110 -translate-y-2 px-4 py-2 font-['Space_Grotesk'] font-bold text-xs active:scale-95 duration-75">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span>Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 px-2 py-1 font-['Space_Grotesk'] font-bold text-xs hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75">
+<span class="material-symbols-outlined" data-icon="style">style</span>
+<span>Collection</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 px-2 py-1 font-['Space_Grotesk'] font-bold text-xs hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75">
+<span class="material-symbols-outlined" data-icon="swords">swords</span>
+<span>Battle</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 px-2 py-1 font-['Space_Grotesk'] font-bold text-xs hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span>Shop</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 px-2 py-1 font-['Space_Grotesk'] font-bold text-xs hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Social</span>
+</button>
+</nav>
+<!-- Floating Action Button (Only for specific primary intent - here used for Quick Battle) -->
+<button class="fixed bottom-24 right-6 md:bottom-8 md:right-8 bg-tertiary text-white w-16 h-16 rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center hover:scale-110 transition-transform active:translate-y-1 active:shadow-none z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</body></html>
