@@ -26,6 +26,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
 
         return (
           <div key={item.templateId} className="collection-card-tile memedex-card-tile">
+            <div className="memedex-slot-tab" aria-hidden="true">Owned slot</div>
             <button
               type="button"
               className="collection-card-tile-trigger memedex-card-trigger"
@@ -60,6 +61,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
 
       {Array.from({ length: lockedPreviewCount }, (_, index) => (
         <div key={`locked-${index}`} className="collection-card-tile memedex-card-tile memedex-card-tile--locked" aria-label="Locked Memedex entry">
+          <div className="memedex-slot-tab memedex-slot-tab--locked" aria-hidden="true">Locked slot</div>
           <div className="memedex-card-trigger memedex-card-trigger--locked" aria-hidden="true">
             <span className="memedex-card-rarity-bar rarity-locked" />
             <div className="memedex-card-frame memedex-card-frame--locked">

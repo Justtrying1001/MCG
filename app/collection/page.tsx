@@ -139,7 +139,8 @@ export default function CollectionPage() {
           completionWidth={completionWidth}
         />
 
-        <Surface variant="raised" className="memedex-toolbar-shell">
+        <Surface variant="raised" className="memedex-toolbar-shell memedex-control-shell">
+          <div className="memedex-control-ribbon">Album tools</div>
           <div className="collection-toolbar memedex-toolbar">
             <div className="collection-data-block memedex-data-block">
               <span className="mcg-eyebrow">Memedex status</span>
@@ -281,34 +282,51 @@ export default function CollectionPage() {
           </div>
         </Surface>
 
-        {!me ? (
-          <CardGrid
-            items={guestCollection}
-            onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
-            guestMode
-          />
-        ) : !useMvpCollection ? (
-          <EmptyState
-            title="Memedex data unavailable"
-            description="Refresh your session and verify the Memedex payload."
-          />
-        ) : visibleCards.length > 0 ? (
-          <CardGrid
-            items={visibleCards}
-            onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
-            missingCount={missingTemplates}
-          />
-        ) : me && sourceCollection.length === 0 ? (
-          <EmptyState
-            title="Your Memedex is empty"
-            description="Open your first pack to discover your first Memedex entry."
-          />
-        ) : (
-          <EmptyState
-            title="No Memedex entries match"
-            description="Try a different search or filter to surface more discovered cards."
-          />
-        )}
+        <section className="memedex-gallery-stage">
+          <div className="memedex-gallery-head">
+            <div>
+              <p className="mcg-eyebrow">Album view</p>
+              <h2 className="memedex-gallery-title">Collectible slots</h2>
+              <p className="memedex-gallery-copy">
+                Browse discovered cards and locked spaces like a real collectible
+                album instead of a plain inventory table.
+              </p>
+            </div>
+            <div className="memedex-gallery-stats" aria-label="Album summary">
+              <span>Showing {shownCount}</span>
+              <span>{me ? `${ownedTemplates.toLocaleString()} discovered` : `${guestUnique} preview cards`}</span>
+            </div>
+          </div>
+
+          {!me ? (
+            <CardGrid
+              items={guestCollection}
+              onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
+              guestMode
+            />
+          ) : !useMvpCollection ? (
+            <EmptyState
+              title="Memedex data unavailable"
+              description="Refresh your session and verify the Memedex payload."
+            />
+          ) : visibleCards.length > 0 ? (
+            <CardGrid
+              items={visibleCards}
+              onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
+              missingCount={missingTemplates}
+            />
+          ) : me && sourceCollection.length === 0 ? (
+            <EmptyState
+              title="Your Memedex is empty"
+              description="Open your first pack to discover your first Memedex entry."
+            />
+          ) : (
+            <EmptyState
+              title="No Memedex entries match"
+              description="Try a different search or filter to surface more discovered cards."
+            />
+          )}
+        </section>
 
         {me && missingTemplates > 0 ? (
           <MissingCardsShelf missingCount={missingTemplates} />

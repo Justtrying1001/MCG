@@ -30,6 +30,7 @@ export function CollectionHeader({
     >
       <div className="collection-header-wrap memedex-header-wrap">
         <div className="memedex-header-copy">
+          <div className="memedex-header-stamp">Collector album</div>
           <SectionHeader
             eyebrow="Your Memedex"
             title="The album"
@@ -52,6 +53,7 @@ export function CollectionHeader({
           className="memedex-header-progress"
           aria-label="Memedex completion summary"
         >
+          <div className="memedex-header-medal" aria-hidden="true">★</div>
           <div className="memedex-header-progress-top">
             <span>Memedex progress</span>
             <strong>

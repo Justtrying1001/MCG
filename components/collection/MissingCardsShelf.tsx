@@ -16,6 +16,7 @@ export function MissingCardsShelf({ missingCount }: MissingCardsShelfProps) {
           title="Still missing from your Memedex"
           subtitle={missingCount > 0 ? `${missingCount} templates left before your album is complete.` : "You are currently complete on visible templates."}
         />
+        <div className="missing-shelf-banner">Completion chase</div>
         <div className="missing-shelf-grid" aria-label="Missing Memedex entry placeholders">
           {placeholders.map((idx) => (
             <div key={idx} className="missing-shelf-card">

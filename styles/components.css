@@ -12380,3 +12380,264 @@ button.mcg-chip:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Memedex second pass ===== */
+.stitch-memedex-screen {
+  gap: 1.45rem;
+  padding-bottom: 2.75rem;
+}
+
+.stitch-memedex-screen .memedex-header-shell,
+.stitch-memedex-screen .memedex-toolbar-shell,
+.stitch-memedex-screen .missing-shelf-surface,
+.stitch-memedex-screen .memedex-gallery-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.stitch-memedex-screen .memedex-header-shell {
+  background: linear-gradient(180deg, #fff7bf 0%, #ffd9ea 42%, #d7f8ff 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.memedex-header-stamp {
+  display: inline-flex;
+  margin-bottom: 0.9rem;
+  min-height: 34px;
+  padding: 0 14px;
+  align-items: center;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #ffef55;
+  box-shadow: 6px 6px 0 #111;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stitch-memedex-screen .memedex-header-wrap {
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+}
+
+.stitch-memedex-screen .memedex-header-progress {
+  position: relative;
+  padding-top: 3.5rem;
+  background: linear-gradient(180deg, #fffef6 0%, #fff0b5 100%);
+}
+
+.memedex-header-medal {
+  position: absolute;
+  top: 0.9rem;
+  right: 1rem;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: #ffef55;
+  box-shadow: 6px 6px 0 #111;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.stitch-memedex-screen .memedex-toolbar-shell {
+  background: linear-gradient(180deg, #fffef8 0%, #dbfbff 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.memedex-control-shell {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.memedex-control-ribbon {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 14px;
+  align-items: center;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #2437ff;
+  box-shadow: 6px 6px 0 #111;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stitch-memedex-screen .memedex-data-block,
+.stitch-memedex-screen .memedex-sort-block {
+  background: linear-gradient(180deg, #fff 0%, #f6fbff 100%);
+}
+
+.stitch-memedex-screen .memedex-progress-callout {
+  background: linear-gradient(180deg, #fff6b5 0%, #ffef82 100%);
+  box-shadow: 6px 6px 0 #111;
+}
+
+.stitch-memedex-screen .memedex-filter-pill {
+  min-height: 44px;
+  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+}
+
+.stitch-memedex-screen .memedex-filter-pill.is-active {
+  background: linear-gradient(180deg, #ffef55 0%, #ffd96a 100%);
+}
+
+.stitch-memedex-screen .collection-select,
+.stitch-memedex-screen .memedex-search-input {
+  background: linear-gradient(180deg, #fff 0%, #fffdf2 100%);
+}
+
+.memedex-gallery-stage {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border: 4px solid #111;
+  border-radius: 34px;
+  background: linear-gradient(180deg, #fffdf2 0%, #ffe9f2 40%, #ffffff 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.memedex-gallery-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.memedex-gallery-title {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.memedex-gallery-copy {
+  margin: 0.35rem 0 0;
+  max-width: 56ch;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.memedex-gallery-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.memedex-gallery-stats span,
+.memedex-slot-tab {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 4px 4px 0 #111;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.memedex-slot-tab {
+  justify-self: start;
+  margin-bottom: -0.1rem;
+  background: #d7f8ff;
+}
+
+.memedex-slot-tab--locked {
+  background: #fff1a8;
+}
+
+.stitch-memedex-screen .memedex-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.15rem;
+}
+
+.stitch-memedex-screen .memedex-card-tile {
+  gap: 0.45rem;
+}
+
+.stitch-memedex-screen .memedex-card-trigger {
+  background: linear-gradient(180deg, #fff 0%, #edfaff 100%);
+  box-shadow: 8px 8px 0 #111;
+}
+
+.stitch-memedex-screen .memedex-card-trigger--locked {
+  background: linear-gradient(180deg, #fffdf2 0%, #f0f2f5 100%);
+}
+
+.stitch-memedex-screen .memedex-card-frame {
+  background: linear-gradient(180deg, #fffef8 0%, #ecfbff 100%);
+}
+
+.stitch-memedex-screen .memedex-card-frame--locked {
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0 14px, rgba(255, 255, 255, 0.82) 14px 28px);
+}
+
+.stitch-memedex-screen .memedex-card-meta {
+  padding: 0.2rem 0.25rem 0;
+}
+
+.stitch-memedex-screen .memedex-card-status {
+  background: linear-gradient(180deg, #d8fcff 0%, #bef8ff 100%);
+}
+
+.stitch-memedex-screen .memedex-card-status--locked {
+  background: linear-gradient(180deg, #fff7c9 0%, #ffe996 100%);
+}
+
+.stitch-memedex-screen .missing-shelf-surface {
+  background: linear-gradient(180deg, #fff5b7 0%, #ffdce9 100%);
+  box-shadow: 10px 10px 0 #111;
+}
+
+.missing-shelf-banner {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 12px;
+  align-items: center;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #2437ff;
+  color: #fff;
+  box-shadow: 6px 6px 0 #111;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .memedex-gallery-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stitch-memedex-screen .memedex-header-wrap,
+  .stitch-memedex-screen .memedex-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .stitch-memedex-screen .memedex-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
