@@ -75,6 +75,21 @@ export type LinkedWalletEnvelope = {
   };
 };
 
+export type LinkedTwitterSummary = {
+  providerUserId: string;
+  username: string | null;
+  displayName: string | null;
+  linkedAt: string;
+  lastSeenAt: string | null;
+  isVerified: boolean;
+};
+
+export type LinkedSocialEnvelope = {
+  linkedSocials: {
+    twitter: LinkedTwitterSummary | null;
+  };
+};
+
 export type MeCoexistenceEnvelope = {
   coexistence?: {
     v2?: {
@@ -87,7 +102,7 @@ export type MeCoexistenceEnvelope = {
   };
 };
 
-export type UserSessionPayload = MeCoexistenceEnvelope & LinkedWalletEnvelope & {
+export type UserSessionPayload = MeCoexistenceEnvelope & LinkedWalletEnvelope & LinkedSocialEnvelope & {
   mode: "user";
   user: {
     id: string;

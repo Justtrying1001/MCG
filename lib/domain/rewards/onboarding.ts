@@ -104,6 +104,20 @@ async function upsertIdentities(
   }
 }
 
+async function updateUserFromIdentityGraph(
+  tx: Prisma.TransactionClient,
+  params: { userId: string; profile: PrivyIdentityGraph },
+) {
+  return tx.user.update({
+    where: { id: params.userId },
+    data: {
+      displayName: resolveDisplayName(params.profile),
+      handle: resolveHandle(params.profile),
+      avatarUrl: params.profile.avatarUrl ?? undefined,
+    },
+  });
+}
+
 export async function upsertUserFromPrivyIdentityGraphWithWelcome(
   tx: Prisma.TransactionClient,
   profile: PrivyIdentityGraph,
@@ -171,20 +185,20 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
   return { user, created: !existingUser };
 }
 
-export async function linkWalletIdentitiesToExistingUser(
+export async function linkPrivyIdentitiesToExistingUser(
   tx: Prisma.TransactionClient,
   params: {
     userId: string;
-    privyUserId: string;
-    identities: ResolvedIdentityAccount[];
+    profile: PrivyIdentityGraph;
+    allowedProviders: UserIdentityProvider[];
   },
 ) {
   const identities = uniqueIdentityAccounts(
-    params.identities.filter((identity) => identity.provider === UserIdentityProvider.WALLET_SOLANA),
+    params.profile.identities.filter((identity) => params.allowedProviders.includes(identity.provider)),
   );
 
   if (identities.length === 0) {
-    throw new IdentityLinkingError("No Solana wallet found on the Privy user");
+    throw new IdentityLinkingError("No linkable identity found on the Privy user");
   }
 
   const user = await tx.user.findUnique({
@@ -199,7 +213,7 @@ export async function linkWalletIdentitiesToExistingUser(
     where: {
       provider_providerUserId: {
         provider: UserIdentityProvider.PRIVY,
-        providerUserId: params.privyUserId,
+        providerUserId: params.profile.privyUserId,
       },
     },
     select: { userId: true },
@@ -225,6 +239,35 @@ export async function linkWalletIdentitiesToExistingUser(
   });
 
   await upsertIdentities(tx, params.userId, identities, existingIdentities);
+  await updateUserFromIdentityGraph(tx, { userId: params.userId, profile: params.profile });
 
   return identities;
+}
+
+export async function linkWalletIdentitiesToExistingUser(
+  tx: Prisma.TransactionClient,
+  params: {
+    userId: string;
+    profile: PrivyIdentityGraph;
+  },
+) {
+  return linkPrivyIdentitiesToExistingUser(tx, {
+    userId: params.userId,
+    profile: params.profile,
+    allowedProviders: [UserIdentityProvider.WALLET_SOLANA],
+  });
+}
+
+export async function linkTwitterIdentityToExistingUser(
+  tx: Prisma.TransactionClient,
+  params: {
+    userId: string;
+    profile: PrivyIdentityGraph;
+  },
+) {
+  return linkPrivyIdentitiesToExistingUser(tx, {
+    userId: params.userId,
+    profile: params.profile,
+    allowedProviders: [UserIdentityProvider.TWITTER],
+  });
 }

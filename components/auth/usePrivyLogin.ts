@@ -98,7 +98,7 @@ export function usePrivyLogin() {
     }
   }, [authenticated, getAccessToken, ready, refresh]);
 
-  const loginWithPrivy = useCallback(async () => {
+  const startLogin = useCallback(async () => {
     if (loginAttemptInFlightRef.current) {
       return false;
     }
@@ -127,7 +127,10 @@ export function usePrivyLogin() {
       }
 
       writePendingLoginRequest(true);
-      login({ loginMethods: ["twitter"] });
+      login({
+        loginMethods: ["twitter", "wallet"],
+        walletChainType: "solana-only",
+      });
       return true;
     } finally {
       loginAttemptInFlightRef.current = false;
@@ -154,8 +157,9 @@ export function usePrivyLogin() {
     authenticated,
     isStartingLogin,
     isSyncingSession,
-    loginWithPrivy,
+    loginWithPrivy: startLogin,
+    openConnectModal: startLogin,
     logoutFromApp,
     ready,
-  }), [authenticated, isStartingLogin, isSyncingSession, loginWithPrivy, logoutFromApp, ready]);
+  }), [authenticated, isStartingLogin, isSyncingSession, startLogin, logoutFromApp, ready]);
 }

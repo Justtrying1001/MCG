@@ -7585,3 +7585,28 @@ a { color: inherit; text-decoration: none; }
 .profile-wallet-card__feedback.is-success {
   color: #79f0c1;
 }
+
+
+.profile-identity-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+.profile-identity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.profile-identity-item > div {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.profile-identity-item span {
+  color: var(--text-2);
+  font-size: 0.86rem;
+  word-break: break-all;
+}

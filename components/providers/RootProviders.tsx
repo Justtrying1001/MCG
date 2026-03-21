@@ -24,10 +24,10 @@ export function RootProviders({ children }: { children: ReactNode }) {
           accentColor: "#c89b3c",
           theme: "dark",
           showWalletLoginFirst: false,
-          walletChainType: "ethereum-and-solana",
+          walletChainType: "solana-only",
           walletList: ["phantom", "solflare", "backpack", "wallet_connect"],
         },
-        loginMethods: ["twitter"],
+        loginMethods: ["twitter", "wallet"],
         externalWallets: {
           solana: {
             connectors: solanaWalletConnectors,

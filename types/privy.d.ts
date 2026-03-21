@@ -37,6 +37,7 @@ declare module "@privy-io/react-auth" {
     onError?: (error: unknown) => void;
   }): {
     linkWallet: (options?: Record<string, unknown>) => void;
+    linkTwitter: (options?: Record<string, unknown>) => void;
   };
 }
 

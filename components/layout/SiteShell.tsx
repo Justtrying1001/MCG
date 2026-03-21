@@ -68,7 +68,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   disabled={!ready || isStartingLogin}
                   onClick={() => void loginWithPrivy()}
                 >
-                  Connect with X
+                  Connect
                 </Button>
               </>
             )}

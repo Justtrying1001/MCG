@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useLinkAccount, usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
@@ -10,54 +10,72 @@ type LinkState = {
   message: string | null;
 };
 
+async function assertSuccessfulLink(response: Response, fallbackMessage: string) {
+  const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+  if (!response.ok) {
+    throw new Error(payload?.error || fallbackMessage);
+  }
+}
+
 export function SolanaWalletCard() {
   const { me, refresh } = useSession();
   const { authenticated, getAccessToken, ready } = usePrivy();
   const linkedWallets = me?.linkedWallets.solanaWallets ?? [];
+  const linkedTwitter = me?.linkedSocials.twitter ?? null;
   const hasWallet = linkedWallets.length > 0;
-  const [isLinking, setIsLinking] = useState(false);
+  const hasTwitter = Boolean(linkedTwitter);
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+  const [isLinkingTwitter, setIsLinkingTwitter] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>({ kind: "idle", message: null });
+  const pendingLinkTypeRef = useRef<"wallet" | "twitter" | null>(null);
 
-  const syncWalletLink = useCallback(async () => {
+  const syncLinkedIdentity = useCallback(async (route: string, fallbackMessage: string) => {
     const accessToken = await getAccessToken();
     if (!accessToken) {
-      throw new Error("Privy access token unavailable after wallet link");
+      throw new Error("Privy access token unavailable after identity link");
     }
 
-    const response = await fetch("/api/auth/privy/link-wallet", {
+    const response = await fetch(route, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accessToken }),
     });
 
-    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-    if (!response.ok) {
-      throw new Error(payload?.error || "Wallet linking failed");
-    }
-
+    await assertSuccessfulLink(response, fallbackMessage);
     await refresh();
   }, [getAccessToken, refresh]);
 
-  const { linkWallet } = useLinkAccount({
+  const { linkWallet, linkTwitter } = useLinkAccount({
     onSuccess: () => {
       void (async () => {
-        setIsLinking(true);
+        const pendingLinkType = pendingLinkTypeRef.current;
+        if (!pendingLinkType) return;
+
         try {
-          await syncWalletLink();
-          setLinkState({ kind: "success", message: "Solana wallet linked successfully." });
+          if (pendingLinkType === "wallet") {
+            await syncLinkedIdentity("/api/auth/privy/link-wallet", "Wallet linking failed");
+            setLinkState({ kind: "success", message: "Solana wallet linked successfully." });
+          } else {
+            await syncLinkedIdentity("/api/auth/privy/link-twitter", "Twitter linking failed");
+            setLinkState({ kind: "success", message: "Twitter account linked successfully." });
+          }
         } catch (error) {
           setLinkState({
             kind: "error",
-            message: error instanceof Error ? error.message : "Unable to persist linked wallet.",
+            message: error instanceof Error ? error.message : "Unable to persist linked identity.",
           });
         } finally {
-          setIsLinking(false);
+          pendingLinkTypeRef.current = null;
+          setIsLinkingWallet(false);
+          setIsLinkingTwitter(false);
         }
       })();
     },
     onError: (error) => {
-      setIsLinking(false);
-      const message = error instanceof Error ? error.message : "Wallet link cancelled or failed.";
+      pendingLinkTypeRef.current = null;
+      setIsLinkingWallet(false);
+      setIsLinkingTwitter(false);
+      const message = error instanceof Error ? error.message : "Identity link cancelled or failed.";
       setLinkState({ kind: "error", message });
     },
   });
@@ -69,50 +87,78 @@ export function SolanaWalletCard() {
   }, [primaryWallet]);
 
   const handleLinkWallet = useCallback(() => {
-    if (!ready || !authenticated || isLinking) return;
+    if (!ready || !authenticated || isLinkingWallet || isLinkingTwitter) return;
     setLinkState({ kind: "idle", message: null });
-    setIsLinking(true);
+    pendingLinkTypeRef.current = "wallet";
+    setIsLinkingWallet(true);
     linkWallet({
       walletChainType: "solana-only",
       walletList: ["phantom", "solflare", "backpack", "wallet_connect"],
-      description: "Link a Solana wallet to your existing MCG profile.",
+      description: "Link a Solana wallet to your MCG account.",
     });
-  }, [authenticated, isLinking, linkWallet, ready]);
+  }, [authenticated, isLinkingTwitter, isLinkingWallet, linkWallet, ready]);
+
+  const handleLinkTwitter = useCallback(() => {
+    if (!ready || !authenticated || isLinkingWallet || isLinkingTwitter) return;
+    setLinkState({ kind: "idle", message: null });
+    pendingLinkTypeRef.current = "twitter";
+    setIsLinkingTwitter(true);
+    linkTwitter();
+  }, [authenticated, isLinkingTwitter, isLinkingWallet, linkTwitter, ready]);
 
   return (
     <section className="mcg-surface profile-wallet-card">
       <div className="profile-wallet-card__header">
         <div>
-          <p className="mcg-eyebrow">Solana wallet</p>
-          <h3>Connect wallet</h3>
+          <p className="mcg-eyebrow">Identity links</p>
+          <h3>Connect accounts</h3>
         </div>
-        <span className={`profile-wallet-badge ${hasWallet ? "is-linked" : "is-empty"}`}>
-          {hasWallet ? "wallet linked" : "no wallet linked"}
+        <span className={`profile-wallet-badge ${hasWallet && hasTwitter ? "is-linked" : "is-empty"}`}>
+          {hasWallet && hasTwitter ? "all linked" : "link available"}
         </span>
       </div>
 
       <p className="profile-wallet-card__copy">
-        Link an external Solana wallet to prepare token-gating and holder checks, without changing your X login.
+        Sign in with either X or a Solana wallet at entry, then link the missing identity here for the full MCG profile.
       </p>
 
-      {primaryWallet ? (
-        <div className="profile-wallet-card__address">
-          <strong>{primaryWalletShort}</strong>
-          <span>{primaryWallet.address}</span>
+      <div className="profile-identity-grid">
+        <div className="profile-identity-item">
+          <div>
+            <p className="mcg-eyebrow">Twitter / X</p>
+            <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "No X account linked"}</strong>
+          </div>
+          <Button
+            variant={hasTwitter ? "ghost" : "primary"}
+            className="btn-sm"
+            disabled={!ready || !authenticated || hasTwitter || isLinkingTwitter || isLinkingWallet}
+            onClick={handleLinkTwitter}
+          >
+            {isLinkingTwitter ? "Linking X…" : hasTwitter ? "X linked" : "Link X"}
+          </Button>
         </div>
-      ) : (
-        <p className="profile-wallet-card__empty">No Solana wallet linked to this MCG account yet.</p>
-      )}
 
-      <div className="profile-wallet-card__actions">
-        <Button
-          variant={hasWallet ? "ghost" : "primary"}
-          className="btn-sm"
-          disabled={!ready || !authenticated || isLinking}
-          onClick={handleLinkWallet}
-        >
-          {isLinking ? "Linking wallet…" : hasWallet ? "Link another Solana wallet" : "Connect Solana wallet"}
-        </Button>
+        <div className="profile-identity-item">
+          <div>
+            <p className="mcg-eyebrow">Solana wallet</p>
+            {primaryWallet ? (
+              <>
+                <strong>{primaryWalletShort}</strong>
+                <span>{primaryWallet.address}</span>
+              </>
+            ) : (
+              <strong>No Solana wallet linked</strong>
+            )}
+          </div>
+          <Button
+            variant={hasWallet ? "ghost" : "primary"}
+            className="btn-sm"
+            disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
+            onClick={handleLinkWallet}
+          >
+            {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Link another wallet" : "Link Solana wallet"}
+          </Button>
+        </div>
       </div>
 
       {linkState.message ? (

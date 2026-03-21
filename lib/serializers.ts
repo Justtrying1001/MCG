@@ -31,6 +31,23 @@ function serializeLinkedWallets(identities: UserIdentity[]) {
   };
 }
 
+function serializeLinkedSocials(identities: UserIdentity[]) {
+  const twitter = identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER) ?? null;
+
+  return {
+    twitter: twitter
+      ? {
+          providerUserId: twitter.providerUserId,
+          username: twitter.username,
+          displayName: twitter.displayName,
+          linkedAt: twitter.linkedAt.toISOString(),
+          lastSeenAt: twitter.lastSeenAt?.toISOString() ?? null,
+          isVerified: twitter.isVerified,
+        }
+      : null,
+  };
+}
+
 export function buildUserPayload(params: {
   user: User;
   ownedInstances: OwnedInstanceWithTemplate[];
@@ -96,6 +113,7 @@ export function buildUserPayload(params: {
       packsOpened: params.user.packsOpened,
     },
     linkedWallets: serializeLinkedWallets(params.identities ?? []),
+    linkedSocials: serializeLinkedSocials(params.identities ?? []),
     mvpCollection,
   };
 }
