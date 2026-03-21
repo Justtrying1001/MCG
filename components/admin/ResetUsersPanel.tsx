@@ -9,6 +9,8 @@ type ResetResponse = {
   ok: boolean;
   error?: string;
   deletedUsers?: number;
+  deletedUserSessions?: number;
+  deletedUserIdentities?: number;
   resetRewardPackSupplyRows?: number;
   resetPackDefinitionsCount?: number;
 };
@@ -113,6 +115,8 @@ export function ResetUsersPanel({ enabled, isSupervisor, resetEnabled, resetFlag
               <AdminStatusBadge tone="success" label="SUCCESS" />
               <p>
                 Deleted users: <strong>{result.deletedUsers ?? 0}</strong> ·
+                deleted sessions: <strong>{result.deletedUserSessions ?? 0}</strong> ·
+                deleted identities: <strong>{result.deletedUserIdentities ?? 0}</strong> ·
                 reset reward pack rows: <strong>{result.resetRewardPackSupplyRows ?? 0}</strong> · pack definitions reset: <strong>{result.resetPackDefinitionsCount ?? 0}</strong>
               </p>
             </>
