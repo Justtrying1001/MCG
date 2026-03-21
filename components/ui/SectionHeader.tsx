@@ -10,12 +10,12 @@ type SectionHeaderProps = {
 export function SectionHeader({ eyebrow, title, subtitle, actions }: SectionHeaderProps) {
   return (
     <div className="mcg-section-header">
-      <div>
+      <div className="mcg-section-copy">
         {eyebrow ? <p className="mcg-eyebrow">{eyebrow}</p> : null}
         <h2 className="mcg-title">{title}</h2>
         {subtitle ? <p className="mcg-subtitle">{subtitle}</p> : null}
       </div>
-      {actions ? <div>{actions}</div> : null}
+      {actions ? <div className="mcg-section-actions">{actions}</div> : null}
     </div>
   );
 }

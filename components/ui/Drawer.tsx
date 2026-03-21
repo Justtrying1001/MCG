@@ -23,13 +23,13 @@ export function Drawer({ open, title, children, onClose }: DrawerProps) {
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
-        <div className="modal-head">
-          <h3>{title}</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
+    <div className="mcg-overlay" onClick={onClose}>
+      <div className="mcg-drawer" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+        <div className="mcg-modal-head">
+          <h3 className="mcg-modal-title">{title}</h3>
+          <button type="button" className="mcg-icon-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
-        <div className="modal-content">{children}</div>
+        <div className="mcg-modal-content">{children}</div>
       </div>
     </div>
   );

@@ -9,9 +9,9 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export function Button({ variant = "primary", icon, className = "", children, ...props }: Props) {
   return (
-    <button className={`btn btn-${variant} ${className}`.trim()} {...props}>
-      {icon ? <span className="btn-icon">{icon}</span> : null}
-      <span>{children}</span>
+    <button className={`btn btn-${variant} ${className}`.trim()} data-variant={variant} {...props}>
+      {icon ? <span className="btn-icon" aria-hidden="true">{icon}</span> : null}
+      <span className="btn-label">{children}</span>
     </button>
   );
 }

@@ -16,7 +16,7 @@ export function Surface<T extends ElementType = "section">({
 }: SurfaceProps<T>) {
   const Component = as ?? "section";
   return (
-    <Component className={`mcg-surface ${variant === "base" ? "" : variant} ${className}`.trim()} {...rest}>
+    <Component className={`mcg-surface ${variant === "base" ? "" : variant} ${className}`.trim()} data-surface-variant={variant} {...rest}>
       {children}
     </Component>
   );

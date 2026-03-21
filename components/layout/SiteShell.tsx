@@ -61,20 +61,18 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  className="btn-sm"
-                  disabled={!ready || isStartingLogin}
-                  onClick={() => void loginWithPrivy()}
-                >
-                  Connect with X
-                </Button>
-              </>
+              <Button
+                variant="ghost"
+                className="btn-sm"
+                disabled={!ready || isStartingLogin}
+                onClick={() => void loginWithPrivy()}
+              >
+                Connect with X
+              </Button>
             )}
 
-            <Button variant="ghost" className="btn-sm mcg-mobile-menu-btn" onClick={() => setOpenMobile((v) => !v)}>
-              Menu
+            <Button variant="gold" className="btn-sm mcg-mobile-menu-btn" onClick={() => setOpenMobile((v) => !v)}>
+              {openMobile ? "Close" : "Menu"}
             </Button>
           </div>
         </div>
