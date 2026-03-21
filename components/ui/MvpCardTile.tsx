@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { MvpCardView } from "@/types/cards";
-import { getEditionTheme, getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
+import { getRarityTheme, getRarityVars } from "@/components/ui/mvpCardTheme";
 
 type CardVariant = "canonical" | "zoom";
 
@@ -42,27 +42,31 @@ const getCardText = (card: MvpCardView) => {
   return "No flavor text available in token-master.";
 };
 
+const getEditionBadge = (setName: string) => {
+  const compact = setName.trim().toUpperCase();
+  if (compact.length <= 8) return compact;
+  return compact.slice(0, 8);
+};
+
 export function MvpCardTile({ card, quantity: _quantity, variant = "canonical", interactive = true, imageLoading = "lazy" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
-  const editionTheme = getEditionTheme(card.edition);
   const cardNumber = getPrintedCardNumber(card);
   const pullNumber = getPullNumber(card);
 
-  const setName = card.setCode ?? DEFAULT_SET_NAME;
+  const setName = (card.setCode ?? DEFAULT_SET_NAME).toUpperCase();
   const setEdition = card.setEditionLabel ?? DEFAULT_SET_EDITION;
-  const editionBadge = editionTheme.badgeLabel || editionTheme.label.toUpperCase();
+  const editionBadge = getEditionBadge(setName);
 
   const cardStyle = getRarityVars(rarityTheme) as CSSProperties;
 
   return (
     <article
-      className={`mvp-premium-card ${editionTheme.editionClass} variant-${variant}${interactive ? "" : " is-static"}`}
+      className={`mvp-premium-card variant-${variant}${interactive ? "" : " is-static"}`}
       style={cardStyle}
       data-card-variant={variant}
     >
       <div className="mvp-card-grain" aria-hidden="true" />
       <div className="mvp-card-inner-line" aria-hidden="true" />
-      <div className="mvp-card-rarity-rail" aria-hidden="true" />
 
       <header className="mvp-card-header">
         <div className="mvp-card-header-topline">
@@ -78,7 +82,7 @@ export function MvpCardTile({ card, quantity: _quantity, variant = "canonical", 
       <div className="mvp-card-art-stage">
         <div className="mvp-card-art-frame-outer">
           <div className="mvp-card-art-frame-accent">
-            <div className={`mvp-card-art-shell${editionTheme.hasFoilEffect ? " has-foil" : ""}`}>
+            <div className="mvp-card-art-shell">
               {card.imageUrl ? (
                 <Image
                   src={card.imageUrl}
@@ -90,7 +94,6 @@ export function MvpCardTile({ card, quantity: _quantity, variant = "canonical", 
               ) : (
                 <div className="mvp-card-art-placeholder">MCG</div>
               )}
-              {editionTheme.hasFoilEffect ? <div className="mvp-card-edition-foil" aria-hidden="true" /> : null}
             </div>
           </div>
         </div>
