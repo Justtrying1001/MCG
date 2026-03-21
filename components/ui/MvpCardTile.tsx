@@ -42,16 +42,6 @@ const getCardText = (card: MvpCardView) => {
   return "No flavor text available in token-master.";
 };
 
-function Corner({ stroke, detail, dot }: { stroke: string; detail: boolean; dot: boolean }) {
-  return (
-    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1 13V1H13" stroke={stroke} strokeWidth={dot ? "1" : "0.9"} />
-      {detail && <rect x="1" y="1" width="3" height="3" stroke={stroke} strokeWidth="0.6" opacity="0.7" fill="none" />}
-      {dot && <circle cx="2.5" cy="2.5" r="0.7" fill={stroke} opacity="0.6" />}
-    </svg>
-  );
-}
-
 export function MvpCardTile({ card, quantity, variant = "canonical", interactive = true, imageLoading = "lazy" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
@@ -61,7 +51,6 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
   const setName = card.setCode ?? DEFAULT_SET_NAME;
   const setEdition = card.setEditionLabel ?? DEFAULT_SET_EDITION;
   const editionBadge = editionTheme.badgeLabel || editionTheme.label.toUpperCase();
-
   const cardStyle = getRarityVars(rarityTheme) as CSSProperties;
 
   return (
@@ -69,8 +58,13 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
       className={`mvp-premium-card ${editionTheme.editionClass} variant-${variant}${interactive ? "" : " is-static"}`}
       style={cardStyle}
       data-card-variant={variant}
+      data-rarity={rarityTheme.code}
+      data-edition={editionTheme.code}
     >
+      <div className="mvp-card-stock" aria-hidden="true" />
       <div className="mvp-card-grain" aria-hidden="true" />
+      <div className="mvp-card-patina" aria-hidden="true" />
+      <div className="mvp-card-frame-shadow" aria-hidden="true" />
 
       {editionTheme.needsReverseLayers && (
         <>
@@ -107,22 +101,10 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
         </>
       )}
 
-      <span className="mvp-corner mvp-corner-tl" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-tr" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-bl" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-br" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
       <header className="mvp-card-header">
         <div className="mvp-card-header-text">
           <span className="mvp-card-name">{card.displayName}</span>
-          <span className="mvp-card-ticker">${card.symbol}</span>
+          <span className="mvp-card-ticker">${card.symbol} · {setName}</span>
         </div>
         <div className="mvp-card-header-badges">
           <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
@@ -131,6 +113,7 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
       </header>
 
       <div className="mvp-card-art-shell" style={editionTheme.needsMcgArtLayer || editionTheme.needsReverseLayers ? { visibility: "hidden" } : undefined}>
+        <div className="mvp-card-art-frame" aria-hidden="true" />
         {card.imageUrl ? (
           <Image
             src={card.imageUrl}
@@ -145,7 +128,10 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
       </div>
 
       <section className="mvp-card-textbox">
-        <p>{getCardText(card)}</p>
+        <div className="mvp-card-textbox-inner">
+          <span className="mvp-card-textbox-label">Collector notes</span>
+          <p>{getCardText(card)}</p>
+        </div>
       </section>
 
       <footer className="mvp-card-footer">
@@ -158,8 +144,8 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
               : `MAX ${padCardNumber(card.plannedSupply)}`
             : "UNLTD"}
         </span>
+        {typeof quantity === "number" && quantity > 1 ? <span className="mvp-footer-quantity">x{quantity}</span> : null}
       </footer>
-
     </article>
   );
 }
