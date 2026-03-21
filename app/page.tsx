@@ -16,6 +16,7 @@ import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
 import { CollectionProgressBlock } from "@/components/home/CollectionProgressBlock";
+import { LobbyTicker } from "@/components/home/LobbyTicker";
 
 type ContestListItem = {
   id: string;
@@ -97,25 +98,47 @@ export default function HomePage() {
     return typeof userInfo.ownedTemplates === "number" || typeof userInfo.missingTemplates === "number";
   }, [userInfo]);
 
+  const tickerItems = useMemo(() => {
+    if (!userInfo) return [];
+
+    const nextContest = contests[0];
+    const latestPull = recentPulls[0];
+    const rows = [
+      typeof userInfo.level === "number" ? `Trainer level ${userInfo.level} ready for the lobby` : "",
+      typeof userInfo.seasonRank === "number" ? `Season rank #${userInfo.seasonRank} on the board` : "",
+      typeof userInfo.completionPct === "number" ? `Memedex at ${userInfo.completionPct}% completion` : "",
+      nextContest ? `${nextContest.title} ${nextContest.status === "OPEN" ? "open for entries" : `currently ${nextContest.status.toLowerCase()}`}` : "",
+      latestPull ? `${latestPull.playerName} just revealed ${latestPull.card.displayName}` : "",
+      `${contests.length} active contest${contests.length === 1 ? "" : "s"} loaded`,
+    ];
+
+    return rows.filter(Boolean);
+  }, [contests, recentPulls, userInfo]);
+
   return (
     <SiteShell>
       {isAuth && userInfo ? (
         <div className="home-dashboard-layout">
+          <LobbyTicker items={tickerItems} />
+
           <PlayerDashboardHeader
             displayName={userInfo.displayName}
             points={userInfo.points}
             level={userInfo.level}
             activeEntries={userInfo.activeEntries}
+            completionPct={userInfo.completionPct}
+            ownedTemplates={userInfo.ownedTemplates}
+            missingTemplates={userInfo.missingTemplates}
             seasonRank={userInfo.seasonRank}
           />
 
           <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
-            <div className="home-dashboard-main-column">
+            <div className="home-dashboard-main-column home-dashboard-main-column--hero">
               <ActiveContestsRail contests={contests} />
             </div>
 
             {hasCollectionSummary ? (
-              <aside className="home-dashboard-side-column">
+              <aside className="home-dashboard-side-column home-dashboard-side-column--console">
                 <CollectionProgressBlock
                   completionPct={userInfo.completionPct}
                   ownedCount={userInfo.ownedTemplates ?? 0}
@@ -125,9 +148,10 @@ export default function HomePage() {
             ) : null}
           </div>
 
-          <RecentPullsRail pulls={recentPulls} />
-
-          <DocsLearnSection compact />
+          <div className="home-dashboard-secondary-grid">
+            <RecentPullsRail pulls={recentPulls} />
+            <DocsLearnSection compact />
+          </div>
         </div>
       ) : (
         <>

@@ -35,9 +35,9 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
     <Surface variant="raised" className="active-contests-panel">
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Lobby queue"
+          eyebrow="Battle arena"
           title="Active contests"
-          subtitle="Jump into live windows and review where you already have an entry."
+          subtitle="Your loudest mode tile: jump into live windows, check lineups, and move straight into the arena."
           actions={<Link href="/contests" className="mcg-btn ghost">All contests</Link>}
         />
         {contests.length === 0 ? (
