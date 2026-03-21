@@ -112,6 +112,9 @@ export function buildUserPayload(params: {
       points: params.user.points,
       packsOpened: params.user.packsOpened,
     },
+    onboarding: {
+      needsHandle: !params.user.handle,
+    },
     linkedWallets: serializeLinkedWallets(params.identities ?? []),
     linkedSocials: serializeLinkedSocials(params.identities ?? []),
     mvpCollection,

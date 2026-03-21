@@ -90,6 +90,12 @@ export type LinkedSocialEnvelope = {
   };
 };
 
+export type OnboardingEnvelope = {
+  onboarding: {
+    needsHandle: boolean;
+  };
+};
+
 export type MeCoexistenceEnvelope = {
   coexistence?: {
     v2?: {
@@ -102,7 +108,7 @@ export type MeCoexistenceEnvelope = {
   };
 };
 
-export type UserSessionPayload = MeCoexistenceEnvelope & LinkedWalletEnvelope & LinkedSocialEnvelope & {
+export type UserSessionPayload = MeCoexistenceEnvelope & LinkedWalletEnvelope & LinkedSocialEnvelope & OnboardingEnvelope & {
   mode: "user";
   user: {
     id: string;
