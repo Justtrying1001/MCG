@@ -1,8 +1,22 @@
 import Link from "next/link";
-import type { ContestListItem, ContestRule, ContestStatus } from "@/components/contests/types";
-import { buildContestBonusRewardSummary, parseContestBonusRewards } from "@/components/contests/bonusRewards";
-import { getContestStateMessaging, getPhaseLabel } from "@/components/contests/contestLifecycle";
-import { formatCountdown, formatDate, getTargetDate } from "@/components/contests/contestUtils";
+import type {
+  ContestListItem,
+  ContestRule,
+  ContestStatus,
+} from "@/components/contests/types";
+import {
+  buildContestBonusRewardSummary,
+  parseContestBonusRewards,
+} from "@/components/contests/bonusRewards";
+import {
+  getContestStateMessaging,
+  getPhaseLabel,
+} from "@/components/contests/contestLifecycle";
+import {
+  formatCountdown,
+  formatDate,
+  getTargetDate,
+} from "@/components/contests/contestUtils";
 import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Surface } from "@/components/ui/Surface";
@@ -19,16 +33,20 @@ function getRewardHighlight(contest: ContestListItem, rosterSize: number) {
   const topPercent = rewardConfig?.rewardedTopPercent ?? 25;
   const pointsPool = rewardConfig?.pointsPool;
   const packPool = rewardConfig?.packPool;
-  const fallbackPoints = contest.rewardPreview?.amount ?? Math.max(100, rosterSize * 40);
+  const fallbackPoints =
+    contest.rewardPreview?.amount ?? Math.max(100, rosterSize * 40);
 
   if (pointsPool || packPool) {
     const rewards: string[] = [];
     rewards.push(`${pointsPool ?? fallbackPoints} pts`);
-    if ((packPool ?? 0) > 0) rewards.push(`${packPool} pack${packPool === 1 ? "" : "s"}`);
+    if ((packPool ?? 0) > 0)
+      rewards.push(`${packPool} pack${packPool === 1 ? "" : "s"}`);
     return `Top ${topPercent}% · ${rewards.join(" + ")}`;
   }
 
-  return contest.rewardPreview?.label ?? `Top ${topPercent}% · ${fallbackPoints} pts`;
+  return (
+    contest.rewardPreview?.label ?? `Top ${topPercent}% · ${fallbackPoints} pts`
+  );
 }
 
 function toBadgeTone(status: ContestStatus) {
@@ -50,7 +68,11 @@ function getGroupCta(group: ContestCardGroup, contest: ContestListItem) {
   return "View results";
 }
 
-function getTimingLabel(group: ContestCardGroup, contest: ContestListItem, nowTs: number) {
+function getTimingLabel(
+  group: ContestCardGroup,
+  contest: ContestListItem,
+  nowTs: number,
+) {
   if (group === "upcoming") {
     return {
       label: "Starts",
@@ -67,7 +89,10 @@ function getTimingLabel(group: ContestCardGroup, contest: ContestListItem, nowTs
 
   return {
     label: "Time left",
-    value: formatCountdown(getTargetDate(contest.status, contest.lockAt, contest.endsAt), nowTs),
+    value: formatCountdown(
+      getTargetDate(contest.status, contest.lockAt, contest.endsAt),
+      nowTs,
+    ),
   };
 }
 
@@ -93,7 +118,9 @@ export function ContestCard({
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
   const timing = getTimingLabel(group, contest, nowTs);
   const stateMessaging = getContestStateMessaging(contest.status);
-  const bonusSummary = buildContestBonusRewardSummary(parseContestBonusRewards(rule?.config?.bonusRewards));
+  const bonusSummary = buildContestBonusRewardSummary(
+    parseContestBonusRewards(rule?.config?.bonusRewards),
+  );
   const ctaLabel = getGroupCta(group, contest);
 
   return (
@@ -102,14 +129,20 @@ export function ContestCard({
       variant="raised"
       className={`contest-lobby-card contest-lobby-card-${group} contest-lobby-card-${contest.status.toLowerCase()}`}
     >
+      <div className="contest-lobby-card-accent-bar" aria-hidden="true" />
       <div className="contest-lobby-card-topline">
         <span className="contest-lobby-card-code">{contest.code}</span>
-        <StatusBadge tone={toBadgeTone(contest.status)} label={getPhaseLabel(contest.status)} />
+        <StatusBadge
+          tone={toBadgeTone(contest.status)}
+          label={getPhaseLabel(contest.status)}
+        />
       </div>
 
       <div className="contest-lobby-card-head">
         <div>
-          <p className="contest-lobby-card-kicker">{getContestTypeLabel(contest)}</p>
+          <p className="contest-lobby-card-kicker">
+            {getContestTypeLabel(contest)}
+          </p>
           <h3>{contest.title}</h3>
         </div>
         <div className="contest-lobby-card-timing">
@@ -127,7 +160,10 @@ export function ContestCard({
         <Chip label={`${contest._count.entries} players`} />
       </div>
 
-      <div className="contest-lobby-card-grid" aria-label="Contest quick details">
+      <div
+        className="contest-lobby-card-grid"
+        aria-label="Contest quick details"
+      >
         <div className="contest-lobby-card-panel">
           <span>Type / tier</span>
           <strong>{getContestTypeLabel(contest)}</strong>
@@ -136,12 +172,18 @@ export function ContestCard({
         <div className="contest-lobby-card-panel">
           <span>Entry</span>
           <strong>{getEntryLabel(rule)}</strong>
-          <small>{contest.userEntry ? "Lineup on file" : "No lineup submitted yet"}</small>
+          <small>
+            {contest.userEntry ? "Lineup on file" : "No lineup submitted yet"}
+          </small>
         </div>
         <div className="contest-lobby-card-panel contest-lobby-card-panel-highlight">
           <span>Reward highlight</span>
           <strong>{rewardHighlight}</strong>
-          <small>{bonusSummary ? `Bonus: ${bonusSummary}` : "Standard placement rewards"}</small>
+          <small>
+            {bonusSummary
+              ? `Bonus: ${bonusSummary}`
+              : "Standard placement rewards"}
+          </small>
         </div>
       </div>
 
@@ -151,7 +193,11 @@ export function ContestCard({
           <strong>{stateMessaging.shortLabel}</strong>
         </div>
 
-        <Link href={`/contests/${contest.id}`} className="mcg-btn primary" aria-label={`${ctaLabel} ${contest.title}`}>
+        <Link
+          href={`/contests/${contest.id}`}
+          className="mcg-btn primary contest-lobby-card-cta"
+          aria-label={`${ctaLabel} ${contest.title}`}
+        >
           {ctaLabel}
         </Link>
       </div>

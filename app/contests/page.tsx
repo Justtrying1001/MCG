@@ -14,6 +14,26 @@ type ContestPayload = { contests?: ContestListItem[] };
 
 type LobbyGroupKey = "active" | "upcoming" | "completed";
 
+function getZoneTone(group: LobbyGroupKey) {
+  if (group === "active") return "active";
+  if (group === "upcoming") return "upcoming";
+  return "completed";
+}
+
+function getZoneEyebrow(group: LobbyGroupKey) {
+  if (group === "active") return "Arena floor";
+  if (group === "upcoming") return "Entry gates";
+  return "Victory archive";
+}
+
+function getZoneBadge(group: LobbyGroupKey, count: number) {
+  if (group === "active")
+    return `${count} clash${count === 1 ? "" : "es"} live`;
+  if (group === "upcoming")
+    return `${count} bracket${count === 1 ? "" : "s"} opening`;
+  return `${count} result board${count === 1 ? "" : "s"}`;
+}
+
 function getFeaturedContest(contests: ContestListItem[]) {
   return (
     contests.find((contest) => contest.status === "LIVE") ??
@@ -188,28 +208,65 @@ export default function ContestsPage() {
     <SiteShell>
       <div className="contest-lobby-layout stitch-screen stitch-contests-screen">
         <Surface className="contest-lobby-hero" variant="raised">
-          <div className="contest-lobby-hero-copy">
-            <p className="mcg-eyebrow">Live competition hub</p>
-            <h1>Contests</h1>
-            <p>
-              Jump into active clashes, scout the next wave of lobbies, and
-              review the last results board without leaving the arena.
-            </p>
-            <div
-              className="contest-lobby-hero-chips"
-              aria-label="Contest lobby summary"
-            >
-              <Chip label={`${computed.active} active`} />
-              <Chip label={`${computed.upcoming} upcoming`} />
-              <Chip label={`${computed.completed} completed`} />
-              <Chip label={`${computed.activePlayers} players in motion`} />
+          <div className="contest-lobby-hero-stage">
+            <div className="contest-lobby-hero-copy">
+              <p className="contest-lobby-hero-kicker">Arena central</p>
+              <h1>Contests</h1>
+              <p className="contest-lobby-hero-description">
+                Enter the tournament map, scout the hottest rooms in the arena,
+                and move from live clashes to upcoming brackets without leaving
+                the battle board.
+              </p>
+              <div
+                className="contest-lobby-hero-chips"
+                aria-label="Contest lobby summary"
+              >
+                <Chip label={`${computed.active} active`} />
+                <Chip label={`${computed.upcoming} upcoming`} />
+                <Chip label={`${computed.completed} completed`} />
+                <Chip label={`${computed.activePlayers} players in motion`} />
+              </div>
+              <div className="contest-lobby-hero-action-row">
+                <div className="contest-lobby-hero-action-card tone-live">
+                  <span>Live arena pulse</span>
+                  <strong>{computed.activePlayers.toLocaleString()}</strong>
+                  <small>Players moving through open or live contests.</small>
+                </div>
+                <div className="contest-lobby-hero-action-card tone-open">
+                  <span>Bracket queue</span>
+                  <strong>{computed.upcoming}</strong>
+                  <small>Upcoming contests waiting for lineup locks.</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="contest-lobby-map-board" aria-hidden="true">
+              <div className="contest-lobby-map-path">
+                <span className="node node-live" />
+                <span className="path" />
+                <span className="node node-open" />
+                <span className="path" />
+                <span className="node node-settled" />
+              </div>
+              <div className="contest-lobby-map-grid">
+                <div className="contest-lobby-map-tile tone-live">
+                  <strong>LIVE</strong>
+                  <span>{computed.active} rooms</span>
+                </div>
+                <div className="contest-lobby-map-tile tone-open">
+                  <strong>OPEN</strong>
+                  <span>{computed.upcoming} rooms</span>
+                </div>
+                <div className="contest-lobby-map-tile tone-settled">
+                  <strong>SETTLED</strong>
+                  <span>{computed.completed} boards</span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="contest-lobby-featured">
-            <span className="contest-lobby-featured-label">
-              Featured contest
-            </span>
+            <span className="contest-lobby-featured-label">Spotlight room</span>
             {featuredContest ? (
               <>
                 <strong>{featuredContest.title}</strong>
@@ -218,6 +275,14 @@ export default function ContestsPage() {
                   {featuredContest._count.entries} players ·{" "}
                   {featuredContest.leagueTierRequired ?? "OPEN"} tier
                 </p>
+                <div className="contest-lobby-featured-rail">
+                  <span>{featuredContest.status}</span>
+                  <span>
+                    {featuredContest.userEntry
+                      ? `Your entry ${featuredContest.userEntry.status}`
+                      : "No entry on file"}
+                  </span>
+                </div>
               </>
             ) : (
               <>
@@ -297,7 +362,10 @@ export default function ContestsPage() {
             />
           </div>
         ) : (
-          <div className="contest-lobby-sections" aria-live="polite">
+          <div
+            className="contest-lobby-sections contest-lobby-map-sections"
+            aria-live="polite"
+          >
             {(
               [
                 {
@@ -333,8 +401,20 @@ export default function ContestsPage() {
               return (
                 <section
                   key={section.key}
-                  className={`contest-lobby-section contest-lobby-section-${section.key}`}
+                  className={`contest-lobby-section contest-lobby-section-${section.key} zone-${getZoneTone(section.key)}`}
                 >
+                  <div className="contest-lobby-section-banner">
+                    <div className="contest-lobby-section-banner-copy">
+                      <span className="contest-lobby-section-banner-eyebrow">
+                        {getZoneEyebrow(section.key)}
+                      </span>
+                      <strong>{section.title}</strong>
+                      <p>{section.subtitle}</p>
+                    </div>
+                    <span className="contest-lobby-section-banner-badge">
+                      {getZoneBadge(section.key, section.contests.length)}
+                    </span>
+                  </div>
                   <SectionHeader
                     eyebrow="Contest state"
                     title={section.title}
