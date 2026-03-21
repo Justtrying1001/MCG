@@ -118,7 +118,7 @@ export default function AccountPage() {
 
   return (
     <SiteShell>
-      <div className="profile-account-layout">
+      <div className="profile-account-layout stitch-screen stitch-profile-screen">
         {!me ? (
           <>
             <div className="profile-account-hero-grid">

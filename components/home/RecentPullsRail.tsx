@@ -38,7 +38,7 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
         <SectionHeader
           eyebrow="Live feed"
           title="Recent pulls"
-          subtitle="Fresh reveals from active players across the game."
+          subtitle="Legendary reveals rolling through the lobby right now."
           actions={<Link href="/packs" className="mcg-btn ghost">Open packs</Link>}
         />
         {hasPulls ? (

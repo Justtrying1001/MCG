@@ -520,7 +520,6 @@ export default function PacksPage() {
     return Array.from(grouped.values());
   }, [rewardGrants]);
 
-
   const featuredPackDescription = me
     ? "Rip into the live featured drop using your points balance and reveal the cards instantly."
     : "Test the tactile reveal flow with a preview, then connect when you want your next pack to count.";
@@ -541,181 +540,191 @@ export default function PacksPage() {
 
   return (
     <SiteShell>
-      <section className="packs-main-section">
-        <div className="packs-main-header">
-          <div>
-            <p className="packs-main-kicker">Pack store</p>
-            <h2>Featured drop</h2>
-          </div>
-          <p className="packs-main-intro">
-            A collectible-first storefront for live drops and reward inventory,
-            using the exact same pack actions and reveal flow already wired into
-            the page.
-          </p>
-        </div>
-
-        <FeaturedPackStage
-          packImageSrc={officialPackImage}
-          packName={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
-          cardsPerPack={cardsPerPack}
-          remaining={packRemaining}
-          planned={packPlanned}
-          isOpening={isOpening}
-          openingPhase={openingPhase}
-          canOpen={!isOpening && openingPhase !== "tearing"}
-          onOpen={() => void openPack()}
-          onOpenOdds={() => setOddsOpen(true)}
-          rarityOdds={rarityOddsForDisplay}
-          editionOdds={editionOddsForDisplay}
-          userPoints={me?.user?.points}
-          purchaseLimit={purchaseLimit}
-          statusNotice={saleNotice}
-          isGuest={!me}
-          guestHeadline="Discover what can be inside"
-          guestSupportingCopy="Run a short preview reveal now, then connect with X when you want the next reveal to count toward your real inventory."
-          onConnectWithX={() => void loginWithPrivy()}
-          guestCtaLabel="Connect wallet / X to open your pack"
-        />
-      </section>
-
-      <section className="packs-shop-section">
-        <div className="packs-shop-header">
-          <div>
-            <p className="packs-main-kicker">Collectible shop</p>
-            <h2>Browse packs</h2>
-          </div>
-          <p>
-            Every card below reuses the current live data, pricing, ownership,
-            and opening actions already available on this page.
-          </p>
-        </div>
-
-        <div className="packs-shop-grid">
-          <PackCard
-            imageSrc={officialPackImage}
-            imageAlt={`${packConfig?.pack?.displayName ?? "Genesis pack"} pack`}
-            eyebrow="Featured pack"
-            name={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
-            description={featuredPackDescription}
-            priceLabel={me ? `${GAME_CONFIG.PACK_COST} pts` : "Preview first"}
-            infoLabel={
-              purchaseLimit?.enabled
-                ? purchaseLimit.isBlocked
-                  ? "Daily cap reached"
-                  : `${purchaseLimit.used}/${purchaseLimit.limit ?? 0} purchased`
-                : "Live inventory"
-            }
-            ctaLabel={
-              isOpening || openingPhase === "tearing"
-                ? "Opening…"
-                : me
-                  ? "Open featured pack"
-                  : "View preview"
-            }
-            onAction={() => void openPack()}
-            disabled={isOpening || openingPhase === "tearing"}
-            tags={featuredPackTags}
-            accent="gold"
-          />
-
-          {me && !loadingRewardGrants && groupedRewardGrants.map((group) => {
-            const quantity = group.grants.length;
-            const nextGrantId = group.grants[0]?.id;
-            const isOpeningThisGroup = Boolean(
-              openingRewardGrantId &&
-                group.grants.some((grant) => grant.id === openingRewardGrantId),
-            );
-
-            return (
-              <PackCard
-                key={group.key}
-                imageSrc={officialPackImage}
-                imageAlt={`${group.displayName} pack`}
-                eyebrow={group.sourceLabel}
-                name={group.displayName}
-                description={
-                  group.description ??
-                  "Special pack awarded for your progress in MCG."
-                }
-                priceLabel="Reward pack"
-                infoLabel={`${quantity} ready to open`}
-                ctaLabel={isOpeningThisGroup ? "Opening…" : "Open reward pack"}
-                onAction={() => {
-                  if (!nextGrantId) return;
-                  void openRewardPack(nextGrantId);
-                }}
-                disabled={
-                  isOpening ||
-                  !nextGrantId ||
-                  isOpeningThisGroup ||
-                  openingPhase === "tearing"
-                }
-                quantityLabel={quantity > 1 ? `x${quantity}` : undefined}
-                tags={[
-                  quantity > 1 ? `${quantity} copies` : "Single pack",
-                  "Earned inventory",
-                ]}
-                accent="violet"
-              />
-            );
-          })}
-        </div>
-
-        {me ? (
-          <section className="reward-packs-section">
-            <div className="reward-packs-header">
-              <p className="reward-packs-kicker">Reward inventory</p>
-              <h2>Reward Packs</h2>
-              <p className="reward-packs-intro">
-                Packs earned from contests, quests, and future rewards. Open your
-                earned packs here.
-              </p>
+      <div className="stitch-screen stitch-packs-screen">
+        <section className="packs-main-section stitch-pack-stage-shell">
+          <div className="packs-main-header">
+            <div>
+              <p className="packs-main-kicker">Pack store</p>
+              <h2>Featured drop</h2>
             </div>
+            <p className="packs-main-intro">
+              A collectible-first storefront for live drops and reward
+              inventory, using the exact same pack actions and reveal flow
+              already wired into the page.
+            </p>
+          </div>
 
-            {rewardNotice ? (
-              <div
-                className={`packs-inline-notice packs-inline-notice--${rewardNotice.tone}`}
-                role="status"
-                aria-live="polite"
-              >
-                <strong>{rewardNotice.title}</strong>
-                {rewardNotice.detail ? <span>{rewardNotice.detail}</span> : null}
+          <FeaturedPackStage
+            packImageSrc={officialPackImage}
+            packName={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
+            cardsPerPack={cardsPerPack}
+            remaining={packRemaining}
+            planned={packPlanned}
+            isOpening={isOpening}
+            openingPhase={openingPhase}
+            canOpen={!isOpening && openingPhase !== "tearing"}
+            onOpen={() => void openPack()}
+            onOpenOdds={() => setOddsOpen(true)}
+            rarityOdds={rarityOddsForDisplay}
+            editionOdds={editionOddsForDisplay}
+            userPoints={me?.user?.points}
+            purchaseLimit={purchaseLimit}
+            statusNotice={saleNotice}
+            isGuest={!me}
+            guestHeadline="Discover what can be inside"
+            guestSupportingCopy="Run a short preview reveal now, then connect with X when you want the next reveal to count toward your real inventory."
+            onConnectWithX={() => void loginWithPrivy()}
+            guestCtaLabel="Connect wallet / X to open your pack"
+          />
+        </section>
+
+        <section className="packs-shop-section stitch-pack-gallery-shell">
+          <div className="packs-shop-header">
+            <div>
+              <p className="packs-main-kicker">Collectible shop</p>
+              <h2>Browse packs</h2>
+            </div>
+            <p>
+              Every card below reuses the current live data, pricing, ownership,
+              and opening actions already available on this page.
+            </p>
+          </div>
+
+          <div className="packs-shop-grid">
+            <PackCard
+              imageSrc={officialPackImage}
+              imageAlt={`${packConfig?.pack?.displayName ?? "Genesis pack"} pack`}
+              eyebrow="Featured pack"
+              name={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
+              description={featuredPackDescription}
+              priceLabel={me ? `${GAME_CONFIG.PACK_COST} pts` : "Preview first"}
+              infoLabel={
+                purchaseLimit?.enabled
+                  ? purchaseLimit.isBlocked
+                    ? "Daily cap reached"
+                    : `${purchaseLimit.used}/${purchaseLimit.limit ?? 0} purchased`
+                  : "Live inventory"
+              }
+              ctaLabel={
+                isOpening || openingPhase === "tearing"
+                  ? "Opening…"
+                  : me
+                    ? "Open featured pack"
+                    : "View preview"
+              }
+              onAction={() => void openPack()}
+              disabled={isOpening || openingPhase === "tearing"}
+              tags={featuredPackTags}
+              accent="gold"
+            />
+
+            {me &&
+              !loadingRewardGrants &&
+              groupedRewardGrants.map((group) => {
+                const quantity = group.grants.length;
+                const nextGrantId = group.grants[0]?.id;
+                const isOpeningThisGroup = Boolean(
+                  openingRewardGrantId &&
+                  group.grants.some(
+                    (grant) => grant.id === openingRewardGrantId,
+                  ),
+                );
+
+                return (
+                  <PackCard
+                    key={group.key}
+                    imageSrc={officialPackImage}
+                    imageAlt={`${group.displayName} pack`}
+                    eyebrow={group.sourceLabel}
+                    name={group.displayName}
+                    description={
+                      group.description ??
+                      "Special pack awarded for your progress in MCG."
+                    }
+                    priceLabel="Reward pack"
+                    infoLabel={`${quantity} ready to open`}
+                    ctaLabel={
+                      isOpeningThisGroup ? "Opening…" : "Open reward pack"
+                    }
+                    onAction={() => {
+                      if (!nextGrantId) return;
+                      void openRewardPack(nextGrantId);
+                    }}
+                    disabled={
+                      isOpening ||
+                      !nextGrantId ||
+                      isOpeningThisGroup ||
+                      openingPhase === "tearing"
+                    }
+                    quantityLabel={quantity > 1 ? `x${quantity}` : undefined}
+                    tags={[
+                      quantity > 1 ? `${quantity} copies` : "Single pack",
+                      "Earned inventory",
+                    ]}
+                    accent="violet"
+                  />
+                );
+              })}
+          </div>
+
+          {me ? (
+            <section className="reward-packs-section">
+              <div className="reward-packs-header">
+                <p className="reward-packs-kicker">Reward inventory</p>
+                <h2>Reward Packs</h2>
+                <p className="reward-packs-intro">
+                  Packs earned from contests, quests, and future rewards. Open
+                  your earned packs here.
+                </p>
               </div>
-            ) : null}
 
-            {loadingRewardGrants ? (
-              <p className="reward-packs-status">Loading reward packs…</p>
-            ) : null}
+              {rewardNotice ? (
+                <div
+                  className={`packs-inline-notice packs-inline-notice--${rewardNotice.tone}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <strong>{rewardNotice.title}</strong>
+                  {rewardNotice.detail ? (
+                    <span>{rewardNotice.detail}</span>
+                  ) : null}
+                </div>
+              ) : null}
 
-            {!loadingRewardGrants && groupedRewardGrants.length === 0 ? (
-              <p className="reward-packs-status">
-                No reward packs yet. Win events and complete quests to build your
-                inventory.
-              </p>
-            ) : null}
-          </section>
-        ) : null}
-      </section>
+              {loadingRewardGrants ? (
+                <p className="reward-packs-status">Loading reward packs…</p>
+              ) : null}
 
-      <PackRevealModal
-        open={revealSize > 0 && openingPhase === "revealing"}
-        cards={resultMvp}
-        revealed={revealed}
-        nextRevealIndex={nextRevealIndex}
-        onReveal={handleReveal}
-        onZoom={setZoomedCard}
-        onClose={closeReveal}
-        isGuestPreview={isGuestPreview}
-        onConnectWithX={isGuestPreview ? handleConnectWithX : undefined}
-        cardBackSrc={versoImage}
-      />
+              {!loadingRewardGrants && groupedRewardGrants.length === 0 ? (
+                <p className="reward-packs-status">
+                  No reward packs yet. Win events and complete quests to build
+                  your inventory.
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+        </section>
 
-      <CardZoomModal
-        card={zoomedCard}
-        quantity={1}
-        open={Boolean(zoomedCard)}
-        onClose={() => setZoomedCard(null)}
-      />
+        <PackRevealModal
+          open={revealSize > 0 && openingPhase === "revealing"}
+          cards={resultMvp}
+          revealed={revealed}
+          nextRevealIndex={nextRevealIndex}
+          onReveal={handleReveal}
+          onZoom={setZoomedCard}
+          onClose={closeReveal}
+          isGuestPreview={isGuestPreview}
+          onConnectWithX={isGuestPreview ? handleConnectWithX : undefined}
+          cardBackSrc={versoImage}
+        />
+
+        <CardZoomModal
+          card={zoomedCard}
+          quantity={1}
+          open={Boolean(zoomedCard)}
+          onClose={() => setZoomedCard(null)}
+        />
+      </div>
     </SiteShell>
   );
 }

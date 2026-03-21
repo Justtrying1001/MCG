@@ -13,11 +13,18 @@ type Props = {
   secondaryAction?: ReactNode;
 };
 
-export function CollectorShowcase({ displayName, points, level, completionPct, primaryAction, secondaryAction }: Props) {
+export function CollectorShowcase({
+  displayName,
+  points,
+  level,
+  completionPct,
+  primaryAction,
+  secondaryAction,
+}: Props) {
   const initial = displayName.slice(0, 1).toUpperCase();
 
   return (
-    <Surface className="profile-showcase" variant="raised">
+    <Surface className="profile-showcase stitch-panel-card" variant="raised">
       <div className="profile-showcase-card-shell">
         <div className="profile-showcase-card-frame">
           <div className="profile-showcase-head">
@@ -27,7 +34,9 @@ export function CollectorShowcase({ displayName, points, level, completionPct, p
 
           <div className="profile-showcase-avatar" aria-hidden="true">
             <span>{initial}</span>
-            <strong>{completionPct === null ? "Memedex" : `${completionPct}%`}</strong>
+            <strong>
+              {completionPct === null ? "Memedex" : `${completionPct}%`}
+            </strong>
           </div>
 
           <SectionHeader
@@ -39,12 +48,22 @@ export function CollectorShowcase({ displayName, points, level, completionPct, p
           <div className="profile-showcase-chips">
             <Chip label={`Level ${level}`} />
             <Chip label={`${points.toLocaleString()} points`} />
-            <Chip label={`Memedex ${completionPct === null ? "—" : `${completionPct}%`}`} />
+            <Chip
+              label={`Memedex ${completionPct === null ? "—" : `${completionPct}%`}`}
+            />
           </div>
 
           <div className="profile-showcase-actions">
-            {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open Memedex</Link>}
-            {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
+            {primaryAction ?? (
+              <Link href="/collection" className="mcg-btn primary">
+                Open Memedex
+              </Link>
+            )}
+            {secondaryAction ?? (
+              <Link href="/contests" className="mcg-btn ghost">
+                Go to contests
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -867,7 +867,7 @@ export default function ContestDetailPage({
 
   return (
     <SiteShell>
-      <div className="contest-detail-page-v2">
+      <div className="contest-detail-page-v2 stitch-screen stitch-contest-detail-screen">
         <HeroPanel
           title={contest.title}
           status={contest.status}

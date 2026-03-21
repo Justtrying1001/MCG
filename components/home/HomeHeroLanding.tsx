@@ -36,7 +36,7 @@ export function HomeHeroLanding() {
   const { isStartingLogin, loginWithPrivy, ready } = usePrivyLogin();
 
   return (
-    <section className="home-hero-landing">
+    <section className="home-hero-landing stitch-hero-card">
       <div className="home-hero-glow" aria-hidden="true" />
       <div className="home-hero-glow home-hero-glow-2" aria-hidden="true" />
       <div className="home-hero-ring" aria-hidden="true" />
@@ -44,18 +44,29 @@ export function HomeHeroLanding() {
       <div className="home-hero-body">
         <div className="home-hero-content">
           <p className="home-hero-kicker">Join the fun • Genesis season live</p>
+          <div className="stitch-stamp">Press start</div>
           <h1 className="home-hero-headline">
             MCG — THE <span>MEME</span>
             <br />
             CARD GAME
           </h1>
           <p className="home-hero-subline">
-            Stop scrolling. Start collecting. Pull internet legends, build your roster across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens, and battle for leaderboard glory.
+            Stop scrolling. Start collecting. Pull internet legends, build your
+            roster across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens, and
+            battle for leaderboard glory.
           </p>
 
-          <div className="home-hero-chip-row" aria-label="Guest landing highlights">
-            <span className="mcg-chip">{GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens</span>
-            <span className="mcg-chip">{GAME_CONFIG.GENESIS_SET.PACK_COUNT.toLocaleString()} planned packs</span>
+          <div
+            className="home-hero-chip-row"
+            aria-label="Guest landing highlights"
+          >
+            <span className="mcg-chip">
+              {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens
+            </span>
+            <span className="mcg-chip">
+              {GAME_CONFIG.GENESIS_SET.PACK_COUNT.toLocaleString()} planned
+              packs
+            </span>
             <span className="mcg-chip">Guest preview ready</span>
           </div>
 
@@ -64,11 +75,18 @@ export function HomeHeroLanding() {
               className="btn-lg home-hero-cta-primary"
               disabled={!ready || isStartingLogin}
               onClick={() => void loginWithPrivy()}
-              icon={(
-                <svg width="16" height="14" viewBox="0 0 300 271" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0 }}>
+              icon={
+                <svg
+                  width="16"
+                  height="14"
+                  viewBox="0 0 300 271"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  style={{ flexShrink: 0 }}
+                >
                   <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
                 </svg>
-              )}
+              }
             >
               Start adventure
             </Button>
@@ -87,7 +105,10 @@ export function HomeHeroLanding() {
           <div className="home-hero-stage-badge">Pack-ready roster</div>
           <div className="home-hero-cards-float">
             {HERO_CARDS.map((card) => (
-              <article key={card.name} className={`home-float-card ${card.cls}`.trim()}>
+              <article
+                key={card.name}
+                className={`home-float-card ${card.cls}`.trim()}
+              >
                 <div className="home-float-card-art">
                   <Image
                     src={card.img}
@@ -108,7 +129,10 @@ export function HomeHeroLanding() {
           </div>
           <div className="home-hero-stage-note">
             <strong>Collectible obsession unlocked.</strong>
-            <span>Every pack can feed collection, contests, and progression once you connect.</span>
+            <span>
+              Every pack can feed collection, contests, and progression once you
+              connect.
+            </span>
           </div>
         </div>
       </div>
