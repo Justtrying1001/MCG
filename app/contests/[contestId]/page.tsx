@@ -3,12 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { findDuplicateLineupIdentityKeys } from "@/lib/domain/contests/lineup-identity";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { getContestStateMessaging, getPrimaryCtaLabel } from "@/components/contests/contestLifecycle";
+import {
+  getContestStateMessaging,
+  getPrimaryCtaLabel,
+} from "@/components/contests/contestLifecycle";
 import { useSession } from "@/components/useSession";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
-import type { ContestEntryStatus, ContestRule, ContestStatus, LineupOption } from "@/components/contests/types";
+import type {
+  ContestEntryStatus,
+  ContestRule,
+  ContestStatus,
+  LineupOption,
+} from "@/components/contests/types";
 import {
   HeroPanel,
   LeaderboardPanel,
@@ -19,7 +27,6 @@ import {
   type SlotCardView,
 } from "@/components/contests/ContestDetailPanels";
 import type { BreakdownRow } from "@/components/contests/ScoreBreakdownPanel";
-
 
 type ContestDetail = {
   contest: {
@@ -50,7 +57,14 @@ type RankingPayload = {
 
 type RewardPayload = {
   hasPolicyData: boolean;
-  tiers: Array<{ label: string; bundleName: string; pointsAmount: number; xpAmount: number; packsCount: number; winnerLabel?: string | null }>;
+  tiers: Array<{
+    label: string;
+    bundleName: string;
+    pointsAmount: number;
+    xpAmount: number;
+    packsCount: number;
+    winnerLabel?: string | null;
+  }>;
   summary?: {
     pointsPool: number;
     packPool: number;
@@ -61,7 +75,14 @@ type RewardPayload = {
 };
 
 type ScoreBreakdownPayload = { rows?: BreakdownRow[] };
-type MyRewardsPayload = RewardSummary & { grants: Array<{ id: string; type: string; amount: number | null; packDefinitionId: string | null }> };
+type MyRewardsPayload = RewardSummary & {
+  grants: Array<{
+    id: string;
+    type: string;
+    amount: number | null;
+    packDefinitionId: string | null;
+  }>;
+};
 
 type ContestDetailPageCache = {
   detail: ContestDetail | null;
@@ -96,7 +117,10 @@ function formatContestTimestamp(iso: string | null | undefined): string {
   return `${UTC_DATE_TIME_FORMATTER.format(new Date(iso))} UTC`;
 }
 
-function formatCountdown(targetAt: string | null | undefined, nowTs: number): string {
+function formatCountdown(
+  targetAt: string | null | undefined,
+  nowTs: number,
+): string {
   if (!targetAt) return "--:--:--";
   const diff = new Date(targetAt).getTime() - nowTs;
   if (diff <= 0) return "00:00:00";
@@ -106,16 +130,32 @@ function formatCountdown(targetAt: string | null | undefined, nowTs: number): st
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function ContestDetailPage({ params }: { params: { contestId: string } }) {
+export default function ContestDetailPage({
+  params,
+}: {
+  params: { contestId: string };
+}) {
   const cachedState = contestDetailPageCache.get(params.contestId);
   const { me, loading } = useSession();
   const { loginWithPrivy } = usePrivyLogin();
-  const [detail, setDetail] = useState<ContestDetail | null>(cachedState?.detail ?? null);
-  const [ranking, setRanking] = useState<RankingPayload | null>(cachedState?.ranking ?? null);
-  const [rewards, setRewards] = useState<RewardPayload | null>(cachedState?.rewards ?? null);
-  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(cachedState?.myRewards ?? null);
-  const [options, setOptions] = useState<LineupOption[]>(cachedState?.options ?? []);
-  const [lineupSlots, setLineupSlots] = useState<Array<string | null>>(cachedState?.lineupSlots ?? []);
+  const [detail, setDetail] = useState<ContestDetail | null>(
+    cachedState?.detail ?? null,
+  );
+  const [ranking, setRanking] = useState<RankingPayload | null>(
+    cachedState?.ranking ?? null,
+  );
+  const [rewards, setRewards] = useState<RewardPayload | null>(
+    cachedState?.rewards ?? null,
+  );
+  const [myRewards, setMyRewards] = useState<MyRewardsPayload | null>(
+    cachedState?.myRewards ?? null,
+  );
+  const [options, setOptions] = useState<LineupOption[]>(
+    cachedState?.options ?? [],
+  );
+  const [lineupSlots, setLineupSlots] = useState<Array<string | null>>(
+    cachedState?.lineupSlots ?? [],
+  );
   const [showBuilder, setShowBuilder] = useState(false);
   const [activeBuilderSlot, setActiveBuilderSlot] = useState(0);
   const [error, setError] = useState("");
@@ -123,10 +163,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const [builderFlash, setBuilderFlash] = useState("");
   const [builderError, setBuilderError] = useState("");
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(cachedState?.scoreBreakdown ?? null);
+  const [scoreBreakdown, setScoreBreakdown] = useState<BreakdownRow[] | null>(
+    cachedState?.scoreBreakdown ?? null,
+  );
   const [isLoadingPage, setIsLoadingPage] = useState(!cachedState);
-  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(Boolean(cachedState));
-  const slotsInitializedRef = useRef(Boolean(cachedState && cachedState.lineupSlots.length > 0));
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(
+    Boolean(cachedState),
+  );
+  const slotsInitializedRef = useRef(
+    Boolean(cachedState && cachedState.lineupSlots.length > 0),
+  );
   const leaderboardSectionRef = useRef<HTMLDivElement | null>(null);
   const lastLiveRefreshAtRef = useRef(0);
 
@@ -134,32 +180,43 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   const rule = contestData?.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
 
-  const persistPageCache = useCallback((next: Partial<ContestDetailPageCache>) => {
-    const previous = contestDetailPageCache.get(params.contestId);
-    contestDetailPageCache.set(params.contestId, {
-      detail: next.detail ?? previous?.detail ?? null,
-      ranking: next.ranking ?? previous?.ranking ?? null,
-      rewards: next.rewards ?? previous?.rewards ?? null,
-      myRewards: next.myRewards ?? previous?.myRewards ?? null,
-      options: next.options ?? previous?.options ?? [],
-      lineupSlots: next.lineupSlots ?? previous?.lineupSlots ?? [],
-      scoreBreakdown: next.scoreBreakdown ?? previous?.scoreBreakdown ?? null,
-      lastLoadedAt: next.lastLoadedAt ?? previous?.lastLoadedAt ?? Date.now(),
-    });
-  }, [params.contestId]);
+  const persistPageCache = useCallback(
+    (next: Partial<ContestDetailPageCache>) => {
+      const previous = contestDetailPageCache.get(params.contestId);
+      contestDetailPageCache.set(params.contestId, {
+        detail: next.detail ?? previous?.detail ?? null,
+        ranking: next.ranking ?? previous?.ranking ?? null,
+        rewards: next.rewards ?? previous?.rewards ?? null,
+        myRewards: next.myRewards ?? previous?.myRewards ?? null,
+        options: next.options ?? previous?.options ?? [],
+        lineupSlots: next.lineupSlots ?? previous?.lineupSlots ?? [],
+        scoreBreakdown: next.scoreBreakdown ?? previous?.scoreBreakdown ?? null,
+        lastLoadedAt: next.lastLoadedAt ?? previous?.lastLoadedAt ?? Date.now(),
+      });
+    },
+    [params.contestId],
+  );
 
   const loadAll = useCallback(async () => {
-    setIsLoadingPage((previous) => previous && !contestDetailPageCache.has(params.contestId));
+    setIsLoadingPage(
+      (previous) => previous && !contestDetailPageCache.has(params.contestId),
+    );
     setHasAttemptedLoad(true);
     setError("");
 
     try {
-      const detailRes = await fetch(`/api/contests/${params.contestId}`, { cache: "no-store" });
+      const detailRes = await fetch(`/api/contests/${params.contestId}`, {
+        cache: "no-store",
+      });
       let detailPayload: ContestDetail | null = null;
 
       if (!detailRes.ok) {
-        const payload = (await detailRes.json().catch(() => null)) as { error?: string } | null;
-        setError(payload?.error ?? "Contest is unavailable or still being prepared.");
+        const payload = (await detailRes.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        setError(
+          payload?.error ?? "Contest is unavailable or still being prepared.",
+        );
         setDetail(null);
         setRanking(null);
         setOptions([]);
@@ -175,16 +232,29 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
       if (!slotsInitializedRef.current) {
         slotsInitializedRef.current = true;
-        const nextRosterSize = detailPayload.contest.rules?.[0]?.maxRosterSize ?? 5;
-        const roster = detailPayload.userEntry?.rosterLocks?.map((row) => row.ownedCardInstanceId) ?? [];
+        const nextRosterSize =
+          detailPayload.contest.rules?.[0]?.maxRosterSize ?? 5;
+        const roster =
+          detailPayload.userEntry?.rosterLocks?.map(
+            (row) => row.ownedCardInstanceId,
+          ) ?? [];
         if (roster.length > 0) {
           setLineupSlots(toSlots(roster, nextRosterSize));
           localStorage.removeItem(`lineup-draft-${params.contestId}`);
         } else {
           try {
-            const localDraft = localStorage.getItem(`lineup-draft-${params.contestId}`);
+            const localDraft = localStorage.getItem(
+              `lineup-draft-${params.contestId}`,
+            );
             if (localDraft) {
-              setLineupSlots(toSlots((JSON.parse(localDraft) as Array<string | null>).filter(Boolean) as string[], nextRosterSize));
+              setLineupSlots(
+                toSlots(
+                  (JSON.parse(localDraft) as Array<string | null>).filter(
+                    Boolean,
+                  ) as string[],
+                  nextRosterSize,
+                ),
+              );
             } else {
               setLineupSlots(toSlots([], nextRosterSize));
             }
@@ -194,19 +264,44 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         }
       }
 
-      const rankingReq = fetch(`/api/contests/${params.contestId}/ranking`, { cache: "no-store" });
-      const rewardsReq = fetch(`/api/contests/${params.contestId}/reward-preview`, { cache: "no-store" });
-      const optionsReq = me ? fetch(`/api/contests/${params.contestId}/lineup-options`, { cache: "no-store" }) : Promise.resolve<Response | null>(null);
-      const [rankingRes, rewardsRes, optionsRes] = await Promise.all([rankingReq, rewardsReq, optionsReq]);
+      const rankingReq = fetch(`/api/contests/${params.contestId}/ranking`, {
+        cache: "no-store",
+      });
+      const rewardsReq = fetch(
+        `/api/contests/${params.contestId}/reward-preview`,
+        { cache: "no-store" },
+      );
+      const optionsReq = me
+        ? fetch(`/api/contests/${params.contestId}/lineup-options`, {
+            cache: "no-store",
+          })
+        : Promise.resolve<Response | null>(null);
+      const [rankingRes, rewardsRes, optionsRes] = await Promise.all([
+        rankingReq,
+        rewardsReq,
+        optionsReq,
+      ]);
 
-      const nextRanking = rankingRes.ok ? ((await rankingRes.json()) as RankingPayload) : null;
-      const nextRewards = rewardsRes.ok ? ((await rewardsRes.json()) as RewardPayload) : null;
+      const nextRanking = rankingRes.ok
+        ? ((await rankingRes.json()) as RankingPayload)
+        : null;
+      const nextRewards = rewardsRes.ok
+        ? ((await rewardsRes.json()) as RewardPayload)
+        : null;
       setRanking(nextRanking);
       setRewards(nextRewards);
-      persistPageCache({ ranking: nextRanking, rewards: nextRewards, lastLoadedAt: Date.now() });
+      persistPageCache({
+        ranking: nextRanking,
+        rewards: nextRewards,
+        lastLoadedAt: Date.now(),
+      });
       if (optionsRes?.ok) {
-        const payload = (await optionsRes.json().catch(() => null)) as { options?: LineupOption[] } | null;
-        const nextOptions = Array.isArray(payload?.options) ? payload.options : [];
+        const payload = (await optionsRes.json().catch(() => null)) as {
+          options?: LineupOption[];
+        } | null;
+        const nextOptions = Array.isArray(payload?.options)
+          ? payload.options
+          : [];
         setOptions(nextOptions);
         persistPageCache({ options: nextOptions, lastLoadedAt: Date.now() });
       } else {
@@ -214,37 +309,74 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         persistPageCache({ options: [], lastLoadedAt: Date.now() });
       }
 
-      const shouldLoadSettledExtras = Boolean(detailPayload.userEntry && detailPayload.contest.status === "SETTLED" && me);
+      const shouldLoadSettledExtras = Boolean(
+        detailPayload.userEntry &&
+        detailPayload.contest.status === "SETTLED" &&
+        me,
+      );
       if (shouldLoadSettledExtras) {
         const [breakdownRes, myRewardsRes] = await Promise.all([
-          fetch(`/api/contests/${params.contestId}/my-score-breakdown`, { cache: "no-store" }),
-          fetch(`/api/contests/${params.contestId}/my-rewards`, { cache: "no-store" }),
+          fetch(`/api/contests/${params.contestId}/my-score-breakdown`, {
+            cache: "no-store",
+          }),
+          fetch(`/api/contests/${params.contestId}/my-rewards`, {
+            cache: "no-store",
+          }),
         ]);
 
         if (breakdownRes.ok) {
-          const payload = (await breakdownRes.json().catch(() => null)) as ScoreBreakdownPayload | null;
-          const nextBreakdown = Array.isArray(payload?.rows) ? payload.rows : [];
+          const payload = (await breakdownRes
+            .json()
+            .catch(() => null)) as ScoreBreakdownPayload | null;
+          const nextBreakdown = Array.isArray(payload?.rows)
+            ? payload.rows
+            : [];
           setScoreBreakdown(nextBreakdown);
-          persistPageCache({ scoreBreakdown: nextBreakdown, lastLoadedAt: Date.now() });
+          persistPageCache({
+            scoreBreakdown: nextBreakdown,
+            lastLoadedAt: Date.now(),
+          });
         } else {
           setScoreBreakdown([]);
           persistPageCache({ scoreBreakdown: [], lastLoadedAt: Date.now() });
         }
 
         if (myRewardsRes.ok) {
-          const payload = (await myRewardsRes.json().catch(() => null)) as MyRewardsPayload | null;
-          const nextRewards = payload ?? { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] };
+          const payload = (await myRewardsRes
+            .json()
+            .catch(() => null)) as MyRewardsPayload | null;
+          const nextRewards = payload ?? {
+            pointsTotal: 0,
+            xpTotal: 0,
+            packsTotal: 0,
+            grants: [],
+          };
           setMyRewards(nextRewards);
-          persistPageCache({ myRewards: nextRewards, lastLoadedAt: Date.now() });
+          persistPageCache({
+            myRewards: nextRewards,
+            lastLoadedAt: Date.now(),
+          });
         } else {
-          const nextRewards = { pointsTotal: 0, xpTotal: 0, packsTotal: 0, grants: [] };
+          const nextRewards = {
+            pointsTotal: 0,
+            xpTotal: 0,
+            packsTotal: 0,
+            grants: [],
+          };
           setMyRewards(nextRewards);
-          persistPageCache({ myRewards: nextRewards, lastLoadedAt: Date.now() });
+          persistPageCache({
+            myRewards: nextRewards,
+            lastLoadedAt: Date.now(),
+          });
         }
       } else {
         setScoreBreakdown(null);
         setMyRewards(null);
-        persistPageCache({ scoreBreakdown: null, myRewards: null, lastLoadedAt: Date.now() });
+        persistPageCache({
+          scoreBreakdown: null,
+          myRewards: null,
+          lastLoadedAt: Date.now(),
+        });
       }
     } catch {
       setDetail(null);
@@ -270,7 +402,16 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       scoreBreakdown,
       lastLoadedAt: Date.now(),
     });
-  }, [detail, lineupSlots, myRewards, options, persistPageCache, ranking, rewards, scoreBreakdown]);
+  }, [
+    detail,
+    lineupSlots,
+    myRewards,
+    options,
+    persistPageCache,
+    ranking,
+    rewards,
+    scoreBreakdown,
+  ]);
 
   useEffect(() => {
     if (loading) return;
@@ -292,7 +433,13 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       .map((row) => row.cardInstance.id)
       .filter((id): id is string => typeof id === "string" && id.length > 0);
     setLineupSlots(toSlots(fallbackLineupIds, rosterSize));
-  }, [contestData?.status, detail?.userEntry, lineupSlots, rosterSize, scoreBreakdown]);
+  }, [
+    contestData?.status,
+    detail?.userEntry,
+    lineupSlots,
+    rosterSize,
+    scoreBreakdown,
+  ]);
 
   useEffect(() => {
     const id = setInterval(() => setNowTs(Date.now()), 1000);
@@ -302,11 +449,18 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   useEffect(() => {
     if (!contestData || loading) return;
 
-    const isRefreshableStatus = contestData.status === "OPEN" || contestData.status === "LOCKED" || contestData.status === "LIVE";
+    const isRefreshableStatus =
+      contestData.status === "OPEN" ||
+      contestData.status === "LOCKED" ||
+      contestData.status === "LIVE";
     if (!isRefreshableStatus) return;
 
     const refresh = () => {
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState !== "visible"
+      )
+        return;
       const now = Date.now();
       if (now - lastLiveRefreshAtRef.current < 1_500) return;
       lastLiveRefreshAtRef.current = now;
@@ -327,21 +481,34 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const canManageLineup = contestData?.status === "OPEN" && Boolean(me);
   const hasEntry = Boolean(detail?.userEntry);
-  const selectedIds = useMemo(() => lineupSlots.filter(Boolean) as string[], [lineupSlots]);
-  const optionById = useMemo(() => new Map(options.map((item) => [item.instanceId, item])), [options]);
+  const selectedIds = useMemo(
+    () => lineupSlots.filter(Boolean) as string[],
+    [lineupSlots],
+  );
+  const optionById = useMemo(
+    () => new Map(options.map((item) => [item.instanceId, item])),
+    [options],
+  );
   const selectedLogicalTokenKeys = useMemo(() => {
     const keys = new Set<string>();
     for (const instanceId of lineupSlots) {
       if (!instanceId) continue;
       const item = optionById.get(instanceId);
       if (!item) continue;
-      keys.add(getLogicalTokenKey({ tokenProjectId: item.tokenProjectId, cardTemplateId: item.cardTemplateId }));
+      keys.add(
+        getLogicalTokenKey({
+          tokenProjectId: item.tokenProjectId,
+          cardTemplateId: item.cardTemplateId,
+        }),
+      );
     }
     return keys;
   }, [lineupSlots, optionById]);
 
   const duplicateLineupKeys = useMemo(() => {
-    const selectedOptions = selectedIds.map((id) => optionById.get(id)).filter((row): row is LineupOption => Boolean(row));
+    const selectedOptions = selectedIds
+      .map((id) => optionById.get(id))
+      .filter((row): row is LineupOption => Boolean(row));
     return findDuplicateLineupIdentityKeys(selectedOptions);
   }, [selectedIds, optionById]);
 
@@ -351,7 +518,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, [me, ranking]);
 
   const slotCards = useMemo(() => {
-    const breakdownByInstanceId = new Map((scoreBreakdown ?? []).map((row) => [row.cardInstance.id, row]));
+    const breakdownByInstanceId = new Map(
+      (scoreBreakdown ?? []).map((row) => [row.cardInstance.id, row]),
+    );
     return lineupSlots.map<SlotCardView | null>((id) => {
       if (!id) return null;
       const optionCard = optionById.get(id);
@@ -380,7 +549,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
             tokenId: "settled",
             displayName: row.cardInstance.cardTemplate.name,
             symbol: row.tokenProject.displayName,
-            slug: row.tokenProject.displayName.toLowerCase().replace(/\s+/g, "-"),
+            slug: row.tokenProject.displayName
+              .toLowerCase()
+              .replace(/\s+/g, "-"),
             imageUrl: row.cardInstance.cardTemplate.imageUrl,
             primaryChain: null,
             faction: null,
@@ -403,7 +574,12 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
   }, [lineupSlots, optionById, scoreBreakdown]);
 
   const submitLineup = async (isDraft = false) => {
-    if (!contestData || selectedIds.length !== rosterSize || contestData.status !== "OPEN") return;
+    if (
+      !contestData ||
+      selectedIds.length !== rosterSize ||
+      contestData.status !== "OPEN"
+    )
+      return;
     if (selectedLogicalTokenKeys.size !== selectedIds.length) {
       setError("This token is already used in your lineup.");
       return;
@@ -417,7 +593,9 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       body: JSON.stringify({ lineupInstanceIds: selectedIds }),
     });
     if (!res.ok) {
-      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      const payload = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       setError(payload?.error ?? "Contest entry failed");
       setSubmitBusy(false);
       return;
@@ -426,26 +604,41 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
     await loadAll();
     setSubmitBusy(false);
     setShowBuilder(false);
-    setBuilderFlash(isDraft ? "Draft saved." : "Lineup submitted successfully.");
+    setBuilderFlash(
+      isDraft ? "Draft saved." : "Lineup submitted successfully.",
+    );
   };
 
-  const handleSelectCard = (instanceId: string, targetSlotIndex: number | null) => {
+  const handleSelectCard = (
+    instanceId: string,
+    targetSlotIndex: number | null,
+  ) => {
     if (!canManageLineup) return;
     setError("");
     const option = optionById.get(instanceId);
     if (!option) return;
 
-    const incomingTokenKey = getLogicalTokenKey({ tokenProjectId: option.tokenProjectId, cardTemplateId: option.cardTemplateId });
+    const incomingTokenKey = getLogicalTokenKey({
+      tokenProjectId: option.tokenProjectId,
+      cardTemplateId: option.cardTemplateId,
+    });
 
     setLineupSlots((prev) => {
-      const next = [...(prev.length === rosterSize ? prev : toSlots(prev.filter(Boolean) as string[], rosterSize))];
+      const next = [
+        ...(prev.length === rosterSize
+          ? prev
+          : toSlots(prev.filter(Boolean) as string[], rosterSize)),
+      ];
       const targetIndex = targetSlotIndex ?? activeBuilderSlot;
 
       const duplicateTokenIndex = next.findIndex((value, index) => {
         if (!value || index === targetIndex) return false;
         const selectedOption = optionById.get(value);
         if (!selectedOption) return false;
-        const selectedTokenKey = getLogicalTokenKey({ tokenProjectId: selectedOption.tokenProjectId, cardTemplateId: selectedOption.cardTemplateId });
+        const selectedTokenKey = getLogicalTokenKey({
+          tokenProjectId: selectedOption.tokenProjectId,
+          cardTemplateId: selectedOption.cardTemplateId,
+        });
         return selectedTokenKey === incomingTokenKey;
       });
       if (duplicateTokenIndex >= 0) {
@@ -478,19 +671,31 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
 
   const openBuilder = (preferredSlot?: number) => {
     const firstEmpty = lineupSlots.findIndex((slot) => !slot);
-    setActiveBuilderSlot(typeof preferredSlot === "number" ? preferredSlot : firstEmpty >= 0 ? firstEmpty : 0);
+    setActiveBuilderSlot(
+      typeof preferredSlot === "number"
+        ? preferredSlot
+        : firstEmpty >= 0
+          ? firstEmpty
+          : 0,
+    );
     setBuilderFlash("");
     setShowBuilder(true);
   };
 
   const scrollToLeaderboard = () => {
-    leaderboardSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    leaderboardSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   if (!hasAttemptedLoad || isLoadingPage || (loading && !detail)) {
     return (
       <SiteShell>
-        <section className="contest-command-loading" aria-label="Loading contest detail">
+        <section
+          className="contest-command-loading"
+          aria-label="Loading contest detail"
+        >
           <div className="contest-command-skeleton-lg" />
           <div className="contest-command-skeleton-md" />
           <div className="contest-command-skeleton-grid">
@@ -507,19 +712,33 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       <SiteShell>
         <section className="contest-command-empty">
           <h1>Contest unavailable</h1>
-          <p>{error || "This contest is currently unavailable. Please try again in a few moments."}</p>
+          <p>
+            {error ||
+              "This contest is currently unavailable. Please try again in a few moments."}
+          </p>
         </section>
       </SiteShell>
     );
   }
 
   const contest = detail.contest;
-  const entryFee = rule?.entryFeeEnabled ? `${rule.entryFeeAmount ?? 0} pts` : "Free";
-  const countdownTarget = isOpen ? (contest.lockAt ?? contest.liveAt) : isLocked ? (contest.liveAt ?? contest.endsAt) : isLive ? contest.endsAt : null;
+  const entryFee = rule?.entryFeeEnabled
+    ? `${rule.entryFeeAmount ?? 0} pts`
+    : "Free";
+  const countdownTarget = isOpen
+    ? (contest.lockAt ?? contest.liveAt)
+    : isLocked
+      ? (contest.liveAt ?? contest.endsAt)
+      : isLive
+        ? contest.endsAt
+        : null;
   const timingDetails = (() => {
     const items = [
       (isOpen || isLocked) && (contest.liveAt ?? contest.lockAt)
-        ? { label: "Start", value: formatContestTimestamp(contest.liveAt ?? contest.lockAt) }
+        ? {
+            label: "Start",
+            value: formatContestTimestamp(contest.liveAt ?? contest.lockAt),
+          }
         : null,
       (isOpen || isLocked || isLive) && contest.endsAt
         ? { label: "End", value: formatContestTimestamp(contest.endsAt) }
@@ -529,14 +748,26 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         : null,
     ].filter((item): item is { label: string; value: string } => Boolean(item));
 
-    return items.filter((item, index, array) => array.findIndex((candidate) => candidate.label === item.label && candidate.value === item.value) === index);
+    return items.filter(
+      (item, index, array) =>
+        array.findIndex(
+          (candidate) =>
+            candidate.label === item.label && candidate.value === item.value,
+        ) === index,
+    );
   })();
   const countdownTimestampValue = formatContestTimestamp(countdownTarget);
-  const countdownTimestampLabel = isLive ? "Closes at" : isLocked ? "Starts at" : "Closes at";
+  const countdownTimestampLabel = isLive
+    ? "Closes at"
+    : isLocked
+      ? "Starts at"
+      : "Closes at";
   const heroTiming = isSettled
     ? {
         label: "Contest settled",
-        value: formatContestTimestamp(contest.endsAt ?? contest.liveAt ?? contest.lockAt),
+        value: formatContestTimestamp(
+          contest.endsAt ?? contest.liveAt ?? contest.lockAt,
+        ),
         helper: "Final scoring and rewards are now locked.",
         details: timingDetails,
       }
@@ -555,18 +786,32 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         };
   const rankingRows = ranking?.rankings ?? [];
   const stateBody = isOpen
-    ? (hasEntry ? "Edit before lineup lock." : selectedIds.length > 0 ? "Finish and submit before lock." : "Build your entry before lock.")
+    ? hasEntry
+      ? "Edit before lineup lock."
+      : selectedIds.length > 0
+        ? "Finish and submit before lock."
+        : "Build your entry before lock."
     : isLive
-      ? (myRanking ? `Currently #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Live scoring is underway.")
+      ? myRanking
+        ? `Currently #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.`
+        : "Live scoring is underway."
       : isSettled
-        ? (myRanking ? `Finished #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.` : "Final scoring is complete.")
+        ? myRanking
+          ? `Finished #${myRanking.rank} with ${myRanking.score.toFixed(2)} points.`
+          : "Final scoring is complete."
         : "Lineups are locked.";
   const stateMessaging = getContestStateMessaging(contest.status);
   const stateContextBody = `${stateMessaging.longLabel}. ${stateBody}`;
 
   const heroAction = isOpen
     ? {
-        label: !me ? "Connect X to enter contest" : hasEntry ? "Edit lineup" : selectedIds.length > 0 ? "Continue lineup" : getPrimaryCtaLabel(contest.status),
+        label: !me
+          ? "Connect wallet / X to enter contest"
+          : hasEntry
+            ? "Edit lineup"
+            : selectedIds.length > 0
+              ? "Continue lineup"
+              : getPrimaryCtaLabel(contest.status),
         onClick: () => {
           if (!me) {
             void loginWithPrivy();
@@ -576,11 +821,25 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         },
       }
     : {
-        label: isSettled ? getPrimaryCtaLabel(contest.status) : isLive ? getPrimaryCtaLabel(contest.status) : "Track contest",
+        label: isSettled
+          ? getPrimaryCtaLabel(contest.status)
+          : isLive
+            ? getPrimaryCtaLabel(contest.status)
+            : "Track contest",
         onClick: scrollToLeaderboard,
       };
 
-  const lineupLabel = isSettled ? "Final lineup" : isLive ? "Locked lineup" : isLocked ? "Locked" : hasEntry ? "Submitted" : selectedIds.length > 0 ? "Draft" : "Empty";
+  const lineupLabel = isSettled
+    ? "Final lineup"
+    : isLive
+      ? "Locked lineup"
+      : isLocked
+        ? "Locked"
+        : hasEntry
+          ? "Submitted"
+          : selectedIds.length > 0
+            ? "Draft"
+            : "Empty";
   const lineupHelperText = isSettled
     ? "These are the cards that counted in your final result."
     : isLive
@@ -588,20 +847,23 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
       : isLocked
         ? "Lineup changes are disabled now that the lock milestone has passed."
         : !me
-          ? "Connect X to build a lineup, submit your entry, and track your personal contest results."
+          ? "Connect wallet / X to build a lineup, submit your entry, and track your personal contest results."
           : duplicateLineupKeys.length > 0
             ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
             : "Fill every slot to complete your contest entry.";
-  const heroCoverImageUrl = contest.rules[0]?.config?.coverImageUrl?.trim()
-    || slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl
-    || null;
+  const heroCoverImageUrl =
+    contest.rules[0]?.config?.coverImageUrl?.trim() ||
+    slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl ||
+    null;
   const contestInfoLine = [
     entryFee,
     `${rosterSize} cards`,
     `${contest._count.entries} entr${contest._count.entries === 1 ? "y" : "ies"}`,
     contest.seasonName ?? null,
     contest.leagueTierRequired ? `${contest.leagueTierRequired} tier` : null,
-  ].filter((value): value is string => Boolean(value)).join(" • ");
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" • ");
 
   return (
     <SiteShell>
@@ -674,7 +936,11 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
         lockAt={contest.lockAt}
         rosterSize={rosterSize}
         initialActiveSlot={activeBuilderSlot}
-        lineupSlots={lineupSlots.length === rosterSize ? lineupSlots : toSlots(selectedIds, rosterSize)}
+        lineupSlots={
+          lineupSlots.length === rosterSize
+            ? lineupSlots
+            : toSlots(selectedIds, rosterSize)
+        }
         options={options}
         selectedLogicalTokenKeys={selectedLogicalTokenKeys}
         busy={submitBusy}
@@ -698,7 +964,10 @@ export default function ContestDetailPage({ params }: { params: { contestId: str
           if (selectedIds.length === rosterSize) {
             await submitLineup(true);
           } else {
-            localStorage.setItem(`lineup-draft-${params.contestId}`, JSON.stringify(lineupSlots));
+            localStorage.setItem(
+              `lineup-draft-${params.contestId}`,
+              JSON.stringify(lineupSlots),
+            );
             setBuilderFlash("Draft saved.");
             setShowBuilder(false);
           }

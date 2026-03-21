@@ -26,7 +26,8 @@ function writePendingLoginRequest(value: boolean) {
 }
 
 export function usePrivyLogin() {
-  const { authenticated, getAccessToken, login, logout, ready, user } = usePrivy();
+  const { authenticated, getAccessToken, login, logout, ready, user } =
+    usePrivy();
   const { me, refresh, setMe } = useSession();
   const [isSyncingSession, setIsSyncingSession] = useState(false);
   const [isStartingLogin, setIsStartingLogin] = useState(false);
@@ -45,7 +46,9 @@ export function usePrivyLogin() {
         return true;
       }
 
-      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS));
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS),
+      );
     }
 
     return privyStateRef.current.ready;
@@ -55,13 +58,23 @@ export function usePrivyLogin() {
     const startedAt = Date.now();
 
     while (Date.now() - startedAt < PRIVY_LOGOUT_WAIT_TIMEOUT_MS) {
-      const { authenticated: isAuthenticated, ready: isReady, user: currentUser } = privyStateRef.current;
+      const {
+        authenticated: isAuthenticated,
+        ready: isReady,
+        user: currentUser,
+      } = privyStateRef.current;
       if (isReady && !isAuthenticated && !currentUser) {
-        await new Promise((resolve) => window.setTimeout(resolve, PRIVY_POST_LOGOUT_SETTLE_MS));
-        return !privyStateRef.current.authenticated && !privyStateRef.current.user;
+        await new Promise((resolve) =>
+          window.setTimeout(resolve, PRIVY_POST_LOGOUT_SETTLE_MS),
+        );
+        return (
+          !privyStateRef.current.authenticated && !privyStateRef.current.user
+        );
       }
 
-      await new Promise((resolve) => window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS));
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS),
+      );
     }
 
     return false;
@@ -80,7 +93,9 @@ export function usePrivyLogin() {
 
       const response = await fetch("/api/auth/privy/exchange", {
         method: "POST",
-        headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
+        headers: getAnalyticsRequestHeaders({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify({ accessToken }),
       });
 
@@ -121,13 +136,17 @@ export function usePrivyLogin() {
         didLogoutCleanly = await waitForPrivyLogout();
       }
 
-      if (!didLogoutCleanly || privyStateRef.current.authenticated || privyStateRef.current.user) {
+      if (
+        !didLogoutCleanly ||
+        privyStateRef.current.authenticated ||
+        privyStateRef.current.user
+      ) {
         writePendingLoginRequest(false);
         return false;
       }
 
       writePendingLoginRequest(true);
-      login({ loginMethods: ["twitter"] });
+      login();
       return true;
     } finally {
       loginAttemptInFlightRef.current = false;
@@ -146,16 +165,33 @@ export function usePrivyLogin() {
   }, [logout, refresh, setMe]);
 
   useEffect(() => {
-    if (!ready || !authenticated || me || isSyncingSession || !hasPendingLoginRequest()) return;
+    if (
+      !ready ||
+      !authenticated ||
+      me ||
+      isSyncingSession ||
+      !hasPendingLoginRequest()
+    )
+      return;
     void syncSession();
   }, [authenticated, isSyncingSession, me, ready, syncSession]);
 
-  return useMemo(() => ({
-    authenticated,
-    isStartingLogin,
-    isSyncingSession,
-    loginWithPrivy,
-    logoutFromApp,
-    ready,
-  }), [authenticated, isStartingLogin, isSyncingSession, loginWithPrivy, logoutFromApp, ready]);
+  return useMemo(
+    () => ({
+      authenticated,
+      isStartingLogin,
+      isSyncingSession,
+      loginWithPrivy,
+      logoutFromApp,
+      ready,
+    }),
+    [
+      authenticated,
+      isStartingLogin,
+      isSyncingSession,
+      loginWithPrivy,
+      logoutFromApp,
+      ready,
+    ],
+  );
 }

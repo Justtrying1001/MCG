@@ -21,14 +21,19 @@ export function RootProviders({ children }: { children: ReactNode }) {
         appearance: {
           accentColor: "#c89b3c",
           theme: "dark",
-          showWalletLoginFirst: false,
         },
-        loginMethods: ["twitter"],
       }}
     >
       {children}
     </PrivyProvider>
-  ) : children;
+  ) : (
+    children
+  );
 
-  return <SessionProvider><InternalAnalyticsTracker />{content}</SessionProvider>;
+  return (
+    <SessionProvider>
+      <InternalAnalyticsTracker />
+      {content}
+    </SessionProvider>
+  );
 }

@@ -533,9 +533,9 @@ export default function RewardsPage() {
           </section>
           <ConnectXCallout
             layout="inline"
-            title="Connect X to unlock quests"
+            title="Connect to unlock quests"
             description="Rewards only load for connected players so the ledger and quest state stay accurate."
-            ctaLabel="Connect X"
+            ctaLabel="Connect wallet / X"
           />
         </div>
       ) : null}

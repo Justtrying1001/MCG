@@ -35,7 +35,11 @@ type PackConfigPayload = {
     type: string;
     label: string;
     rarityOdds: Array<{ rarityCode: string; pct: number }>;
-    rarityEditionOdds: Array<{ rarityCode: string; editionCode: string; pct: number }>;
+    rarityEditionOdds: Array<{
+      rarityCode: string;
+      editionCode: string;
+      pct: number;
+    }>;
   }>;
 };
 
@@ -86,14 +90,18 @@ export default function PacksPage() {
   const [resultMvp, setResultMvp] = useState<MvpCardView[]>([]);
   const [isOpening, setIsOpening] = useState(false);
   const [revealed, setRevealed] = useState<boolean[]>([]);
-  const [openingPhase, setOpeningPhase] = useState<"idle" | "tearing" | "revealing">("idle");
+  const [openingPhase, setOpeningPhase] = useState<
+    "idle" | "tearing" | "revealing"
+  >("idle");
   const [revealMode, setRevealMode] = useState<RevealMode>("real");
   const [packConfig, setPackConfig] = useState<PackConfigPayload | null>(null);
   const [zoomedCard, setZoomedCard] = useState<MvpCardView | null>(null);
   const [oddsOpen, setOddsOpen] = useState(false);
   const [rewardGrants, setRewardGrants] = useState<RewardPackGrant[]>([]);
   const [loadingRewardGrants, setLoadingRewardGrants] = useState(false);
-  const [openingRewardGrantId, setOpeningRewardGrantId] = useState<string | null>(null);
+  const [openingRewardGrantId, setOpeningRewardGrantId] = useState<
+    string | null
+  >(null);
   const [saleNotice, setSaleNotice] = useState<InlineNotice | null>(null);
   const [rewardNotice, setRewardNotice] = useState<InlineNotice | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -141,7 +149,9 @@ export default function PacksPage() {
     fetch("/api/rewards/packs", { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) return null;
-        return (await response.json().catch(() => null)) as { grants?: RewardPackGrant[] } | null;
+        return (await response.json().catch(() => null)) as {
+          grants?: RewardPackGrant[];
+        } | null;
       })
       .then((payload) => {
         if (!active) return;
@@ -193,7 +203,9 @@ export default function PacksPage() {
     setRevealed([]);
     startReveal(GUEST_PACK_PREVIEW_CARDS, "guest-preview");
     trackInternalEvent("PACK_OPEN");
-    trackEvent("packs_guest_preview_opened", { cards: GUEST_PACK_PREVIEW_CARDS.length });
+    trackEvent("packs_guest_preview_opened", {
+      cards: GUEST_PACK_PREVIEW_CARDS.length,
+    });
   };
 
   const openPack = async () => {
@@ -202,7 +214,10 @@ export default function PacksPage() {
       return;
     }
 
-    trackEvent("packs_cta_click", { state: "authenticated", intent: "open_real_pack" });
+    trackEvent("packs_cta_click", {
+      state: "authenticated",
+      intent: "open_real_pack",
+    });
     trackInternalEvent("CLICK_OPEN_PACK");
     setSaleNotice(null);
     setRevealMode("real");
@@ -213,23 +228,37 @@ export default function PacksPage() {
 
     const res = await fetch("/api/pack/open", {
       method: "POST",
-      headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
+      headers: getAnalyticsRequestHeaders({
+        "Content-Type": "application/json",
+      }),
     });
 
     if (!res.ok) {
-      const payload = await res.json().catch(() => null) as { error?: { message?: string; purchaseLimit?: PurchaseLimitStatus } } | null;
+      const payload = (await res.json().catch(() => null)) as {
+        error?: { message?: string; purchaseLimit?: PurchaseLimitStatus };
+      } | null;
       if (payload?.error?.purchaseLimit) {
-        setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.error!.purchaseLimit! } : prev);
+        setPackConfig((prev) =>
+          prev
+            ? { ...prev, purchaseLimit: payload.error!.purchaseLimit! }
+            : prev,
+        );
         setSaleNotice({
           tone: "danger",
           title: "Daily purchase cap reached",
           detail: payload.error.purchaseLimit.resetAt
             ? `Try again when the cooldown expires.`
-            : payload.error.message ?? "Purchase limit reached.",
+            : (payload.error.message ?? "Purchase limit reached."),
         });
       } else {
-        const fallbackMessage = payload?.error?.message ?? "Unable to open pack right now. Please try again.";
-        setSaleNotice({ tone: "danger", title: "Pack purchase failed", detail: fallbackMessage });
+        const fallbackMessage =
+          payload?.error?.message ??
+          "Unable to open pack right now. Please try again.";
+        setSaleNotice({
+          tone: "danger",
+          title: "Pack purchase failed",
+          detail: fallbackMessage,
+        });
       }
       setIsOpening(false);
       setOpeningPhase("idle");
@@ -243,7 +272,8 @@ export default function PacksPage() {
       setSaleNotice({
         tone: "danger",
         title: "Pack reveal unavailable",
-        detail: "Pack opened but the reveal payload is missing. Please refresh and try again.",
+        detail:
+          "Pack opened but the reveal payload is missing. Please refresh and try again.",
       });
       setIsOpening(false);
       setOpeningPhase("idle");
@@ -251,7 +281,14 @@ export default function PacksPage() {
       return;
     }
 
-    setPackConfig((prev) => prev ? { ...prev, purchaseLimit: payload.purchaseLimit ?? prev.purchaseLimit } : prev);
+    setPackConfig((prev) =>
+      prev
+        ? {
+            ...prev,
+            purchaseLimit: payload.purchaseLimit ?? prev.purchaseLimit,
+          }
+        : prev,
+    );
     setSaleNotice({
       tone: "success",
       title: "Pack purchased successfully",
@@ -280,7 +317,9 @@ export default function PacksPage() {
 
       const res = await fetch("/api/rewards/packs/claim", {
         method: "POST",
-        headers: getAnalyticsRequestHeaders({ "Content-Type": "application/json" }),
+        headers: getAnalyticsRequestHeaders({
+          "Content-Type": "application/json",
+        }),
         body: JSON.stringify({ grantId }),
       });
 
@@ -296,14 +335,18 @@ export default function PacksPage() {
         return;
       }
 
-      const payload = (await res.json()) as { pulledCardsMvp?: MvpCardView[]; packCode?: string };
+      const payload = (await res.json()) as {
+        pulledCardsMvp?: MvpCardView[];
+        packCode?: string;
+      };
       const pulledMvp = payload.pulledCardsMvp ?? [];
 
       if (pulledMvp.length === 0) {
         setRewardNotice({
           tone: "danger",
           title: "Reward reveal unavailable",
-          detail: "Reward pack opened but the reveal payload is missing. Please refresh and try again.",
+          detail:
+            "Reward pack opened but the reveal payload is missing. Please refresh and try again.",
         });
         setOpeningRewardGrantId(null);
         setIsOpening(false);
@@ -352,20 +395,26 @@ export default function PacksPage() {
   };
 
   const handleConnectWithX = () => {
-    trackEvent("packs_guest_preview_connect_click", { location: "preview_complete" });
+    trackEvent("packs_guest_preview_connect_click", {
+      location: "preview_complete",
+    });
     void loginWithPrivy();
   };
 
   const packRemaining = packConfig?.pack?.remainingPackCount;
   const packPlanned = packConfig?.pack?.plannedPackCount;
-  const cardsPerPack = packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
+  const cardsPerPack =
+    packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
   const purchaseLimit = useMemo(() => {
     const base = packConfig?.purchaseLimit;
     if (!base?.resetAt) return base ?? null;
 
     const remainingMs = new Date(base.resetAt).getTime() - nowMs;
     const cooldownSeconds = Math.max(Math.ceil(remainingMs / 1000), 0);
-    const isBlocked = base.enabled && cooldownSeconds > 0 && (base.remainingPurchases ?? 0) <= 0;
+    const isBlocked =
+      base.enabled &&
+      cooldownSeconds > 0 &&
+      (base.remainingPurchases ?? 0) <= 0;
 
     return {
       ...base,
@@ -404,13 +453,18 @@ export default function PacksPage() {
   }, [cardsPerPack, packConfig?.slots]);
 
   const rarityOddsForDisplay = useMemo(() => {
-    const standardSlots = (packConfig?.slots ?? []).filter((s) => s.type === "STANDARD");
+    const standardSlots = (packConfig?.slots ?? []).filter(
+      (s) => s.type === "STANDARD",
+    );
     if (standardSlots.length === 0) return undefined;
     const aggregate = new Map<string, number>();
     for (const slot of standardSlots) {
       for (const odd of slot.rarityOdds ?? []) {
         const key = odd.rarityCode.toUpperCase();
-        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / standardSlots.length);
+        aggregate.set(
+          key,
+          (aggregate.get(key) ?? 0) + odd.pct / standardSlots.length,
+        );
       }
     }
     return Array.from(aggregate.entries())
@@ -495,7 +549,7 @@ export default function PacksPage() {
           guestHeadline="Discover what can be inside"
           guestSupportingCopy="Run a short preview reveal now, then connect with X when you want the next reveal to count toward your real inventory."
           onConnectWithX={() => void loginWithPrivy()}
-          guestCtaLabel="Connect X to open your pack"
+          guestCtaLabel="Connect wallet / X to open your pack"
         />
       </section>
 
@@ -514,21 +568,31 @@ export default function PacksPage() {
             <p className="reward-packs-kicker">Reward inventory</p>
             <h2>Reward Packs</h2>
             <p className="reward-packs-intro">
-              Packs earned from contests, quests, and future rewards. Open your earned packs here.
+              Packs earned from contests, quests, and future rewards. Open your
+              earned packs here.
             </p>
           </div>
 
           {rewardNotice ? (
-            <div className={`packs-inline-notice packs-inline-notice--${rewardNotice.tone}`} role="status" aria-live="polite">
+            <div
+              className={`packs-inline-notice packs-inline-notice--${rewardNotice.tone}`}
+              role="status"
+              aria-live="polite"
+            >
               <strong>{rewardNotice.title}</strong>
               {rewardNotice.detail ? <span>{rewardNotice.detail}</span> : null}
             </div>
           ) : null}
 
-          {loadingRewardGrants ? <p className="reward-packs-status">Loading reward packs…</p> : null}
+          {loadingRewardGrants ? (
+            <p className="reward-packs-status">Loading reward packs…</p>
+          ) : null}
 
           {!loadingRewardGrants && groupedRewardGrants.length === 0 ? (
-            <p className="reward-packs-status">No reward packs yet. Win events and complete quests to build your inventory.</p>
+            <p className="reward-packs-status">
+              No reward packs yet. Win events and complete quests to build your
+              inventory.
+            </p>
           ) : null}
 
           {!loadingRewardGrants && groupedRewardGrants.length > 0 ? (
@@ -537,27 +601,44 @@ export default function PacksPage() {
                 const quantity = group.grants.length;
                 const nextGrantId = group.grants[0]?.id;
                 const isOpeningThisGroup = Boolean(
-                  openingRewardGrantId && group.grants.some((grant) => grant.id === openingRewardGrantId),
+                  openingRewardGrantId &&
+                  group.grants.some(
+                    (grant) => grant.id === openingRewardGrantId,
+                  ),
                 );
 
                 return (
                   <article key={group.key} className="reward-pack-card">
                     <div className="reward-pack-art-wrap">
-                      <Image src={officialPackImage} alt={`${group.displayName} pack`} className="reward-pack-art" />
-                      {quantity > 1 ? <span className="reward-pack-quantity">x{quantity}</span> : null}
+                      <Image
+                        src={officialPackImage}
+                        alt={`${group.displayName} pack`}
+                        className="reward-pack-art"
+                      />
+                      {quantity > 1 ? (
+                        <span className="reward-pack-quantity">
+                          x{quantity}
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="reward-pack-body">
                       <p className="reward-pack-source">{group.sourceLabel}</p>
                       <h3>{group.displayName}</h3>
                       <p className="reward-pack-copy">
-                        {group.description ?? "Special pack awarded for your progress in MCG."}
+                        {group.description ??
+                          "Special pack awarded for your progress in MCG."}
                       </p>
                     </div>
 
                     <Button
                       className="reward-pack-open"
-                      disabled={isOpening || !nextGrantId || isOpeningThisGroup || openingPhase === "tearing"}
+                      disabled={
+                        isOpening ||
+                        !nextGrantId ||
+                        isOpeningThisGroup ||
+                        openingPhase === "tearing"
+                      }
                       onClick={() => {
                         if (!nextGrantId) return;
                         void openRewardPack(nextGrantId);
@@ -586,7 +667,12 @@ export default function PacksPage() {
         cardBackSrc={versoImage}
       />
 
-      <CardZoomModal card={zoomedCard} quantity={1} open={Boolean(zoomedCard)} onClose={() => setZoomedCard(null)} />
+      <CardZoomModal
+        card={zoomedCard}
+        quantity={1}
+        open={Boolean(zoomedCard)}
+        onClose={() => setZoomedCard(null)}
+      />
     </SiteShell>
   );
 }
