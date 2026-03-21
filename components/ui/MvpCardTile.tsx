@@ -144,7 +144,6 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
               : `MAX ${padCardNumber(card.plannedSupply)}`
             : "UNLTD"}
         </span>
-        {typeof quantity === "number" && quantity > 1 ? <span className="mvp-footer-quantity">x{quantity}</span> : null}
       </footer>
     </article>
   );
