@@ -58,8 +58,7 @@ export function PlayerDashboardHeader({
                 </span>
               </p>
               <p className="player-dash-copy">
-                Your lobby for contests, Memedex momentum, and the freshest
-                activity across MCG.
+                Your handheld hub for contest runs, collection goals, rewards, and the loudest moves happening across MCG.
               </p>
             </div>
           </div>
@@ -115,7 +114,7 @@ export function PlayerDashboardHeader({
           href="/contests"
           className="player-dash-btn player-dash-btn--primary"
         >
-          Battle arena
+          Enter battle arena
         </Link>
         <div
           className="player-dash-secondary-links"
@@ -131,7 +130,7 @@ export function PlayerDashboardHeader({
             href="/packs"
             className="player-dash-secondary-link player-dash-secondary-link--yellow"
           >
-            Booster shop
+            Open booster shop
           </Link>
           <Link
             href="/rewards"

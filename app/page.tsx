@@ -17,6 +17,7 @@ import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
 import { CollectionProgressBlock } from "@/components/home/CollectionProgressBlock";
 import { LobbyTicker } from "@/components/home/LobbyTicker";
+import { LobbyModeDeck } from "@/components/home/LobbyModeDeck";
 
 type ContestListItem = {
   id: string;
@@ -136,39 +137,46 @@ export default function HomePage() {
     <SiteShell>
       {isAuth && userInfo ? (
         <div className="home-dashboard-layout stitch-screen stitch-dashboard-screen">
-          <LobbyTicker items={tickerItems} />
+          <section className="home-dashboard-top-zone">
+            <PlayerDashboardHeader
+              displayName={userInfo.displayName}
+              points={userInfo.points}
+              level={userInfo.level}
+              activeEntries={userInfo.activeEntries}
+              completionPct={userInfo.completionPct}
+              ownedTemplates={userInfo.ownedTemplates}
+              missingTemplates={userInfo.missingTemplates}
+              seasonRank={userInfo.seasonRank}
+            />
 
-          <PlayerDashboardHeader
-            displayName={userInfo.displayName}
-            points={userInfo.points}
-            level={userInfo.level}
-            activeEntries={userInfo.activeEntries}
-            completionPct={userInfo.completionPct}
-            ownedTemplates={userInfo.ownedTemplates}
-            missingTemplates={userInfo.missingTemplates}
-            seasonRank={userInfo.seasonRank}
-          />
+            <LobbyTicker items={tickerItems} />
+          </section>
 
           <div
             className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}
           >
             <div className="home-dashboard-main-column home-dashboard-main-column--hero">
               <ActiveContestsRail contests={contests} />
+              <RecentPullsRail pulls={recentPulls} />
             </div>
 
-            {hasCollectionSummary ? (
-              <aside className="home-dashboard-side-column home-dashboard-side-column--console">
+            <aside className="home-dashboard-side-column home-dashboard-side-column--console">
+              <LobbyModeDeck
+                completionPct={userInfo.completionPct}
+                points={userInfo.points}
+                activeEntries={userInfo.activeEntries}
+              />
+              {hasCollectionSummary ? (
                 <CollectionProgressBlock
                   completionPct={userInfo.completionPct}
                   ownedCount={userInfo.ownedTemplates ?? 0}
                   missingCount={userInfo.missingTemplates ?? 0}
                 />
-              </aside>
-            ) : null}
+              ) : null}
+            </aside>
           </div>
 
-          <div className="home-dashboard-secondary-grid">
-            <RecentPullsRail pulls={recentPulls} />
+          <div className="home-dashboard-secondary-grid home-dashboard-secondary-grid--solo">
             <DocsLearnSection compact />
           </div>
         </div>

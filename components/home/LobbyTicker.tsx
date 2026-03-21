@@ -11,6 +11,7 @@ export function LobbyTicker({ items }: LobbyTickerProps) {
 
   return (
     <div className="lobby-ticker" aria-label="Lobby status ticker">
+      <div className="lobby-ticker-label" aria-hidden="true">LIVE</div>
       <div className="lobby-ticker-track">
         {tickerItems.map((item, index) => (
           <span key={`${item}-${index}`} className="lobby-ticker-item">
