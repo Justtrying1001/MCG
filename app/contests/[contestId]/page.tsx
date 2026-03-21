@@ -864,6 +864,34 @@ export default function ContestDetailPage({
   ]
     .filter((value): value is string => Boolean(value))
     .join(" • ");
+  const eventRailItems = [
+    {
+      label: "Arena status",
+      value: contest.status,
+      tone: isLive
+        ? "live"
+        : isLocked
+          ? "locked"
+          : isSettled
+            ? "settled"
+            : "open",
+    },
+    {
+      label: "Entry mode",
+      value: entryFee,
+      tone: "neutral",
+    },
+    {
+      label: "Roster size",
+      value: `${rosterSize} cards`,
+      tone: "neutral",
+    },
+    {
+      label: "Arena crowd",
+      value: `${contest._count.entries.toLocaleString()} entries`,
+      tone: "neutral",
+    },
+  ];
 
   return (
     <SiteShell>
@@ -881,8 +909,32 @@ export default function ContestDetailPage({
           error={error || builderError || null}
         />
 
+        <section
+          className="contest-detail-event-rail"
+          aria-label="Contest event summary"
+        >
+          {eventRailItems.map((item) => (
+            <article
+              key={`${item.label}-${item.value}`}
+              className={`contest-detail-event-chip tone-${item.tone}`}
+            >
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))}
+        </section>
+
         <section className="contest-detail-main-layout">
           <div className="contest-detail-primary-zone">
+            <div className="contest-detail-zone-banner">
+              <span className="contest-detail-zone-banner-kicker">
+                Participation bay
+              </span>
+              <strong>Your contest station</strong>
+              <p>
+                Build, review, and track the lineup tied to this arena event.
+              </p>
+            </div>
             <div ref={leaderboardSectionRef}>
               <LineupPanel
                 title="Your lineup"
@@ -904,6 +956,16 @@ export default function ContestDetailPage({
           </div>
 
           <aside className="contest-detail-support-zone">
+            <div className="contest-detail-zone-banner support-zone">
+              <span className="contest-detail-zone-banner-kicker">
+                Arena modules
+              </span>
+              <strong>Rewards + rankings</strong>
+              <p>
+                Supporting event boards for payouts, standings, and contest
+                context.
+              </p>
+            </div>
             <RewardsPanel
               status={contest.status}
               tiers={rewards?.tiers ?? []}

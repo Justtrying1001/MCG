@@ -10889,3 +10889,312 @@ button.mcg-chip:hover {
     flex-direction: column;
   }
 }
+
+/* ===== Contest detail second pass ===== */
+.stitch-contest-detail-screen {
+  gap: 1.35rem;
+  padding-bottom: 2.5rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-page-v2 {
+  position: relative;
+  gap: 1.35rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-page-v2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255, 239, 85, 0.18),
+      transparent 22%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(255, 114, 180, 0.16),
+      transparent 24%
+    );
+}
+
+.stitch-contest-detail-screen .contest-detail-shell-hero {
+  overflow: hidden;
+  border: 4px solid #111;
+  border-radius: 34px;
+  box-shadow: 10px 10px 0 #111;
+  background: linear-gradient(135deg, #ff76b8 0%, #7f7dff 52%, #19e7ff 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-visual {
+  border: 0;
+  min-height: 420px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(255, 239, 85, 0.24),
+      transparent 24%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(18, 15, 42, 0.9) 0%,
+      rgba(67, 22, 79, 0.76) 52%,
+      rgba(10, 42, 83, 0.62) 100%
+    );
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-visual::after {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0.04) 0%,
+    rgba(10, 10, 10, 0.26) 34%,
+    rgba(10, 10, 10, 0.76) 100%
+  );
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-copy-panel {
+  border: 4px solid #111;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 8px 8px 0 #111;
+  padding: 1.15rem 1.2rem;
+  color: #111;
+  max-width: 44rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-kicker {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 0 0.35rem;
+  padding: 0.36rem 0.78rem;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #ffef55;
+  color: #111;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0 #111;
+  transform: rotate(-2deg);
+}
+
+.stitch-contest-detail-screen .contest-detail-shell-hero h1 {
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  text-shadow: none;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-meta-pill {
+  border: 3px solid #111;
+  background: #fff;
+  color: #111;
+  box-shadow: 4px 4px 0 #111;
+  font-weight: 800;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-context-line,
+.stitch-contest-detail-screen .contest-detail-hero-info-line {
+  color: rgba(17, 17, 17, 0.8);
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-visual-badge-row {
+  gap: 0.7rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-stamp {
+  display: inline-flex;
+  align-items: center;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  padding: 0.38rem 0.8rem;
+  box-shadow: 4px 4px 0 #111;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-side {
+  gap: 1rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-panel,
+.stitch-contest-detail-screen .contest-detail-hero-action-panel--event {
+  border: 4px solid #111;
+  border-radius: 28px;
+  box-shadow: 7px 7px 0 #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-panel {
+  background: linear-gradient(180deg, #fffef6 0%, #ffe2ef 100%);
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-label,
+.stitch-contest-detail-screen .contest-detail-timing-details span,
+.stitch-contest-detail-screen .contest-detail-timing-header p {
+  color: rgba(17, 17, 17, 0.66);
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-header strong,
+.stitch-contest-detail-screen .contest-detail-timing-details strong {
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-action-panel--event {
+  background: linear-gradient(180deg, #fff9d0 0%, #d7fbff 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-cta {
+  border: 4px solid #111;
+  border-radius: 999px;
+  box-shadow: 5px 5px 0 #111;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stitch-contest-detail-screen .contest-detail-help-panel {
+  border-top: 3px dashed rgba(17, 17, 17, 0.2);
+  padding-top: 0.8rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-event-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-event-chip {
+  border: 4px solid #111;
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 #111;
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.2rem;
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-event-chip span,
+.stitch-contest-detail-screen .contest-detail-zone-banner-kicker {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stitch-contest-detail-screen .contest-detail-event-chip strong {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.stitch-contest-detail-screen .contest-detail-event-chip.tone-live {
+  background: #fff1aa;
+}
+.stitch-contest-detail-screen .contest-detail-event-chip.tone-locked {
+  background: #e2dbff;
+}
+.stitch-contest-detail-screen .contest-detail-event-chip.tone-settled {
+  background: #ffd8eb;
+}
+.stitch-contest-detail-screen .contest-detail-event-chip.tone-open,
+.stitch-contest-detail-screen .contest-detail-event-chip.tone-neutral {
+  background: #ddfbff;
+}
+
+.stitch-contest-detail-screen .contest-detail-main-layout {
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.stitch-contest-detail-screen .contest-detail-primary-zone,
+.stitch-contest-detail-screen .contest-detail-support-zone {
+  gap: 1rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-zone-banner {
+  border: 4px solid #111;
+  border-radius: 26px;
+  box-shadow: 7px 7px 0 #111;
+  padding: 0.95rem 1rem;
+  background: linear-gradient(180deg, #fff7c6 0%, #ffe5ae 100%);
+  display: grid;
+  gap: 0.2rem;
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-zone-banner.support-zone {
+  background: linear-gradient(180deg, #ffe1ef 0%, #defaff 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-zone-banner strong {
+  font-size: 1.25rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.stitch-contest-detail-screen .contest-detail-zone-banner p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.stitch-contest-detail-screen .contest-detail-block,
+.stitch-contest-detail-screen .rewards-panel,
+.stitch-contest-detail-screen .leaderboard-panel {
+  border: 4px solid #111;
+  border-radius: 30px;
+  box-shadow: 8px 8px 0 #111;
+  overflow: hidden;
+}
+
+.stitch-contest-detail-screen .contest-detail-main-surface {
+  background: linear-gradient(180deg, #fffef8 0%, #fff0f7 100%);
+}
+
+.stitch-contest-detail-screen .rewards-panel {
+  background: linear-gradient(180deg, #fff8d3 0%, #ffe4ee 100%);
+}
+
+.stitch-contest-detail-screen .leaderboard-panel {
+  background: linear-gradient(180deg, #f5feff 0%, #d9f8ff 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot,
+.stitch-contest-detail-screen .contest-detail-reward-pool-card,
+.stitch-contest-detail-screen .contest-detail-reward-tier-list article,
+.stitch-contest-detail-screen .contest-detail-fact-list div,
+.stitch-contest-detail-screen .contest-detail-leaderboard-row {
+  border: 3px solid #111;
+  border-radius: 22px;
+  box-shadow: 4px 4px 0 #111;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.stitch-contest-detail-screen .contest-detail-leaderboard-row.is-top {
+  background: linear-gradient(180deg, #fff1aa 0%, #ffe5b3 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-leaderboard-row.is-me {
+  background: linear-gradient(180deg, #e4faff 0%, #d2f4ff 100%);
+}
+
+@media (max-width: 1080px) {
+  .stitch-contest-detail-screen .contest-detail-event-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .stitch-contest-detail-screen .contest-detail-event-rail,
+  .stitch-contest-detail-screen .contest-detail-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
