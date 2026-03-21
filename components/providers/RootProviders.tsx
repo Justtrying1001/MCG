@@ -2,11 +2,13 @@
 
 import type { ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
+import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { SessionProvider } from "@/components/session/SessionProvider";
 import { InternalAnalyticsTracker } from "@/components/analytics/InternalAnalyticsTracker";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
+const solanaConnectors = toSolanaWalletConnectors();
 
 export function RootProviders({ children }: { children: ReactNode }) {
   const hasPrivyConfig = Boolean(privyAppId && privyClientId);
@@ -22,13 +24,35 @@ export function RootProviders({ children }: { children: ReactNode }) {
           accentColor: "#c89b3c",
           theme: "dark",
           showWalletLoginFirst: false,
+          walletChainType: "solana-only",
+          walletList: ["phantom", "solflare", "backpack", "wallet_connect"],
         },
-        loginMethods: ["twitter"],
+        loginMethods: ["twitter", "wallet"],
+        externalWallets: {
+          solana: {
+            connectors: solanaConnectors,
+          },
+        },
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: "off",
+          },
+          solana: {
+            createOnLogin: "off",
+          },
+        },
       }}
     >
       {children}
     </PrivyProvider>
-  ) : children;
+  ) : (
+    children
+  );
 
-  return <SessionProvider><InternalAnalyticsTracker />{content}</SessionProvider>;
+  return (
+    <SessionProvider>
+      <InternalAnalyticsTracker />
+      {content}
+    </SessionProvider>
+  );
 }

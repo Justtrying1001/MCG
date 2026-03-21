@@ -21,14 +21,24 @@ const navItems = [
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, loading } = useSession();
-  const { isStartingLogin, isSyncingSession, loginWithPrivy, logoutFromApp, ready } = usePrivyLogin();
+  const {
+    isStartingLogin,
+    isSyncingSession,
+    loginWithPrivy,
+    logoutFromApp,
+    ready,
+  } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
 
   return (
     <div className="mcg-app">
       <header className="mcg-topnav">
         <div className="mcg-container mcg-topnav-inner">
-          <Link href="/" className="mcg-brand" onClick={() => setOpenMobile(false)}>
+          <Link
+            href="/"
+            className="mcg-brand"
+            onClick={() => setOpenMobile(false)}
+          >
             <span className="mcg-brand-mark">MCG</span>
             <span>
               <strong className="mcg-brand-name">Meme Card Game</strong>
@@ -38,9 +48,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
           <nav className="mcg-nav-links" aria-label="Main navigation">
             {navItems.map((item) => {
-              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              const active =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href);
               return (
-                <Link key={item.href} href={item.href} className={`mcg-nav-link${active ? " active" : ""}`}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`mcg-nav-link${active ? " active" : ""}`}
+                >
                   {item.label}
                 </Link>
               );
@@ -56,7 +73,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <strong>{me.user.displayName}</strong>
                   <span>{me.user.points} pts</span>
                 </span>
-                <Button variant="ghost" className="btn-sm" onClick={() => void logoutFromApp()}>
+                <Button
+                  variant="ghost"
+                  className="btn-sm"
+                  onClick={() => void logoutFromApp()}
+                >
                   Logout
                 </Button>
               </>
@@ -67,18 +88,27 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 disabled={!ready || isStartingLogin}
                 onClick={() => void loginWithPrivy()}
               >
-                Connect with X
+                Connect wallet / X
               </Button>
             )}
 
-            <Button variant="gold" className="btn-sm mcg-mobile-menu-btn" onClick={() => setOpenMobile((v) => !v)}>
+            <Button
+              variant="gold"
+              className="btn-sm mcg-mobile-menu-btn"
+              onClick={() => setOpenMobile((v) => !v)}
+            >
               {openMobile ? "Close" : "Menu"}
             </Button>
           </div>
         </div>
 
         {openMobile ? (
-          <div className="mcg-mobile-drawer mcg-container" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+          <div
+            className="mcg-mobile-drawer mcg-container"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
+          >
             {navItems.map((item) => (
               <Link
                 key={item.href}
