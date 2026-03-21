@@ -104,10 +104,12 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
       <header className="mvp-card-header">
         <div className="mvp-card-header-text">
           <span className="mvp-card-name">{card.displayName}</span>
-          <span className="mvp-card-ticker">${card.symbol} · {setName}</span>
+          <div className="mvp-card-header-meta">
+            <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
+            <span className="mvp-card-ticker">${card.symbol} · {setName}</span>
+          </div>
         </div>
         <div className="mvp-card-header-badges">
-          <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
           <span className="mvp-badge-edition">{editionBadge}</span>
         </div>
       </header>
@@ -136,7 +138,9 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
 
       <footer className="mvp-card-footer">
         <span className="mvp-footer-code">{cardNumber}</span>
+        <span className="mvp-footer-separator" aria-hidden="true">|</span>
         <span className="mvp-footer-center">{setName} · {setEdition}</span>
+        <span className="mvp-footer-separator" aria-hidden="true">|</span>
         <span className="mvp-footer-supply">
           {card.plannedSupply > 0
             ? pullNumber

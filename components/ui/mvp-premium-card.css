@@ -8,8 +8,8 @@
   isolation: isolate;
 
   --card-header-height: 12%;
-  --card-textbox-height: 15%;
-  --card-footer-height: 13%;
+  --card-textbox-height: 14%;
+  --card-footer-height: 12%;
 
   --accent: #4B4B4B;
   --glow-col: rgba(0, 0, 0, 0);
@@ -30,7 +30,7 @@
     inset 0 0 0 1px #B8B2A7,
     inset 0 1px 3px rgba(255, 255, 255, 0.5),
     inset 0 -2px 6px rgba(0, 0, 0, 0.04),
-    0 2px 0 rgba(0, 0, 0, 0.1);
+    0 3px 10px rgba(0, 0, 0, 0.08);
   display: grid;
   grid-template-rows: var(--card-header-height) 1fr var(--card-textbox-height) var(--card-footer-height);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -52,7 +52,7 @@
     inset 0 0 0 1px #B8B2A7,
     inset 0 1px 3px rgba(255, 255, 255, 0.5),
     inset 0 -2px 6px rgba(0, 0, 0, 0.04),
-    0 3px 0 rgba(0, 0, 0, 0.1);
+    0 5px 14px rgba(0, 0, 0, 0.1);
 }
 
 .mvp-premium-card.is-static,
@@ -69,16 +69,6 @@
 .mvp-card-grain,
 .mvp-card-patina,
 .mvp-card-frame-shadow {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.mvp-card-stock,
-.mvp-card-grain,
-.mvp-card-patina,
-.mvp-card-frame-shadow {
   display: none;
 }
 
@@ -86,7 +76,7 @@
   position: relative;
   z-index: 10;
   margin: 8px 8px 0;
-  padding: 7px 9px 6px;
+  padding: 8px 9px 7px;
   background: #E6DFD2;
   border: 1px solid #B8B2A7;
   border-bottom: 2px solid #2A2A2A;
@@ -100,30 +90,28 @@
 .mvp-card-header-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
-}
-
-.mvp-card-header-badges {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .mvp-card-name {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 800;
-  font-size: 19px;
-  line-height: 1;
+  font-size: 23px;
+  line-height: 0.98;
   letter-spacing: 0.01em;
-  color: #1A1A1A;
+  color: #121212;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: uppercase;
+}
+
+.mvp-card-header-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .mvp-card-ticker {
@@ -135,12 +123,16 @@
   text-transform: uppercase;
 }
 
+.mvp-card-header-badges {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 3px;
+}
+
 .mvp-badge-rarity,
 .mvp-badge-edition {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 8px;
-  font-weight: 800;
-  color: var(--txt-sub);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: none;
@@ -150,34 +142,39 @@
 }
 
 .mvp-badge-rarity {
+  font-size: 9px;
+  font-weight: 800;
   color: var(--accent);
 }
 
 .mvp-badge-edition {
   font-size: 7px;
-  font-weight: 700;
-  color: #6B6B6B;
+  font-weight: 800;
+  color: #595959;
 }
 
 .ed-holo .mvp-badge-edition {
-  color: #6B6B6B;
+  color: #595959;
   -webkit-text-fill-color: currentColor;
 }
 
 .mvp-card-art-shell {
   position: relative;
   z-index: 10;
-  margin: 10px 8px 8px;
+  margin: 8px 8px 6px;
   border-radius: 0;
   overflow: hidden;
-  background: #D8D2C6;
-  border: 3px solid #2A2A2A;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 2px 6px rgba(0,0,0,0.25);
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 58%), #D8D2C6;
+  border: 3px solid #1A1A1A;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.24),
+    inset 0 2px 6px rgba(0,0,0,0.25),
+    inset 0 -8px 14px rgba(0,0,0,0.08);
 }
 
 .mvp-card-art-frame {
   position: absolute;
-  inset: 4px;
+  inset: 3px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   pointer-events: none;
   z-index: 2;
@@ -197,7 +194,7 @@
   display: grid;
   place-items: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 26px;
+  font-size: 28px;
   color: rgba(26, 26, 26, 0.28);
 }
 
@@ -208,6 +205,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  background: radial-gradient(circle at center, transparent 58%, rgba(0,0,0,0.12) 100%);
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
 }
 
@@ -220,7 +218,7 @@
 
 .mvp-card-textbox-inner {
   height: 100%;
-  padding: 8px 9px 9px;
+  padding: 10px 11px 10px;
   background: #EFE7DA;
   border: 1px solid #B8B2A7;
   border-radius: 0;
@@ -229,22 +227,22 @@
 
 .mvp-card-textbox-label {
   display: inline-block;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 6px;
+  font-size: 6.5px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #6B6B6B;
+  color: #5F5F5F;
 }
 
 .mvp-card-textbox p {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-style: normal;
-  font-size: 10px;
-  line-height: 1.35;
-  color: #2A2A2A;
+  font-size: 10.5px;
+  line-height: 1.36;
+  color: #242424;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -261,35 +259,38 @@
   border-top: 2px solid #2A2A2A;
   border-radius: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 6px;
+  column-gap: 8px;
 }
 
 .mvp-footer-code,
-.mvp-footer-supply {
+.mvp-footer-supply,
+.mvp-footer-center,
+.mvp-footer-separator {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 7.5px;
+  font-size: 8px;
   font-weight: 800;
-  color: #2A2A2A;
+  color: #242424;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.mvp-footer-code,
+.mvp-footer-center,
+.mvp-footer-supply {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .mvp-footer-center {
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 7.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: #2A2A2A;
-  text-transform: uppercase;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mvp-footer-separator {
+  color: #6B6B6B;
 }
 
 .mvp-footer-supply {
@@ -345,24 +346,27 @@
 .mvp-reverse-art-mask,
 .mvp-mcgart-art-mask {
   z-index: 22;
-  top: calc(8px + var(--card-header-height) + 10px);
+  top: calc(8px + var(--card-header-height) + 8px);
   left: 8px;
   right: 8px;
-  bottom: calc(8px + var(--card-textbox-height) + var(--card-footer-height) + 16px);
+  bottom: calc(8px + var(--card-textbox-height) + var(--card-footer-height) + 14px);
   background: #D8D2C6;
 }
 
 .mvp-reverse-art-reveal,
 .mvp-mcgart-art-reveal {
   z-index: 23;
-  top: calc(8px + var(--card-header-height) + 10px);
+  top: calc(8px + var(--card-header-height) + 8px);
   left: 8px;
   right: 8px;
-  bottom: calc(8px + var(--card-textbox-height) + var(--card-footer-height) + 16px);
+  bottom: calc(8px + var(--card-textbox-height) + var(--card-footer-height) + 14px);
   overflow: hidden;
   background: #D8D2C6;
-  border: 3px solid #2A2A2A;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), inset 0 2px 6px rgba(0,0,0,0.25);
+  border: 3px solid #1A1A1A;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.24),
+    inset 0 2px 6px rgba(0,0,0,0.25),
+    inset 0 -8px 14px rgba(0,0,0,0.08);
 }
 
 .mvp-reverse-art-reveal img,
@@ -444,25 +448,44 @@
   mix-blend-mode: screen;
 }
 
-.mvp-premium-card[data-rarity="S"] {
-  box-shadow: inset 0 0 0 1px #B8B2A7, inset 0 1px 3px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.04), 0 2px 0 rgba(0,0,0,0.1), 0 0 0 1px rgba(73,108,154,0.28);
+.mvp-premium-card[data-rarity="S"] .mvp-card-art-shell,
+.mvp-premium-card[data-rarity="S"] .mvp-reverse-art-reveal,
+.mvp-premium-card[data-rarity="S"] .mvp-mcgart-art-reveal {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.24),
+    inset 0 2px 6px rgba(0,0,0,0.25),
+    inset 0 -8px 14px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(73,108,154,0.3);
 }
 
-.mvp-premium-card[data-rarity="E"] {
-  box-shadow: inset 0 0 0 1px #B8B2A7, inset 0 1px 3px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.04), 0 2px 0 rgba(0,0,0,0.1), 0 0 0 1px rgba(122,86,163,0.28);
+.mvp-premium-card[data-rarity="E"] .mvp-card-art-shell,
+.mvp-premium-card[data-rarity="E"] .mvp-reverse-art-reveal,
+.mvp-premium-card[data-rarity="E"] .mvp-mcgart-art-reveal {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.24),
+    inset 0 2px 6px rgba(0,0,0,0.25),
+    inset 0 -8px 14px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(122,86,163,0.3);
 }
 
-.mvp-premium-card[data-rarity="S+"] {
-  box-shadow: inset 0 0 0 1px #B8B2A7, inset 0 1px 3px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.04), 0 2px 0 rgba(0,0,0,0.1), 0 0 0 1px rgba(168,130,42,0.34);
+.mvp-premium-card[data-rarity="S+"] .mvp-card-art-shell,
+.mvp-premium-card[data-rarity="S+"] .mvp-reverse-art-reveal,
+.mvp-premium-card[data-rarity="S+"] .mvp-mcgart-art-reveal {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.24),
+    inset 0 2px 6px rgba(0,0,0,0.25),
+    inset 0 -8px 14px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(168,130,42,0.34);
 }
 
 @media (max-width: 520px) {
-  .mvp-card-name { font-size: 15px; }
-  .mvp-card-ticker { font-size: 6.5px; }
-  .mvp-badge-rarity { font-size: 7px; }
-  .mvp-badge-edition { font-size: 6px; }
-  .mvp-card-textbox p { font-size: 9px; }
+  .mvp-card-name { font-size: 18px; }
+  .mvp-badge-rarity { font-size: 8px; }
+  .mvp-badge-edition,
+  .mvp-card-ticker { font-size: 6px; }
+  .mvp-card-textbox p { font-size: 9.5px; }
   .mvp-footer-code,
   .mvp-footer-center,
-  .mvp-footer-supply { font-size: 6.5px; }
+  .mvp-footer-supply,
+  .mvp-footer-separator { font-size: 7px; }
 }
