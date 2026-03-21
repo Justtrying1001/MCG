@@ -42,17 +42,7 @@ const getCardText = (card: MvpCardView) => {
   return "No flavor text available in token-master.";
 };
 
-function Corner({ stroke, detail, dot }: { stroke: string; detail: boolean; dot: boolean }) {
-  return (
-    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1 13V1H13" stroke={stroke} strokeWidth={dot ? "1" : "0.9"} />
-      {detail && <rect x="1" y="1" width="3" height="3" stroke={stroke} strokeWidth="0.6" opacity="0.7" fill="none" />}
-      {dot && <circle cx="2.5" cy="2.5" r="0.7" fill={stroke} opacity="0.6" />}
-    </svg>
-  );
-}
-
-export function MvpCardTile({ card, quantity, variant = "canonical", interactive = true, imageLoading = "lazy" }: Props) {
+export function MvpCardTile({ card, quantity: _quantity, variant = "canonical", interactive = true, imageLoading = "lazy" }: Props) {
   const rarityTheme = getRarityTheme(card.rarity);
   const editionTheme = getEditionTheme(card.edition);
   const cardNumber = getPrintedCardNumber(card);
@@ -71,80 +61,47 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
       data-card-variant={variant}
     >
       <div className="mvp-card-grain" aria-hidden="true" />
+      <div className="mvp-card-inner-line" aria-hidden="true" />
+      <div className="mvp-card-rarity-rail" aria-hidden="true" />
 
-      {editionTheme.needsReverseLayers && (
-        <>
-          <div className="mvp-reverse-foil" aria-hidden="true" />
-          <div className="mvp-reverse-art-mask" aria-hidden="true" />
-          <div className="mvp-reverse-art-reveal" aria-hidden="true">
-            {card.imageUrl && <Image src={card.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />}
-          </div>
-        </>
-      )}
-
-      {editionTheme.needsBrillanteLayer && (
-        <>
-          <div className="mvp-brill-foil" aria-hidden="true" />
-          <div className="mvp-brill-glitter" aria-hidden="true" />
-          <div className="mvp-brill-sweep" aria-hidden="true" />
-        </>
-      )}
-
-      {editionTheme.needsHoloLayer && (
-        <>
-          <div className="mvp-holo-layer" aria-hidden="true" />
-          <div className="mvp-holo-lines" aria-hidden="true" />
-        </>
-      )}
-
-      {editionTheme.needsMcgArtLayer && (
-        <>
-          <div className="mvp-mcgart-pattern" aria-hidden="true" />
-          <div className="mvp-mcgart-art-mask" aria-hidden="true" />
-          <div className="mvp-mcgart-art-reveal" aria-hidden="true">
-            {card.imageUrl && <Image src={card.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />}
-          </div>
-        </>
-      )}
-
-      <span className="mvp-corner mvp-corner-tl" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-tr" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-bl" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
-      <span className="mvp-corner mvp-corner-br" aria-hidden="true">
-        <Corner stroke={rarityTheme.cornerStroke} detail={rarityTheme.cornerDetail} dot={rarityTheme.cornerDot} />
-      </span>
       <header className="mvp-card-header">
+        <div className="mvp-card-header-topline">
+          <span className="mvp-badge-edition">{editionBadge}</span>
+          <span className="mvp-rarity-text">{rarityTheme.label.toUpperCase()}</span>
+        </div>
         <div className="mvp-card-header-text">
           <span className="mvp-card-name">{card.displayName}</span>
           <span className="mvp-card-ticker">${card.symbol}</span>
         </div>
-        <div className="mvp-card-header-badges">
-          <span className="mvp-badge-rarity">{rarityTheme.label.toUpperCase()}</span>
-          <span className="mvp-badge-edition">{editionBadge}</span>
-        </div>
       </header>
 
-      <div className="mvp-card-art-shell" style={editionTheme.needsMcgArtLayer || editionTheme.needsReverseLayers ? { visibility: "hidden" } : undefined}>
-        {card.imageUrl ? (
-          <Image
-            src={card.imageUrl}
-            alt={card.displayName}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            loading={imageLoading}
-          />
-        ) : (
-          <div className="mvp-card-art-placeholder">MCG</div>
-        )}
+      <div className="mvp-card-art-stage">
+        <div className="mvp-card-art-frame-outer">
+          <div className="mvp-card-art-frame-accent">
+            <div className={`mvp-card-art-shell${editionTheme.hasFoilEffect ? " has-foil" : ""}`}>
+              {card.imageUrl ? (
+                <Image
+                  src={card.imageUrl}
+                  alt={card.displayName}
+                  fill
+                  sizes={variant === "zoom" ? "min(92vw, 420px)" : "(max-width: 768px) 50vw, 25vw"}
+                  loading={imageLoading}
+                />
+              ) : (
+                <div className="mvp-card-art-placeholder">MCG</div>
+              )}
+              {editionTheme.hasFoilEffect ? <div className="mvp-card-edition-foil" aria-hidden="true" /> : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mvp-card-separator" aria-hidden="true">
+        <span className="mvp-card-separator-highlight" />
       </div>
 
       <section className="mvp-card-textbox">
+        <span className="mvp-card-textbox-label">Collector Notes</span>
         <p>{getCardText(card)}</p>
       </section>
 
@@ -159,7 +116,6 @@ export function MvpCardTile({ card, quantity, variant = "canonical", interactive
             : "UNLTD"}
         </span>
       </footer>
-
     </article>
   );
 }
