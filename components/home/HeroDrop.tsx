@@ -14,7 +14,7 @@ export function HeroDrop() {
         </p>
         <div className="mcg-home-hero-actions">
           <Link href="/packs" className="mcg-btn primary">Open Packs</Link>
-          <Link href="/collection" className="mcg-btn ghost">View Collection</Link>
+          <Link href="/collection" className="mcg-btn ghost">View Memedex</Link>
         </div>
         <div className="mcg-home-hero-chips">
           <Chip label="5 cards per pack" />

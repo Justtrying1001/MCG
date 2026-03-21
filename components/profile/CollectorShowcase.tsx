@@ -18,19 +18,19 @@ export function CollectorShowcase({ displayName, points, level, completionPct, p
     <Surface className="profile-showcase" variant="raised">
       <div>
         <SectionHeader
-          eyebrow="Collector identity"
+          eyebrow="Memedex identity"
           title={displayName}
-          subtitle="Your personal collector showcase"
+          subtitle="Your personal Memedex showcase"
         />
         <div className="profile-showcase-chips">
           <Chip label={`Level ${level}`} />
           <Chip label={`${points.toLocaleString()} points`} />
-          <Chip label={`Completion ${completionPct === null ? "—" : `${completionPct}%`}`} />
+          <Chip label={`Memedex completion ${completionPct === null ? "—" : `${completionPct}%`}`} />
         </div>
       </div>
 
       <div className="profile-showcase-actions">
-        {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open collection</Link>}
+        {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open Memedex</Link>}
         {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
       </div>
     </Surface>

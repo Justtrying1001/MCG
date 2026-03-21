@@ -16,15 +16,15 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
     <Surface variant="raised" className="collection-progress-block">
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Collection"
-          title="Album progress"
-          subtitle="Your current collection snapshot."
-          actions={<Link href="/collection" className="mcg-btn ghost">Open album</Link>}
+          eyebrow="Memedex"
+          title="Memedex progress"
+          subtitle="Your current Memedex snapshot."
+          actions={<Link href="/collection" className="mcg-btn ghost">Open Memedex</Link>}
         />
 
         <div className="collection-progress-hero">
           <div>
-            <p className="collection-progress-label">Collection completion</p>
+            <p className="collection-progress-label">Memedex completion</p>
             <div className="collection-progress-value">
               {hasCompletion ? `${completionPct}%` : "—"}
             </div>
@@ -34,13 +34,13 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
             <span style={{ width: `${width}%` }} />
           </div>
 
-          <div className="collection-progress-stats" aria-label="Collection summary">
+          <div className="collection-progress-stats" aria-label="Memedex summary">
             <div className="collection-progress-stat">
-              <span>Cards owned</span>
+              <span>Entries owned</span>
               <strong>{ownedCount.toLocaleString()}</strong>
             </div>
             <div className="collection-progress-stat">
-              <span>Cards missing</span>
+              <span>Locked entries</span>
               <strong>{missingCount.toLocaleString()}</strong>
             </div>
           </div>
@@ -48,7 +48,7 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
 
         <p className="collection-progress-note">
           {hasCompletion
-            ? "Based on your current collection summary."
+            ? "Based on your current Memedex summary."
             : "Completion percentage is unavailable, but owned and missing template counts are currently tracked."}
         </p>
       </div>

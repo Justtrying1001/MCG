@@ -86,7 +86,7 @@ export default function AccountPage() {
             points={0}
             level={1}
             completionPct={null}
-            primaryAction={<ConnectXCallout layout="inline" title="Collection access" description="Open your real collector vault, saved cards, and ownership counts once you connect." ctaLabel="Connect X to open your collection" />}
+            primaryAction={<ConnectXCallout layout="inline" title="Memedex access" description="Open your real Memedex vault, saved cards, and ownership counts once you connect." ctaLabel="Connect X to open your Memedex" />}
           />
           <FeaturedCardsStrip cards={[]} />
           <SetCompletionSection rows={[{ label: "Genesis Set", done: 0, total: 100 }, { label: "Arena Set", done: 0, total: 50 }, { label: "Meme Icons", done: 0, total: 50 }]} />

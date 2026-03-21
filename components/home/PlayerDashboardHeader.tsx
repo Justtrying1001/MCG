@@ -43,7 +43,7 @@ export function PlayerDashboardHeader({
                 Trainer <span className="player-dash-name">{shortenAddress(displayName)}</span>
               </p>
               <p className="player-dash-copy">
-                Your lobby for contests, collection momentum, and the freshest activity across MCG.
+                Your lobby for contests, Memedex momentum, and the freshest activity across MCG.
               </p>
             </div>
           </div>
@@ -74,7 +74,7 @@ export function PlayerDashboardHeader({
             Browse contests
           </Link>
           <Link href="/collection" className="player-dash-secondary-link">
-            View collection
+            View Memedex
           </Link>
         </div>
       </div>

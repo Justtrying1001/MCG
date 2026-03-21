@@ -12,7 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/packs", label: "Packs" },
-  { href: "/collection", label: "Collection" },
+  { href: "/collection", label: "Memedex" },
   { href: "/contests", label: "Contests" },
   { href: "/rewards", label: "Rewards" },
   { href: "/compte", label: "Profile" },

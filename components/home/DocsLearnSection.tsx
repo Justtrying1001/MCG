@@ -4,10 +4,10 @@ type Props = {
 
 export function DocsLearnSection({ compact = false }: Props) {
   const eyebrow = compact ? "Lobby intel" : "Get started";
-  const title = compact ? "Learn the game." : "Join the collection obsession.";
+  const title = compact ? "Learn the game." : "Join the Memedex obsession.";
   const description = compact
     ? "Rules, packs, contests, and scoring in one place."
-    : "Learn the rules, understand scoring, and see how packs, collection progress, and contests connect before your first real run.";
+    : "Learn the rules, understand scoring, and see how packs, Memedex progress, and contests connect before your first real run.";
 
   return (
     <section className={`home-docs-section${compact ? " home-docs-section--compact" : ""}`}>

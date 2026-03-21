@@ -6832,3 +6832,373 @@ button.mcg-chip:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Memedex (collection redesign) ===== */
+.memedex-header-shell,
+.memedex-toolbar-shell,
+.missing-shelf-surface {
+  border-width: 4px;
+  border-radius: 32px;
+}
+
+.memedex-header-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: 24px;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  align-items: start;
+}
+
+.memedex-header-shell {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(18, 241, 255, 0.18), transparent 25%),
+    radial-gradient(circle at 85% 10%, rgba(255, 117, 160, 0.2), transparent 22%),
+    color-mix(in srgb, var(--color-surface-0) 90%, var(--color-brand-primary) 10%);
+}
+
+.memedex-header-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.memedex-header-progress {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 3px solid var(--color-ink);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--color-brand-yellow) 28%, white);
+  box-shadow: var(--shadow-hard);
+}
+
+.memedex-header-progress-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.memedex-header-progress-top span,
+.memedex-header-progress p,
+.memedex-control-head p,
+.memedex-search-field span,
+.memedex-card-status,
+.memedex-card-index,
+.missing-shelf-card small,
+.memedex-data-copy {
+  color: var(--color-text-secondary);
+}
+
+.memedex-header-progress-top span,
+.memedex-search-field span {
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.memedex-header-progress-top strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.memedex-header-track {
+  height: 22px;
+}
+
+.memedex-toolbar {
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 20px;
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+}
+
+.memedex-data-block,
+.memedex-sort-block {
+  border: 3px solid var(--color-ink);
+  border-radius: 28px;
+  background: var(--color-surface-0);
+  box-shadow: var(--shadow-hard);
+  padding: 18px;
+}
+
+.memedex-data-copy {
+  max-width: 58ch;
+  line-height: 1.6;
+}
+
+.memedex-data-stats span {
+  border-width: 2px;
+  border-color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-brand-cyan) 18%, white);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.memedex-progress-callout {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 3px solid var(--color-ink);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--color-brand-primary) 8%, white);
+}
+
+.memedex-progress-callout strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.memedex-progress-callout span {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+}
+
+.memedex-progress-track {
+  height: 20px;
+}
+
+.memedex-control-head {
+  display: grid;
+  gap: 4px;
+}
+
+.collection-search-input,
+.memedex-search-input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--color-ink);
+  background: color-mix(in srgb, var(--color-brand-yellow) 10%, white);
+  color: var(--color-text-primary);
+  padding: 0 16px;
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.memedex-search-field {
+  display: grid;
+  gap: 8px;
+}
+
+.memedex-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.memedex-filter-pill {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: white;
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-label);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.memedex-filter-pill.is-active {
+  background: var(--color-brand-yellow);
+}
+
+.memedex-sort-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.memedex-sort-row label {
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.collection-select {
+  min-height: 46px;
+  border: 3px solid var(--color-ink);
+  border-radius: 18px;
+  background: white;
+  box-shadow: var(--shadow-hard-sm);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.memedex-callout-wrap {
+  grid-column: 1 / -1;
+}
+
+.memedex-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 20px;
+}
+
+.memedex-card-tile {
+  gap: 12px;
+}
+
+.memedex-card-trigger {
+  position: relative;
+  display: grid;
+  gap: 0;
+  padding: 10px;
+  border: 3px solid var(--color-ink);
+  border-radius: 28px;
+  background: var(--color-surface-0);
+  box-shadow: var(--shadow-hard);
+  overflow: hidden;
+}
+
+.memedex-card-rarity-bar {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+  border: 2px solid var(--color-ink);
+  background: var(--color-brand-primary);
+}
+
+.memedex-card-rarity-bar.rarity-common { background: color-mix(in srgb, var(--color-brand-primary) 35%, white); }
+.memedex-card-rarity-bar.rarity-uncommon { background: color-mix(in srgb, var(--color-brand-cyan) 55%, white); }
+.memedex-card-rarity-bar.rarity-rare { background: var(--color-brand-cyan); }
+.memedex-card-rarity-bar.rarity-epic { background: var(--color-brand-pink); }
+.memedex-card-rarity-bar.rarity-legendary { background: var(--color-brand-yellow); }
+.memedex-card-rarity-bar.rarity-locked { background: rgba(120, 124, 128, 0.5); }
+
+.memedex-card-frame {
+  padding: 4px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--color-surface-0) 86%, var(--color-brand-cyan) 14%);
+}
+
+.memedex-card-meta {
+  padding-inline: 4px;
+  gap: 8px;
+}
+
+.memedex-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.memedex-card-status {
+  display: inline-flex;
+  min-height: 28px;
+  padding: 0 10px;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-ink);
+  background: color-mix(in srgb, var(--color-brand-cyan) 18%, white);
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-label);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+.memedex-card-status--locked {
+  background: rgba(255,255,255,0.7);
+}
+
+.memedex-card-index {
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.memedex-card-tile--locked {
+  opacity: 0.88;
+}
+
+.memedex-card-trigger--locked {
+  cursor: default;
+  background: color-mix(in srgb, var(--color-surface-0) 84%, rgba(120, 124, 128, 0.12) 16%);
+}
+
+.memedex-card-frame--locked {
+  min-height: 330px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  border: 3px dashed var(--color-ink);
+  background: repeating-linear-gradient(135deg, rgba(0,0,0,0.04) 0 14px, rgba(255,255,255,0.8) 14px 28px);
+}
+
+.memedex-card-lock-mark {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--color-ink);
+  background: white;
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.missing-shelf-surface {
+  background: color-mix(in srgb, var(--color-surface-0) 92%, var(--color-brand-pink) 8%);
+}
+
+.missing-shelf-wrap {
+  gap: 18px;
+}
+
+.missing-shelf-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.missing-shelf-card {
+  min-height: 168px;
+  border: 3px dashed var(--color-ink);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--color-surface-0) 80%, rgba(120, 124, 128, 0.12) 20%);
+  box-shadow: var(--shadow-hard-sm);
+  gap: 8px;
+}
+
+.missing-shelf-card span {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .memedex-header-wrap,
+  .memedex-toolbar,
+  .memedex-sort-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .memedex-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .memedex-grid {
+    grid-template-columns: 1fr;
+  }
+}
