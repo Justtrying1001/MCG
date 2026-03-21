@@ -11,12 +11,12 @@ type ResultRow = {
 
 export function RecentResults({ results }: { results: ResultRow[] }) {
   return (
-    <Surface>
+    <Surface variant="raised" className="profile-results-surface">
       <div className="profile-results-wrap">
         <SectionHeader
-          eyebrow="Recent results"
+          eyebrow="Recent record"
           title="Latest contest finishes"
-          subtitle="Compact history of your latest rankings."
+          subtitle="Compact history of your latest rankings and return-to-contest actions."
         />
 
         <div className="profile-results-list">
@@ -27,7 +27,7 @@ export function RecentResults({ results }: { results: ResultRow[] }) {
                 <strong>{result.contestTitle}</strong>
                 <p className="contest-inline-note">{new Date(result.rankedAt).toLocaleDateString()}</p>
               </div>
-              <Link href={`/contests/${result.contestId}`} className="mcg-btn ghost">View</Link>
+              <Link href={`/contests/${result.contestId}`} className="mcg-btn ghost">Open result</Link>
             </div>
           ))}
         </div>

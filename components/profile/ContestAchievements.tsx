@@ -18,25 +18,25 @@ export function ContestAchievements({
   footer?: ReactNode;
 }) {
   const badges = [
-    { label: "Entered", value: String(contestsEntered), icon: "⚔️" },
-    { label: "Best rank", value: bestRank ? `#${bestRank}` : "—", icon: "🥇" },
-    { label: "Rating", value: rating ? String(rating) : "—", icon: "📈" },
-    { label: "League", value: leagueTier ?? "Unranked", icon: "🛡️" },
-    { label: "Season rank", value: seasonRank ? `#${seasonRank}` : "—", icon: "🏁" },
+    { label: "Entered", value: String(contestsEntered), tone: "primary" },
+    { label: "Best rank", value: bestRank ? `#${bestRank}` : "—", tone: "secondary" },
+    { label: "Rating", value: rating ? String(rating) : "—", tone: "tertiary" },
+    { label: "League", value: leagueTier ?? "Unranked", tone: "neutral" },
+    { label: "Season rank", value: seasonRank ? `#${seasonRank}` : "—", tone: "neutral" },
   ];
 
   return (
-    <Surface>
+    <Surface variant="raised" className="profile-achievements-surface">
       <div className="profile-achievements-wrap">
         <SectionHeader
-          eyebrow="Contest achievements"
-          title="Competitive highlights"
-          subtitle="Your strongest moments in MCG contests."
+          eyebrow="Competitive panel"
+          title="Trainer record"
+          subtitle="Your clearest contest stats and ladder signals in one trainer-card side panel."
         />
         <div className="profile-achievement-grid">
           {badges.map((badge) => (
-            <article key={badge.label} className="profile-achievement-item">
-              <p>{badge.icon} {badge.label}</p>
+            <article key={badge.label} className={`profile-achievement-item tone-${badge.tone}`}>
+              <p>{badge.label}</p>
               <strong>{badge.value}</strong>
             </article>
           ))}

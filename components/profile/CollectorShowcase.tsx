@@ -14,24 +14,39 @@ type Props = {
 };
 
 export function CollectorShowcase({ displayName, points, level, completionPct, primaryAction, secondaryAction }: Props) {
+  const initial = displayName.slice(0, 1).toUpperCase();
+
   return (
     <Surface className="profile-showcase" variant="raised">
-      <div>
-        <SectionHeader
-          eyebrow="Memedex identity"
-          title={displayName}
-          subtitle="Your personal Memedex showcase"
-        />
-        <div className="profile-showcase-chips">
-          <Chip label={`Level ${level}`} />
-          <Chip label={`${points.toLocaleString()} points`} />
-          <Chip label={`Memedex completion ${completionPct === null ? "—" : `${completionPct}%`}`} />
-        </div>
-      </div>
+      <div className="profile-showcase-card-shell">
+        <div className="profile-showcase-card-frame">
+          <div className="profile-showcase-head">
+            <span className="profile-showcase-label">Trainer card</span>
+            <span className="profile-showcase-id">LVL {level}</span>
+          </div>
 
-      <div className="profile-showcase-actions">
-        {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open Memedex</Link>}
-        {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
+          <div className="profile-showcase-avatar" aria-hidden="true">
+            <span>{initial}</span>
+            <strong>{completionPct === null ? "Memedex" : `${completionPct}%`}</strong>
+          </div>
+
+          <SectionHeader
+            eyebrow="Trainer identity"
+            title={displayName}
+            subtitle="Your premium MCG trainer card, with Memedex progress and competitive momentum in one place."
+          />
+
+          <div className="profile-showcase-chips">
+            <Chip label={`Level ${level}`} />
+            <Chip label={`${points.toLocaleString()} points`} />
+            <Chip label={`Memedex ${completionPct === null ? "—" : `${completionPct}%`}`} />
+          </div>
+
+          <div className="profile-showcase-actions">
+            {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open Memedex</Link>}
+            {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
+          </div>
+        </div>
       </div>
     </Surface>
   );

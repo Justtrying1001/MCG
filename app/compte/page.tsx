@@ -76,64 +76,116 @@ export default function AccountPage() {
   );
 
   const accountBreakdown = account?.progressionBreakdown;
+  const spotlightStats = [
+    { label: "Player level", value: String(account?.level ?? 1), tone: "primary" },
+    { label: "Total points", value: (me?.user.points ?? 0).toLocaleString(), tone: "secondary" },
+    { label: "Milestones", value: String(unlockedMilestoneCount), tone: "tertiary" },
+    { label: "Competitive rating", value: competitive?.rating ? String(competitive.rating) : "—", tone: "neutral" },
+  ];
 
   return (
     <SiteShell>
-      {!me ? (
-        <>
-          <CollectorShowcase
-            displayName="Guest Collector"
-            points={0}
-            level={1}
-            completionPct={null}
-            primaryAction={<ConnectXCallout layout="inline" title="Memedex access" description="Open your real Memedex vault, saved cards, and ownership counts once you connect." ctaLabel="Connect X to open your Memedex" />}
-          />
-          <FeaturedCardsStrip cards={[]} />
-          <SetCompletionSection rows={[{ label: "Genesis Set", done: 0, total: 100 }, { label: "Arena Set", done: 0, total: 50 }, { label: "Meme Icons", done: 0, total: 50 }]} />
-          <ContestAchievements
-            contestsEntered={0}
-            bestRank={null}
-            rating={null}
-            leagueTier={null}
-            seasonRank={null}
-          />
-          <EmptyState title="No profile data yet" description="Connect X to start collecting cards, entering contests, and building your public MCG identity." />
-        </>
-      ) : (
-        <>
-          <CollectorShowcase
-            displayName={me.user.displayName}
-            points={me.user.points}
-            level={account?.level ?? 1}
-            completionPct={collection?.completionPct ?? null}
-          />
+      <div className="profile-account-layout">
+        {!me ? (
+          <>
+            <div className="profile-account-hero-grid">
+              <CollectorShowcase
+                displayName="Guest Collector"
+                points={0}
+                level={1}
+                completionPct={null}
+                primaryAction={<ConnectXCallout layout="inline" title="Memedex access" description="Open your real Memedex vault, saved cards, and ownership counts once you connect." ctaLabel="Connect X to open your Memedex" />}
+              />
 
-          <FeaturedCardsStrip cards={featuredCards} />
-
-          <SetCompletionSection rows={setCompletionRows} />
-
-          <ContestAchievements
-            contestsEntered={competitive?.contestsEntered ?? 0}
-            bestRank={competitive?.bestRank ?? null}
-            rating={competitive?.rating ?? null}
-            leagueTier={competitive?.leagueTier ?? null}
-            seasonRank={competitive?.seasonRank ?? null}
-          />
-
-          {unlockedMilestoneCount > 0 ? (
-            <div className="mcg-surface profile-unlocked-strip">
-              <p className="mcg-eyebrow">Milestone badges unlocked</p>
-              <strong>{unlockedMilestoneCount} unlocked</strong>
+              <section className="profile-spotlight-grid" aria-label="Guest trainer overview">
+                {spotlightStats.map((stat) => (
+                  <article key={stat.label} className={`profile-spotlight-card tone-${stat.tone}`}>
+                    <span>{stat.label}</span>
+                    <strong>{stat.value}</strong>
+                  </article>
+                ))}
+              </section>
             </div>
-          ) : null}
 
-          {recentResults.length > 0 ? (
-            <RecentResults results={recentResults} />
-          ) : (
-            <EmptyState title="No recent contest results" description="Enter contests to build your competitive history." />
-          )}
-        </>
-      )}
+            <div className="profile-account-main-grid">
+              <div className="profile-account-main-stack">
+                <FeaturedCardsStrip cards={[]} />
+                <SetCompletionSection rows={[{ label: "Genesis Set", done: 0, total: 100 }, { label: "Arena Set", done: 0, total: 50 }, { label: "Meme Icons", done: 0, total: 50 }]} />
+              </div>
+              <div className="profile-account-side-stack">
+                <ContestAchievements
+                  contestsEntered={0}
+                  bestRank={null}
+                  rating={null}
+                  leagueTier={null}
+                  seasonRank={null}
+                />
+                <EmptyState title="No profile data yet" description="Connect X to start collecting cards, entering contests, and building your public MCG identity." />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="profile-account-hero-grid">
+              <CollectorShowcase
+                displayName={me.user.displayName}
+                points={me.user.points}
+                level={account?.level ?? 1}
+                completionPct={collection?.completionPct ?? null}
+              />
+
+              <section className="profile-spotlight-grid" aria-label="Trainer spotlight metrics">
+                {spotlightStats.map((stat) => (
+                  <article key={stat.label} className={`profile-spotlight-card tone-${stat.tone}`}>
+                    <span>{stat.label}</span>
+                    <strong>{stat.value}</strong>
+                  </article>
+                ))}
+                {accountBreakdown ? (
+                  <article className="profile-spotlight-card tone-wide">
+                    <span>Progress breakdown</span>
+                    <div className="profile-breakdown-list">
+                      <strong>Points {accountBreakdown.pointsXp.toLocaleString()}</strong>
+                      <strong>Competitive {accountBreakdown.competitiveXp.toLocaleString()}</strong>
+                      <strong>Collection {accountBreakdown.collectionXp.toLocaleString()}</strong>
+                    </div>
+                  </article>
+                ) : null}
+              </section>
+            </div>
+
+            <div className="profile-account-main-grid">
+              <div className="profile-account-main-stack">
+                <FeaturedCardsStrip cards={featuredCards} />
+                <SetCompletionSection rows={setCompletionRows} />
+                {recentResults.length > 0 ? (
+                  <RecentResults results={recentResults} />
+                ) : (
+                  <EmptyState title="No recent contest results" description="Enter contests to build your competitive history." />
+                )}
+              </div>
+
+              <div className="profile-account-side-stack">
+                <ContestAchievements
+                  contestsEntered={competitive?.contestsEntered ?? 0}
+                  bestRank={competitive?.bestRank ?? null}
+                  rating={competitive?.rating ?? null}
+                  leagueTier={competitive?.leagueTier ?? null}
+                  seasonRank={competitive?.seasonRank ?? null}
+                />
+
+                {unlockedMilestoneCount > 0 ? (
+                  <div className="mcg-surface profile-unlocked-strip">
+                    <p className="mcg-eyebrow">Milestone badges unlocked</p>
+                    <strong>{unlockedMilestoneCount} unlocked</strong>
+                    <span>Trainer-card progression keeps your completed contest milestones visible here.</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </SiteShell>
   );
 }
