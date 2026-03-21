@@ -146,7 +146,7 @@ export function usePrivyLogin() {
       }
 
       writePendingLoginRequest(true);
-      login();
+      login({ loginMethods: ["wallet", "twitter"] });
       return true;
     } finally {
       loginAttemptInFlightRef.current = false;

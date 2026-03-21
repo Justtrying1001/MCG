@@ -21,7 +21,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
         appearance: {
           accentColor: "#c89b3c",
           theme: "dark",
+          showWalletLoginFirst: true,
         },
+        loginMethods: ["wallet", "twitter"],
       }}
     >
       {children}
