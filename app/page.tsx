@@ -183,9 +183,13 @@ export default function HomePage() {
       ) : (
         <div className="stitch-screen stitch-landing-screen">
           <HomeHeroLanding />
-          <StatsBar />
-          <HowItWorks />
-          <DocsLearnSection />
+          <div className="landing-support-stage">
+            <StatsBar />
+            <div className="landing-play-grid">
+              <HowItWorks />
+              <DocsLearnSection />
+            </div>
+          </div>
         </div>
       )}
     </SiteShell>

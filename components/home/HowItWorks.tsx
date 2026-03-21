@@ -25,6 +25,7 @@ const steps = [
 export function HowItWorks() {
   return (
     <section className="home-how-it-works">
+      <div className="home-how-marquee" aria-hidden="true">Open • Collect • Battle • Repeat</div>
       <div className="home-how-header">
         <p className="home-how-eyebrow">How it works</p>
         <h2 className="home-how-title">Three steps to glory.</h2>
@@ -33,6 +34,7 @@ export function HowItWorks() {
       <div className="home-how-steps">
         {steps.map((step) => (
           <article key={step.num} className={`home-how-step home-how-step--${step.accent}`.trim()}>
+            <div className="home-how-step-shadow" aria-hidden="true" />
             <div className="home-how-step-top">
               <div className="home-how-step-icon" aria-hidden="true">
                 {step.icon}

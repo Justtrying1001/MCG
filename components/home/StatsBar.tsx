@@ -12,6 +12,7 @@ const STATS = [
 export function StatsBar() {
   return (
     <section className="home-stats-shell">
+      <div className="home-stats-banner">Start screen intel</div>
       <div className="home-stats-bar" role="list" aria-label="MCG key stats">
         {STATS.map((stat) => (
           <article key={stat.label} className={`home-stats-item home-stats-item--${stat.accent}`.trim()} role="listitem">
