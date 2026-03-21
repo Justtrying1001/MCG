@@ -1,144 +1,154 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, UserIdentityProvider } from "@prisma/client";
 
 import { grantWelcomeReward } from "@/lib/domain/rewards/welcome";
+import type { ResolvedIdentityAccount } from "@/lib/privy-auth";
 
-export type XProfileIdentity = {
-  id: string;
-  username: string;
-  name: string;
-  profile_image_url?: string | null;
-};
+export class IdentityConflictError extends Error {
+  readonly status = 409;
 
-export type PrivyProfileIdentity = {
+  constructor(message: string, readonly conflictProviders: UserIdentityProvider[]) {
+    super(message);
+    this.name = "IdentityConflictError";
+  }
+}
+
+export type PrivyIdentityGraph = {
   privyUserId: string;
-  xUserId: string | null;
-  xUsername: string | null;
   displayName: string | null;
   avatarUrl?: string | null;
+  identities: ResolvedIdentityAccount[];
 };
 
-export async function upsertUserFromXProfileWithWelcome(
-  tx: Prisma.TransactionClient,
-  profile: XProfileIdentity,
-) {
-  const existing = await tx.user.findUnique({
-    where: { xUserId: profile.id },
-    select: { id: true },
+function uniqueIdentityAccounts(identities: ResolvedIdentityAccount[]) {
+  const seen = new Set<string>();
+  return identities.filter((identity) => {
+    const key = `${identity.provider}:${identity.providerUserId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
+}
 
-  if (existing) {
-    const user = await tx.user.update({
-      where: { xUserId: profile.id },
-      data: {
-        xUsername: profile.username,
-        displayName: profile.name,
-        avatarUrl: profile.profile_image_url ?? null,
-      },
-    });
+function resolveHandle(profile: PrivyIdentityGraph, userHandle?: string | null) {
+  const twitterIdentity = profile.identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
+  return twitterIdentity?.username?.trim() || userHandle || null;
+}
 
-    return { user, created: false as const };
+function resolveDisplayName(profile: PrivyIdentityGraph, userDisplayName?: string | null) {
+  const twitterIdentity = profile.identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
+  return profile.displayName?.trim() || twitterIdentity?.displayName?.trim() || userDisplayName || "MCG Player";
+}
+
+function buildIdentityMetadata(identity: ResolvedIdentityAccount) {
+  if (!identity.metadata) return Prisma.JsonNull;
+  return identity.metadata as Prisma.InputJsonValue;
+}
+
+export async function upsertUserFromPrivyIdentityGraphWithWelcome(
+  tx: Prisma.TransactionClient,
+  profile: PrivyIdentityGraph,
+) {
+  const identities = uniqueIdentityAccounts(profile.identities);
+  if (identities.length === 0) {
+    throw new Error("Resolved Privy identity graph has no identities");
   }
 
-  const user = await tx.user.create({
-    data: {
-      xUserId: profile.id,
-      xUsername: profile.username,
-      displayName: profile.name,
-      avatarUrl: profile.profile_image_url ?? null,
-      points: 0,
+  const existingIdentities = await tx.userIdentity.findMany({
+    where: {
+      OR: identities.map((identity) => ({
+        provider: identity.provider,
+        providerUserId: identity.providerUserId,
+      })),
+    },
+    select: {
+      id: true,
+      userId: true,
+      provider: true,
+      providerUserId: true,
     },
   });
 
-  await grantWelcomeReward(tx, user.id);
-
-  return { user, created: true as const };
-}
-
-function buildFallbackXIdentity(privyUserId: string) {
-  const suffix = privyUserId.replace(/[^a-zA-Z0-9]/g, "").slice(-12).toLowerCase() || "user";
-  return {
-    xUserId: `privy:${privyUserId}`,
-    xUsername: `privy_${suffix}`,
-  };
-}
-
-export async function upsertUserFromPrivyProfileWithWelcome(
-  tx: Prisma.TransactionClient,
-  profile: PrivyProfileIdentity,
-) {
-  const fallbackIdentity = buildFallbackXIdentity(profile.privyUserId);
-  const resolvedXUserId = profile.xUserId ?? fallbackIdentity.xUserId;
-  const resolvedXUsername = profile.xUsername ?? fallbackIdentity.xUsername;
-  const resolvedDisplayName = profile.displayName ?? profile.xUsername ?? "MCG Player";
-  const resolvedAvatarUrl = profile.avatarUrl ?? null;
-
-  const existingPrivyUser = await tx.user.findUnique({
-    where: { privyUserId: profile.privyUserId },
-    select: { id: true, xUserId: true },
-  });
-
-  if (existingPrivyUser) {
-    const canPromoteStoredXIdentity = Boolean(
-      profile.xUserId
-      && existingPrivyUser.xUserId.startsWith("privy:")
-      && existingPrivyUser.xUserId !== profile.xUserId,
+  const matchingUserIds = Array.from(new Set(existingIdentities.map((identity) => identity.userId)));
+  if (matchingUserIds.length > 1) {
+    throw new IdentityConflictError(
+      "Resolved identities are already linked to multiple users",
+      Array.from(new Set(existingIdentities.map((identity) => identity.provider))),
     );
-    const conflictingHistoricalXUser = canPromoteStoredXIdentity
-      ? await tx.user.findUnique({
-          where: { xUserId: profile.xUserId! },
-          select: { id: true },
-        })
-      : null;
-
-    const user = await tx.user.update({
-      where: { id: existingPrivyUser.id },
-      data: {
-        authProvider: "privy",
-        xUserId: canPromoteStoredXIdentity && !conflictingHistoricalXUser ? resolvedXUserId : undefined,
-        xUsername: resolvedXUsername,
-        displayName: resolvedDisplayName,
-        avatarUrl: resolvedAvatarUrl,
-      },
-    });
-
-    return { user, created: false as const };
   }
 
-  if (profile.xUserId) {
-    const existingXUser = await tx.user.findUnique({
-      where: { xUserId: profile.xUserId },
-      select: { id: true },
-    });
+  const targetUserId = matchingUserIds[0] ?? null;
+  const existingUser = targetUserId
+    ? await tx.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, displayName: true, handle: true },
+      })
+    : null;
 
-    if (existingXUser) {
-      const user = await tx.user.update({
-        where: { id: existingXUser.id },
+  const user = existingUser
+    ? await tx.user.update({
+        where: { id: existingUser.id },
         data: {
-          privyUserId: profile.privyUserId,
-          authProvider: "privy",
-          xUsername: resolvedXUsername,
-          displayName: resolvedDisplayName,
-          avatarUrl: resolvedAvatarUrl,
+          displayName: resolveDisplayName(profile, existingUser.displayName),
+          handle: resolveHandle(profile, existingUser.handle),
+          avatarUrl: profile.avatarUrl ?? undefined,
+        },
+      })
+    : await tx.user.create({
+        data: {
+          displayName: resolveDisplayName(profile),
+          handle: resolveHandle(profile),
+          avatarUrl: profile.avatarUrl ?? null,
+          points: 0,
         },
       });
 
-      return { user, created: false as const };
+  for (const identity of identities) {
+    const matchingIdentity = existingIdentities.find(
+      (candidate) => candidate.provider === identity.provider && candidate.providerUserId === identity.providerUserId,
+    );
+
+    if (matchingIdentity && matchingIdentity.userId !== user.id) {
+      throw new IdentityConflictError(
+        "Resolved identity is already linked to another user",
+        [matchingIdentity.provider],
+      );
     }
+
+    await tx.userIdentity.upsert({
+      where: {
+        provider_providerUserId: {
+          provider: identity.provider,
+          providerUserId: identity.providerUserId,
+        },
+      },
+      update: {
+        userId: user.id,
+        username: identity.username ?? undefined,
+        displayName: identity.displayName ?? undefined,
+        walletAddress: identity.walletAddress ?? undefined,
+        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
+        isVerified: true,
+        lastSeenAt: new Date(),
+        metadata: buildIdentityMetadata(identity),
+      },
+      create: {
+        userId: user.id,
+        provider: identity.provider,
+        providerUserId: identity.providerUserId,
+        username: identity.username ?? null,
+        displayName: identity.displayName ?? null,
+        walletAddress: identity.walletAddress ?? null,
+        isPrimary: identity.provider === UserIdentityProvider.PRIVY ? true : identity.isPrimary,
+        isVerified: true,
+        lastSeenAt: new Date(),
+        metadata: buildIdentityMetadata(identity),
+      },
+    });
   }
 
-  const user = await tx.user.create({
-    data: {
-      privyUserId: profile.privyUserId,
-      xUserId: resolvedXUserId,
-      xUsername: resolvedXUsername,
-      displayName: resolvedDisplayName,
-      avatarUrl: resolvedAvatarUrl,
-      authProvider: "privy",
-      points: 0,
-    },
-  });
+  if (!existingUser) {
+    await grantWelcomeReward(tx, user.id);
+  }
 
-  await grantWelcomeReward(tx, user.id);
-
-  return { user, created: true as const };
+  return { user, created: !existingUser };
 }

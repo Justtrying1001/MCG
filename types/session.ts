@@ -77,11 +77,10 @@ export type UserSessionPayload = MeCoexistenceEnvelope & {
   mode: "user";
   user: {
     id: string;
-    xUserId: string;
-    username: string;
+    handle: string | null;
+    username: string | null;
     displayName: string;
     avatarUrl: string | null;
-    authProvider: string;
     points: number;
     packsOpened: number;
   };

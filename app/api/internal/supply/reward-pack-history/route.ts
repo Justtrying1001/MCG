@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           },
         },
         user: {
-          select: { xUsername: true, displayName: true },
+          select: { handle: true, displayName: true },
         },
       },
     });
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
 
     const recentGrants: RecentGrant[] = grants.slice(0, 50).map((g) => {
       const userLabel =
-        g.user?.displayName || (g.user?.xUsername ? `@${g.user.xUsername}` : g.userId);
+        g.user?.displayName || (g.user?.handle ? `@${g.user.handle}` : g.userId);
       const isContest = g.sourceContestSettlementId !== null;
       return {
         id: g.id,

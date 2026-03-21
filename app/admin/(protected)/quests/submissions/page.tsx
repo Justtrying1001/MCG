@@ -17,7 +17,7 @@ type SubmissionRow = {
   reviewedByAdmin: string | null;
   reviewedAt: string | null;
   createdAt: string;
-  user: { id: string; xUsername: string; displayName: string };
+  user: { id: string; handle: string; displayName: string };
   quest: { id: string; code: string; type: string; title: string; rewardPoints: number };
 };
 
@@ -117,7 +117,7 @@ export default function AdminQuestSubmissionsPage() {
                   <span className={`contest-status status-${row.status.toLowerCase()}`}>{row.status}</span>
                 </div>
                 <h3 className="contest-title">{row.quest.title}</h3>
-                <p className="contest-inline-note">User: {row.user.displayName} (@{row.user.xUsername})</p>
+                <p className="contest-inline-note">User: {row.user.displayName} (@{row.user.handle})</p>
                 <p className="contest-inline-note">Type: {row.quest.type} · Reward: {row.quest.rewardPoints} pts</p>
                 <p className="contest-inline-note">Created: {new Date(row.createdAt).toLocaleString()}</p>
                 <p className="contest-inline-note">Proof: {row.proofUrl ? <a href={row.proofUrl} target="_blank" rel="noreferrer">{row.proofUrl}</a> : "—"}</p>

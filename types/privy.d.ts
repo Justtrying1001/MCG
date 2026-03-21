@@ -6,6 +6,9 @@ declare module "@privy-io/react-auth" {
     subject?: string;
     username?: string | null;
     name?: string | null;
+    address?: string | null;
+    chainType?: string | null;
+    walletClientType?: string | null;
   };
 
   export type PrivyUser = {
@@ -35,6 +38,9 @@ declare module "@privy-io/server-auth" {
     type: string;
     subject?: string;
     username?: string | null;
+    address?: string | null;
+    chainType?: string | null;
+    walletClientType?: string | null;
   };
 
   export type User = {
@@ -42,6 +48,7 @@ declare module "@privy-io/server-auth" {
     email?: { address?: string | null };
     phone?: { number?: string | null };
     twitter?: { subject?: string; username?: string | null } | null;
+    profileImage?: string | null;
     linkedAccounts: LinkedAccountWithMetadata[];
   };
 

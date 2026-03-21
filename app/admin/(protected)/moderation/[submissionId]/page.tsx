@@ -15,7 +15,7 @@ type ContextPayload = {
     reviewedByAdmin: string | null;
     reviewedAt: string | null;
     createdAt: string;
-    user: { id: string; displayName: string | null; xUsername: string | null };
+    user: { id: string; displayName: string | null; handle: string | null };
     quest: { id: string; code: string; title: string; validationMode: string; rewardPoints: number };
   };
   context: {
@@ -103,7 +103,7 @@ export default function ModerationSubmissionDetailPage() {
               <span className={`contest-status status-${data.submission.status.toLowerCase()}`}>{data.submission.status}</span>
             </div>
             <h1 className="admin-title">Submission review</h1>
-            <p className="contest-inline-note">User: {data.submission.user.displayName || "Unknown"} @{data.submission.user.xUsername || "—"}</p>
+            <p className="contest-inline-note">User: {data.submission.user.displayName || "Unknown"} @{data.submission.user.handle || "—"}</p>
             <p className="contest-inline-note">Quest: {data.submission.quest.title} · Reward: {data.submission.quest.rewardPoints} pts</p>
             <p className="contest-inline-note">Submitted: {new Date(data.submission.createdAt).toLocaleString()}</p>
             <p className="contest-inline-note">Evidence: {data.submission.proofUrl ? <a href={data.submission.proofUrl} target="_blank" rel="noreferrer">{data.submission.proofUrl}</a> : data.submission.note || "—"}</p>

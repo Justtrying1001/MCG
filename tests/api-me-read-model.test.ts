@@ -37,7 +37,7 @@ describe("/api/me MVP read model", () => {
   it("uses instance-aware v2 payload and returns mvpCollection", async () => {
     resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
-      { id: "u1", xUserId: "x1", xUsername: "user", displayName: "User", avatarUrl: null, authProvider: "x", points: 300, packsOpened: 3 },
+      { id: "u1", handle: "user", displayName: "User", avatarUrl: null, points: 300, packsOpened: 3 },
       [
         {
           cardTemplate: {
@@ -100,7 +100,7 @@ describe("/api/me MVP read model", () => {
   it("fails explicitly when canonical card dependencies are missing", async () => {
     resolveSessionUserMock.mockResolvedValue({ ok: true, user: { id: "u1" }, sessionId: "s1", expiresAt: new Date("2026-01-01T00:00:00.000Z") });
     prismaMock.$transaction.mockResolvedValue([
-      { id: "u1", xUserId: "x1", xUsername: "user", displayName: "User", avatarUrl: null, authProvider: "x", points: 300, packsOpened: 3 },
+      { id: "u1", handle: "user", displayName: "User", avatarUrl: null, points: 300, packsOpened: 3 },
       [
         {
           cardTemplate: {

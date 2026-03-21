@@ -29,7 +29,7 @@ export async function grantRewardPackMvp(input: {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, points: true, displayName: true, xUsername: true },
+    select: { id: true, points: true, displayName: true, handle: true },
   });
 
   if (!user) {
@@ -44,7 +44,7 @@ export async function grantRewardPackMvp(input: {
 
     const refreshedUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, points: true, displayName: true, xUsername: true },
+      select: { id: true, points: true, displayName: true, handle: true },
     });
 
     return {
@@ -78,7 +78,7 @@ export async function listRecentRewardPackGrantsMvp(limit = 100) {
         select: {
           id: true,
           displayName: true,
-          xUsername: true,
+          handle: true,
         },
       },
       packDefinition: {

@@ -19,7 +19,7 @@ type ConsolePayload = {
   };
   scoring: {
     tokenScores: Array<{ id: string; tokenProject: { displayName: string }; score: number; priceChange: number | null; marketCapChange: number | null; volumeChange: number | null }>;
-    breakdownRows: Array<{ id: string; entry: { id: string; userId: string; user?: { displayName: string | null; xUsername: string | null } }; tokenProject: { displayName: string; slug: string }; cardInstance: { cardTemplate: { name: string; rarity?: { code: string } | null; edition?: { code: string } | null } }; finalScore: number; rarityMultiplier: number; editionMultiplier: number; baseScore: number }>;
+    breakdownRows: Array<{ id: string; entry: { id: string; userId: string; user?: { displayName: string | null; handle: string | null } }; tokenProject: { displayName: string; slug: string }; cardInstance: { cardTemplate: { name: string; rarity?: { code: string } | null; edition?: { code: string } | null } }; finalScore: number; rarityMultiplier: number; editionMultiplier: number; baseScore: number }>;
   };
 };
 

@@ -27,7 +27,7 @@ describe("/api/pulls/recent", () => {
       {
         id: "inst_1",
         acquiredAt: new Date("2026-03-17T10:00:00.000Z"),
-        user: { displayName: "Alice", xUsername: "alice_x" },
+        user: { displayName: "Alice", handle: "alice_x" },
         cardTemplate: {
           id: "tpl_1",
           plannedSupply: 100,
@@ -61,7 +61,7 @@ describe("/api/pulls/recent", () => {
       {
         id: "inst_1",
         acquiredAt: new Date("2026-03-17T10:00:00.000Z"),
-        user: { displayName: "Alice", xUsername: "alice_x" },
+        user: { displayName: "Alice", handle: "alice_x" },
         cardTemplate: {
           id: "tpl_1",
           plannedSupply: 100,

@@ -12,7 +12,7 @@ type DecisionItem = {
   reviewer: string | null;
   reviewedAt: string | null;
   quest: { id: string; code: string; title: string };
-  user: { id: string; xUsername: string | null; displayName: string | null };
+  user: { id: string; handle: string | null; displayName: string | null };
 };
 
 export default function ModerationHistoryPage() {
@@ -85,7 +85,7 @@ export default function ModerationHistoryPage() {
                 <span className={`contest-status status-${item.status === "APPROVED" ? "approved" : "rejected"}`}>{item.status}</span>
               </div>
               <h3 className="contest-title">{item.quest.title}</h3>
-              <p className="contest-inline-note">User: {item.user.displayName || "Unknown"} @{item.user.xUsername || "—"}</p>
+              <p className="contest-inline-note">User: {item.user.displayName || "Unknown"} @{item.user.handle || "—"}</p>
               <p className="contest-inline-note">Reviewer: {item.reviewer || "admin"} · Decision code: {item.decisionCode || "—"}</p>
               <p className="contest-inline-note">Note: {item.note || "—"}</p>
               <p className="contest-inline-note">Reviewed at: {item.reviewedAt ? new Date(item.reviewedAt).toLocaleString() : "—"}</p>

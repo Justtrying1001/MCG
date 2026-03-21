@@ -13,7 +13,7 @@ export async function grantWelcomeReward(tx: Prisma.TransactionClient, userId: s
     reasonRef: LedgerConventions.welcome.reasonRef(userId),
     idempotencyKey: LedgerConventions.welcome.idempotencyKey(userId),
     metadata: {
-      source: "x_oauth_signup",
+      source: "privy_signup",
     },
   });
 }

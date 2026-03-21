@@ -20,9 +20,22 @@ export async function listUsersForAdminBrowser(options: AdminUsersBrowserOptions
     ? {
       OR: [
         { id: { contains: query, mode: "insensitive" as const } },
-        { xUserId: { contains: query, mode: "insensitive" as const } },
-        { xUsername: { contains: query, mode: "insensitive" as const } },
+        { handle: { contains: query, mode: "insensitive" as const } },
         { displayName: { contains: query, mode: "insensitive" as const } },
+        {
+          identities: {
+            some: {
+              providerUserId: { contains: query, mode: "insensitive" as const },
+            },
+          },
+        },
+        {
+          identities: {
+            some: {
+              username: { contains: query, mode: "insensitive" as const },
+            },
+          },
+        },
       ],
     }
     : undefined;
@@ -34,7 +47,7 @@ export async function listUsersForAdminBrowser(options: AdminUsersBrowserOptions
       select: {
         id: true,
         displayName: true,
-        xUsername: true,
+        handle: true,
         points: true,
         packsOpened: true,
         createdAt: true,
@@ -58,4 +71,3 @@ export async function listUsersForAdminBrowser(options: AdminUsersBrowserOptions
     users,
   };
 }
-

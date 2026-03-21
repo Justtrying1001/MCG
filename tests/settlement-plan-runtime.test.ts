@@ -259,7 +259,7 @@ describe("settlement plan runtime", () => {
       rankingSnapshotSize: 3,
       contest: { id: "c1", code: "W1", title: "Week 1", status: "LIVE" },
       items: [
-        { id: "i1", rank: 1, userId: "u1", user: { id: "u1", displayName: "U1", xUsername: "u1" }, sourceRuleId: "r1", sourceRuleType: "FIXED_RANKS", sourceBundleId: "b1", rewardComponents: [{ type: "POINTS", amount: 100 }], pointsTotal: 100, xpTotal: 0, packsTotal: 0 },
+        { id: "i1", rank: 1, userId: "u1", user: { id: "u1", displayName: "U1", handle: "u1" }, sourceRuleId: "r1", sourceRuleType: "FIXED_RANKS", sourceBundleId: "b1", rewardComponents: [{ type: "POINTS", amount: 100 }], pointsTotal: 100, xpTotal: 0, packsTotal: 0 },
       ],
     });
 

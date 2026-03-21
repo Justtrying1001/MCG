@@ -15,7 +15,7 @@ import {
 
 type SearchUser = {
   id: string;
-  xUsername: string;
+  handle: string;
   displayName: string;
   points: number;
   packsOpened: number;
@@ -25,7 +25,7 @@ type SearchUser = {
 };
 
 type UserContext = {
-  user: { id: string; displayName: string | null; xUsername: string | null; points: number; createdAt: string };
+  user: { id: string; displayName: string | null; handle: string | null; points: number; createdAt: string };
   rewards: { grantsCount: number; totalManualGranted: number };
   quests: { pendingSubmissions: number; approvedSubmissions: number; rejectedSubmissions: number; completedProgress: number };
   contests: { entriesCount: number; scoredEntriesCount: number; settlementsCount: number };
@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
                 onClick={() => void loadContext(row.id)}
               >
                 <span>
-                  <strong>{row.displayName} {row.xUsername ? `(@${row.xUsername})` : ""}</strong>
+                  <strong>{row.displayName} {row.handle ? `(@${row.handle})` : ""}</strong>
                   <small className="contest-inline-note">{row.points} pts · {row.packsOpened} packs · lvl {row.level ?? "—"}</small>
                 </span>
                 <small className="contest-inline-note">{new Date(row.createdAt).toLocaleDateString()}</small>
@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
           {contextLoading ? <AdminEmptyState title="Loading context…" /> : null}
           {!contextLoading && selected ? (
             <>
-              <p><strong>{selected.user.displayName ?? selected.user.id}</strong> (@{selected.user.xUsername ?? "—"})</p>
+              <p><strong>{selected.user.displayName ?? selected.user.id}</strong> (@{selected.user.handle ?? "—"})</p>
               <p className="contest-inline-note">{selected.user.points} total points · created {new Date(selected.user.createdAt).toLocaleString()}</p>
 
               <AdminStatStrip items={[

@@ -1,6 +1,14 @@
 import { Surface } from "@/components/ui/Surface";
 
-type RankingRow = { id: string; userId: string; rank: number; score: number; user: { displayName: string; xUsername: string } };
+type RankingRow = {
+  id: string;
+  userId: string;
+  rank: number;
+  score: number;
+  displayName?: string | null;
+  handle?: string | null;
+  user?: { displayName: string | null; handle: string | null };
+};
 
 export function LeaderboardCard({ rankings, currentUserId }: { rankings: RankingRow[]; currentUserId?: string }) {
   if (!rankings.length) {
@@ -19,7 +27,9 @@ export function LeaderboardCard({ rankings, currentUserId }: { rankings: Ranking
       <div className="contest-leaderboard-list-v2">
         {rankings.slice(0, 10).map((row) => {
           const isMe = row.userId === currentUserId;
-          const label = row.user.displayName?.trim() || (row.user.xUsername ? `@${row.user.xUsername}` : `Player #${row.rank}`);
+          const displayName = row.displayName ?? row.user?.displayName ?? null;
+          const handle = row.handle ?? row.user?.handle ?? null;
+          const label = displayName?.trim() || (handle ? `@${handle}` : `Player #${row.rank}`);
           return (
             <div key={row.id} className={`contest-leaderboard-row-v2${isMe ? " is-me" : ""}`}>
               <span>#{row.rank}</span>

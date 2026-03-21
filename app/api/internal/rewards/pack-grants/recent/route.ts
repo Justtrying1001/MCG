@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
           },
         },
         user: {
-          select: { displayName: true, xUsername: true },
+          select: { displayName: true, handle: true },
         },
       },
       orderBy: [{ createdAt: "desc" }],

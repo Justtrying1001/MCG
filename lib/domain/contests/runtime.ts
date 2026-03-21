@@ -562,7 +562,7 @@ export async function getContestRankingMvp(contestId: string) {
     const rankingsRaw = await tx.contestRanking.findMany({
       where: { contestId },
       orderBy: [{ rank: "asc" }],
-      include: { user: { select: { id: true, displayName: true, xUsername: true } } },
+      include: { user: { select: { id: true, displayName: true, handle: true } } },
     });
 
     const rankings = rankingsRaw.map((row) => ({
@@ -573,7 +573,7 @@ export async function getContestRankingMvp(contestId: string) {
       score: row.score,
       rankedAt: row.rankedAt,
       displayName: row.user.displayName,
-      xUsername: row.user.xUsername,
+      handle: row.user.handle,
     }));
 
     return { contest, rankings };
