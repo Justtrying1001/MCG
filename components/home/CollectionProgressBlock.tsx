@@ -16,9 +16,9 @@ export function CollectionProgressBlock({ completionPct, ownedCount, missingCoun
     <Surface variant="raised" className="collection-progress-block">
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Memedex"
+          eyebrow="Collection mode"
           title="Memedex progress"
-          subtitle="Your current Memedex snapshot."
+          subtitle="Your collectible console card for completion, ownership, and what is still locked."
           actions={<Link href="/collection" className="mcg-btn ghost">Open Memedex</Link>}
         />
 
