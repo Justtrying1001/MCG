@@ -216,31 +216,13 @@ async function main() {
       }
     }
 
-    // ── P3005: fresh DB with no migration history — baseline all but last ─
+    // ── P3005: database schema is not empty but has no migration history ──
     if (migrate.output.includes("P3005")) {
-      const migrations = getMigrationDirectories();
-      if (migrations.length <= 1) {
-        process.stderr.write(migrate.output);
-        process.exit(migrate.status);
-      }
-
-      const migrationsToBaseline = migrations.slice(0, -1);
-      console.warn(
-        `Prisma migrate deploy reported P3005. Baselining ${migrationsToBaseline.length} historical migration(s), then retrying deploy.`
+      console.error(
+        "[deploy-schema] Prisma migrate deploy reported P3005: target database is not empty but has no Prisma migration history. Refusing to auto-baseline because it can silently skip required schema changes and cause runtime drift. Baseline this database manually, then rerun deploy."
       );
-
-      for (const migrationName of migrationsToBaseline) {
-        markApplied(migrationName);
-      }
-
-      const redeploy = await deployWithLockRetry();
-      if (!redeploy.ok) {
-        process.stderr.write(redeploy.output);
-        process.exit(redeploy.status);
-      }
-
-      console.log("Prisma migrate deploy succeeded after baseline recovery.");
-      return;
+      process.stderr.write(migrate.output);
+      process.exit(migrate.status);
     }
 
     // ── Unknown error ─────────────────────────────────────────────────────
