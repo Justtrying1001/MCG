@@ -26,8 +26,10 @@ export class QuestRuntimeError extends Error {
 }
 
 function isMissingPrismaTableError(error: unknown) {
-  return error instanceof Prisma.PrismaClientKnownRequestError
-    && (error.code === "P2021" || error.code === "P2022");
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  );
 }
 
 function getPrismaErrorCode(error: unknown): string | null {
@@ -46,7 +48,10 @@ async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getModelDelegate<T>(tx: Prisma.TransactionClient, key: string): T | null {
+function getModelDelegate<T>(
+  tx: Prisma.TransactionClient,
+  key: string,
+): T | null {
   const delegate = (tx as unknown as Record<string, unknown>)[key];
   return delegate ? (delegate as T) : null;
 }
@@ -66,19 +71,22 @@ type MilestoneConfigSummary = {
 
 type QuestLifecycleStatus = "ACTIVE" | "ARCHIVED" | "DELETED";
 
-
 async function ensureUniqueQuestCode(code: string) {
   let candidate = code;
   let suffix = 2;
 
-  while (await prisma.questDefinition.findUnique({ where: { code: candidate }, select: { id: true } })) {
+  while (
+    await prisma.questDefinition.findUnique({
+      where: { code: candidate },
+      select: { id: true },
+    })
+  ) {
     candidate = `${code}_${suffix}`;
     suffix += 1;
   }
 
   return candidate;
 }
-
 
 export type InternalQuestAnalytics = {
   progressCount: number;
@@ -121,6 +129,55 @@ export type InternalQuestDetail = {
 
 const AUTO_VALIDATION_DELAY_MS = 60_000;
 
+async function grantQuestRewardsTx(
+  tx: Prisma.TransactionClient,
+  params: {
+    userId: string;
+    questId: string;
+    questCode: string;
+    questType: QuestType;
+    rewardPoints: number;
+    rewardPackDefinitionId: string | null;
+    rewardPackQuantity: number | null;
+    trigger: string;
+    submissionId?: string;
+  },
+) {
+  if (params.rewardPoints > 0) {
+    await creditPointsWithLedger(tx, {
+      userId: params.userId,
+      amount: params.rewardPoints,
+      reasonType: RewardLedgerReasonType.QUEST_REWARD,
+      reasonRef: LedgerConventions.questReward.reasonRef(params.questId),
+      idempotencyKey: params.trigger.startsWith("milestone_")
+        ? LedgerConventions.questReward.autoMilestoneIdempotencyKey(
+            params.questId,
+            params.userId,
+          )
+        : LedgerConventions.questReward.approvalIdempotencyKey(
+            params.questId,
+            params.userId,
+          ),
+      metadata: {
+        questCode: params.questCode,
+        questType: params.questType,
+        trigger: params.trigger,
+        ...(params.submissionId ? { submissionId: params.submissionId } : {}),
+      },
+    });
+  }
+
+  if (params.rewardPackDefinitionId) {
+    const qty = Math.max(params.rewardPackQuantity ?? 1, 1);
+    for (let i = 0; i < qty; i++) {
+      await grantRewardPackByDefinitionTx(tx, {
+        userId: params.userId,
+        packDefinitionId: params.rewardPackDefinitionId,
+      });
+    }
+  }
+}
+
 export type QuestForUserRow = {
   id: string;
   code: string;
@@ -161,12 +218,14 @@ export type QuestForUserRow = {
   };
 };
 
-function nowInActiveWindow(now: Date, quest: { startAt: Date | null; endAt: Date | null }) {
+function nowInActiveWindow(
+  now: Date,
+  quest: { startAt: Date | null; endAt: Date | null },
+) {
   if (quest.startAt && quest.startAt > now) return false;
   if (quest.endAt && quest.endAt < now) return false;
   return true;
 }
-
 
 async function finalizeAutoValidationIfReady(params: {
   tx: Prisma.TransactionClient;
@@ -191,16 +250,18 @@ async function finalizeAutoValidationIfReady(params: {
   for (const progress of pendingRows) {
     const startedAt = progress.startedAt;
     if (!startedAt) continue;
-    if (params.now.getTime() < startedAt.getTime() + AUTO_VALIDATION_DELAY_MS) continue;
+    if (params.now.getTime() < startedAt.getTime() + AUTO_VALIDATION_DELAY_MS)
+      continue;
 
-    const existingApprovedSubmission = await params.tx.questSubmission.findFirst({
-      where: {
-        userId: progress.userId,
-        questId: progress.questId,
-        status: QuestSubmissionStatus.APPROVED,
-      },
-      orderBy: [{ createdAt: "desc" }],
-    });
+    const existingApprovedSubmission =
+      await params.tx.questSubmission.findFirst({
+        where: {
+          userId: progress.userId,
+          questId: progress.questId,
+          status: QuestSubmissionStatus.APPROVED,
+        },
+        orderBy: [{ createdAt: "desc" }],
+      });
 
     if (!existingApprovedSubmission) {
       await params.tx.questSubmission.create({
@@ -224,35 +285,23 @@ async function finalizeAutoValidationIfReady(params: {
       },
     });
 
-    if (progress.quest.rewardPoints > 0) {
-      await creditPointsWithLedger(params.tx, {
-        userId: progress.userId,
-        amount: progress.quest.rewardPoints,
-        reasonType: RewardLedgerReasonType.QUEST_REWARD,
-        reasonRef: LedgerConventions.questReward.reasonRef(progress.questId),
-        idempotencyKey: LedgerConventions.questReward.approvalIdempotencyKey(progress.questId, progress.userId),
-        metadata: {
-          questCode: progress.quest.code,
-          questType: progress.quest.type,
-          trigger: "social_auto_complete",
-        },
-      });
-    }
-
-    if (progress.quest.rewardPackDefinitionId) {
-      const qty = Math.max(progress.quest.rewardPackQuantity ?? 1, 1);
-      for (let i = 0; i < qty; i++) {
-        await grantRewardPackByDefinitionTx(params.tx, {
-          userId: progress.userId,
-          packDefinitionId: progress.quest.rewardPackDefinitionId,
-        });
-      }
-    }
+    await grantQuestRewardsTx(params.tx, {
+      userId: progress.userId,
+      questId: progress.questId,
+      questCode: progress.quest.code,
+      questType: progress.quest.type,
+      rewardPoints: progress.quest.rewardPoints,
+      rewardPackDefinitionId: progress.quest.rewardPackDefinitionId,
+      rewardPackQuantity: progress.quest.rewardPackQuantity,
+      trigger: "social_auto_complete",
+    });
   }
 }
 
 function isSocialSubmitQuest(type: QuestType) {
-  return type === QuestType.SOCIAL_FOLLOW_X || type === QuestType.SOCIAL_ENGAGEMENT_X;
+  return (
+    type === QuestType.SOCIAL_FOLLOW_X || type === QuestType.SOCIAL_ENGAGEMENT_X
+  );
 }
 
 function parseMilestoneType(value: unknown): MilestoneType | null {
@@ -273,16 +322,23 @@ function parseMilestoneType(value: unknown): MilestoneType | null {
     "POINTS_BALANCE_REACHED",
   ];
 
-  return allowed.includes(value as MilestoneType) ? (value as MilestoneType) : null;
+  return allowed.includes(value as MilestoneType)
+    ? (value as MilestoneType)
+    : null;
 }
 
-function parseContestMilestoneThreshold(config: Prisma.JsonValue | null): number | null {
+function parseContestMilestoneThreshold(
+  config: Prisma.JsonValue | null,
+): number | null {
   const parsed = parseMilestoneConfig(config);
   return parsed?.targetValue ?? null;
 }
 
-function parseMilestoneConfig(config: Prisma.JsonValue | null): MilestoneConfigSummary | null {
-  if (!config || typeof config !== "object" || Array.isArray(config)) return null;
+function parseMilestoneConfig(
+  config: Prisma.JsonValue | null,
+): MilestoneConfigSummary | null {
+  if (!config || typeof config !== "object" || Array.isArray(config))
+    return null;
 
   const root = config as Record<string, unknown>;
   const rawTarget = root.targetValue ?? root.threshold;
@@ -295,24 +351,47 @@ function parseMilestoneConfig(config: Prisma.JsonValue | null): MilestoneConfigS
   };
 }
 
-function parseSocialSubmitConfig(config: Prisma.JsonValue | null): SocialQuestConfigSummary {
+function parseSocialSubmitConfig(
+  config: Prisma.JsonValue | null,
+): SocialQuestConfigSummary {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
-    return { proofRequired: false, targetUrl: null, ctaLabel: null, instructions: null, socialAction: null };
+    return {
+      proofRequired: false,
+      targetUrl: null,
+      ctaLabel: null,
+      instructions: null,
+      socialAction: null,
+    };
   }
 
   const root = config as Record<string, unknown>;
 
   return {
     proofRequired: Boolean(root.proofRequired),
-    targetUrl: typeof root.targetUrl === "string" && root.targetUrl.trim() ? root.targetUrl.trim() : null,
-    ctaLabel: typeof root.ctaLabel === "string" && root.ctaLabel.trim() ? root.ctaLabel.trim() : null,
-    instructions: typeof root.instructions === "string" && root.instructions.trim() ? root.instructions.trim() : null,
-    socialAction: typeof root.socialAction === "string" && root.socialAction.trim() ? root.socialAction.trim() : null,
+    targetUrl:
+      typeof root.targetUrl === "string" && root.targetUrl.trim()
+        ? root.targetUrl.trim()
+        : null,
+    ctaLabel:
+      typeof root.ctaLabel === "string" && root.ctaLabel.trim()
+        ? root.ctaLabel.trim()
+        : null,
+    instructions:
+      typeof root.instructions === "string" && root.instructions.trim()
+        ? root.instructions.trim()
+        : null,
+    socialAction:
+      typeof root.socialAction === "string" && root.socialAction.trim()
+        ? root.socialAction.trim()
+        : null,
   };
 }
 
-function parseQuestLifecycleStatus(config: Prisma.JsonValue | null): QuestLifecycleStatus {
-  if (!config || typeof config !== "object" || Array.isArray(config)) return "ACTIVE";
+function parseQuestLifecycleStatus(
+  config: Prisma.JsonValue | null,
+): QuestLifecycleStatus {
+  if (!config || typeof config !== "object" || Array.isArray(config))
+    return "ACTIVE";
   const status = (config as Record<string, unknown>).lifecycleStatus;
   if (status === "ARCHIVED" || status === "DELETED") return status;
   return "ACTIVE";
@@ -326,7 +405,10 @@ function isLifecycleVisibleForUsers(config: Prisma.JsonValue | null) {
 function normalizeRewardPoints(value: unknown) {
   const rewardPoints = Number(value);
   if (!Number.isInteger(rewardPoints) || rewardPoints < 0) {
-    throw new QuestRuntimeError("rewardPoints must be a non-negative integer", 400);
+    throw new QuestRuntimeError(
+      "rewardPoints must be a non-negative integer",
+      400,
+    );
   }
 
   return rewardPoints;
@@ -344,10 +426,18 @@ function normalizeOptionalDate(raw: unknown): Date | null | undefined {
   return value;
 }
 
-function normalizeQuestConfig(type: QuestType, config: unknown, required: boolean): Prisma.InputJsonValue | undefined {
+function normalizeQuestConfig(
+  type: QuestType,
+  config: unknown,
+  required: boolean,
+): Prisma.InputJsonValue | undefined {
   if (type === QuestType.CONTEST_COUNT_MILESTONE) {
     if (config === undefined) {
-      if (required) throw new QuestRuntimeError("CONTEST_COUNT_MILESTONE quests require config.threshold", 400);
+      if (required)
+        throw new QuestRuntimeError(
+          "CONTEST_COUNT_MILESTONE quests require config.threshold",
+          400,
+        );
       return undefined;
     }
 
@@ -359,12 +449,16 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
     const rawTarget = root.targetValue ?? root.threshold;
     const targetValue = Number(rawTarget);
     if (!Number.isInteger(targetValue) || targetValue <= 0) {
-      throw new QuestRuntimeError("config.targetValue (or threshold) must be a positive integer", 400);
+      throw new QuestRuntimeError(
+        "config.targetValue (or threshold) must be a positive integer",
+        400,
+      );
     }
 
     return {
       ...root,
-      milestoneType: parseMilestoneType(root.milestoneType) ?? "CONTESTS_JOINED",
+      milestoneType:
+        parseMilestoneType(root.milestoneType) ?? "CONTESTS_JOINED",
       targetValue,
       threshold: targetValue,
     };
@@ -373,7 +467,13 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
   if (isSocialSubmitQuest(type)) {
     if (config === undefined) {
       if (required) {
-        return { proofRequired: false, targetUrl: null, ctaLabel: null, instructions: null, socialAction: null };
+        return {
+          proofRequired: false,
+          targetUrl: null,
+          ctaLabel: null,
+          instructions: null,
+          socialAction: null,
+        };
       }
       return undefined;
     }
@@ -387,10 +487,22 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
     return {
       ...root,
       proofRequired: Boolean(root.proofRequired),
-      targetUrl: typeof root.targetUrl === "string" && root.targetUrl.trim() ? root.targetUrl.trim() : null,
-      ctaLabel: typeof root.ctaLabel === "string" && root.ctaLabel.trim() ? root.ctaLabel.trim() : null,
-      instructions: typeof root.instructions === "string" && root.instructions.trim() ? root.instructions.trim() : null,
-      socialAction: typeof root.socialAction === "string" && root.socialAction.trim() ? root.socialAction.trim() : null,
+      targetUrl:
+        typeof root.targetUrl === "string" && root.targetUrl.trim()
+          ? root.targetUrl.trim()
+          : null,
+      ctaLabel:
+        typeof root.ctaLabel === "string" && root.ctaLabel.trim()
+          ? root.ctaLabel.trim()
+          : null,
+      instructions:
+        typeof root.instructions === "string" && root.instructions.trim()
+          ? root.instructions.trim()
+          : null,
+      socialAction:
+        typeof root.socialAction === "string" && root.socialAction.trim()
+          ? root.socialAction.trim()
+          : null,
     };
   }
 
@@ -398,7 +510,10 @@ function normalizeQuestConfig(type: QuestType, config: unknown, required: boolea
   return config as Prisma.InputJsonValue;
 }
 
-async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: string) {
+async function getUserMilestoneStatsTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+) {
   const [
     contestParticipations,
     packOpenCount,
@@ -421,11 +536,34 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
     tx.ownedCardInstance.groupBy({ by: ["cardTemplateId"], where: { userId } }),
     tx.contestRanking.count({ where: { userId, rank: 1 } }),
     tx.contestRanking.count({ where: { userId, rank: { lte: 3 } } }),
-    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: { in: ["RARE", "EPIC", "LEGENDARY"] } } } } }),
-    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: { in: ["EPIC", "LEGENDARY"] } } } } }),
-    tx.ownedCardInstance.count({ where: { userId, cardTemplate: { rarity: { code: "LEGENDARY" } } } }),
-    tx.rewardLedgerEntry.count({ where: { userId, entryType: RewardLedgerEntryType.CREDIT, reasonType: RewardLedgerReasonType.QUEST_REWARD } }),
-    tx.rewardLedgerEntry.aggregate({ where: { userId, entryType: RewardLedgerEntryType.CREDIT }, _sum: { amount: true } }),
+    tx.ownedCardInstance.count({
+      where: {
+        userId,
+        cardTemplate: {
+          rarity: { code: { in: ["RARE", "EPIC", "LEGENDARY"] } },
+        },
+      },
+    }),
+    tx.ownedCardInstance.count({
+      where: {
+        userId,
+        cardTemplate: { rarity: { code: { in: ["EPIC", "LEGENDARY"] } } },
+      },
+    }),
+    tx.ownedCardInstance.count({
+      where: { userId, cardTemplate: { rarity: { code: "LEGENDARY" } } },
+    }),
+    tx.rewardLedgerEntry.count({
+      where: {
+        userId,
+        entryType: RewardLedgerEntryType.CREDIT,
+        reasonType: RewardLedgerReasonType.QUEST_REWARD,
+      },
+    }),
+    tx.rewardLedgerEntry.aggregate({
+      where: { userId, entryType: RewardLedgerEntryType.CREDIT },
+      _sum: { amount: true },
+    }),
     tx.rosterLock.count({ where: { contestEntry: { userId } } }),
     tx.contestEntry.count({ where: { userId, status: "SETTLED" } }),
     tx.user.findUnique({ where: { id: userId }, select: { points: true } }),
@@ -449,7 +587,10 @@ async function getUserMilestoneStatsTx(tx: Prisma.TransactionClient, userId: str
   } as const;
 }
 
-async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
+async function applyAutoMilestoneQuestProgressionTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+) {
   const now = new Date();
   const stats = await getUserMilestoneStatsTx(tx, userId);
 
@@ -477,7 +618,11 @@ async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient
     });
 
     if (!existing) {
-      const status = reached ? UserQuestStatus.COMPLETED : (progressMetric > 0 ? UserQuestStatus.IN_PROGRESS : UserQuestStatus.AVAILABLE);
+      const status = reached
+        ? UserQuestStatus.COMPLETED
+        : progressMetric > 0
+          ? UserQuestStatus.IN_PROGRESS
+          : UserQuestStatus.AVAILABLE;
       const completedAt = reached ? now : null;
       const claimedAt = reached ? now : null;
 
@@ -515,43 +660,43 @@ async function applyAutoMilestoneQuestProgressionTx(tx: Prisma.TransactionClient
         await tx.userQuestProgress.update({
           where: { id: existing.id },
           data: {
-            status: nextProgress > 0 ? UserQuestStatus.IN_PROGRESS : UserQuestStatus.AVAILABLE,
+            status:
+              nextProgress > 0
+                ? UserQuestStatus.IN_PROGRESS
+                : UserQuestStatus.AVAILABLE,
             progressValue: nextProgress,
           },
         });
       }
     }
 
-    if (reached && quest.rewardPoints > 0) {
-      await creditPointsWithLedger(tx, {
+    if (reached) {
+      await grantQuestRewardsTx(tx, {
         userId,
-        amount: quest.rewardPoints,
-        reasonType: RewardLedgerReasonType.QUEST_REWARD,
-        reasonRef: LedgerConventions.questReward.reasonRef(quest.id),
-        idempotencyKey: LedgerConventions.questReward.autoMilestoneIdempotencyKey(quest.id, userId),
-        metadata: {
-          questCode: quest.code,
-          questType: quest.type,
-          trigger: `milestone_${milestoneConfig.milestoneType}`,
-        },
+        questId: quest.id,
+        questCode: quest.code,
+        questType: quest.type,
+        rewardPoints: quest.rewardPoints,
+        rewardPackDefinitionId: quest.rewardPackDefinitionId,
+        rewardPackQuantity: quest.rewardPackQuantity,
+        trigger: `milestone_${milestoneConfig.milestoneType}`,
       });
-    }
-
-    if (reached && quest.rewardPackDefinitionId) {
-      const qty = Math.max(quest.rewardPackQuantity ?? 1, 1);
-      for (let i = 0; i < qty; i++) {
-        await grantRewardPackByDefinitionTx(tx, {
-          userId,
-          packDefinitionId: quest.rewardPackDefinitionId,
-        });
-      }
     }
   }
 }
 
-export async function applyContestEntryQuestProgressionTx(tx: Prisma.TransactionClient, userId: string) {
+export async function applyContestEntryQuestProgressionTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+) {
   const maybeTx = tx as unknown as Record<string, unknown>;
-  if (!maybeTx.contestEntry || !maybeTx.packOpeningEvent || !maybeTx.questDefinition || !maybeTx.userQuestProgress || !maybeTx.rewardLedgerEntry) {
+  if (
+    !maybeTx.contestEntry ||
+    !maybeTx.packOpeningEvent ||
+    !maybeTx.questDefinition ||
+    !maybeTx.userQuestProgress ||
+    !maybeTx.rewardLedgerEntry
+  ) {
     return;
   }
   await applyAutoMilestoneQuestProgressionTx(tx, userId);
@@ -562,9 +707,12 @@ export async function syncContestEntryQuestProgression(userId: string) {
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      await prisma.$transaction(async (tx) => {
-        await applyAutoMilestoneQuestProgressionTx(tx, userId);
-      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      await prisma.$transaction(
+        async (tx) => {
+          await applyAutoMilestoneQuestProgressionTx(tx, userId);
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
       return;
     } catch (error) {
       if (error instanceof TypeError || isMissingPrismaTableError(error)) {
@@ -577,10 +725,13 @@ export async function syncContestEntryQuestProgression(userId: string) {
           continue;
         }
 
-        console.warn("syncContestEntryQuestProgression skipped after transaction conflicts", {
-          userId,
-          attempts: attempt,
-        });
+        console.warn(
+          "syncContestEntryQuestProgression skipped after transaction conflicts",
+          {
+            userId,
+            attempts: attempt,
+          },
+        );
         return;
       }
 
@@ -595,97 +746,117 @@ export async function submitSocialQuestMvp(params: {
   proofUrl?: string | null;
   note?: string | null;
 }) {
-  return prisma.$transaction(async (tx) => {
-    const now = new Date();
-    const quest = await tx.questDefinition.findUnique({ where: { id: params.questId } });
-    if (!quest) throw new QuestRuntimeError("Quest not found", 404);
+  return prisma.$transaction(
+    async (tx) => {
+      const now = new Date();
+      const quest = await tx.questDefinition.findUnique({
+        where: { id: params.questId },
+      });
+      if (!quest) throw new QuestRuntimeError("Quest not found", 404);
 
-    if (!quest.isActive || !nowInActiveWindow(now, quest)) {
-      throw new QuestRuntimeError("Quest is not active", 400);
-    }
+      if (!quest.isActive || !nowInActiveWindow(now, quest)) {
+        throw new QuestRuntimeError("Quest is not active", 400);
+      }
 
-    if (!isSocialSubmitQuest(quest.type)) {
-      throw new QuestRuntimeError("Quest does not accept user submissions", 400);
-    }
+      if (!isSocialSubmitQuest(quest.type)) {
+        throw new QuestRuntimeError(
+          "Quest does not accept user submissions",
+          400,
+        );
+      }
 
-    const socialConfig = parseSocialSubmitConfig(quest.config);
-    const proofUrl = params.proofUrl?.trim() || null;
-    const note = params.note?.trim() || null;
+      const socialConfig = parseSocialSubmitConfig(quest.config);
+      const proofUrl = params.proofUrl?.trim() || null;
+      const note = params.note?.trim() || null;
 
-    if (quest.validationMode !== QuestValidationMode.AUTO && socialConfig.proofRequired && !proofUrl) {
-      throw new QuestRuntimeError("This quest requires a proof URL", 400);
-    }
+      if (
+        quest.validationMode !== QuestValidationMode.AUTO &&
+        socialConfig.proofRequired &&
+        !proofUrl
+      ) {
+        throw new QuestRuntimeError("This quest requires a proof URL", 400);
+      }
 
-    const [latestSubmission, progress] = await Promise.all([
-      tx.questSubmission.findFirst({
-        where: { userId: params.userId, questId: params.questId },
-        orderBy: [{ createdAt: "desc" }],
-      }),
-      tx.userQuestProgress.findUnique({
-        where: { userId_questId: { userId: params.userId, questId: params.questId } },
-      }),
-    ]);
+      const [latestSubmission, progress] = await Promise.all([
+        tx.questSubmission.findFirst({
+          where: { userId: params.userId, questId: params.questId },
+          orderBy: [{ createdAt: "desc" }],
+        }),
+        tx.userQuestProgress.findUnique({
+          where: {
+            userId_questId: { userId: params.userId, questId: params.questId },
+          },
+        }),
+      ]);
 
-    if (latestSubmission?.status === QuestSubmissionStatus.SUBMITTED) {
-      throw new QuestRuntimeError("A submission is already under review", 409);
-    }
+      if (latestSubmission?.status === QuestSubmissionStatus.SUBMITTED) {
+        throw new QuestRuntimeError(
+          "A submission is already under review",
+          409,
+        );
+      }
 
-    if (latestSubmission?.status === QuestSubmissionStatus.APPROVED || progress?.status === UserQuestStatus.COMPLETED) {
-      throw new QuestRuntimeError("Quest already completed", 409);
-    }
+      if (
+        latestSubmission?.status === QuestSubmissionStatus.APPROVED ||
+        progress?.status === UserQuestStatus.COMPLETED
+      ) {
+        throw new QuestRuntimeError("Quest already completed", 409);
+      }
 
-    if (quest.validationMode === QuestValidationMode.AUTO) {
-      if (!progress) {
-        return tx.userQuestProgress.create({
+      if (quest.validationMode === QuestValidationMode.AUTO) {
+        if (!progress) {
+          return tx.userQuestProgress.create({
+            data: {
+              userId: params.userId,
+              questId: params.questId,
+              status: UserQuestStatus.PENDING_VALIDATION,
+              startedAt: now,
+              progressValue: 0,
+            },
+          });
+        }
+
+        return tx.userQuestProgress.update({
+          where: { id: progress.id },
           data: {
-            userId: params.userId,
-            questId: params.questId,
             status: UserQuestStatus.PENDING_VALIDATION,
             startedAt: now,
-            progressValue: 0,
+            completedAt: null,
+            claimedAt: null,
           },
         });
       }
 
-      return tx.userQuestProgress.update({
-        where: { id: progress.id },
-        data: {
-          status: UserQuestStatus.PENDING_VALIDATION,
-          startedAt: now,
-          completedAt: null,
-          claimedAt: null,
-        },
-      });
-    }
-
-    const submission = await tx.questSubmission.create({
-      data: {
-        userId: params.userId,
-        questId: params.questId,
-        status: QuestSubmissionStatus.SUBMITTED,
-        proofUrl,
-        note,
-      },
-    });
-
-    if (!progress) {
-      await tx.userQuestProgress.create({
+      const submission = await tx.questSubmission.create({
         data: {
           userId: params.userId,
           questId: params.questId,
-          status: UserQuestStatus.IN_PROGRESS,
-          progressValue: 0,
+          status: QuestSubmissionStatus.SUBMITTED,
+          proofUrl,
+          note,
         },
       });
-    } else {
-      await tx.userQuestProgress.update({
-        where: { id: progress.id },
-        data: { status: UserQuestStatus.IN_PROGRESS },
-      });
-    }
 
-    return submission;
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      if (!progress) {
+        await tx.userQuestProgress.create({
+          data: {
+            userId: params.userId,
+            questId: params.questId,
+            status: UserQuestStatus.IN_PROGRESS,
+            progressValue: 0,
+          },
+        });
+      } else {
+        await tx.userQuestProgress.update({
+          where: { id: progress.id },
+          data: { status: UserQuestStatus.IN_PROGRESS },
+        });
+      }
+
+      return submission;
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 }
 
 export async function reviewQuestSubmissionMvp(params: {
@@ -694,145 +865,170 @@ export async function reviewQuestSubmissionMvp(params: {
   reviewedByAdmin: string;
   note?: string | null;
 }) {
-  return prisma.$transaction(async (tx) => {
-    const submission = await tx.questSubmission.findUnique({
-      where: { id: params.submissionId },
-      include: { quest: true },
-    });
+  return prisma.$transaction(
+    async (tx) => {
+      const submission = await tx.questSubmission.findUnique({
+        where: { id: params.submissionId },
+        include: { quest: true },
+      });
 
-    if (!submission) throw new QuestRuntimeError("Submission not found", 404);
+      if (!submission) throw new QuestRuntimeError("Submission not found", 404);
 
-    if (!isSocialSubmitQuest(submission.quest.type)) {
-      throw new QuestRuntimeError("Submission quest type is not social submit", 400);
-    }
+      if (!isSocialSubmitQuest(submission.quest.type)) {
+        throw new QuestRuntimeError(
+          "Submission quest type is not social submit",
+          400,
+        );
+      }
 
-    if (submission.status !== QuestSubmissionStatus.SUBMITTED) {
-      return { submission, alreadyReviewed: true as const };
-    }
+      if (submission.status !== QuestSubmissionStatus.SUBMITTED) {
+        return { submission, alreadyReviewed: true as const };
+      }
 
-    const now = new Date();
-    const reviewedSubmission = await tx.questSubmission.update({
-      where: { id: submission.id },
-      data: {
-        status: params.action === "APPROVE" ? QuestSubmissionStatus.APPROVED : QuestSubmissionStatus.REJECTED,
-        reviewedByAdmin: params.reviewedByAdmin,
-        reviewedAt: now,
-        note: params.note !== undefined ? (params.note?.trim() || null) : submission.note,
-      },
-    });
+      const now = new Date();
+      const reviewedSubmission = await tx.questSubmission.update({
+        where: { id: submission.id },
+        data: {
+          status:
+            params.action === "APPROVE"
+              ? QuestSubmissionStatus.APPROVED
+              : QuestSubmissionStatus.REJECTED,
+          reviewedByAdmin: params.reviewedByAdmin,
+          reviewedAt: now,
+          note:
+            params.note !== undefined
+              ? params.note?.trim() || null
+              : submission.note,
+        },
+      });
 
-    const progress = await tx.userQuestProgress.findUnique({
-      where: { userId_questId: { userId: submission.userId, questId: submission.questId } },
-    });
-
-    if (params.action === "APPROVE") {
-      if (!progress) {
-        await tx.userQuestProgress.create({
-          data: {
+      const progress = await tx.userQuestProgress.findUnique({
+        where: {
+          userId_questId: {
             userId: submission.userId,
             questId: submission.questId,
-            status: UserQuestStatus.COMPLETED,
-            progressValue: 1,
-            completedAt: now,
-            claimedAt: now,
           },
+        },
+      });
+
+      if (params.action === "APPROVE") {
+        if (!progress) {
+          await tx.userQuestProgress.create({
+            data: {
+              userId: submission.userId,
+              questId: submission.questId,
+              status: UserQuestStatus.COMPLETED,
+              progressValue: 1,
+              completedAt: now,
+              claimedAt: now,
+            },
+          });
+        } else {
+          await tx.userQuestProgress.update({
+            where: { id: progress.id },
+            data: {
+              status: UserQuestStatus.COMPLETED,
+              progressValue: Math.max(progress.progressValue, 1),
+              completedAt: progress.completedAt ?? now,
+              claimedAt: progress.claimedAt ?? now,
+            },
+          });
+        }
+
+        await grantQuestRewardsTx(tx, {
+          userId: submission.userId,
+          questId: submission.questId,
+          questCode: submission.quest.code,
+          questType: submission.quest.type,
+          rewardPoints: submission.quest.rewardPoints,
+          rewardPackDefinitionId: submission.quest.rewardPackDefinitionId,
+          rewardPackQuantity: submission.quest.rewardPackQuantity,
+          trigger: "manual_review_approval",
+          submissionId: submission.id,
         });
-      } else {
+      } else if (progress && progress.status !== UserQuestStatus.COMPLETED) {
         await tx.userQuestProgress.update({
           where: { id: progress.id },
           data: {
-            status: UserQuestStatus.COMPLETED,
-            progressValue: Math.max(progress.progressValue, 1),
-            completedAt: progress.completedAt ?? now,
-            claimedAt: progress.claimedAt ?? now,
+            status: UserQuestStatus.REJECTED,
           },
         });
       }
 
-      if (submission.quest.rewardPoints > 0) {
-        await creditPointsWithLedger(tx, {
-          userId: submission.userId,
-          amount: submission.quest.rewardPoints,
-          reasonType: RewardLedgerReasonType.QUEST_REWARD,
-          reasonRef: LedgerConventions.questReward.reasonRef(submission.questId),
-          idempotencyKey: LedgerConventions.questReward.approvalIdempotencyKey(submission.questId, submission.userId),
-          metadata: {
-            questCode: submission.quest.code,
-            questType: submission.quest.type,
-            trigger: "manual_review_approval",
-            submissionId: submission.id,
-          },
-        });
-      }
-
-      if (submission.quest.rewardPackDefinitionId) {
-        const qty = Math.max(submission.quest.rewardPackQuantity ?? 1, 1);
-        for (let i = 0; i < qty; i++) {
-          await grantRewardPackByDefinitionTx(tx, {
-            userId: submission.userId,
-            packDefinitionId: submission.quest.rewardPackDefinitionId,
-          });
-        }
-      }
-    } else if (progress && progress.status !== UserQuestStatus.COMPLETED) {
-      await tx.userQuestProgress.update({
-        where: { id: progress.id },
-        data: {
-          status: UserQuestStatus.REJECTED,
-        },
-      });
-    }
-
-    return { submission: reviewedSubmission, alreadyReviewed: false as const };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      return {
+        submission: reviewedSubmission,
+        alreadyReviewed: false as const,
+      };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 }
 
-export async function listQuestSubmissionsMvp(params?: { status?: QuestSubmissionStatus }) {
+export async function listQuestSubmissionsMvp(params?: {
+  status?: QuestSubmissionStatus;
+}) {
   return prisma.questSubmission.findMany({
     where: {
       ...(params?.status ? { status: params.status } : {}),
     },
     include: {
-      user: { select: { id: true, handle: true, displayName: true } },
-      quest: { select: { id: true, code: true, type: true, title: true, rewardPoints: true } },
+      user: { select: { id: true, xUsername: true, displayName: true } },
+      quest: {
+        select: {
+          id: true,
+          code: true,
+          type: true,
+          title: true,
+          rewardPoints: true,
+        },
+      },
     },
     orderBy: [{ createdAt: "desc" }],
     take: 300,
   });
 }
 
-export async function listUserQuestsMvp(userId: string): Promise<{ quests: QuestForUserRow[] }> {
+export async function listUserQuestsMvp(
+  userId: string,
+): Promise<{ quests: QuestForUserRow[] }> {
   await syncContestEntryQuestProgression(userId);
 
   const now = new Date();
 
-  const { quests, progressRows, submissions } = await prisma.$transaction(async (tx) => {
-    await finalizeAutoValidationIfReady({ tx, userId, now });
+  const { quests, progressRows, submissions } = await prisma.$transaction(
+    async (tx) => {
+      await finalizeAutoValidationIfReady({ tx, userId, now });
 
-    const [quests, progressRows, submissions] = await Promise.all([
-      tx.questDefinition.findMany({
-        where: { isActive: true },
-        orderBy: [{ createdAt: "desc" }],
-        take: 200,
-        include: {
-          rewardPackDefinition: { select: { code: true } },
-        },
-      }),
-      tx.userQuestProgress.findMany({
-        where: { userId },
-      }),
-      tx.questSubmission.findMany({
-        where: { userId },
-        orderBy: [{ createdAt: "desc" }],
-        take: 500,
-      }),
-    ]);
+      const [quests, progressRows, submissions] = await Promise.all([
+        tx.questDefinition.findMany({
+          where: { isActive: true },
+          orderBy: [{ createdAt: "desc" }],
+          take: 200,
+          include: {
+            rewardPackDefinition: { select: { code: true } },
+          },
+        }),
+        tx.userQuestProgress.findMany({
+          where: { userId },
+        }),
+        tx.questSubmission.findMany({
+          where: { userId },
+          orderBy: [{ createdAt: "desc" }],
+          take: 500,
+        }),
+      ]);
 
-    return { quests, progressRows, submissions };
-  });
+      return { quests, progressRows, submissions };
+    },
+  );
 
-  const progressByQuestId = new Map(progressRows.map((row) => [row.questId, row]));
-  const latestSubmissionByQuestId = new Map<string, typeof submissions[number]>();
+  const progressByQuestId = new Map(
+    progressRows.map((row) => [row.questId, row]),
+  );
+  const latestSubmissionByQuestId = new Map<
+    string,
+    (typeof submissions)[number]
+  >();
   for (const submission of submissions) {
     if (!latestSubmissionByQuestId.has(submission.questId)) {
       latestSubmissionByQuestId.set(submission.questId, submission);
@@ -840,15 +1036,22 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
   }
 
   const rows = quests
-    .filter((quest) => nowInActiveWindow(now, quest) && isLifecycleVisibleForUsers(quest.config))
+    .filter(
+      (quest) =>
+        nowInActiveWindow(now, quest) &&
+        isLifecycleVisibleForUsers(quest.config),
+    )
     .map((quest) => {
       const progress = progressByQuestId.get(quest.id);
-      const milestoneConfig = quest.type === QuestType.CONTEST_COUNT_MILESTONE
-        ? parseMilestoneConfig(quest.config)
-        : null;
+      const milestoneConfig =
+        quest.type === QuestType.CONTEST_COUNT_MILESTONE
+          ? parseMilestoneConfig(quest.config)
+          : null;
       const threshold = milestoneConfig?.targetValue ?? null;
       const latestSubmission = latestSubmissionByQuestId.get(quest.id) ?? null;
-      const socialConfig = isSocialSubmitQuest(quest.type) ? parseSocialSubmitConfig(quest.config) : null;
+      const socialConfig = isSocialSubmitQuest(quest.type)
+        ? parseSocialSubmitConfig(quest.config)
+        : null;
 
       return {
         id: quest.id,
@@ -858,7 +1061,9 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
         description: quest.description,
         rewardPoints: quest.rewardPoints,
         rewardPackCode: quest.rewardPackDefinition?.code ?? null,
-        rewardPackQuantity: quest.rewardPackDefinitionId ? Math.max(quest.rewardPackQuantity ?? 1, 1) : null,
+        rewardPackQuantity: quest.rewardPackDefinitionId
+          ? Math.max(quest.rewardPackQuantity ?? 1, 1)
+          : null,
         validationMode: quest.validationMode,
         oneTime: quest.oneTime,
         isActive: quest.isActive,
@@ -881,7 +1086,12 @@ export async function listUserQuestsMvp(userId: string): Promise<{ quests: Quest
           : null,
         configSummary: {
           ...(threshold ? { threshold } : {}),
-          ...(milestoneConfig ? { milestoneType: milestoneConfig.milestoneType, targetValue: milestoneConfig.targetValue } : {}),
+          ...(milestoneConfig
+            ? {
+                milestoneType: milestoneConfig.milestoneType,
+                targetValue: milestoneConfig.targetValue,
+              }
+            : {}),
           ...(socialConfig ? socialConfig : {}),
           lifecycleStatus: parseQuestLifecycleStatus(quest.config),
         },
@@ -905,35 +1115,43 @@ export async function listInternalQuestsMvp() {
     return [];
   }
 
-  const [progressGrouped, submissionGrouped, pointsGrouped] = await prisma.$transaction([
-    prisma.userQuestProgress.groupBy({
-      by: ["questId", "status"],
-      where: { questId: { in: questIds } },
-      orderBy: { questId: "asc" },
-      _count: { questId: true },
-    }),
-    prisma.questSubmission.groupBy({
-      by: ["questId", "status"],
-      where: { questId: { in: questIds } },
-      orderBy: { questId: "asc" },
-      _count: { questId: true },
-    }),
-    prisma.rewardLedgerEntry.groupBy({
-      by: ["reasonRef"],
-      where: {
-        entryType: RewardLedgerEntryType.CREDIT,
-        reasonType: RewardLedgerReasonType.QUEST_REWARD,
-        reasonRef: { in: questIds },
-      },
-      orderBy: { reasonRef: "asc" },
-      _sum: { amount: true },
-    }),
-  ]);
+  const [progressGrouped, submissionGrouped, pointsGrouped] =
+    await prisma.$transaction([
+      prisma.userQuestProgress.groupBy({
+        by: ["questId", "status"],
+        where: { questId: { in: questIds } },
+        orderBy: { questId: "asc" },
+        _count: { questId: true },
+      }),
+      prisma.questSubmission.groupBy({
+        by: ["questId", "status"],
+        where: { questId: { in: questIds } },
+        orderBy: { questId: "asc" },
+        _count: { questId: true },
+      }),
+      prisma.rewardLedgerEntry.groupBy({
+        by: ["reasonRef"],
+        where: {
+          entryType: RewardLedgerEntryType.CREDIT,
+          reasonType: RewardLedgerReasonType.QUEST_REWARD,
+          reasonRef: { in: questIds },
+        },
+        orderBy: { reasonRef: "asc" },
+        _sum: { amount: true },
+      }),
+    ]);
 
-  const progressMap = new Map<string, { progressCount: number; completedCount: number }>();
+  const progressMap = new Map<
+    string,
+    { progressCount: number; completedCount: number }
+  >();
   for (const row of progressGrouped) {
-    const entry = progressMap.get(row.questId) ?? { progressCount: 0, completedCount: 0 };
-    const count = (row as { _count?: { questId?: number } })._count?.questId ?? 0;
+    const entry = progressMap.get(row.questId) ?? {
+      progressCount: 0,
+      completedCount: 0,
+    };
+    const count =
+      (row as { _count?: { questId?: number } })._count?.questId ?? 0;
     entry.progressCount += count;
     if (row.status === UserQuestStatus.COMPLETED) {
       entry.completedCount += count;
@@ -941,13 +1159,28 @@ export async function listInternalQuestsMvp() {
     progressMap.set(row.questId, entry);
   }
 
-  const submissionMap = new Map<string, { pendingSubmissionCount: number; approvedSubmissionCount: number; rejectedSubmissionCount: number }>();
+  const submissionMap = new Map<
+    string,
+    {
+      pendingSubmissionCount: number;
+      approvedSubmissionCount: number;
+      rejectedSubmissionCount: number;
+    }
+  >();
   for (const row of submissionGrouped) {
-    const entry = submissionMap.get(row.questId) ?? { pendingSubmissionCount: 0, approvedSubmissionCount: 0, rejectedSubmissionCount: 0 };
-    const count = (row as { _count?: { questId?: number } })._count?.questId ?? 0;
-    if (row.status === QuestSubmissionStatus.SUBMITTED) entry.pendingSubmissionCount += count;
-    if (row.status === QuestSubmissionStatus.APPROVED) entry.approvedSubmissionCount += count;
-    if (row.status === QuestSubmissionStatus.REJECTED) entry.rejectedSubmissionCount += count;
+    const entry = submissionMap.get(row.questId) ?? {
+      pendingSubmissionCount: 0,
+      approvedSubmissionCount: 0,
+      rejectedSubmissionCount: 0,
+    };
+    const count =
+      (row as { _count?: { questId?: number } })._count?.questId ?? 0;
+    if (row.status === QuestSubmissionStatus.SUBMITTED)
+      entry.pendingSubmissionCount += count;
+    if (row.status === QuestSubmissionStatus.APPROVED)
+      entry.approvedSubmissionCount += count;
+    if (row.status === QuestSubmissionStatus.REJECTED)
+      entry.rejectedSubmissionCount += count;
     submissionMap.set(row.questId, entry);
   }
 
@@ -963,9 +1196,12 @@ export async function listInternalQuestsMvp() {
     analytics: {
       progressCount: progressMap.get(quest.id)?.progressCount ?? 0,
       completedCount: progressMap.get(quest.id)?.completedCount ?? 0,
-      pendingSubmissionCount: submissionMap.get(quest.id)?.pendingSubmissionCount ?? 0,
-      approvedSubmissionCount: submissionMap.get(quest.id)?.approvedSubmissionCount ?? 0,
-      rejectedSubmissionCount: submissionMap.get(quest.id)?.rejectedSubmissionCount ?? 0,
+      pendingSubmissionCount:
+        submissionMap.get(quest.id)?.pendingSubmissionCount ?? 0,
+      approvedSubmissionCount:
+        submissionMap.get(quest.id)?.approvedSubmissionCount ?? 0,
+      rejectedSubmissionCount:
+        submissionMap.get(quest.id)?.rejectedSubmissionCount ?? 0,
       totalPointsDistributed: pointsMap.get(quest.id) ?? 0,
     },
     rewardPackDefinitionCode: quest.rewardPackDefinition?.code ?? null,
@@ -997,18 +1233,28 @@ export async function createQuestDefinitionMvp(input: {
   const code = await ensureUniqueQuestCode(rawCode);
 
   const type = Object.values(QuestType).includes(input.type as QuestType)
-    ? input.type as QuestType
+    ? (input.type as QuestType)
     : QuestType.MANUAL;
 
-  const validationMode = Object.values(QuestValidationMode).includes(input.validationMode as QuestValidationMode)
-    ? input.validationMode as QuestValidationMode
+  const validationMode = Object.values(QuestValidationMode).includes(
+    input.validationMode as QuestValidationMode,
+  )
+    ? (input.validationMode as QuestValidationMode)
     : QuestValidationMode.MANUAL_REVIEW;
 
   const rewardPoints = normalizeRewardPoints(input.rewardPoints ?? 0);
-  const rewardPackDefinitionId = input.rewardPackDefinitionId ? String(input.rewardPackDefinitionId).trim() || null : null;
-  const rewardPackQuantity = Math.max(Number.isInteger(Number(input.rewardPackQuantity)) ? Number(input.rewardPackQuantity) : 1, 1);
+  const rewardPackDefinitionId = input.rewardPackDefinitionId
+    ? String(input.rewardPackDefinitionId).trim() || null
+    : null;
+  const rewardPackQuantity = Math.max(
+    Number.isInteger(Number(input.rewardPackQuantity))
+      ? Number(input.rewardPackQuantity)
+      : 1,
+    1,
+  );
   const oneTime = input.oneTime === undefined ? true : Boolean(input.oneTime);
-  const isActive = input.isActive === undefined ? true : Boolean(input.isActive);
+  const isActive =
+    input.isActive === undefined ? true : Boolean(input.isActive);
 
   const startAt = normalizeOptionalDate(input.startAt);
   const endAt = normalizeOptionalDate(input.endAt);
@@ -1054,26 +1300,34 @@ export async function updateQuestDefinitionMvp(
     startAt?: unknown;
     endAt?: unknown;
     config?: unknown;
-  }
+  },
 ) {
-  const existing = await prisma.questDefinition.findUnique({ where: { id: questId } });
+  const existing = await prisma.questDefinition.findUnique({
+    where: { id: questId },
+  });
   if (!existing) {
     throw new QuestRuntimeError("Quest not found", 404);
   }
 
-  const nextType = input.type !== undefined
-    ? (Object.values(QuestType).includes(input.type as QuestType) ? input.type as QuestType : null)
-    : existing.type;
+  const nextType =
+    input.type !== undefined
+      ? Object.values(QuestType).includes(input.type as QuestType)
+        ? (input.type as QuestType)
+        : null
+      : existing.type;
 
   if (!nextType) {
     throw new QuestRuntimeError("Invalid quest type", 400);
   }
 
-  const nextValidationMode = input.validationMode !== undefined
-    ? (Object.values(QuestValidationMode).includes(input.validationMode as QuestValidationMode)
-      ? input.validationMode as QuestValidationMode
-      : null)
-    : existing.validationMode;
+  const nextValidationMode =
+    input.validationMode !== undefined
+      ? Object.values(QuestValidationMode).includes(
+          input.validationMode as QuestValidationMode,
+        )
+        ? (input.validationMode as QuestValidationMode)
+        : null
+      : existing.validationMode;
 
   if (!nextValidationMode) {
     throw new QuestRuntimeError("Invalid validationMode", 400);
@@ -1091,12 +1345,21 @@ export async function updateQuestDefinitionMvp(
 
   const config = normalizeQuestConfig(nextType, input.config, false);
 
-  const rewardPackDefinitionId = input.rewardPackDefinitionId !== undefined
-    ? (input.rewardPackDefinitionId ? String(input.rewardPackDefinitionId).trim() || null : null)
-    : undefined;
-  const rewardPackQuantity = input.rewardPackQuantity !== undefined
-    ? Math.max(Number.isInteger(Number(input.rewardPackQuantity)) ? Number(input.rewardPackQuantity) : 1, 1)
-    : undefined;
+  const rewardPackDefinitionId =
+    input.rewardPackDefinitionId !== undefined
+      ? input.rewardPackDefinitionId
+        ? String(input.rewardPackDefinitionId).trim() || null
+        : null
+      : undefined;
+  const rewardPackQuantity =
+    input.rewardPackQuantity !== undefined
+      ? Math.max(
+          Number.isInteger(Number(input.rewardPackQuantity))
+            ? Number(input.rewardPackQuantity)
+            : 1,
+          1,
+        )
+      : undefined;
 
   return prisma.questDefinition.update({
     where: { id: questId },
@@ -1104,13 +1367,22 @@ export async function updateQuestDefinitionMvp(
       code: input.code !== undefined ? String(input.code).trim() : undefined,
       type: nextType,
       title: input.title !== undefined ? String(input.title).trim() : undefined,
-      description: input.description !== undefined ? (input.description ? String(input.description) : null) : undefined,
-      rewardPoints: input.rewardPoints !== undefined ? normalizeRewardPoints(input.rewardPoints) : undefined,
+      description:
+        input.description !== undefined
+          ? input.description
+            ? String(input.description)
+            : null
+          : undefined,
+      rewardPoints:
+        input.rewardPoints !== undefined
+          ? normalizeRewardPoints(input.rewardPoints)
+          : undefined,
       rewardPackDefinitionId,
       rewardPackQuantity,
       validationMode: nextValidationMode,
       oneTime: input.oneTime !== undefined ? Boolean(input.oneTime) : undefined,
-      isActive: input.isActive !== undefined ? Boolean(input.isActive) : undefined,
+      isActive:
+        input.isActive !== undefined ? Boolean(input.isActive) : undefined,
       startAt,
       endAt,
       config,
@@ -1118,17 +1390,21 @@ export async function updateQuestDefinitionMvp(
   });
 }
 
-
 export async function updateQuestLifecycleMvp(
   questId: string,
-  action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT"
+  action: "DISABLE" | "ENABLE" | "ARCHIVE" | "RESTORE" | "DELETE_SOFT",
 ) {
-  const existing = await prisma.questDefinition.findUnique({ where: { id: questId } });
+  const existing = await prisma.questDefinition.findUnique({
+    where: { id: questId },
+  });
   if (!existing) throw new QuestRuntimeError("Quest not found", 404);
 
-  const currentConfig = (existing.config && typeof existing.config === "object" && !Array.isArray(existing.config))
-    ? (existing.config as Record<string, unknown>)
-    : {};
+  const currentConfig =
+    existing.config &&
+    typeof existing.config === "object" &&
+    !Array.isArray(existing.config)
+      ? (existing.config as Record<string, unknown>)
+      : {};
 
   const nextConfig: Record<string, unknown> = { ...currentConfig };
   const data: Prisma.QuestDefinitionUpdateInput = {};
@@ -1158,11 +1434,22 @@ export async function updateQuestLifecycleMvp(
   });
 }
 
-export async function getInternalQuestDetailMvp(questId: string): Promise<InternalQuestDetail> {
-  const quest = await prisma.questDefinition.findUnique({ where: { id: questId } });
+export async function getInternalQuestDetailMvp(
+  questId: string,
+): Promise<InternalQuestDetail> {
+  const quest = await prisma.questDefinition.findUnique({
+    where: { id: questId },
+  });
   if (!quest) throw new QuestRuntimeError("Quest not found", 404);
 
-  const [progressGrouped, submissionGrouped, pointsGrouped, latestSubmissionsRaw, completedRows, latestLedgerRaw] = await prisma.$transaction([
+  const [
+    progressGrouped,
+    submissionGrouped,
+    pointsGrouped,
+    latestSubmissionsRaw,
+    completedRows,
+    latestLedgerRaw,
+  ] = await prisma.$transaction([
     prisma.userQuestProgress.groupBy({
       by: ["status"],
       where: { questId },
@@ -1185,13 +1472,17 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
     }),
     prisma.questSubmission.findMany({
       where: { questId },
-      include: { user: { select: { id: true, handle: true, displayName: true } } },
+      include: {
+        user: { select: { id: true, xUsername: true, displayName: true } },
+      },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
     }),
     prisma.userQuestProgress.findMany({
       where: { questId, status: UserQuestStatus.COMPLETED },
-      include: { user: { select: { id: true, handle: true, displayName: true } } },
+      include: {
+        user: { select: { id: true, xUsername: true, displayName: true } },
+      },
       orderBy: [{ completedAt: "desc" }],
       take: 20,
     }),
@@ -1201,7 +1492,9 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
         reasonType: RewardLedgerReasonType.QUEST_REWARD,
         reasonRef: questId,
       },
-      include: { user: { select: { id: true, handle: true, displayName: true } } },
+      include: {
+        user: { select: { id: true, xUsername: true, displayName: true } },
+      },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
     }),
@@ -1226,9 +1519,12 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
 
   for (const row of submissionGrouped) {
     const count = (row as { _count?: { status?: number } })._count?.status ?? 0;
-    if (row.status === QuestSubmissionStatus.SUBMITTED) analytics.pendingSubmissionCount += count;
-    if (row.status === QuestSubmissionStatus.APPROVED) analytics.approvedSubmissionCount += count;
-    if (row.status === QuestSubmissionStatus.REJECTED) analytics.rejectedSubmissionCount += count;
+    if (row.status === QuestSubmissionStatus.SUBMITTED)
+      analytics.pendingSubmissionCount += count;
+    if (row.status === QuestSubmissionStatus.APPROVED)
+      analytics.approvedSubmissionCount += count;
+    if (row.status === QuestSubmissionStatus.REJECTED)
+      analytics.rejectedSubmissionCount += count;
   }
 
   return {
@@ -1246,7 +1542,8 @@ export async function getInternalQuestDetailMvp(questId: string): Promise<Intern
     })),
     recentlyCompletedUsers: completedRows.map((row) => ({
       userId: row.userId,
-      completedAt: row.completedAt?.toISOString() ?? row.updatedAt.toISOString(),
+      completedAt:
+        row.completedAt?.toISOString() ?? row.updatedAt.toISOString(),
       progressValue: row.progressValue,
       user: row.user,
     })),

@@ -11,15 +11,15 @@ export function Modal({ title, open, onClose, children }: Props) {
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
-        <div className="modal-head">
-          <h3>{title}</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Fermer">
+    <div className="mcg-overlay" onClick={onClose}>
+      <div className="mcg-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+        <div className="mcg-modal-head">
+          <h3 className="mcg-modal-title">{title}</h3>
+          <button type="button" className="mcg-icon-btn" onClick={onClose} aria-label="Fermer">
             ✕
           </button>
         </div>
-        <div className="modal-content">{children}</div>
+        <div className="mcg-modal-content">{children}</div>
       </div>
     </div>
   );

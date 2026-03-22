@@ -8,7 +8,7 @@ import { InternalAnalyticsTracker } from "@/components/analytics/InternalAnalyti
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
-const solanaWalletConnectors = toSolanaWalletConnectors({ shouldAutoConnect: false });
+const solanaConnectors = toSolanaWalletConnectors();
 
 export function RootProviders({ children }: { children: ReactNode }) {
   const hasPrivyConfig = Boolean(privyAppId && privyClientId);
@@ -30,18 +30,29 @@ export function RootProviders({ children }: { children: ReactNode }) {
         loginMethods: ["twitter", "wallet"],
         externalWallets: {
           solana: {
-            connectors: solanaWalletConnectors,
+            connectors: solanaConnectors,
           },
         },
         embeddedWallets: {
-          ethereum: { createOnLogin: "off" },
-          solana: { createOnLogin: "off" },
+          ethereum: {
+            createOnLogin: "off",
+          },
+          solana: {
+            createOnLogin: "off",
+          },
         },
       }}
     >
       {children}
     </PrivyProvider>
-  ) : children;
+  ) : (
+    children
+  );
 
-  return <SessionProvider><InternalAnalyticsTracker />{content}</SessionProvider>;
+  return (
+    <SessionProvider>
+      <InternalAnalyticsTracker />
+      {content}
+    </SessionProvider>
+  );
 }

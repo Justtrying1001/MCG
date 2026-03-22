@@ -16,6 +16,8 @@ import { PlayerDashboardHeader } from "@/components/home/PlayerDashboardHeader";
 import { ActiveContestsRail } from "@/components/home/ActiveContestsRail";
 import { RecentPullsRail } from "@/components/home/RecentPullsRail";
 import { CollectionProgressBlock } from "@/components/home/CollectionProgressBlock";
+import { LobbyTicker } from "@/components/home/LobbyTicker";
+import { LobbyModeDeck } from "@/components/home/LobbyModeDeck";
 
 type ContestListItem = {
   id: string;
@@ -60,7 +62,11 @@ export default function HomePage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((payload) => {
         const rows = (payload?.contests ?? []) as ContestListItem[];
-        setContests(rows.filter((c) => ["OPEN", "LIVE", "LOCKED"].includes(c.status)).slice(0, 5));
+        setContests(
+          rows
+            .filter((c) => ["OPEN", "LIVE", "LOCKED"].includes(c.status))
+            .slice(0, 5),
+        );
       })
       .catch(() => setContests([]));
 
@@ -94,48 +100,97 @@ export default function HomePage() {
 
   const hasCollectionSummary = useMemo(() => {
     if (!userInfo) return false;
-    return typeof userInfo.ownedTemplates === "number" || typeof userInfo.missingTemplates === "number";
+    return (
+      typeof userInfo.ownedTemplates === "number" ||
+      typeof userInfo.missingTemplates === "number"
+    );
   }, [userInfo]);
+
+  const tickerItems = useMemo(() => {
+    if (!userInfo) return [];
+
+    const nextContest = contests[0];
+    const latestPull = recentPulls[0];
+    const rows = [
+      typeof userInfo.level === "number"
+        ? `Trainer level ${userInfo.level} ready for the lobby`
+        : "",
+      typeof userInfo.seasonRank === "number"
+        ? `Season rank #${userInfo.seasonRank} on the board`
+        : "",
+      typeof userInfo.completionPct === "number"
+        ? `Memedex at ${userInfo.completionPct}% completion`
+        : "",
+      nextContest
+        ? `${nextContest.title} ${nextContest.status === "OPEN" ? "open for entries" : `currently ${nextContest.status.toLowerCase()}`}`
+        : "",
+      latestPull
+        ? `${latestPull.playerName} just revealed ${latestPull.card.displayName}`
+        : "",
+      `${contests.length} active contest${contests.length === 1 ? "" : "s"} loaded`,
+    ];
+
+    return rows.filter(Boolean);
+  }, [contests, recentPulls, userInfo]);
 
   return (
     <SiteShell>
       {isAuth && userInfo ? (
-        <div className="home-dashboard-layout">
-          <PlayerDashboardHeader
-            displayName={userInfo.displayName}
-            points={userInfo.points}
-            level={userInfo.level}
-            activeEntries={userInfo.activeEntries}
-            seasonRank={userInfo.seasonRank}
-          />
+        <div className="home-dashboard-layout stitch-screen stitch-dashboard-screen">
+          <section className="home-dashboard-top-zone">
+            <PlayerDashboardHeader
+              displayName={userInfo.displayName}
+              points={userInfo.points}
+              level={userInfo.level}
+              activeEntries={userInfo.activeEntries}
+              completionPct={userInfo.completionPct}
+              ownedTemplates={userInfo.ownedTemplates}
+              missingTemplates={userInfo.missingTemplates}
+              seasonRank={userInfo.seasonRank}
+            />
 
-          <div className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}>
-            <div className="home-dashboard-main-column">
+            <LobbyTicker items={tickerItems} />
+          </section>
+
+          <div
+            className={`home-dashboard-main-grid${hasCollectionSummary ? "" : " home-dashboard-main-grid--single"}`}
+          >
+            <div className="home-dashboard-main-column home-dashboard-main-column--hero">
               <ActiveContestsRail contests={contests} />
+              <RecentPullsRail pulls={recentPulls} />
             </div>
 
-            {hasCollectionSummary ? (
-              <aside className="home-dashboard-side-column">
+            <aside className="home-dashboard-side-column home-dashboard-side-column--console">
+              <LobbyModeDeck
+                completionPct={userInfo.completionPct}
+                points={userInfo.points}
+                activeEntries={userInfo.activeEntries}
+              />
+              {hasCollectionSummary ? (
                 <CollectionProgressBlock
                   completionPct={userInfo.completionPct}
                   ownedCount={userInfo.ownedTemplates ?? 0}
                   missingCount={userInfo.missingTemplates ?? 0}
                 />
-              </aside>
-            ) : null}
+              ) : null}
+            </aside>
           </div>
 
-          <RecentPullsRail pulls={recentPulls} />
-
-          <DocsLearnSection compact />
+          <div className="home-dashboard-secondary-grid home-dashboard-secondary-grid--solo">
+            <DocsLearnSection compact />
+          </div>
         </div>
       ) : (
-        <>
+        <div className="stitch-screen stitch-landing-screen">
           <HomeHeroLanding />
-          <StatsBar />
-          <HowItWorks />
-          <DocsLearnSection />
-        </>
+          <div className="landing-support-stage">
+            <StatsBar />
+            <div className="landing-play-grid">
+              <HowItWorks />
+              <DocsLearnSection />
+            </div>
+          </div>
+        </div>
       )}
     </SiteShell>
   );

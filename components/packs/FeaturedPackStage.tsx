@@ -92,13 +92,14 @@ export function FeaturedPackStage({
   guestHeadline,
   guestSupportingCopy,
   onConnectWithX,
-  guestCtaLabel = "Connect X to open your pack",
+  guestCtaLabel = "Connect wallet / X to open your pack",
 }: FeaturedPackStageProps) {
   const packCost = GAME_CONFIG.PACK_COST;
-  const displayRarity = rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
-  const displayEdition = (editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS).map(
-    (o) => ({ ...o, label: o.label.replace("_", " ") }),
-  );
+  const displayRarity =
+    rarityOdds && rarityOdds.length > 0 ? rarityOdds : DEFAULT_RARITY_ODDS;
+  const displayEdition = (
+    editionOdds && editionOdds.length > 0 ? editionOdds : DEFAULT_EDITION_ODDS
+  ).map((o) => ({ ...o, label: o.label.replace("_", " ") }));
   const canAfford = userPoints === undefined || userPoints >= packCost;
   const isPurchaseBlocked = !isGuest && Boolean(purchaseLimit?.isBlocked);
 
@@ -118,7 +119,9 @@ export function FeaturedPackStage({
             : `Reveal pack — ${packCost} pts`;
 
   const hours = Math.floor((purchaseLimit?.cooldownSeconds ?? 0) / 3600);
-  const minutes = Math.floor(((purchaseLimit?.cooldownSeconds ?? 0) % 3600) / 60);
+  const minutes = Math.floor(
+    ((purchaseLimit?.cooldownSeconds ?? 0) % 3600) / 60,
+  );
   const cooldownLabel = `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m`;
 
   const supplyText =
@@ -132,19 +135,27 @@ export function FeaturedPackStage({
     <div className="ps-layout">
       <div className="ps-hero">
         <div className="ps-hero-glow" />
+        <div className="ps-hero-rays" />
+        <div className="ps-hero-badge">Featured booster</div>
         <div className="ps-hero-inner">
           <div className="ps-hero-image-wrap">
-            <Image
-              src={packImageSrc as Parameters<typeof Image>[0]["src"]}
-              alt="MCG booster pack"
-              className="ps-hero-image"
-              priority
-            />
+            <div className="ps-hero-pack-frame">
+              <Image
+                src={packImageSrc as Parameters<typeof Image>[0]["src"]}
+                alt="MCG booster pack"
+                className="ps-hero-image"
+                priority
+              />
+            </div>
           </div>
           <div className="ps-hero-meta">
             <span className="ps-edition-badge">GENESIS</span>
             <h1 className="ps-pack-name">{packName.toUpperCase()}</h1>
             <p className="ps-supply-counter">{supplyText}</p>
+            <div className="ps-desire-strip">
+              <span>Rip for instant reveal</span>
+              <span>Odds panel below</span>
+            </div>
           </div>
         </div>
       </div>
@@ -153,21 +164,38 @@ export function FeaturedPackStage({
         <div className="ps-price-block">
           <span className="ps-price-label">PRICE</span>
           <span className="ps-price-value">{packCost} PTS</span>
-          {!canAfford && <span className="ps-price-warn">Not enough points</span>}
+          {!canAfford && (
+            <span className="ps-price-warn">Not enough points</span>
+          )}
           {purchaseLimit ? (
             purchaseLimit.enabled ? (
               <div style={{ marginTop: 10 }}>
-                <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#cbd5e1" }}>
-                  {purchaseLimit.used} / {purchaseLimit.limit ?? 0} packs purchased
+                <span
+                  className="ps-price-warn"
+                  style={{ color: isPurchaseBlocked ? "#fca5a5" : "#cbd5e1" }}
+                >
+                  {purchaseLimit.used} / {purchaseLimit.limit ?? 0} packs
+                  purchased
                 </span>
-                <span className="ps-price-warn" style={{ color: isPurchaseBlocked ? "#fca5a5" : "#86efac", display: "block" }}>
+                <span
+                  className="ps-price-warn"
+                  style={{
+                    color: isPurchaseBlocked ? "#fca5a5" : "#86efac",
+                    display: "block",
+                  }}
+                >
                   {isPurchaseBlocked
                     ? `Daily purchase cap reached · Try again in ${cooldownLabel}`
                     : `${purchaseLimit.remainingPurchases ?? 0} purchase${purchaseLimit.remainingPurchases === 1 ? "" : "s"} remaining`}
                 </span>
               </div>
             ) : (
-              <span className="ps-price-warn" style={{ marginTop: 10, color: "#86efac" }}>Purchase cap disabled</span>
+              <span
+                className="ps-price-warn"
+                style={{ marginTop: 10, color: "#86efac" }}
+              >
+                Purchase cap disabled
+              </span>
             )
           ) : null}
         </div>
@@ -177,7 +205,9 @@ export function FeaturedPackStage({
           <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
           <div className="ps-slots-row">
             <span className="ps-slot-pill">STANDARD ×3</span>
-            <span className="ps-slot-pill ps-slot-pill--boost">EDITION BOOST</span>
+            <span className="ps-slot-pill ps-slot-pill--boost">
+              EDITION BOOST
+            </span>
             <span className="ps-slot-pill ps-slot-pill--hit">RARITY HIT</span>
           </div>
         </div>
@@ -186,20 +216,30 @@ export function FeaturedPackStage({
           <h2 className="ps-section-title">ODDS</h2>
           <div className="ps-odds-grid">
             <div className="ps-odds-col">
-              <p className="ps-odds-col-title">RARITY <span className="ps-odds-col-note">Slots 1–3</span></p>
+              <p className="ps-odds-col-title">
+                RARITY <span className="ps-odds-col-note">Slots 1–3</span>
+              </p>
               {displayRarity.map((o) => (
                 <div key={o.label} className="ps-odd-row">
-                  <span className="ps-rarity-dot" style={{ background: RARITY_COLOR[o.label] ?? "#7E8794" }} />
+                  <span
+                    className="ps-rarity-dot"
+                    style={{ background: RARITY_COLOR[o.label] ?? "#7E8794" }}
+                  />
                   <span className="ps-rarity-label">{o.label}</span>
                   <span className="ps-rarity-pct">{o.pct}%</span>
                 </div>
               ))}
             </div>
             <div className="ps-odds-col">
-              <p className="ps-odds-col-title">EDITION <span className="ps-odds-col-note">Slot 4↑</span></p>
+              <p className="ps-odds-col-title">
+                EDITION <span className="ps-odds-col-note">Slot 4↑</span>
+              </p>
               {displayEdition.map((o) => (
                 <div key={o.label} className="ps-odd-row">
-                  <span className="ps-rarity-dot" style={{ background: EDITION_COLOR[o.label] ?? "#7E8794" }} />
+                  <span
+                    className="ps-rarity-dot"
+                    style={{ background: EDITION_COLOR[o.label] ?? "#7E8794" }}
+                  />
                   <span className="ps-rarity-label">{o.label}</span>
                   <span className="ps-rarity-pct">{o.pct}%</span>
                 </div>
@@ -229,18 +269,32 @@ export function FeaturedPackStage({
           ) : null}
           {isGuest ? (
             <div className="ps-guest-copy-block">
-              {guestHeadline ? <p className="ps-guest-headline">{guestHeadline}</p> : null}
-              {guestSupportingCopy ? <p className="ps-guest-copy">{guestSupportingCopy}</p> : null}
+              {guestHeadline ? (
+                <p className="ps-guest-headline">{guestHeadline}</p>
+              ) : null}
+              {guestSupportingCopy ? (
+                <p className="ps-guest-copy">{guestSupportingCopy}</p>
+              ) : null}
               {onConnectWithX ? (
-                <div style={{ marginTop: "0.85rem" }}>
-                  <Button type="button" variant="ghost" onClick={onConnectWithX}>{guestCtaLabel}</Button>
+                <div className="ps-guest-connect-wrap">
+                  <Button type="button" variant="ghost" onClick={onConnectWithX}>
+                    {guestCtaLabel}
+                  </Button>
                 </div>
               ) : null}
             </div>
           ) : (
-            <p className="ps-cta-subcopy">Open with points, reveal instantly, and add cards directly to your collection. Reward, contest, and admin-granted packs are unaffected by this purchase cap.</p>
+            <p className="ps-cta-subcopy">
+              Open with points, reveal instantly, and add cards directly to your
+              collection. Reward, contest, and admin-granted packs are
+              unaffected by this purchase cap.
+            </p>
           )}
-          <button type="button" className="ps-btn-secondary" onClick={onOpenOdds}>
+          <button
+            type="button"
+            className="ps-btn-secondary"
+            onClick={onOpenOdds}
+          >
             Full odds &amp; supply details
           </button>
         </div>

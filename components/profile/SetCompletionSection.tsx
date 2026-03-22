@@ -10,12 +10,12 @@ type SetCompletion = {
 
 export function SetCompletionSection({ rows, footer }: { rows: SetCompletion[]; footer?: ReactNode }) {
   return (
-    <Surface>
+    <Surface variant="raised" className="profile-set-surface">
       <div className="profile-set-completion-wrap">
         <SectionHeader
-          eyebrow="Set completion"
-          title="Binder progress by set"
-          subtitle="Track your completion in a visual, collection-first way."
+          eyebrow="Memedex sectors"
+          title="Set completion overview"
+          subtitle="Track your Memedex progress across the sets that shape your trainer card."
         />
 
         <div className="profile-set-completion-grid">
@@ -23,9 +23,12 @@ export function SetCompletionSection({ rows, footer }: { rows: SetCompletion[]; 
             const pct = Math.min(100, Math.round((row.done / Math.max(row.total, 1)) * 100));
             return (
               <article key={row.label} className="profile-set-completion-item">
-                <strong>{row.label}</strong>
+                <div className="profile-set-completion-top">
+                  <strong>{row.label}</strong>
+                  <span>{pct}%</span>
+                </div>
                 <div className="profile-progress-bar"><span style={{ width: `${pct}%` }} /></div>
-                <p className="contest-inline-note">{row.done} / {row.total} ({pct}%)</p>
+                <p className="contest-inline-note">Memedex completion: {row.done} / {row.total}</p>
               </article>
             );
           })}

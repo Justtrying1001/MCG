@@ -1,24 +1,45 @@
 :root {
-  --ink-deep: #07090f;
-  --ink-mid: #101624;
-  --ink-light: #1b2436;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --accent-primary: #8b5cf6;
-  --accent-secondary: #22d3ee;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --fog: #94a3b8;
-  --chalk: #f8fafc;
+  --color-brand-primary: #0e0dfe;
+  --color-brand-primary-dim: #8087ff;
+  --color-brand-cyan: #12f1ff;
+  --color-brand-pink: #ff75a0;
+  --color-brand-pink-deep: #a92759;
+  --color-brand-yellow: #ffef00;
+  --color-brand-green: #ccff00;
 
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #fb7185;
+  --color-ink: #111111;
+  --color-ink-soft: #2c2f30;
+  --color-page: #f5f6f7;
+  --color-surface-2: #dadddf;
+  --color-surface-1: #eff1f2;
+  --color-surface-0: #ffffff;
+  --color-surface-raised: #e6e8ea;
 
-  --rarity-common: #94a3b8;
-  --rarity-uncommon: #34d399;
-  --rarity-rare: #60a5fa;
-  --rarity-epic: #a78bfa;
-  --rarity-legendary: #f59e0b;
+  --color-text-primary: #17191c;
+  --color-text-secondary: #595c5d;
+  --color-text-muted: #757778;
+  --color-text-inverse: #ffffff;
+
+  --accent-primary: var(--color-brand-primary);
+  --accent-secondary: var(--color-brand-cyan);
+  --accent-amber: var(--color-brand-yellow);
+  --accent-rose: var(--color-brand-pink);
+  --fog: var(--color-text-muted);
+  --chalk: var(--color-text-inverse);
+
+  --success: var(--color-brand-green);
+  --warning: var(--color-brand-yellow);
+  --danger: #ff8167;
+
+  --rarity-common: #7e8794;
+  --rarity-uncommon: #5fd38c;
+  --rarity-rare: #12b8ff;
+  --rarity-epic: #ff75a0;
+  --rarity-legendary: #ffef00;
 
   --space-1: 8px;
   --space-2: 16px;
@@ -27,14 +48,19 @@
   --space-5: 48px;
   --space-6: 64px;
 
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-xs: 8px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
 
-  --shadow-sm: 0 6px 18px rgba(2, 8, 23, 0.32);
-  --shadow-md: 0 18px 38px rgba(2, 8, 23, 0.5);
-  --shadow-lg: 0 32px 62px rgba(2, 8, 23, 0.62);
+  --border-thick: 3px;
+  --shadow-hard-sm: 3px 3px 0 0 rgba(0, 0, 0, 0.9);
+  --shadow-hard: 4px 4px 0 0 rgba(0, 0, 0, 0.95);
+  --shadow-hard-lg: 8px 8px 0 0 rgba(0, 0, 0, 0.95);
+
+  --progress-thickness: 22px;
 
   --bp-sm: 640px;
   --bp-md: 860px;
@@ -42,5 +68,5 @@
   --bp-xl: 1280px;
 
   --content-max: 1280px;
-  --nav-h: 72px;
+  --nav-h: 86px;
 }

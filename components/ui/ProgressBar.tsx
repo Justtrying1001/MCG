@@ -8,7 +8,7 @@ export function ProgressBar({ value, max, label }: Props) {
   const clamped = Math.min(100, Math.max(0, Math.round((value / Math.max(max, 1)) * 100)));
 
   return (
-    <div className="progress-wrap" aria-label={label ?? "Progress"}>
+    <div className="progress-wrap" aria-label={label ?? "Progress"} role="progressbar" aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(max, Math.max(0, value))}>
       <div className="progress-label-row">
         {label ? <span className="progress-label">{label}</span> : null}
         <span className="progress-pct">{clamped}%</span>

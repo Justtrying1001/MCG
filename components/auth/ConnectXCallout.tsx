@@ -9,7 +9,7 @@ type Layout = "stacked" | "inline";
 export function ConnectXCallout({
   title,
   description,
-  ctaLabel = "Connect",
+  ctaLabel = "Connect wallet / X",
   layout = "stacked",
 }: {
   title: string;
@@ -35,8 +35,18 @@ export function ConnectXCallout({
     return (
       <div style={shellStyle}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <strong style={{ display: "block", marginBottom: "0.2rem" }}>{title}</strong>
-          <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "0.88rem" }}>{description}</p>
+          <strong style={{ display: "block", marginBottom: "0.2rem" }}>
+            {title}
+          </strong>
+          <p
+            style={{
+              margin: 0,
+              color: "var(--color-text-secondary)",
+              fontSize: "0.88rem",
+            }}
+          >
+            {description}
+          </p>
         </div>
         <Button
           type="button"

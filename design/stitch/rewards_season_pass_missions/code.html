@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCG Rewards - Mission Log</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#dadddf",
+                        "on-secondary-fixed": "#004145",
+                        "on-primary-fixed": "#000000",
+                        "surface-tint": "#0e0dfe",
+                        "surface-container-low": "#eff1f2",
+                        "surface": "#f5f6f7",
+                        "on-secondary-fixed-variant": "#006066",
+                        "surface-bright": "#f5f6f7",
+                        "outline-variant": "#abadae",
+                        "secondary-fixed": "#12f1ff",
+                        "surface-container-highest": "#dadddf",
+                        "error": "#b02500",
+                        "secondary-container": "#12f1ff",
+                        "tertiary-container": "#ff8eae",
+                        "on-background": "#2c2f30",
+                        "on-primary-fixed-variant": "#02009f",
+                        "on-primary": "#d8d8ff",
+                        "on-primary-container": "#010083",
+                        "error-container": "#f95630",
+                        "background": "#f5f6f7",
+                        "primary-fixed": "#9097ff",
+                        "on-error": "#ffefec",
+                        "on-surface-variant": "#595c5d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#a92759",
+                        "secondary-fixed-dim": "#00e1ef",
+                        "surface-dim": "#d1d5d7",
+                        "surface-container-high": "#e0e3e4",
+                        "outline": "#757778",
+                        "on-tertiary-fixed-variant": "#760037",
+                        "inverse-surface": "#0c0f10",
+                        "on-secondary-container": "#00555b",
+                        "error-dim": "#b92902",
+                        "inverse-primary": "#7c84ff",
+                        "tertiary-fixed": "#ff8eae",
+                        "secondary": "#00666c",
+                        "inverse-on-surface": "#9b9d9e",
+                        "primary-dim": "#0400e1",
+                        "surface-container": "#e6e8ea",
+                        "primary": "#0e0dfe",
+                        "on-tertiary-fixed": "#380017",
+                        "on-surface": "#2c2f30",
+                        "tertiary-fixed-dim": "#ff75a0",
+                        "primary-fixed-dim": "#8087ff",
+                        "primary-container": "#9097ff",
+                        "tertiary-dim": "#98194d",
+                        "on-tertiary-container": "#66002f",
+                        "on-error-container": "#520c00",
+                        "on-secondary": "#cefbff",
+                        "secondary-dim": "#00595e",
+                        "on-tertiary": "#ffeff1"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+        }
+        .hard-shadow-lg {
+            box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+        }
+        .active-tab-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-blue-600 dark:bg-blue-700 docked full-width top-0 border-b-4 border-black flex justify-between items-center w-full px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sticky z-50">
+<div class="flex items-center gap-4">
+<span class="text-3xl italic font-black text-yellow-400 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] font-headline uppercase tracking-tighter">MCG</span>
+</div>
+<nav class="hidden md:flex gap-8">
+<a class="text-blue-100 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Home</a>
+<a class="text-blue-100 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Collection</a>
+<a class="text-white underline decoration-4 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Battle</a>
+<a class="text-blue-100 font-headline font-black uppercase tracking-tighter hover:scale-110 hover:rotate-2 transition-transform active:translate-x-1 active:translate-y-1" href="#">Shop</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-yellow-400 hover:scale-110 transition-transform"><span class="material-symbols-outlined text-3xl">notifications</span></button>
+<button class="text-yellow-400 hover:scale-110 transition-transform"><span class="material-symbols-outlined text-3xl">settings</span></button>
+<div class="w-10 h-10 rounded-full border-2 border-black overflow-hidden bg-yellow-400">
+<img alt="Trainer Avatar" data-alt="User profile avatar with yellow background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApfAC1IkoJbJ3MgHCMvZDspzRAlktCUfkC1bjdY61tvVdf5mNkDYB5_JfSmdeEfKNDTis9URsRWWo1HZM2Rq3cyx4WSKO6BCaTDwnyrD4UX-wv_rF8SffACvl3mk3a7PfbEF2DfpQ5VkN30Ot-yQ5pzBBYKlh4zW7q2Yy1wlNp5zjm_FWH9LJVyRCUT3ZvrLDAe_07p8Vbe2qLmwfdH_Q8sVwYUmNZEphJX2ik0Bm6y-tkIePz8x3on3LjEAkECWUkISa4FkVYEns"/>
+</div>
+</div>
+</header>
+<main class="max-w-6xl mx-auto px-4 py-8 space-y-12">
+<!-- Seasonal Banner Section -->
+<section class="relative bg-primary-container rounded-xl border-4 border-black hard-shadow-lg p-8 overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-secondary-container opacity-20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="space-y-2 text-center md:text-left">
+<span class="bg-yellow-400 text-black font-label font-bold px-4 py-1 rounded-full border-2 border-black text-sm uppercase tracking-wider">Season 12: Cyber Strike</span>
+<h1 class="text-5xl md:text-6xl font-headline font-black text-on-primary-container tracking-tight leading-none uppercase">Mission Log</h1>
+<p class="text-on-primary-container font-medium text-lg opacity-80">Unlock exclusive rewards by completing tasks!</p>
+</div>
+<div class="flex items-center gap-4 bg-white border-4 border-black p-4 rounded-xl hard-shadow">
+<span class="material-symbols-outlined text-yellow-500 text-4xl" style="font-variation-settings: 'FILL' 1;">stars</span>
+<div>
+<p class="font-label font-bold text-xs uppercase text-outline">Level 24 XP</p>
+<p class="text-2xl font-headline font-black text-primary">12,450 / 15,000</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Season Pass Linear Progression -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h2 class="text-3xl font-headline font-black uppercase text-on-background">SEASON PASS</h2>
+<span class="font-label font-bold text-primary">PREMIUM ACTIVE</span>
+</div>
+<div class="bg-surface-container-low border-4 border-black rounded-xl p-8 hard-shadow overflow-x-auto">
+<div class="min-w-[800px] relative pt-12 pb-4 px-4">
+<!-- The Progress Bar Line -->
+<div class="absolute top-[4.5rem] left-0 right-0 h-8 bg-surface-container-highest border-4 border-black rounded-full overflow-hidden">
+<div class="h-full w-[65%] bg-gradient-to-r from-primary to-secondary-container"></div>
+</div>
+<!-- Milestone Nodes -->
+<div class="relative flex justify-between">
+<!-- Node 1: Unlocked -->
+<div class="flex flex-col items-center gap-4 -mt-16">
+<span class="font-headline font-black text-xl text-primary">Lvl 20</span>
+<div class="w-20 h-20 bg-secondary-fixed border-4 border-black rounded-full flex items-center justify-center hard-shadow relative">
+<span class="material-symbols-outlined text-4xl text-on-secondary-fixed" style="font-variation-settings: 'FILL' 1;">diamond</span>
+<div class="absolute -top-2 -right-2 bg-green-500 rounded-full p-1 border-2 border-black">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+</div>
+<span class="font-label font-bold text-xs uppercase">500 Gems</span>
+</div>
+<!-- Node 2: Unlocked -->
+<div class="flex flex-col items-center gap-4 -mt-16">
+<span class="font-headline font-black text-xl text-primary">Lvl 22</span>
+<div class="w-20 h-20 bg-secondary-fixed border-4 border-black rounded-full flex items-center justify-center hard-shadow relative">
+<span class="material-symbols-outlined text-4xl text-on-secondary-fixed" style="font-variation-settings: 'FILL' 1;">style</span>
+<div class="absolute -top-2 -right-2 bg-green-500 rounded-full p-1 border-2 border-black">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+</div>
+<span class="font-label font-bold text-xs uppercase">Rare Pack</span>
+</div>
+<!-- Node 3: Current -->
+<div class="flex flex-col items-center gap-4 -mt-16 scale-110">
+<span class="font-headline font-black text-2xl text-tertiary">Lvl 25</span>
+<div class="w-24 h-24 bg-tertiary-container border-4 border-black rounded-full flex items-center justify-center hard-shadow-lg ring-4 ring-yellow-400 ring-offset-4">
+<span class="material-symbols-outlined text-5xl text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<span class="font-label font-bold text-sm uppercase text-tertiary">Epic Medal</span>
+</div>
+<!-- Node 4: Locked -->
+<div class="flex flex-col items-center gap-4 -mt-16 opacity-60">
+<span class="font-headline font-black text-xl text-outline">Lvl 28</span>
+<div class="w-20 h-20 bg-surface-variant border-4 border-black rounded-full flex items-center justify-center hard-shadow">
+<span class="material-symbols-outlined text-4xl text-outline" style="font-variation-settings: 'FILL' 1;">token</span>
+</div>
+<span class="font-label font-bold text-xs uppercase">1000 Coins</span>
+</div>
+<!-- Node 5: Locked -->
+<div class="flex flex-col items-center gap-4 -mt-16 opacity-60">
+<span class="font-headline font-black text-xl text-outline">Lvl 30</span>
+<div class="w-20 h-20 bg-surface-variant border-4 border-black rounded-full flex items-center justify-center hard-shadow">
+<span class="material-symbols-outlined text-4xl text-outline" style="font-variation-settings: 'FILL' 1;">card_giftcard</span>
+</div>
+<span class="font-label font-bold text-xs uppercase">Mystery Box</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Daily Missions Grid -->
+<section class="space-y-6">
+<div class="flex items-center gap-4">
+<h2 class="text-3xl font-headline font-black uppercase text-on-background">DAILY MISSIONS</h2>
+<div class="h-1 flex-grow bg-black rounded-full"></div>
+<span class="font-label font-bold text-sm bg-surface-container-highest px-3 py-1 border-2 border-black rounded-full">RESETS IN: 14H 22M</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Mission 1: Claimable -->
+<div class="bg-surface-container-lowest border-4 border-black rounded-xl p-6 hard-shadow flex flex-col gap-4 group hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 bg-secondary-container border-2 border-black rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">swords</span>
+</div>
+<span class="bg-green-100 text-green-800 font-label font-bold text-[10px] px-2 py-0.5 border-2 border-green-800 rounded-full uppercase">Completed</span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-xl uppercase leading-tight">Win 3 Battles</h3>
+<p class="text-on-surface-variant text-sm mt-1">Defeat opponents in Ranked matches.</p>
+</div>
+<div class="mt-2">
+<div class="flex justify-between font-label font-bold text-xs mb-1">
+<span>PROGRESS</span>
+<span>3 / 3</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low border-2 border-black rounded-full overflow-hidden">
+<div class="h-full w-full bg-secondary"></div>
+</div>
+</div>
+<button class="mt-auto w-full bg-tertiary text-on-tertiary font-headline font-black py-3 rounded-full border-4 border-black hard-shadow hover:scale-105 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all uppercase tracking-wider">CLAIM REWARD</button>
+</div>
+<!-- Mission 2: Progress -->
+<div class="bg-surface-container-lowest border-4 border-black rounded-xl p-6 hard-shadow flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 bg-primary-container border-2 border-black rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">shopping_bag</span>
+</div>
+<span class="font-label font-bold text-[10px] px-2 py-0.5 border-2 border-black rounded-full uppercase">+200 XP</span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-xl uppercase leading-tight">Market Hunter</h3>
+<p class="text-on-surface-variant text-sm mt-1">Purchase 2 items from the Daily Shop.</p>
+</div>
+<div class="mt-2">
+<div class="flex justify-between font-label font-bold text-xs mb-1">
+<span>PROGRESS</span>
+<span>1 / 2</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low border-2 border-black rounded-full overflow-hidden">
+<div class="h-full w-1/2 bg-primary"></div>
+</div>
+</div>
+<button class="mt-auto w-full bg-surface-container-highest text-outline font-headline font-black py-3 rounded-full border-4 border-black cursor-not-allowed uppercase tracking-wider">IN PROGRESS</button>
+</div>
+<!-- Mission 3: Progress -->
+<div class="bg-surface-container-lowest border-4 border-black rounded-xl p-6 hard-shadow flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 bg-yellow-400 border-2 border-black rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-black">group</span>
+</div>
+<span class="font-label font-bold text-[10px] px-2 py-0.5 border-2 border-black rounded-full uppercase">+150 XP</span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-xl uppercase leading-tight">Social Butterfly</h3>
+<p class="text-on-surface-variant text-sm mt-1">Send 5 stickers to your Guild mates.</p>
+</div>
+<div class="mt-2">
+<div class="flex justify-between font-label font-bold text-xs mb-1">
+<span>PROGRESS</span>
+<span>4 / 5</span>
+</div>
+<div class="h-3 w-full bg-surface-container-low border-2 border-black rounded-full overflow-hidden">
+<div class="h-full w-4/5 bg-yellow-500"></div>
+</div>
+</div>
+<button class="mt-auto w-full bg-surface-container-highest text-outline font-headline font-black py-3 rounded-full border-4 border-black cursor-not-allowed uppercase tracking-wider">IN PROGRESS</button>
+</div>
+</div>
+</section>
+<!-- Milestones/Achievements Bento -->
+<section class="space-y-6">
+<h2 class="text-3xl font-headline font-black uppercase text-on-background">MILESTONES</h2>
+<div class="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[400px]">
+<div class="md:col-span-2 md:row-span-2 bg-yellow-400 border-4 border-black rounded-xl p-8 hard-shadow flex flex-col justify-center items-center text-center gap-6">
+<div class="w-32 h-32 bg-white rounded-full border-4 border-black flex items-center justify-center rotate-6 hard-shadow-lg">
+<span class="material-symbols-outlined text-7xl text-primary" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<div>
+<h3 class="text-3xl font-headline font-black uppercase italic">Master collector</h3>
+<p class="font-body font-bold mt-2">Unlock 100 unique cards to earn the Golden Badge!</p>
+</div>
+<div class="w-full max-w-xs h-6 bg-black/10 border-2 border-black rounded-full overflow-hidden">
+<div class="h-full w-3/4 bg-white"></div>
+</div>
+<p class="font-label font-bold">75 / 100 CARDS</p>
+</div>
+<div class="md:col-span-2 bg-secondary-fixed border-4 border-black rounded-xl p-6 hard-shadow flex items-center gap-6">
+<div class="w-16 h-16 bg-white rounded-xl border-2 border-black flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-4xl text-secondary">flash_on</span>
+</div>
+<div>
+<h4 class="font-headline font-black uppercase text-xl">Strike 50</h4>
+<p class="text-sm font-medium">Land 50 critical hits in battle.</p>
+<div class="mt-2 h-2 bg-black/10 rounded-full border border-black w-32">
+<div class="h-full w-[40%] bg-white"></div>
+</div>
+</div>
+<button class="ml-auto bg-white border-2 border-black px-4 py-2 font-headline font-black text-xs uppercase hover:bg-black hover:text-white transition-colors">Details</button>
+</div>
+<div class="md:col-span-1 bg-tertiary-container border-4 border-black rounded-xl p-6 hard-shadow flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-5xl mb-2">hotel_class</span>
+<h4 class="font-headline font-black uppercase text-sm">Perfect Week</h4>
+<p class="text-[10px] font-bold uppercase mt-1">7 Days Logged</p>
+</div>
+<div class="md:col-span-1 bg-white border-4 border-black rounded-xl p-6 hard-shadow flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-5xl mb-2 text-primary">local_fire_department</span>
+<h4 class="font-headline font-black uppercase text-sm">On Fire</h4>
+<p class="text-[10px] font-bold uppercase mt-1">5 Win Streak</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center h-20 mx-4 bg-white dark:bg-gray-800 rounded-full border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-xl md:mx-auto">
+<a class="text-gray-500 dark:text-gray-400 px-2 py-1 flex flex-col items-center hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Space_Grotesk'] font-bold text-xs">Home</span>
+</a>
+<a class="text-gray-500 dark:text-gray-400 px-2 py-1 flex flex-col items-center hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75" href="#">
+<span class="material-symbols-outlined">style</span>
+<span class="font-['Space_Grotesk'] font-bold text-xs">Collection</span>
+</a>
+<a class="bg-yellow-400 text-black border-2 border-black rounded-full scale-110 -translate-y-2 px-4 py-2 flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">swords</span>
+<span class="font-['Space_Grotesk'] font-bold text-xs">Battle</span>
+</a>
+<a class="text-gray-500 dark:text-gray-400 px-2 py-1 flex flex-col items-center hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-['Space_Grotesk'] font-bold text-xs">Shop</span>
+</a>
+<a class="text-gray-500 dark:text-gray-400 px-2 py-1 flex flex-col items-center hover:bg-cyan-400 hover:text-black transition-all active:scale-95 duration-75" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-['Space_Grotesk'] font-bold text-xs">Social</span>
+</a>
+</nav>
+<!-- FAB -->
+<button class="fixed bottom-28 right-8 w-16 h-16 bg-secondary-fixed border-4 border-black rounded-full hard-shadow flex items-center justify-center hover:scale-110 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all z-40">
+<span class="material-symbols-outlined text-3xl text-black">add</span>
+</button>
+</body></html>
