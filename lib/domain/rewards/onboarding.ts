@@ -40,7 +40,7 @@ function uniqueIdentityAccounts(identities: ResolvedIdentityAccount[]) {
 
 function resolveHandle(profile: PrivyIdentityGraph, userHandle?: string | null) {
   const twitterIdentity = profile.identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
-  return twitterIdentity?.username?.trim() || userHandle || null;
+  return userHandle || twitterIdentity?.username?.trim() || null;
 }
 
 function resolveDisplayName(profile: PrivyIdentityGraph, userDisplayName?: string | null) {
@@ -106,13 +106,13 @@ async function upsertIdentities(
 
 async function updateUserFromIdentityGraph(
   tx: Prisma.TransactionClient,
-  params: { userId: string; profile: PrivyIdentityGraph },
+  params: { userId: string; profile: PrivyIdentityGraph; currentHandle?: string | null; currentDisplayName?: string | null },
 ) {
   return tx.user.update({
     where: { id: params.userId },
     data: {
-      displayName: resolveDisplayName(params.profile),
-      handle: resolveHandle(params.profile),
+      displayName: resolveDisplayName(params.profile, params.currentDisplayName),
+      handle: resolveHandle(params.profile, params.currentHandle),
       avatarUrl: params.profile.avatarUrl ?? undefined,
     },
   });
@@ -126,6 +126,21 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
   if (identities.length === 0) {
     throw new Error("Resolved Privy identity graph has no identities");
   }
+
+  const existingPrivyIdentity = await tx.userIdentity.findUnique({
+    where: {
+      provider_providerUserId: {
+        provider: UserIdentityProvider.PRIVY,
+        providerUserId: profile.privyUserId,
+      },
+    },
+    select: {
+      id: true,
+      userId: true,
+      provider: true,
+      providerUserId: true,
+    },
+  });
 
   const existingIdentities = await tx.userIdentity.findMany({
     where: {
@@ -142,15 +157,21 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
     },
   });
 
-  const matchingUserIds = Array.from(new Set(existingIdentities.map((identity) => identity.userId)));
+  const matchingUserIds = Array.from(new Set([
+    ...(existingPrivyIdentity ? [existingPrivyIdentity.userId] : []),
+    ...existingIdentities.map((identity) => identity.userId),
+  ]));
   if (matchingUserIds.length > 1) {
     throw new IdentityConflictError(
       "Resolved identities are already linked to multiple users",
-      Array.from(new Set(existingIdentities.map((identity) => identity.provider))),
+      Array.from(new Set([
+        ...(existingPrivyIdentity ? [existingPrivyIdentity.provider] : []),
+        ...existingIdentities.map((identity) => identity.provider),
+      ])),
     );
   }
 
-  const targetUserId = matchingUserIds[0] ?? null;
+  const targetUserId = existingPrivyIdentity?.userId ?? matchingUserIds[0] ?? null;
   const existingUser = targetUserId
     ? await tx.user.findUnique({
         where: { id: targetUserId },
@@ -203,7 +224,7 @@ export async function linkPrivyIdentitiesToExistingUser(
 
   const user = await tx.user.findUnique({
     where: { id: params.userId },
-    select: { id: true },
+    select: { id: true, handle: true, displayName: true },
   });
   if (!user) {
     throw new IdentityLinkingError("Authenticated user no longer exists");
@@ -239,7 +260,12 @@ export async function linkPrivyIdentitiesToExistingUser(
   });
 
   await upsertIdentities(tx, params.userId, identities, existingIdentities);
-  await updateUserFromIdentityGraph(tx, { userId: params.userId, profile: params.profile });
+  await updateUserFromIdentityGraph(tx, {
+    userId: params.userId,
+    profile: params.profile,
+    currentHandle: user.handle,
+    currentDisplayName: user.displayName,
+  });
 
   return identities;
 }
