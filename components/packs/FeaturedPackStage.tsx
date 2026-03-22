@@ -285,9 +285,7 @@ export function FeaturedPackStage({
             </div>
           ) : (
             <p className="ps-cta-subcopy">
-              Open with points, reveal instantly, and add cards directly to your
-              collection. Reward, contest, and admin-granted packs are
-              unaffected by this purchase cap.
+              Open with points and add the reveal directly to your collection.
             </p>
           )}
           <button
