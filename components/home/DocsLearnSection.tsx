@@ -7,7 +7,7 @@ export function DocsLearnSection({ compact = false }: Props) {
   const title = compact ? "Learn the game." : "Start smart";
   const description = compact
     ? "Rules, packs, contests, and scoring in one place."
-    : "Learn the basics before your first run.";
+    : "Rules, scoring, and pack basics without the clutter.";
 
   return (
     <section className={`home-docs-section${compact ? " home-docs-section--compact" : ""}`}>
@@ -37,7 +37,7 @@ export function DocsLearnSection({ compact = false }: Props) {
               <div className="home-docs-art-badge">Quick start</div>
               <div className="home-docs-art-body">
                 <strong>Know the loop.</strong>
-                <span>Rules, score, then jump in.</span>
+                <span>Read the essentials, then jump into your first run.</span>
               </div>
             </div>
           </div>

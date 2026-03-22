@@ -8,7 +8,6 @@ import { useSession } from "@/components/useSession";
 // State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
 import { HowItWorks } from "@/components/home/HowItWorks";
-import { StatsBar } from "@/components/home/StatsBar";
 import { DocsLearnSection } from "@/components/home/DocsLearnSection";
 
 // State B — dashboard
@@ -184,7 +183,6 @@ export default function HomePage() {
         <div className="stitch-screen stitch-landing-screen">
           <HomeHeroLanding />
           <div className="landing-support-stage">
-            <StatsBar />
             <div className="landing-play-grid">
               <HowItWorks />
               <DocsLearnSection />
