@@ -11903,8 +11903,8 @@ button.mcg-chip:hover {
 
 .landing-play-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
-  gap: clamp(1.75rem, 3.2vw, 2.75rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(3rem, 6vw, 4rem);
   align-items: start;
 }
 
@@ -11943,14 +11943,15 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-hero-headline {
   max-width: 8ch;
-  font-size: clamp(2.9rem, 6vw, 5rem);
-  line-height: 0.9;
+  margin-bottom: 0.35rem;
+  font-size: clamp(48px, 6vw, 72px);
+  line-height: 0.95;
   letter-spacing: -0.07em;
 }
 
 .home-hero-copy {
   display: grid;
-  gap: 0.95rem;
+  gap: 1rem;
   max-width: 35rem;
 }
 
@@ -12007,7 +12008,7 @@ button.mcg-chip:hover {
 .home-hero-stage-frame {
   position: relative;
   display: grid;
-  gap: 1.2rem;
+  gap: 1.5rem;
   width: 100%;
   padding: 1.5rem 1.25rem 1.25rem;
   border: 4px solid #111;
@@ -12019,11 +12020,11 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-hero-stage-badge {
   justify-self: center;
-  transform: rotate(-2deg);
+  transform: none;
 }
 
 .stitch-landing-screen .home-hero-cards-float {
-  min-height: 520px;
+  min-height: 460px;
 }
 
 .stitch-landing-screen .home-float-card:nth-child(1) {
@@ -12032,7 +12033,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-float-card:nth-child(2) {
-  transform: rotate(-1deg) scale(1.02);
+  transform: none;
 }
 
 .stitch-landing-screen .home-float-card:nth-child(3) {
@@ -12043,7 +12044,7 @@ button.mcg-chip:hover {
 .stitch-landing-screen .home-hero-stage-note {
   justify-self: center;
   max-width: 460px;
-  transform: rotate(1.2deg);
+  transform: none;
 }
 
 .stitch-landing-screen .home-how-it-works,
@@ -12057,7 +12058,7 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-how-it-works {
   display: grid;
-  gap: 1.8rem;
+  gap: 1.25rem;
   min-height: 100%;
   padding: clamp(1.75rem, 3vw, 2.35rem);
   background: linear-gradient(180deg, #fffef7 0%, #ffe5ef 100%);
@@ -12069,8 +12070,8 @@ button.mcg-chip:hover {
   justify-items: start;
   text-align: left;
   max-width: 38rem;
-  gap: 0.85rem;
-  margin-bottom: 0.2rem;
+  gap: 1rem;
+  margin-bottom: 0;
 }
 
 .stitch-landing-screen .home-how-eyebrow {
@@ -12094,7 +12095,7 @@ button.mcg-chip:hover {
 .stitch-landing-screen .home-how-steps {
   position: relative;
   z-index: 1;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .stitch-landing-screen .home-how-step {
@@ -12120,15 +12121,15 @@ button.mcg-chip:hover {
 }
 
 .home-how-step--tilt-left {
-  transform: rotate(-1.3deg) translateX(-4px);
+  transform: none;
 }
 
 .home-how-step--tilt-right {
-  transform: rotate(1.2deg) translateY(10px);
+  transform: none;
 }
 
 .home-how-step--tilt-left-soft {
-  transform: rotate(-0.7deg) translateX(6px);
+  transform: none;
 }
 
 .stitch-landing-screen .home-how-step-top {
@@ -12178,20 +12179,20 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-docs-section {
-  padding-top: 0.8rem;
+  padding-top: 0;
 }
 
 .stitch-landing-screen .home-docs-panel {
   grid-template-columns: 1fr;
-  gap: 1.1rem;
+  gap: 1.25rem;
   align-items: start;
   padding: 1.5rem 1.35rem 1.45rem;
   background: linear-gradient(180deg, #d8fbff 0%, #ffef9a 100%);
-  transform: translateY(22px) rotate(1.6deg);
+  transform: none;
 }
 
 .stitch-landing-screen .home-docs-content {
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .stitch-landing-screen .home-docs-eyebrow {
@@ -12214,7 +12215,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-docs-points {
-  gap: 0.6rem;
+  gap: 0.75rem;
 }
 
 .stitch-landing-screen .home-docs-panel .mcg-chip {
@@ -12234,14 +12235,14 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-docs-art-card--back {
-  transform: rotate(-6deg) translate(-10px, 10px);
+  transform: none;
   background: #2437ff;
 }
 
 .stitch-landing-screen .home-docs-art-card--front {
   inset: 18px 0 0 24px;
   padding: 18px;
-  transform: rotate(4deg);
+  transform: none;
   background: #fffdf7;
 }
 
@@ -12284,7 +12285,7 @@ button.mcg-chip:hover {
   }
 
   .stitch-landing-screen .home-docs-panel {
-    transform: translateY(0) rotate(0.8deg);
+    transform: none;
   }
 }
 
