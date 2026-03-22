@@ -13230,3 +13230,226 @@ button.mcg-chip:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Landing page vertical rebuild ===== */
+.landing-page-flow {
+  display: grid;
+  gap: clamp(3rem, 6vw, 4.5rem);
+  width: 100%;
+  padding-bottom: clamp(1rem, 2vw, 2rem);
+}
+
+.landing-page-section {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+
+.stitch-landing-screen .home-hero-landing,
+.stitch-landing-screen .home-how-it-works,
+.stitch-landing-screen .home-docs-section {
+  width: min(1040px, 100%);
+}
+
+.stitch-landing-screen .home-hero-landing {
+  min-height: auto;
+  padding: clamp(2rem, 4vw, 3rem);
+}
+
+.stitch-landing-screen .home-hero-body {
+  grid-template-columns: minmax(0, 0.94fr) minmax(320px, 0.96fr);
+  align-items: center;
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+}
+
+.stitch-landing-screen .home-hero-content {
+  gap: 1.1rem;
+}
+
+.home-hero-topline {
+  gap: 0.65rem;
+}
+
+.stitch-landing-screen .home-hero-headline {
+  max-width: 9ch;
+  font-size: clamp(3.3rem, 5vw, 4.5rem);
+  line-height: 0.92;
+}
+
+.home-hero-copy {
+  gap: 0.75rem;
+  max-width: 32rem;
+}
+
+.home-hero-copy p {
+  font-size: clamp(0.98rem, 1.3vw, 1.05rem);
+  line-height: 1.5;
+}
+
+.home-hero-cta-stack {
+  padding-top: 0.2rem;
+}
+
+.stitch-landing-screen .home-hero-cta-primary {
+  min-height: 62px;
+  padding-inline: 1.6rem;
+}
+
+.home-hero-stage-frame {
+  gap: 1.1rem;
+  padding: 1.35rem 1.1rem 1.1rem;
+}
+
+.stitch-landing-screen .home-hero-cards-float {
+  min-height: 390px;
+}
+
+.landing-page-section--how .home-how-it-works,
+.landing-page-section--smart .home-docs-panel {
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #111;
+  border-radius: 28px;
+  box-shadow: 12px 12px 0 #111;
+}
+
+.stitch-landing-screen .home-how-it-works {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1.75rem, 3vw, 2.4rem);
+  background: linear-gradient(180deg, #fffef7 0%, #ffe5ef 100%);
+}
+
+.stitch-landing-screen .home-how-header {
+  justify-items: start;
+  text-align: left;
+  max-width: 34rem;
+  gap: 0.7rem;
+}
+
+.stitch-landing-screen .home-how-title {
+  font-size: clamp(2.35rem, 4vw, 3.5rem);
+}
+
+.stitch-landing-screen .home-how-copy {
+  max-width: 33rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.stitch-landing-screen .home-how-steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.stitch-landing-screen .home-how-step {
+  display: grid;
+  align-content: start;
+  min-height: 100%;
+  gap: 0.8rem;
+  padding: 1.25rem;
+}
+
+.stitch-landing-screen .home-how-step-desc {
+  max-width: none;
+}
+
+.stitch-landing-screen .home-docs-section {
+  padding-bottom: 0;
+}
+
+.stitch-landing-screen .home-docs-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 1.25rem 1.5rem;
+  align-items: center;
+  padding: clamp(1.5rem, 3vw, 2rem);
+  background: linear-gradient(180deg, #d8fbff 0%, #ffef9a 100%);
+}
+
+.stitch-landing-screen .home-docs-content {
+  gap: 0.8rem;
+  max-width: 34rem;
+}
+
+.stitch-landing-screen .home-docs-title {
+  max-width: 12ch;
+  font-size: clamp(2.1rem, 4vw, 3.25rem);
+}
+
+.stitch-landing-screen .home-docs-desc {
+  max-width: 30rem;
+  line-height: 1.5;
+}
+
+.stitch-landing-screen .home-docs-points {
+  gap: 0.6rem;
+}
+
+.stitch-landing-screen .home-docs-art {
+  min-height: 200px;
+  max-width: 280px;
+  justify-self: end;
+}
+
+.stitch-landing-screen .home-docs-cta {
+  grid-column: 1 / 2;
+  justify-self: start;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 1100px) {
+  .stitch-landing-screen .home-hero-body,
+  .stitch-landing-screen .home-docs-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-landing-screen .home-hero-stage,
+  .stitch-landing-screen .home-docs-art {
+    justify-self: center;
+  }
+
+  .stitch-landing-screen .home-docs-cta {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .stitch-landing-screen .home-how-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .landing-page-flow {
+    gap: 3rem;
+  }
+
+  .stitch-landing-screen .home-hero-landing,
+  .stitch-landing-screen .home-how-it-works,
+  .landing-page-section--smart .home-docs-panel {
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 #111;
+  }
+
+  .stitch-landing-screen .home-hero-headline,
+  .stitch-landing-screen .home-how-header,
+  .stitch-landing-screen .home-docs-content {
+    text-align: center;
+    justify-items: center;
+    margin-inline: auto;
+  }
+
+  .home-hero-copy {
+    justify-items: center;
+  }
+
+  .stitch-landing-screen .home-hero-cards-float {
+    min-height: 330px;
+  }
+
+  .stitch-landing-screen .home-docs-art,
+  .stitch-landing-screen .home-docs-cta {
+    justify-self: center;
+  }
+}

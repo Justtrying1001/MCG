@@ -54,11 +54,9 @@ export function HomeHeroLanding() {
             <div className="stitch-stamp">Press start</div>
           </div>
           <h1 className="home-hero-headline">
-            MCG — THE
+            MCG — THE <span>MEME</span>
             <br />
-            <span>MEME</span> CARD
-            <br />
-            GAME
+            CARD GAME
           </h1>
           <div className="home-hero-copy" aria-label="Hero description">
             {HERO_COPY.map((paragraph) => (
