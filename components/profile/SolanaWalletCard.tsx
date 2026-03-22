@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLinkAccount, usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
@@ -9,6 +9,10 @@ type LinkState = {
   kind: "idle" | "success" | "error";
   message: string | null;
 };
+
+function normalizeHandleInput(value: string) {
+  return value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+}
 
 async function assertSuccessfulLink(response: Response, fallbackMessage: string) {
   const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -26,8 +30,15 @@ export function SolanaWalletCard() {
   const hasTwitter = Boolean(linkedTwitter);
   const [isLinkingWallet, setIsLinkingWallet] = useState(false);
   const [isLinkingTwitter, setIsLinkingTwitter] = useState(false);
+  const [isSavingHandle, setIsSavingHandle] = useState(false);
+  const [handleInput, setHandleInput] = useState(me?.user.handle ?? "");
+  const [handleMessage, setHandleMessage] = useState<LinkState>({ kind: "idle", message: null });
   const [linkState, setLinkState] = useState<LinkState>({ kind: "idle", message: null });
   const pendingLinkTypeRef = useRef<"wallet" | "twitter" | null>(null);
+
+  useEffect(() => {
+    setHandleInput(me?.user.handle ?? "");
+  }, [me?.user.handle]);
 
   const syncLinkedIdentity = useCallback(async (route: string, fallbackMessage: string) => {
     const accessToken = await getAccessToken();
@@ -57,7 +68,7 @@ export function SolanaWalletCard() {
             setLinkState({ kind: "success", message: "Solana wallet linked successfully." });
           } else {
             await syncLinkedIdentity("/api/auth/privy/link-twitter", "Twitter linking failed");
-            setLinkState({ kind: "success", message: "Twitter account linked successfully." });
+            setLinkState({ kind: "success", message: "X account linked successfully." });
           }
         } catch (error) {
           setLinkState({
@@ -85,6 +96,9 @@ export function SolanaWalletCard() {
     if (!primaryWallet) return null;
     return `${primaryWallet.address.slice(0, 4)}…${primaryWallet.address.slice(-4)}`;
   }, [primaryWallet]);
+  const normalizedHandle = useMemo(() => normalizeHandleInput(handleInput), [handleInput]);
+  const currentHandle = me?.user.handle ?? null;
+  const handleDirty = normalizedHandle !== (currentHandle ?? "");
 
   const handleLinkWallet = useCallback(() => {
     if (!ready || !authenticated || isLinkingWallet || isLinkingTwitter) return;
@@ -106,58 +120,142 @@ export function SolanaWalletCard() {
     linkTwitter();
   }, [authenticated, isLinkingTwitter, isLinkingWallet, linkTwitter, ready]);
 
+  const handleSave = useCallback(async () => {
+    if (!normalizedHandle || isSavingHandle || !handleDirty) return;
+    setIsSavingHandle(true);
+    setHandleMessage({ kind: "idle", message: null });
+
+    try {
+      const response = await fetch("/api/me/handle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle: normalizedHandle }),
+      });
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        setHandleMessage({ kind: "error", message: payload?.error || "Unable to save username." });
+        return;
+      }
+
+      await refresh();
+      setHandleMessage({
+        kind: "success",
+        message: currentHandle ? "Username updated successfully." : "Username saved successfully.",
+      });
+    } finally {
+      setIsSavingHandle(false);
+    }
+  }, [currentHandle, handleDirty, isSavingHandle, normalizedHandle, refresh]);
+
   return (
-    <section className="mcg-surface profile-wallet-card">
+    <section className="mcg-surface profile-wallet-card profile-account-settings-card">
       <div className="profile-wallet-card__header">
         <div>
-          <p className="mcg-eyebrow">Identity links</p>
-          <h3>Connect accounts</h3>
+          <p className="mcg-eyebrow">Account settings</p>
+          <h3>Username & linked accounts</h3>
         </div>
         <span className={`profile-wallet-badge ${hasWallet && hasTwitter ? "is-linked" : "is-empty"}`}>
-          {hasWallet && hasTwitter ? "all linked" : "link available"}
+          {hasWallet && hasTwitter ? "fully linked" : "setup available"}
         </span>
       </div>
 
       <p className="profile-wallet-card__copy">
-        Sign in with either X or a Solana wallet at entry, then link the missing identity here for the full MCG profile.
+        Your MCG username is editable here. X and wallet connections stay optional, and whichever one you add later links into this same account.
       </p>
 
-      <div className="profile-identity-grid">
-        <div className="profile-identity-item">
+      <div className="profile-settings-section">
+        <div className="profile-settings-section__header">
           <div>
-            <p className="mcg-eyebrow">Twitter / X</p>
-            <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "No X account linked"}</strong>
+            <p className="mcg-eyebrow">App username</p>
+            <strong>{currentHandle ? `@${currentHandle}` : "Username required"}</strong>
           </div>
+          <span className={`profile-status-pill ${currentHandle ? "is-linked" : "is-missing"}`}>
+            {currentHandle ? "set" : "choose one"}
+          </span>
+        </div>
+
+        <label className="profile-handle-field">
+          <span>{currentHandle ? "Change username" : "Choose username"}</span>
+          <input
+            value={handleInput}
+            onChange={(event) => setHandleInput(normalizeHandleInput(event.target.value))}
+            placeholder="your_handle"
+            maxLength={20}
+          />
+        </label>
+
+        <p className="profile-handle-preview">
+          Preview: <strong>{normalizedHandle ? `@${normalizedHandle}` : "@your_handle"}</strong>
+        </p>
+
+        <div className="profile-settings-actions">
           <Button
-            variant={hasTwitter ? "ghost" : "primary"}
             className="btn-sm"
-            disabled={!ready || !authenticated || hasTwitter || isLinkingTwitter || isLinkingWallet}
-            onClick={handleLinkTwitter}
+            disabled={!normalizedHandle || isSavingHandle || !handleDirty}
+            onClick={() => void handleSave()}
           >
-            {isLinkingTwitter ? "Linking X…" : hasTwitter ? "X linked" : "Link X"}
+            {isSavingHandle ? "Saving…" : currentHandle ? "Update username" : "Save username"}
           </Button>
         </div>
 
-        <div className="profile-identity-item">
+        {handleMessage.message ? (
+          <p className={`profile-wallet-card__feedback ${handleMessage.kind === "error" ? "is-error" : "is-success"}`}>
+            {handleMessage.message}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="profile-settings-section">
+        <div className="profile-settings-section__header">
           <div>
-            <p className="mcg-eyebrow">Solana wallet</p>
-            {primaryWallet ? (
-              <>
-                <strong>{primaryWalletShort}</strong>
-                <span>{primaryWallet.address}</span>
-              </>
-            ) : (
-              <strong>No Solana wallet linked</strong>
-            )}
+            <p className="mcg-eyebrow">Connections</p>
+            <strong>Link missing providers whenever you want</strong>
           </div>
-          <Button
-            variant={hasWallet ? "ghost" : "primary"}
-            className="btn-sm"
-            disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
-            onClick={handleLinkWallet}
-          >
-            {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Link another wallet" : "Link Solana wallet"}
-          </Button>
+        </div>
+
+        <div className="profile-identity-grid">
+          <div className="profile-identity-item">
+            <div>
+              <p className="mcg-eyebrow">X connection</p>
+              <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}</strong>
+              <span>
+                {hasTwitter ? "Connected to this MCG account." : "Link X later without changing your username."}
+              </span>
+            </div>
+            <Button
+              variant={hasTwitter ? "ghost" : "primary"}
+              className="btn-sm"
+              disabled={!ready || !authenticated || hasTwitter || isLinkingTwitter || isLinkingWallet}
+              onClick={handleLinkTwitter}
+            >
+              {isLinkingTwitter ? "Linking X…" : hasTwitter ? "X linked" : "Link X"}
+            </Button>
+          </div>
+
+          <div className="profile-identity-item">
+            <div>
+              <p className="mcg-eyebrow">Wallet connection</p>
+              {primaryWallet ? (
+                <>
+                  <strong>{primaryWalletShort}</strong>
+                  <span>{primaryWallet.address}</span>
+                </>
+              ) : (
+                <>
+                  <strong>Wallet not linked</strong>
+                  <span>Link a Solana wallet later without requiring X.</span>
+                </>
+              )}
+            </div>
+            <Button
+              variant={hasWallet ? "ghost" : "primary"}
+              className="btn-sm"
+              disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
+              onClick={handleLinkWallet}
+            >
+              {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Link another wallet" : "Link wallet"}
+            </Button>
+          </div>
         </div>
       </div>
 

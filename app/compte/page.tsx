@@ -259,6 +259,8 @@ export default function AccountPage() {
               </div>
 
               <div className="profile-account-side-stack">
+                <SolanaWalletCard />
+
                 <ContestAchievements
                   contestsEntered={competitive?.contestsEntered ?? 0}
                   bestRank={competitive?.bestRank ?? null}
