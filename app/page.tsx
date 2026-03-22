@@ -278,13 +278,15 @@ export default function HomePage() {
           </section>
         </div>
       ) : (
-        <div className="stitch-screen stitch-landing-screen">
-          <HomeHeroLanding />
-          <div className="landing-support-stage">
-            <div className="landing-play-grid">
-              <HowItWorks />
-              <DocsLearnSection />
-            </div>
+        <div className="stitch-screen stitch-landing-screen landing-page-flow">
+          <div className="landing-page-section landing-page-section--hero">
+            <HomeHeroLanding />
+          </div>
+          <div className="landing-page-section landing-page-section--how">
+            <HowItWorks />
+          </div>
+          <div className="landing-page-section landing-page-section--smart">
+            <DocsLearnSection />
           </div>
         </div>
       )}
