@@ -1,44 +1,34 @@
 ALTER TABLE "User"
+ADD COLUMN IF NOT EXISTS "privyUserId" TEXT,
+ADD COLUMN IF NOT EXISTS "xUsername" TEXT,
 ADD COLUMN IF NOT EXISTS "xUserId" TEXT;
 
-DO $$
-DECLARE
-  has_privy_user_id boolean;
-  has_x_username boolean;
-  backfill_sql text;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'User'
-      AND column_name = 'privyUserId'
-  ) INTO has_privy_user_id;
-
-  SELECT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'User'
-      AND column_name = 'xUsername'
-  ) INTO has_x_username;
-
-  backfill_sql := 'UPDATE "User" SET "xUserId" = CASE ';
-
-  IF has_privy_user_id THEN
-    backfill_sql := backfill_sql || 'WHEN "privyUserId" IS NOT NULL THEN ''privy:'' || "privyUserId" ';
-  END IF;
-
-  IF has_x_username THEN
-    backfill_sql := backfill_sql || 'WHEN COALESCE(NULLIF("xUsername", ''''), '''') <> '''' THEN ''legacy-x:'' || "xUsername" || '':'' || "id" ';
-  END IF;
-
-  backfill_sql := backfill_sql || 'ELSE ''legacy-user:'' || "id" END WHERE "xUserId" IS NULL';
-
-  EXECUTE backfill_sql;
-END $$;
+UPDATE "User"
+SET
+  "xUsername" = COALESCE(
+    NULLIF("xUsername", ''),
+    CASE
+      WHEN "privyUserId" IS NOT NULL THEN 'privy_' || COALESCE(NULLIF(LOWER(RIGHT(REGEXP_REPLACE("privyUserId", '[^a-zA-Z0-9]', '', 'g'), 12)), ''), 'user')
+      WHEN "xUserId" IS NOT NULL AND "xUserId" LIKE 'privy:%' THEN 'privy_' || COALESCE(NULLIF(LOWER(RIGHT(REGEXP_REPLACE(SUBSTRING("xUserId" FROM 7), '[^a-zA-Z0-9]', '', 'g'), 12)), ''), 'user')
+      ELSE 'legacy_' || SUBSTRING("id" FROM GREATEST(1, LENGTH("id") - 11))
+    END
+  ),
+  "xUserId" = COALESCE(
+    NULLIF("xUserId", ''),
+    CASE
+      WHEN "privyUserId" IS NOT NULL THEN 'privy:' || "privyUserId"
+      WHEN COALESCE(NULLIF("xUsername", ''), '') <> '' THEN 'legacy-x:' || "xUsername" || ':' || "id"
+      ELSE 'legacy-user:' || "id"
+    END
+  )
+WHERE "xUserId" IS NULL
+   OR "xUserId" = ''
+   OR "xUsername" IS NULL
+   OR "xUsername" = '';
 
 ALTER TABLE "User"
+ALTER COLUMN "xUsername" SET NOT NULL,
 ALTER COLUMN "xUserId" SET NOT NULL;
 
+CREATE UNIQUE INDEX IF NOT EXISTS "User_privyUserId_key" ON "User"("privyUserId");
 CREATE UNIQUE INDEX IF NOT EXISTS "User_xUserId_key" ON "User"("xUserId");
