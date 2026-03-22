@@ -12801,12 +12801,11 @@ button.mcg-chip:hover {
 
 /* ===== Memedex second pass ===== */
 .stitch-memedex-screen {
-  gap: 1.45rem;
-  padding-bottom: 2.75rem;
+  gap: 2rem;
+  padding-bottom: 3rem;
 }
 
 .stitch-memedex-screen .memedex-header-shell,
-.stitch-memedex-screen .memedex-toolbar-shell,
 .stitch-memedex-screen .missing-shelf-surface,
 .stitch-memedex-screen .memedex-gallery-stage {
   position: relative;
@@ -12818,86 +12817,47 @@ button.mcg-chip:hover {
   box-shadow: 10px 10px 0 #111;
 }
 
-.memedex-header-stamp {
-  display: inline-flex;
-  margin-bottom: 0.9rem;
-  min-height: 34px;
-  padding: 0 14px;
+.stitch-memedex-screen .memedex-header-wrap {
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1.5rem;
   align-items: center;
-  border: 3px solid #111;
-  border-radius: 999px;
-  background: #ffef55;
-  box-shadow: 6px 6px 0 #111;
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
-.stitch-memedex-screen .memedex-header-wrap {
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+.stitch-memedex-screen .memedex-header-copy {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.stitch-memedex-screen .memedex-header-copy .section-header {
+  gap: 0.5rem;
+}
+
+.stitch-memedex-screen .memedex-header-copy .section-header__title {
+  margin: 0;
+}
+
+.stitch-memedex-screen .memedex-header-copy .section-header__subtitle {
+  max-width: 52ch;
+}
+
+.stitch-memedex-screen .memedex-header-chips {
+  gap: 0.5rem;
 }
 
 .stitch-memedex-screen .memedex-header-progress {
-  position: relative;
-  padding-top: 3.5rem;
+  padding: 1.25rem;
   background: linear-gradient(180deg, #fffef6 0%, #fff0b5 100%);
+  box-shadow: 8px 8px 0 #111;
 }
 
-.memedex-header-medal {
-  position: absolute;
-  top: 0.9rem;
-  right: 1rem;
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border: 3px solid #111;
-  border-radius: 18px;
-  background: #ffef55;
-  box-shadow: 6px 6px 0 #111;
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.stitch-memedex-screen .memedex-toolbar-shell {
-  background: linear-gradient(180deg, #fffef8 0%, #dbfbff 100%);
-  box-shadow: 10px 10px 0 #111;
-}
-
-.memedex-control-shell {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.memedex-control-ribbon {
-  display: inline-flex;
-  width: fit-content;
-  min-height: 34px;
-  padding: 0 14px;
-  align-items: center;
-  border: 3px solid #111;
-  border-radius: 999px;
-  background: #2437ff;
-  box-shadow: 6px 6px 0 #111;
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.stitch-memedex-screen .memedex-data-block,
-.stitch-memedex-screen .memedex-sort-block {
-  background: linear-gradient(180deg, #fff 0%, #f6fbff 100%);
-}
-
-.stitch-memedex-screen .memedex-progress-callout {
-  background: linear-gradient(180deg, #fff6b5 0%, #ffef82 100%);
-  box-shadow: 6px 6px 0 #111;
+.stitch-memedex-screen .collection-select,
+.stitch-memedex-screen .memedex-search-input,
+.stitch-memedex-screen .memedex-filter-pill,
+.stitch-memedex-screen .memedex-gallery-stats span,
+.stitch-memedex-screen .memedex-slot-tab,
+.stitch-memedex-screen .memedex-card-status,
+.stitch-memedex-screen .missing-shelf-banner {
+  box-shadow: 4px 4px 0 #111;
 }
 
 .stitch-memedex-screen .memedex-filter-pill {
@@ -12920,8 +12880,8 @@ button.mcg-chip:hover {
 
 .memedex-gallery-stage {
   display: grid;
-  gap: 1rem;
-  padding: 1.15rem;
+  gap: 1.5rem;
+  padding: 1.5rem;
   border: 4px solid #111;
   border-radius: 34px;
   background: linear-gradient(180deg, #fffdf2 0%, #ffe9f2 40%, #ffffff 100%);
@@ -12932,14 +12892,19 @@ button.mcg-chip:hover {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: flex-end;
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
+.memedex-gallery-title-wrap {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .memedex-gallery-title {
-  margin: 0.25rem 0 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: clamp(2rem, 4vw, 3.2rem);
   font-weight: 900;
   line-height: 0.92;
   letter-spacing: -0.05em;
@@ -12947,16 +12912,17 @@ button.mcg-chip:hover {
 }
 
 .memedex-gallery-copy {
-  margin: 0.35rem 0 0;
-  max-width: 56ch;
+  margin: 0;
+  max-width: 54ch;
   color: var(--color-text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .memedex-gallery-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
+  align-items: center;
 }
 
 .memedex-gallery-stats span,
@@ -12968,7 +12934,6 @@ button.mcg-chip:hover {
   border: 2px solid #111;
   border-radius: 999px;
   background: #fff;
-  box-shadow: 4px 4px 0 #111;
   font-family: var(--font-label);
   font-size: 0.68rem;
   font-weight: 900;
@@ -12976,9 +12941,43 @@ button.mcg-chip:hover {
   text-transform: uppercase;
 }
 
+.memedex-gallery-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) auto repeat(3, minmax(140px, 0.75fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.memedex-toolbar-search,
+.memedex-filter-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.memedex-filter-field span {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.memedex-toolbar-search .memedex-search-input,
+.memedex-filter-field .collection-select {
+  min-width: 0;
+}
+
+.memedex-filter-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
 .memedex-slot-tab {
   justify-self: start;
-  margin-bottom: -0.1rem;
+  margin-bottom: 0.15rem;
   background: #d7f8ff;
 }
 
@@ -12988,11 +12987,11 @@ button.mcg-chip:hover {
 
 .stitch-memedex-screen .memedex-grid {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.15rem;
+  gap: 1.5rem 1.25rem;
 }
 
 .stitch-memedex-screen .memedex-card-tile {
-  gap: 0.45rem;
+  gap: 0.6rem;
 }
 
 .stitch-memedex-screen .memedex-card-trigger {
@@ -13043,11 +13042,20 @@ button.mcg-chip:hover {
   border-radius: 999px;
   background: #2437ff;
   color: #fff;
-  box-shadow: 6px 6px 0 #111;
   font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+@media (max-width: 1200px) {
+  .memedex-gallery-toolbar {
+    grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(140px, 1fr));
+  }
+
+  .memedex-filter-pills {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -13056,13 +13064,25 @@ button.mcg-chip:hover {
     align-items: flex-start;
   }
 
-  .stitch-memedex-screen .memedex-header-wrap,
-  .stitch-memedex-screen .memedex-toolbar {
+  .stitch-memedex-screen .memedex-header-wrap {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 720px) {
+  .memedex-gallery-stage {
+    padding: 1.15rem;
+  }
+
+  .memedex-gallery-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .memedex-filter-pills {
+    justify-content: flex-start;
+  }
+
   .stitch-memedex-screen .memedex-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

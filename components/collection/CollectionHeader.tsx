@@ -6,7 +6,6 @@ type CollectionHeaderProps = {
   completionPct: number | null;
   totalCards: number;
   uniqueCards: number;
-  shown: number;
   missingCount?: number | null;
   totalTemplates?: number | null;
   completionWidth?: number;
@@ -16,13 +15,19 @@ export function CollectionHeader({
   completionPct,
   totalCards,
   uniqueCards,
-  shown,
   missingCount = null,
   totalTemplates = null,
   completionWidth = completionPct === null
     ? 12
     : Math.max(6, Math.min(100, completionPct)),
 }: CollectionHeaderProps) {
+  const progressLabel =
+    typeof totalTemplates === "number" && totalTemplates > 0
+      ? `${uniqueCards}/${totalTemplates}`
+      : completionPct === null
+        ? "—"
+        : `${completionPct}%`;
+
   return (
     <Surface
       variant="raised"
@@ -30,22 +35,15 @@ export function CollectionHeader({
     >
       <div className="collection-header-wrap memedex-header-wrap">
         <div className="memedex-header-copy">
-          <div className="memedex-header-stamp">Collector album</div>
           <SectionHeader
-            eyebrow="Your Memedex"
-            title="The album"
-            subtitle="Complete your Memedex with tactile discovery tools, clearer rarity reads, and a collectible-first inventory view."
+            eyebrow="Collection"
+            title="Memedex"
+            subtitle="Track your discovered cards, scan what is still locked, and keep the spotlight on your collection."
           />
           <div className="collection-header-chips memedex-header-chips">
             <Chip
-              label={`Memedex completion ${completionPct === null ? "—" : `${completionPct}%`}`}
+              label={`Progress ${completionPct === null ? "—" : `${completionPct}%`}`}
             />
-            <Chip label={`Owned ${totalCards}`} />
-            <Chip label={`Unique ${uniqueCards}`} />
-            <Chip label={`Shown ${shown}`} />
-            {typeof missingCount === "number" ? (
-              <Chip label={`Locked ${missingCount}`} />
-            ) : null}
           </div>
         </div>
 
@@ -53,16 +51,9 @@ export function CollectionHeader({
           className="memedex-header-progress"
           aria-label="Memedex completion summary"
         >
-          <div className="memedex-header-medal" aria-hidden="true">★</div>
           <div className="memedex-header-progress-top">
             <span>Memedex progress</span>
-            <strong>
-              {typeof totalTemplates === "number" && totalTemplates > 0
-                ? `${uniqueCards}/${totalTemplates}`
-                : completionPct === null
-                  ? "—"
-                  : `${completionPct}%`}
-            </strong>
+            <strong>{progressLabel}</strong>
           </div>
           <div
             className="collection-progress-track memedex-header-track"
@@ -73,7 +64,7 @@ export function CollectionHeader({
           <p>
             {typeof missingCount === "number"
               ? `${missingCount.toLocaleString()} locked entries remain before your Memedex is complete.`
-              : "Sign in to sync your live Memedex completion and missing entries."}
+              : `Preview ${totalCards.toLocaleString()} cards and connect to sync your live Memedex.`}
           </p>
         </div>
       </div>
