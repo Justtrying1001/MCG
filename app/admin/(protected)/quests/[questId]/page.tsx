@@ -34,14 +34,14 @@ type QuestDetailPayload = {
     reviewedByAdmin: string | null;
     reviewedAt: string | null;
     createdAt: string;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string; displayName: string };
   }>;
   latestLedgerCredits: Array<{
     id: string;
     userId: string;
     amount: number;
     createdAt: string;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string; displayName: string };
   }>;
 };
 
@@ -164,7 +164,7 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestSubmissions.map((row) => (
                 <div key={row.id} className="contest-card">
-                  <p className="contest-inline-note">{row.user.displayName} (@{row.user.xUsername}) · {row.status}</p>
+                  <p className="contest-inline-note">{row.user.displayName} (@{row.user.handle}) · {row.status}</p>
                   <p className="contest-inline-note">Evidence: {row.proofUrl || row.note || "—"}</p>
                   <p className="contest-inline-note">Created: {new Date(row.createdAt).toLocaleString()}</p>
                   <Link href={`/admin/moderation/${row.id}`} className="contest-inline-note">Open review detail</Link>
@@ -179,7 +179,7 @@ export default function QuestDetailPerformancePage({ params }: { params: { quest
             <div style={{ display: "grid", gap: "0.5rem" }}>
               {data.latestLedgerCredits.map((row) => (
                 <div key={row.id} className="contest-card">
-                  <p className="contest-inline-note">{row.user.displayName} (@{row.user.xUsername}) · +{row.amount}</p>
+                  <p className="contest-inline-note">{row.user.displayName} (@{row.user.handle}) · +{row.amount}</p>
                   <p className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</p>
                 </div>
               ))}

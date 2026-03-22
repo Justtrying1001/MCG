@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       users: payload.users.map((user) => ({
         id: user.id,
         displayName: user.displayName,
-        xUsername: user.xUsername,
+        handle: user.handle,
         points: user.points,
         packsOpened: user.packsOpened,
         createdAt: user.createdAt.toISOString(),

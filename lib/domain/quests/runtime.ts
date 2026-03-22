@@ -108,13 +108,13 @@ export type InternalQuestDetail = {
     reviewedByAdmin: string | null;
     reviewedAt: string | null;
     createdAt: string;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
   recentlyCompletedUsers: Array<{
     userId: string;
     completedAt: string;
     progressValue: number;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
   latestLedgerCredits: Array<{
     id: string;
@@ -123,7 +123,7 @@ export type InternalQuestDetail = {
     idempotencyKey: string | null;
     createdAt: string;
     metadata: Prisma.JsonValue | null;
-    user: { id: string; xUsername: string; displayName: string };
+    user: { id: string; handle: string | null; displayName: string };
   }>;
 };
 

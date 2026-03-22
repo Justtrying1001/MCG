@@ -33,7 +33,7 @@ describe("/api/internal/moderation/decisions", () => {
         reviewedByAdmin: "alice",
         reviewedAt: new Date("2026-03-10T10:00:00.000Z"),
         quest: { id: "q1", code: "SPRING:FOLLOW", title: "Follow" },
-        user: { id: "u1", xUsername: "bob", displayName: "Bob" },
+        user: { id: "u1", handle: "bob", displayName: "Bob" },
       },
     ]);
 

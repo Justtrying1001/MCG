@@ -14,7 +14,7 @@ import {
 } from "@/lib/auth";
 import { INTERNAL_EVENT_TYPES, recordInternalEvent } from "@/lib/analytics/events";
 import { readVisitorIdFromRequest } from "@/lib/analytics/visitor-id";
-import { upsertUserFromPrivyProfileWithWelcome } from "@/lib/domain/rewards/onboarding";
+import { IdentityConflictError, upsertUserFromPrivyIdentityGraphWithWelcome } from "@/lib/domain/rewards/onboarding";
 import { logAuthEvent } from "@/lib/observability/auth-log";
 import { prisma } from "@/lib/prisma";
 import { resolvePrivyIdentityFromAccessToken } from "@/lib/privy-auth";
@@ -63,12 +63,11 @@ export async function POST(request: Request) {
 
     try {
       user = await prisma.$transaction(async (tx) => {
-        const result = await upsertUserFromPrivyProfileWithWelcome(tx, {
+        const result = await upsertUserFromPrivyIdentityGraphWithWelcome(tx, {
           privyUserId: identity.privyUserId,
-          xUserId: identity.twitterUserId,
-          xUsername: identity.twitterUsername,
           displayName: identity.displayName,
           avatarUrl: identity.avatarUrl,
+          identities: identity.identities,
         });
         return result.user;
       });
@@ -88,10 +87,12 @@ export async function POST(request: Request) {
       ok: true,
       userId: user.id,
       privyUserId: identity.privyUserId,
-      linkedX: identity.twitterUserId ? {
-        id: identity.twitterUserId,
-        username: identity.twitterUsername,
-      } : null,
+      linkedIdentities: identity.identities.map((account) => ({
+        provider: account.provider,
+        providerUserId: account.providerUserId,
+        username: account.username,
+        walletAddress: account.walletAddress,
+      })),
     });
 
     response.cookies.set({
@@ -114,16 +115,28 @@ export async function POST(request: Request) {
       });
     }
 
+    const linkedTwitter = identity.identities.find((account) => account.provider === "TWITTER") ?? null;
+
     logAuthEvent("privy_exchange_succeeded", "info", {
       requestHost: url.host,
       userId: user.id,
       privyUserId: identity.privyUserId,
-      linkedXUserId: identity.twitterUserId,
-      linkedXUsername: identity.twitterUsername,
+      linkedXUserId: linkedTwitter?.providerUserId ?? null,
+      linkedXUsername: linkedTwitter?.username ?? null,
     });
 
     return response;
   } catch (error) {
+    if (error instanceof IdentityConflictError) {
+      logAuthEvent("privy_exchange_conflict", "warn", {
+        requestHost: url.host,
+        errorName: error.name,
+        errorMessage: error.message,
+        conflictProviders: error.conflictProviders.join(","),
+      });
+      return NextResponse.json({ ok: false, error: "Identity conflict" }, { status: 409 });
+    }
+
     logAuthEvent("privy_exchange_failed", "error", {
       requestHost: url.host,
       errorName: error instanceof Error ? error.name : "unknown",

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { getAdminSessionCookieName } from "@/lib/admin-auth";
+import { enforceSameOrigin } from "@/lib/csrf";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: getAdminSessionCookieName(),

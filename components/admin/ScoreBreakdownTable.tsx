@@ -5,7 +5,7 @@ type BreakdownRow = {
   entry: {
     id: string;
     userId: string;
-    user?: { displayName: string | null; xUsername: string | null };
+    user?: { displayName: string | null; handle: string | null };
   };
   tokenProject: { displayName: string; slug?: string };
   cardInstance: { cardTemplate: { name: string; rarity?: { code: string } | null; edition?: { code: string } | null } };
@@ -39,7 +39,7 @@ export function ScoreBreakdownTable({ breakdownRows }: { breakdownRows: Breakdow
         <tbody>
           {breakdownRows.map((row) => {
             const entryLabel = row.entry.user?.displayName?.trim()
-              || row.entry.user?.xUsername
+              || row.entry.user?.handle
               || row.entry.userId;
             return (
               <tr key={row.id}>

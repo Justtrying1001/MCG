@@ -24,8 +24,12 @@ export async function GET(request: Request) {
     }
     const sessionUser = session.user;
 
-    const [user, ownedInstances, openingsCount] = await prisma.$transaction([
+    const [user, identities, ownedInstances, openingsCount] = await prisma.$transaction([
       prisma.user.findUnique({ where: { id: sessionUser.id } }),
+      prisma.userIdentity.findMany({
+        where: { userId: sessionUser.id },
+        orderBy: [{ provider: "asc" }, { linkedAt: "asc" }],
+      }),
       prisma.ownedCardInstance.findMany({
         where: { userId: sessionUser.id },
         include: {
@@ -56,6 +60,7 @@ export async function GET(request: Request) {
 
     const payload = buildUserPayload({
       user,
+      identities,
       ownedInstances,
     });
 
@@ -64,7 +69,7 @@ export async function GET(request: Request) {
     const progressionSummaries = await buildProgressionSummariesV2(
       sessionUser.id,
       user.points,
-      collectionProjection
+      collectionProjection,
     );
 
     const response: UserSessionPayload = {
@@ -87,6 +92,7 @@ export async function GET(request: Request) {
       requestHost: url?.host,
       openingsCount,
       ownedInstancesCount: ownedInstances.length,
+      identitiesCount: identities.length,
     });
 
     return NextResponse.json(response);

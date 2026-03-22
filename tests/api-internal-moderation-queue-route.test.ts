@@ -41,7 +41,7 @@ describe("/api/internal/moderation/queue", () => {
         note: null,
         createdAt: new Date(Date.now() - 3 * 3600 * 1000),
         quest: { id: "q1", code: "SPRING:FOLLOW", title: "Follow", rewardPoints: 100 },
-        user: { id: "u1", xUsername: "alice", displayName: "Alice" },
+        user: { id: "u1", handle: "alice", displayName: "Alice" },
       },
     ]);
 

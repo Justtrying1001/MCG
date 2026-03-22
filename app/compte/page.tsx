@@ -10,6 +10,7 @@ import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
 import { SetCompletionSection } from "@/components/profile/SetCompletionSection";
 import { ContestAchievements } from "@/components/profile/ContestAchievements";
 import { RecentResults } from "@/components/profile/RecentResults";
+import { SolanaWalletCard } from "@/components/profile/SolanaWalletCard";
 
 type UserQuestRow = {
   id: string;

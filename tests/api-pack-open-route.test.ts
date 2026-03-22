@@ -25,7 +25,7 @@ import { PackPurchaseLimitExceededError } from "@/lib/domain/acquisition/purchas
 function buildRequest() {
   return new Request("http://localhost/api/pack/open", {
     method: "POST",
-    headers: { "x-visitor-id": "visitor-1" },
+    headers: { "x-visitor-id": "visitor-1", origin: "http://localhost" },
   });
 }
 

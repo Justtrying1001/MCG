@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
 import { useSession } from "@/components/useSession";
@@ -18,8 +18,11 @@ const navItems = [
   { href: "/compte", label: "Profile" },
 ];
 
+const HANDLE_ONBOARDING_PATH = "/onboarding/profile";
+
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { me, loading } = useSession();
   const {
     isStartingLogin,
@@ -29,6 +32,17 @@ export function SiteShell({ children }: { children: ReactNode }) {
     ready,
   } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
+
+  useEffect(() => {
+    if (!me) return;
+    if (me.onboarding.needsHandle && pathname !== HANDLE_ONBOARDING_PATH) {
+      router.replace(HANDLE_ONBOARDING_PATH);
+      return;
+    }
+    if (!me.onboarding.needsHandle && pathname === HANDLE_ONBOARDING_PATH) {
+      router.replace('/compte');
+    }
+  }, [me, pathname, router]);
 
   return (
     <div className="mcg-app">

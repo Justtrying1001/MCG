@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { submissi
     const submission = await prisma.questSubmission.findUnique({
       where: { id: params.submissionId },
       include: {
-        user: { select: { id: true, displayName: true, xUsername: true } },
+        user: { select: { id: true, displayName: true, handle: true } },
         quest: { select: { id: true, code: true, title: true, validationMode: true, rewardPoints: true } },
       },
     });

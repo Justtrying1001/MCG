@@ -4,6 +4,13 @@ import { NextRequest } from "next/server";
 import type { AdminAccessContext } from "@/lib/admin-ops";
 import { parseAdminRole, resolveSessionAdminRole } from "@/lib/admin-ops";
 import { getAdminSessionFromRequest } from "@/lib/admin-auth";
+import { enforceSameOrigin } from "@/lib/csrf";
+
+
+function isMutationMethod(method: string | null | undefined) {
+  const normalized = (method ?? "GET").toUpperCase();
+  return normalized === "POST" || normalized === "PUT" || normalized === "PATCH" || normalized === "DELETE";
+}
 
 function secureStringEqual(a: string, b: string): boolean {
   // Always compare same-length buffers to avoid length-based timing leaks
@@ -32,6 +39,13 @@ export function requireInternalAdmin(request: NextRequest): { ok: true; keyId: s
 export function requireInternalAdminAccess(request: NextRequest): AdminAccessContext {
   const adminSession = getAdminSessionFromRequest(request);
   if (adminSession) {
+    if (isMutationMethod(request.method)) {
+      const sameOriginError = enforceSameOrigin(request);
+      if (sameOriginError) {
+        return { ok: false, status: sameOriginError.status, error: "Cross-site admin request blocked" };
+      }
+    }
+
     const username = adminSession.username;
     return {
       ok: true,

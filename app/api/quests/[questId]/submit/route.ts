@@ -5,8 +5,12 @@ export const dynamic = "force-dynamic";
 import { getSessionUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api-error";
 import { QuestRuntimeError, submitSocialQuestMvp } from "@/lib/domain/quests/runtime";
+import { enforceSameOrigin } from "@/lib/csrf";
 
 export async function POST(request: Request, { params }: { params: { questId: string } }) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
+
   try {
     const user = await getSessionUser();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });

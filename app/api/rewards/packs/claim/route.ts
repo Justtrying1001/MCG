@@ -6,10 +6,14 @@ import { readVisitorIdFromRequest } from "@/lib/analytics/visitor-id";
 import { handleApiError } from "@/lib/api-error";
 import { claimRewardPackGrantDbNative, PackOpenRuntimeError } from "@/lib/domain/acquisition/open-pack";
 import { prisma } from "@/lib/prisma";
+import { enforceSameOrigin } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const sameOriginError = enforceSameOrigin(request);
+  if (sameOriginError) return sameOriginError;
+
   try {
     const visitorId = readVisitorIdFromRequest(request);
     if (!visitorId) return NextResponse.json({ ok: false, error: "Missing visitorId" }, { status: 400 });

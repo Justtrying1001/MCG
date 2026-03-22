@@ -32,7 +32,7 @@ describe("GET /api/internal/admin/users", () => {
         {
           id: "u1",
           displayName: "Alice",
-          xUsername: "alice",
+          handle: "alice",
           points: 1200,
           packsOpened: 9,
           createdAt: new Date("2026-03-01T10:00:00.000Z"),
@@ -50,7 +50,7 @@ describe("GET /api/internal/admin/users", () => {
     expect(body.users[0]).toMatchObject({
       id: "u1",
       displayName: "Alice",
-      xUsername: "alice",
+      handle: "alice",
       level: 4,
       xp: 980,
       createdAt: "2026-03-01T10:00:00.000Z",

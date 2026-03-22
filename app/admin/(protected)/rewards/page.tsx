@@ -19,7 +19,7 @@ import {
   AdminTableRow,
 } from "@/components/admin/AdminUi";
 
-type CandidateUser = { id: string; xUsername: string | null; displayName: string | null; points: number };
+type CandidateUser = { id: string; handle: string | null; displayName: string | null; points: number };
 type GrantRow = {
   id: string;
   userId: string;
@@ -27,7 +27,7 @@ type GrantRow = {
   reasonRef: string | null;
   metadata: { reasonLabel?: string; reasonCode?: string } | null;
   createdAt: string;
-  user: { displayName: string | null; xUsername: string | null } | null;
+  user: { displayName: string | null; handle: string | null } | null;
 };
 
 export default function AdminRewardsPage() {
@@ -186,10 +186,10 @@ export default function AdminRewardsPage() {
           {searchResults.length > 0 ? (
             <div className="admin-v2-list-stack">
               {searchResults.map((candidate) => (
-                <button key={candidate.id} type="button" className="admin-v2-list-row action" onClick={() => { setUserId(candidate.id); setSearchTerm(candidate.xUsername ? `@${candidate.xUsername}` : candidate.id); }}>
+                <button key={candidate.id} type="button" className="admin-v2-list-row action" onClick={() => { setUserId(candidate.id); setSearchTerm(candidate.handle ? `@${candidate.handle}` : candidate.id); }}>
                   <span>
                     <strong>{candidate.displayName || candidate.id}</strong>
-                    <small className="contest-inline-note">@{candidate.xUsername || "—"} · {candidate.points} pts</small>
+                    <small className="contest-inline-note">@{candidate.handle || "—"} · {candidate.points} pts</small>
                   </span>
                 </button>
               ))}
@@ -224,7 +224,7 @@ export default function AdminRewardsPage() {
                 <AdminTableRow key={row.id}>
                   <span className="contest-code">ADMIN_GRANT</span>
                   <AdminStatusBadge tone="success" label={`+${row.amount}`} />
-                  <span className="contest-inline-note">{row.user?.displayName || "—"} @{row.user?.xUsername || "—"} · {row.metadata?.reasonCode || "—"}</span>
+                  <span className="contest-inline-note">{row.user?.displayName || "—"} @{row.user?.handle || "—"} · {row.metadata?.reasonCode || "—"}</span>
                   <span className="contest-inline-note">{new Date(row.createdAt).toLocaleString()}</span>
                 </AdminTableRow>
               ))}

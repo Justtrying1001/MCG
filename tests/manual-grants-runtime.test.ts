@@ -14,7 +14,7 @@ vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 import { grantManualPointsMvp, ManualGrantError } from "@/lib/domain/rewards/manual-grants";
 
 type State = {
-  user: { id: string; points: number; displayName: string; xUsername: string } | null;
+  user: { id: string; points: number; displayName: string; handle: string } | null;
   entries: Array<any>;
 };
 
@@ -49,7 +49,7 @@ describe("manual grant runtime", () => {
 
   it("credits points once with idempotency", async () => {
     const state: State = {
-      user: { id: "u1", points: 100, displayName: "u", xUsername: "u" },
+      user: { id: "u1", points: 100, displayName: "u", handle: "u" },
       entries: [],
     };
 

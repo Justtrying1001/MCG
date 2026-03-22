@@ -67,7 +67,7 @@ describe("/api/internal/rewards/pack-grant", () => {
       {
         id: "rg_1",
         userId: "u1",
-        user: { id: "u1", displayName: "A", xUsername: "a" },
+        user: { id: "u1", displayName: "A", handle: "a" },
         packDefinition: { id: "p1", code: "genesis_reward_pack", displayName: "MCG Genesis Reward Pack", source: "REWARD" },
         sourcePackOpeningEvent: { id: "evt_1", openedAt: new Date("2026-03-01T10:00:00.000Z") },
         createdAt: new Date("2026-03-01T10:00:00.000Z"),

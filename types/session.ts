@@ -61,6 +61,41 @@ export type CompetitiveProgressionSummaryV2 = {
   recentResults: CompetitiveProgressionRecentResultV2[];
 };
 
+export type LinkedWalletSummary = {
+  address: string;
+  providerUserId: string;
+  linkedAt: string;
+  lastSeenAt: string | null;
+  isVerified: boolean;
+};
+
+export type LinkedWalletEnvelope = {
+  linkedWallets: {
+    solanaWallets: LinkedWalletSummary[];
+  };
+};
+
+export type LinkedTwitterSummary = {
+  providerUserId: string;
+  username: string | null;
+  displayName: string | null;
+  linkedAt: string;
+  lastSeenAt: string | null;
+  isVerified: boolean;
+};
+
+export type LinkedSocialEnvelope = {
+  linkedSocials: {
+    twitter: LinkedTwitterSummary | null;
+  };
+};
+
+export type OnboardingEnvelope = {
+  onboarding: {
+    needsHandle: boolean;
+  };
+};
+
 export type MeCoexistenceEnvelope = {
   coexistence?: {
     v2?: {
@@ -73,15 +108,14 @@ export type MeCoexistenceEnvelope = {
   };
 };
 
-export type UserSessionPayload = MeCoexistenceEnvelope & {
+export type UserSessionPayload = MeCoexistenceEnvelope & LinkedWalletEnvelope & LinkedSocialEnvelope & OnboardingEnvelope & {
   mode: "user";
   user: {
     id: string;
-    xUserId: string;
-    username: string;
+    handle: string | null;
+    username: string | null;
     displayName: string;
     avatarUrl: string | null;
-    authProvider: string;
     points: number;
     packsOpened: number;
   };

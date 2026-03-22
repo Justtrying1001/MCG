@@ -23,7 +23,7 @@ export async function listSeasonsOverview(userId?: string) {
     },
   });
 
-  const rowsBySeason = new Map<string, Array<{ userId: string; points: number; rank: number | null; user: { displayName: string; xUsername: string } }>>();
+  const rowsBySeason = new Map<string, Array<{ userId: string; points: number; rank: number | null; user: { displayName: string; handle: string | null } }>>();
   const userRows = new Map<string, { rank: number | null; points: number }>();
 
   await Promise.all(seasons.map(async (season) => {
@@ -31,13 +31,13 @@ export async function listSeasonsOverview(userId?: string) {
       where: { seasonId: season.id },
       orderBy: [{ rank: "asc" }, { points: "desc" }],
       take: 10,
-      include: { user: { select: { id: true, displayName: true, xUsername: true } } },
+      include: { user: { select: { id: true, displayName: true, handle: true } } },
     });
     rowsBySeason.set(season.id, rows.map((row) => ({
       userId: row.userId,
       points: row.points,
       rank: row.rank,
-      user: { displayName: row.user.displayName, xUsername: row.user.xUsername },
+      user: { displayName: row.user.displayName, handle: row.user.handle },
     })));
 
     if (userId) {
