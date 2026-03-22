@@ -972,7 +972,7 @@ export async function listQuestSubmissionsMvp(params?: {
       ...(params?.status ? { status: params.status } : {}),
     },
     include: {
-      user: { select: { id: true, xUsername: true, displayName: true } },
+      user: { select: { id: true, handle: true, displayName: true } },
       quest: {
         select: {
           id: true,
@@ -1473,7 +1473,7 @@ export async function getInternalQuestDetailMvp(
     prisma.questSubmission.findMany({
       where: { questId },
       include: {
-        user: { select: { id: true, xUsername: true, displayName: true } },
+        user: { select: { id: true, handle: true, displayName: true } },
       },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
@@ -1481,7 +1481,7 @@ export async function getInternalQuestDetailMvp(
     prisma.userQuestProgress.findMany({
       where: { questId, status: UserQuestStatus.COMPLETED },
       include: {
-        user: { select: { id: true, xUsername: true, displayName: true } },
+        user: { select: { id: true, handle: true, displayName: true } },
       },
       orderBy: [{ completedAt: "desc" }],
       take: 20,
@@ -1493,7 +1493,7 @@ export async function getInternalQuestDetailMvp(
         reasonRef: questId,
       },
       include: {
-        user: { select: { id: true, xUsername: true, displayName: true } },
+        user: { select: { id: true, handle: true, displayName: true } },
       },
       orderBy: [{ createdAt: "desc" }],
       take: 20,
