@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type {
   ContestListItem,
@@ -17,7 +18,6 @@ import {
   formatDate,
   getTargetDate,
 } from "@/components/contests/contestUtils";
-import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Surface } from "@/components/ui/Surface";
 
@@ -58,14 +58,14 @@ function toBadgeTone(status: ContestStatus) {
 
 function getGroupCta(group: ContestCardGroup, contest: ContestListItem) {
   if (group === "active") {
-    return contest.userEntry ? "View" : "Enter";
+    return "Open";
   }
 
   if (group === "upcoming") {
-    return contest.userEntry ? "Prepare" : "Register";
+    return contest.userEntry ? "Lineup" : "Register";
   }
 
-  return "View results";
+  return "Open";
 }
 
 function getTimingLabel(
@@ -104,6 +104,10 @@ function getLeagueTierLabel(contest: ContestListItem) {
   return contest.leagueTierRequired ?? "OPEN";
 }
 
+function getContestImage(contest: ContestListItem) {
+  return contest.rules[0]?.config?.coverImageUrl ?? null;
+}
+
 export function ContestCard({
   contest,
   group,
@@ -122,6 +126,18 @@ export function ContestCard({
     parseContestBonusRewards(rule?.config?.bonusRewards),
   );
   const ctaLabel = getGroupCta(group, contest);
+  const contestImage = getContestImage(contest);
+  const detailItems = [
+    { label: "Start", value: timing.value },
+    { label: "Entry", value: getEntryLabel(rule) },
+    {
+      label: "Players",
+      value:
+        contest._count.entries > 0
+          ? `${contest._count.entries.toLocaleString()} joined`
+          : "No entries yet",
+    },
+  ];
 
   return (
     <Surface
@@ -129,77 +145,78 @@ export function ContestCard({
       variant="raised"
       className={`contest-lobby-card contest-lobby-card-${group} contest-lobby-card-${contest.status.toLowerCase()}`}
     >
-      <div className="contest-lobby-card-accent-bar" aria-hidden="true" />
-      <div className="contest-lobby-card-topline">
-        <span className="contest-lobby-card-code">{contest.code}</span>
-        <StatusBadge
-          tone={toBadgeTone(contest.status)}
-          label={getPhaseLabel(contest.status)}
-        />
+      <div className="contest-lobby-card-media">
+        {contestImage ? (
+          <Image
+            src={contestImage}
+            alt={`${contest.title} cover`}
+            className="contest-lobby-card-image"
+            width={640}
+            height={480}
+            unoptimized
+          />
+        ) : (
+          <div className="contest-lobby-card-image contest-lobby-card-image-fallback">
+            <span>{contest.code}</span>
+            <strong>{getContestTypeLabel(contest)}</strong>
+          </div>
+        )}
       </div>
 
-      <div className="contest-lobby-card-head">
-        <div>
-          <p className="contest-lobby-card-kicker">
-            {getContestTypeLabel(contest)}
-          </p>
-          <h3>{contest.title}</h3>
+      <div className="contest-lobby-card-body">
+        <div className="contest-lobby-card-topline">
+          <span className="contest-lobby-card-code">{contest.code}</span>
+          <StatusBadge
+            tone={toBadgeTone(contest.status)}
+            label={getPhaseLabel(contest.status)}
+          />
         </div>
-        <div className="contest-lobby-card-timing">
-          <span>{timing.label}</span>
-          <strong>{timing.value}</strong>
+        <div className="contest-lobby-card-head">
+          <div>
+            <p className="contest-lobby-card-kicker">
+              {getContestTypeLabel(contest)}
+            </p>
+            <h3>{contest.title}</h3>
+          </div>
         </div>
-      </div>
 
-      <p className="contest-lobby-card-copy">{stateMessaging.helper}</p>
+        <p className="contest-lobby-card-copy">
+          {timing.label}: {timing.value}
+        </p>
 
-      <div className="contest-lobby-card-chips" aria-label="Contest tags">
-        <Chip label={getLeagueTierLabel(contest)} />
-        <Chip label={getEntryLabel(rule)} />
-        <Chip label={`${rosterSize} card lineup`} />
-        <Chip label={`${contest._count.entries} players`} />
-      </div>
+        <div className="contest-lobby-card-meta-list" aria-label="Contest quick details">
+          {detailItems.map((item) => (
+            <div key={item.label} className="contest-lobby-card-meta-item">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
 
-      <div
-        className="contest-lobby-card-grid"
-        aria-label="Contest quick details"
-      >
-        <div className="contest-lobby-card-panel">
-          <span>Type / tier</span>
-          <strong>{getContestTypeLabel(contest)}</strong>
-          <small>{getLeagueTierLabel(contest)} access</small>
-        </div>
-        <div className="contest-lobby-card-panel">
-          <span>Entry</span>
-          <strong>{getEntryLabel(rule)}</strong>
-          <small>
-            {contest.userEntry ? "Lineup on file" : "No lineup submitted yet"}
-          </small>
-        </div>
         <div className="contest-lobby-card-panel contest-lobby-card-panel-highlight">
-          <span>Reward highlight</span>
+          <span>Reward</span>
           <strong>{rewardHighlight}</strong>
           <small>
             {bonusSummary
               ? `Bonus: ${bonusSummary}`
-              : "Standard placement rewards"}
+              : `${rosterSize}-card lineup · ${getLeagueTierLabel(contest)} tier`}
           </small>
         </div>
-      </div>
 
-      <div className="contest-lobby-card-footer">
-        <div className="contest-lobby-card-status-copy">
-          <span>Status</span>
-          <strong>{stateMessaging.shortLabel}</strong>
+        <div className="contest-lobby-card-footer">
+          <div className="contest-lobby-card-status-copy">
+            <span>Status</span>
+            <strong>{stateMessaging.shortLabel}</strong>
+          </div>
+
+          <Link
+            href={`/contests/${contest.id}`}
+            className="mcg-btn primary contest-lobby-card-cta"
+            aria-label={`${ctaLabel} ${contest.title}`}
+          >
+            {ctaLabel}
+          </Link>
         </div>
-
-        <Link
-          href={`/contests/${contest.id}`}
-          className="mcg-btn primary contest-lobby-card-cta"
-          aria-label={`${ctaLabel} ${contest.title}`}
-        >
-          {ctaLabel}
-        </Link>
       </div>
     </Surface>
   );
