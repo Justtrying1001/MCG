@@ -47,9 +47,8 @@ function getFeaturedContest(contests: ContestListItem[]) {
 function getSectionEmptyState(group: LobbyGroupKey) {
   if (group === "active") {
     return {
-      title: "No active contests right now",
-      description:
-        "The live arena is between rounds. Check upcoming lobbies below.",
+      title: "No contests live right now",
+      description: "New tournaments are coming soon.",
     };
   }
 
@@ -301,10 +300,9 @@ export default function ContestsPage() {
 
         {error && !showBlockingError ? (
           <section
-            className="contest-hub-error-state"
+            className="contest-hub-error-state contest-hub-inline-state"
             role="status"
             aria-live="polite"
-            style={{ marginBottom: "1rem" }}
           >
             <EmptyState
               title="Contest list may be out of date"
@@ -323,14 +321,7 @@ export default function ContestsPage() {
         ) : null}
 
         {isRefreshing && contests.length > 0 ? (
-          <div
-            aria-live="polite"
-            style={{
-              marginBottom: "1rem",
-              fontSize: "0.85rem",
-              color: "var(--color-text-secondary)",
-            }}
-          >
+          <div className="contest-hub-refresh-note" aria-live="polite">
             Refreshing contests…
           </div>
         ) : null}

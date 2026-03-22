@@ -58,7 +58,8 @@ export function PlayerDashboardHeader({
                 </span>
               </p>
               <p className="player-dash-copy">
-                Your handheld hub for contest runs, collection goals, rewards, and the loudest moves happening across MCG.
+                Your handheld hub for contest runs, collection goals, rewards,
+                and the loudest moves happening across MCG.
               </p>
             </div>
           </div>
@@ -83,7 +84,7 @@ export function PlayerDashboardHeader({
                 <strong>{completionLabel}</strong>
               </div>
               <div className="player-dash-mini-stat">
-                <span>Entries</span>
+                <span>Owned</span>
                 <strong>{discoveredCount}</strong>
               </div>
               <div className="player-dash-mini-stat">

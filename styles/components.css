@@ -9344,6 +9344,17 @@ button.mcg-chip:hover {
   margin-left: 1.25rem;
 }
 
+.lobby-ticker-track {
+  min-width: 0;
+  padding-inline: 0.35rem;
+}
+
+.lobby-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
 @keyframes lobbyTickerScroll {
   from {
     transform: translateX(0);
@@ -10875,6 +10886,26 @@ button.mcg-chip:hover {
   color: rgba(17, 17, 17, 0.58);
 }
 
+.contest-hub-inline-state,
+.contest-hub-refresh-note {
+  margin-bottom: 1rem;
+}
+
+.contest-hub-refresh-note {
+  width: fit-content;
+  padding: 0.45rem 0.8rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
 .stitch-contests-screen .contest-lobby-grid {
   gap: 1rem;
 }
@@ -11511,6 +11542,17 @@ button.mcg-chip:hover {
   transform: translate(-2px, -2px);
 }
 
+.stitch-lineup-modal .bldr-controls {
+  align-items: end;
+  gap: 0.8rem;
+}
+
+.stitch-lineup-modal .bldr-pool-scroll {
+  border: 3px solid #111;
+  border-radius: 24px;
+  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.04);
+}
+
 .stitch-lineup-modal .bldr-card-wrap.disabled {
   opacity: 0.62;
   filter: saturate(0.72);
@@ -11701,6 +11743,8 @@ button.mcg-chip:hover {
 }
 
 .stitch-dashboard-screen .player-dash-mini-stat {
+  min-height: 94px;
+
   background: linear-gradient(180deg, #ffffff 0%, #eef8ff 100%);
 }
 
@@ -12483,6 +12527,25 @@ button.mcg-chip:hover {
   box-shadow: 5px 5px 0 #111;
 }
 
+.packs-shop-marquee {
+  flex-wrap: wrap;
+  row-gap: 0.35rem;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stitch-packs-screen .reward-packs-status {
+  width: fit-content;
+  padding: 0.7rem 0.95rem;
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 4px 4px 0 #111;
+}
+
 .stitch-packs-screen .reward-packs-section {
   border: 4px solid #111;
   border-radius: 34px;
@@ -12630,6 +12693,10 @@ button.mcg-chip:hover {
 .stitch-memedex-screen .memedex-filter-pill {
   min-height: 44px;
   background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+}
+
+.stitch-memedex-screen .memedex-filter-pill:hover {
+  transform: translate(-1px, -1px);
 }
 
 .stitch-memedex-screen .memedex-filter-pill.is-active {
