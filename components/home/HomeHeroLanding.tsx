@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
-import { GAME_CONFIG } from "@/lib/game-config";
 
 const HERO_CARDS = [
   {
@@ -32,6 +31,13 @@ const HERO_CARDS = [
   },
 ];
 
+const HERO_COPY = [
+  "Our favorite memecoins deserve better than just living on a chart.",
+  "MCG turns them into real collectible cards you can actually play with.",
+  "Collectors, traders, trenchers, gamers — this is for you.",
+  "Build your team.\nEnter tournaments.\nIf your coins perform, you get rewarded. Simple.",
+];
+
 export function HomeHeroLanding() {
   const { isStartingLogin, loginWithPrivy, ready } = usePrivyLogin();
 
@@ -44,42 +50,27 @@ export function HomeHeroLanding() {
       <div className="home-hero-body">
         <div className="home-hero-content">
           <div className="home-hero-topline">
-            <p className="home-hero-kicker">Join the fun • Genesis season live</p>
+            <p className="home-hero-kicker">Join the fun</p>
             <div className="stitch-stamp">Press start</div>
           </div>
           <h1 className="home-hero-headline">
-            MCG — THE <span>MEME</span>
+            MCG — THE
             <br />
-            CARD GAME
+            <span>MEME</span> CARD
+            <br />
+            GAME
           </h1>
-          <p className="home-hero-subline">
-            Stop scrolling. Start collecting. Pull internet legends, build your
-            roster across {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens, and
-            battle for leaderboard glory.
-          </p>
-
-          <div className="home-hero-entry-panel">
-            <div className="home-hero-entry-copy">
-              <span className="home-hero-entry-label">Guest preview live</span>
-              <strong>
-                Open the start screen, then connect when you are ready to
-                collect for real.
-              </strong>
-              </div>
-          </div>
-
-          <div
-            className="home-hero-chip-row"
-            aria-label="Guest landing highlights"
-          >
-            <span className="mcg-chip">
-              {GAME_CONFIG.GENESIS_SET.TOKEN_COUNT} meme tokens
-            </span>
-            <span className="mcg-chip">
-              {GAME_CONFIG.GENESIS_SET.PACK_COUNT.toLocaleString()} planned
-              packs
-            </span>
-            <span className="mcg-chip">Guest preview ready</span>
+          <div className="home-hero-copy" aria-label="Hero description">
+            {HERO_COPY.map((paragraph) => (
+              <p key={paragraph}>
+                {paragraph.split("\n").map((line, index) => (
+                  <span key={`${paragraph}-${line}`}>
+                    {index > 0 ? <br /> : null}
+                    {line}
+                  </span>
+                ))}
+              </p>
+            ))}
           </div>
 
           <div className="home-hero-cta-stack">
@@ -89,70 +80,58 @@ export function HomeHeroLanding() {
                 disabled={!ready || isStartingLogin}
                 onClick={() => void loginWithPrivy()}
                 icon={
-                <svg
-                  width="16"
-                  height="14"
-                  viewBox="0 0 300 271"
-                  fill="currentColor"
-                  aria-hidden="true"
-                  style={{ flexShrink: 0 }}
-                >
-                  <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
-                </svg>
+                  <svg
+                    width="16"
+                    height="14"
+                    viewBox="0 0 300 271"
+                    fill="currentColor"
+                    aria-hidden="true"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <path d="M236 0h46L181 115l118 156h-92l-72-94-82 94H7l107-122L1 0h94l65 86L236 0zm-16 244h25L80 26H54l166 218z" />
+                  </svg>
                 }
               >
                 Start adventure
               </Button>
-              <a
-                href="https://mcg-2.gitbook.io/mcg/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mcg-btn ghost btn-lg home-hero-cta-secondary"
-              >
-                Read the docs <span aria-hidden="true">↗</span>
-              </a>
             </div>
-            <p className="home-hero-cta-note">
-              Primary start first. Rules and scoring stay available as a
-              secondary path.
-            </p>
           </div>
         </div>
 
         <div className="home-hero-stage" aria-hidden="true">
           <div className="home-hero-stage-frame">
             <div className="home-hero-stage-badge">Pack-ready roster</div>
-          <div className="home-hero-cards-float">
-            {HERO_CARDS.map((card) => (
-              <article
-                key={card.name}
-                className={`home-float-card ${card.cls}`.trim()}
-              >
-                <div className="home-float-card-art">
-                  <Image
-                    src={card.img}
-                    alt={card.label}
-                    fill
-                    sizes="(max-width: 900px) 40vw, 220px"
-                    className="home-float-card-img"
-                    unoptimized
-                  />
-                </div>
-                <div className="home-float-card-body">
-                  <span className="home-float-card-rarity">{card.rarity}</span>
-                  <span className="home-float-card-name">{card.label}</span>
-                  <span className="home-float-card-symbol">{card.symbol}</span>
-                </div>
-              </article>
-            ))}
-          </div>
+            <div className="home-hero-cards-float">
+              {HERO_CARDS.map((card) => (
+                <article
+                  key={card.name}
+                  className={`home-float-card ${card.cls}`.trim()}
+                >
+                  <div className="home-float-card-art">
+                    <Image
+                      src={card.img}
+                      alt={card.label}
+                      fill
+                      sizes="(max-width: 900px) 40vw, 220px"
+                      className="home-float-card-img"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="home-float-card-body">
+                    <span className="home-float-card-rarity">{card.rarity}</span>
+                    <span className="home-float-card-name">{card.label}</span>
+                    <span className="home-float-card-symbol">{card.symbol}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
             <div className="home-hero-stage-note">
-            <strong>Collectible obsession unlocked.</strong>
-            <span>
-              Every pack can feed collection, contests, and progression once you
-              connect.
-            </span>
-          </div>
+              <strong>Collectible obsession unlocked.</strong>
+              <span>
+                Every pack can feed collection, contests, and progression once you
+                connect.
+              </span>
+            </div>
           </div>
         </div>
       </div>
