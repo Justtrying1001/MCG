@@ -254,7 +254,7 @@
   padding: var(--space-3);
   min-height: 260px;
   display: grid;
-  align-content: end;
+  align-content: flex-end;
 }
 .mcg-home-pack h2 {
   font-family: "Barlow Condensed", sans-serif;
@@ -643,7 +643,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .packs-main-intro {
@@ -5204,7 +5204,7 @@ button.admin-v2-list-row.action.is-active {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .packs-shop-header h2 {
@@ -6364,7 +6364,7 @@ textarea:focus {
 .contest-detail-hero-copy {
   align-self: stretch;
   display: grid;
-  align-content: end;
+  align-content: flex-end;
   gap: 10px;
   max-width: min(58ch, 100%);
 }
@@ -8549,7 +8549,7 @@ button.mcg-chip:hover {
   .modal-overlay,
   .mcg-overlay {
     padding: 0;
-    align-items: end;
+    align-items: flex-end;
   }
 
   .modal,
@@ -11543,7 +11543,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-lineup-modal .bldr-controls {
-  align-items: end;
+  align-items: flex-end;
   gap: 0.8rem;
 }
 
@@ -12722,7 +12722,7 @@ button.mcg-chip:hover {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: end;
+  align-items: flex-end;
   flex-wrap: wrap;
 }
 
