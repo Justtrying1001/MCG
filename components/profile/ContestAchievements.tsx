@@ -26,11 +26,6 @@ export function ContestAchievements({
     },
     { label: "Rating", value: rating ? String(rating) : "—", tone: "tertiary" },
     { label: "League", value: leagueTier ?? "Unranked", tone: "neutral" },
-    {
-      label: "Season rank",
-      value: seasonRank ? `#${seasonRank}` : "—",
-      tone: "neutral",
-    },
   ];
 
   return (
@@ -39,7 +34,7 @@ export function ContestAchievements({
         <SectionHeader
           eyebrow="Competitive panel"
           title="Competitive prestige"
-          subtitle="Your strongest contest credentials, ladder standing, and season posture in one prestige panel."
+          subtitle={seasonRank ? `Season rank #${seasonRank}` : "Key competitive stats."}
         />
         <div className="profile-achievement-grid">
           {badges.map((badge) => (

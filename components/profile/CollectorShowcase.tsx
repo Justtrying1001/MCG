@@ -60,7 +60,7 @@ export function CollectorShowcase({
           <SectionHeader
             eyebrow="Trainer identity"
             title={displayName}
-            subtitle="Your premium MCG trainer card, with Memedex prestige, collection momentum, and contest-ready status in one place."
+            subtitle="Your MCG trainer card."
           />
 
           <div className="profile-showcase-chips">

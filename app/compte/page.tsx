@@ -7,9 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CollectorShowcase } from "@/components/profile/CollectorShowcase";
 import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
-import { SetCompletionSection } from "@/components/profile/SetCompletionSection";
 import { ContestAchievements } from "@/components/profile/ContestAchievements";
-import { RecentResults } from "@/components/profile/RecentResults";
 import { SolanaWalletCard } from "@/components/profile/SolanaWalletCard";
 
 type UserQuestRow = {
@@ -61,28 +59,6 @@ export default function AccountPage() {
       .slice(0, 6);
   }, [me?.mvpCollection]);
 
-  const setCompletionRows = useMemo(() => {
-    const done =
-      collection?.ownedTemplateCount ?? me?.mvpCollection.length ?? 0;
-    const total = Math.max(done + (collection?.missingTemplateCount ?? 0), 1);
-    const half = Math.max(1, Math.round(total * 0.5));
-    return [
-      { label: "Genesis Set", done: Math.min(done, total), total },
-      {
-        label: "Arena Set",
-        done: Math.min(Math.round(done * 0.6), half),
-        total: half,
-      },
-      {
-        label: "Meme Icons",
-        done: Math.min(Math.round(done * 0.4), half),
-        total: half,
-      },
-    ];
-  }, [collection, me?.mvpCollection.length]);
-
-  const recentResults = competitive?.recentResults ?? [];
-
   const unlockedMilestoneCount = useMemo(
     () =>
       userQuests.filter(
@@ -94,6 +70,35 @@ export default function AccountPage() {
   );
 
   const accountBreakdown = account?.progressionBreakdown;
+  const trophyBadges = useMemo(() => {
+    const completedMilestones = userQuests
+      .filter((quest) => quest.status === "COMPLETED")
+      .slice(0, 6);
+
+    return completedMilestones.map((quest, index) => ({
+      id: quest.id,
+      icon:
+        quest.type === "CONTEST_COUNT_MILESTONE"
+          ? "🏆"
+          : quest.type === "SUBMISSION_STREAK"
+            ? "🔥"
+            : quest.type === "POINTS_MILESTONE"
+              ? "⚡"
+              : "✨",
+      title: quest.title,
+      subtitle: quest.rewardPoints
+        ? `+${quest.rewardPoints.toLocaleString()} pts`
+        : quest.configSummary?.milestoneType ?? "Milestone",
+      locked: false,
+    }));
+  }, [userQuests]);
+
+  const guestTrophyBadges = [
+    { id: "guest-1", icon: "🏆", title: "First Arena", subtitle: "Contest debut", locked: true },
+    { id: "guest-2", icon: "⚡", title: "Point Surge", subtitle: "Score streak", locked: true },
+    { id: "guest-3", icon: "✨", title: "Collector Rise", subtitle: "Collection milestone", locked: true },
+  ];
+
   const spotlightStats = [
     {
       label: "Player level",
@@ -117,6 +122,39 @@ export default function AccountPage() {
     },
   ];
 
+  const statsPanel = (
+    <section
+      className="profile-spotlight-panel"
+      aria-label={me ? "Trainer spotlight metrics" : "Guest trainer overview"}
+    >
+      <div className="profile-spotlight-heading">
+        <p className="mcg-eyebrow">Trainer stats</p>
+        <h2>Prestige at a glance</h2>
+      </div>
+      <div className="profile-spotlight-grid">
+        {spotlightStats.map((stat) => (
+          <article
+            key={stat.label}
+            className={`profile-spotlight-card tone-${stat.tone}`}
+          >
+            <span>{stat.label}</span>
+            <strong>{stat.value}</strong>
+          </article>
+        ))}
+      </div>
+      {accountBreakdown ? (
+        <div className="profile-spotlight-footer">
+          <span>Progress mix</span>
+          <strong>
+            {accountBreakdown.pointsXp.toLocaleString()} pts ·{" "}
+            {accountBreakdown.competitiveXp.toLocaleString()} comp ·{" "}
+            {accountBreakdown.collectionXp.toLocaleString()} collection
+          </strong>
+        </div>
+      ) : null}
+    </section>
+  );
+
   return (
     <SiteShell>
       <div className="profile-account-layout stitch-screen stitch-profile-screen">
@@ -137,57 +175,53 @@ export default function AccountPage() {
                   />
                 }
               />
+              {statsPanel}
+            </div>
 
-              <section
-                className="profile-spotlight-panel"
-                aria-label="Guest trainer overview"
-              >
-                <div className="profile-spotlight-heading">
-                  <p className="mcg-eyebrow">Trainer spotlight</p>
-                  <h2>At-a-glance account prestige</h2>
-                  <p>
-                    Core profile signals stay visible here so the trainer card
-                    and supporting panels feel like one curated dashboard.
-                  </p>
+            <div className="profile-account-sections">
+              <section className="mcg-surface profile-trophy-panel">
+                <div className="profile-section-heading">
+                  <p className="mcg-eyebrow">Achievements</p>
+                  <h2>Trophy case</h2>
                 </div>
-                <div className="profile-spotlight-grid">
-                  {spotlightStats.map((stat) => (
+                <div className="profile-trophy-row" aria-label="Trainer achievements">
+                  {guestTrophyBadges.map((badge) => (
                     <article
-                      key={stat.label}
-                      className={`profile-spotlight-card tone-${stat.tone}`}
+                      key={badge.id}
+                      className={`profile-trophy-badge ${badge.locked ? "is-locked" : ""}`}
                     >
-                      <span>{stat.label}</span>
-                      <strong>{stat.value}</strong>
+                      <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
+                      <strong>{badge.title}</strong>
+                      <small>{badge.subtitle}</small>
                     </article>
                   ))}
                 </div>
               </section>
-            </div>
 
-            <div className="profile-account-main-grid">
-              <div className="profile-account-main-stack">
-                <FeaturedCardsStrip cards={[]} />
-                <SetCompletionSection
-                  rows={[
-                    { label: "Genesis Set", done: 0, total: 100 },
-                    { label: "Arena Set", done: 0, total: 50 },
-                    { label: "Meme Icons", done: 0, total: 50 },
-                  ]}
-                />
-              </div>
-              <div className="profile-account-side-stack">
-                <ContestAchievements
-                  contestsEntered={0}
-                  bestRank={null}
-                  rating={null}
-                  leagueTier={null}
-                  seasonRank={null}
-                />
+              <FeaturedCardsStrip
+                cards={[]}
+                emptyState={
+                  <EmptyState
+                    title="No showcase pulls yet"
+                    description="Connect wallet / X to start building a trainer identity with featured cards."
+                  />
+                }
+              />
+
+              <ContestAchievements
+                contestsEntered={0}
+                bestRank={null}
+                rating={null}
+                leagueTier={null}
+                seasonRank={null}
+              />
+
+              <section className="profile-settings-shell">
                 <EmptyState
                   title="No profile data yet"
                   description="Connect wallet / X to start collecting cards, entering contests, and building your public MCG identity."
                 />
-              </div>
+              </section>
             </div>
           </>
         ) : (
@@ -199,86 +233,53 @@ export default function AccountPage() {
                 level={account?.level ?? 1}
                 completionPct={collection?.completionPct ?? null}
               />
-
-              <section
-                className="profile-spotlight-panel"
-                aria-label="Trainer spotlight metrics"
-              >
-                <div className="profile-spotlight-heading">
-                  <p className="mcg-eyebrow">Trainer spotlight</p>
-                  <h2>Account prestige at a glance</h2>
-                  <p>
-                    Identity, progression, and competitive signals sit together
-                    here so the whole page reads like a premium trainer dossier.
-                  </p>
-                </div>
-                <div className="profile-spotlight-grid">
-                  {spotlightStats.map((stat) => (
-                    <article
-                      key={stat.label}
-                      className={`profile-spotlight-card tone-${stat.tone}`}
-                    >
-                      <span>{stat.label}</span>
-                      <strong>{stat.value}</strong>
-                    </article>
-                  ))}
-                  {accountBreakdown ? (
-                    <article className="profile-spotlight-card tone-wide">
-                      <span>Progress breakdown</span>
-                      <div className="profile-breakdown-list">
-                        <strong>
-                          Points {accountBreakdown.pointsXp.toLocaleString()}
-                        </strong>
-                        <strong>
-                          Competitive{" "}
-                          {accountBreakdown.competitiveXp.toLocaleString()}
-                        </strong>
-                        <strong>
-                          Collection{" "}
-                          {accountBreakdown.collectionXp.toLocaleString()}
-                        </strong>
-                      </div>
-                    </article>
-                  ) : null}
-                </div>
-              </section>
+              {statsPanel}
             </div>
 
-            <div className="profile-account-main-grid">
-              <div className="profile-account-main-stack">
-                <FeaturedCardsStrip cards={featuredCards} />
-                <SetCompletionSection rows={setCompletionRows} />
-                {recentResults.length > 0 ? (
-                  <RecentResults results={recentResults} />
+            <div className="profile-account-sections">
+              <section className="mcg-surface profile-trophy-panel">
+                <div className="profile-section-heading">
+                  <p className="mcg-eyebrow">Achievements</p>
+                  <h2>Trophy case</h2>
+                </div>
+                {trophyBadges.length > 0 ? (
+                  <div className="profile-trophy-row" aria-label="Trainer achievements">
+                    {trophyBadges.map((badge) => (
+                      <article key={badge.id} className="profile-trophy-badge">
+                        <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
+                        <strong>{badge.title}</strong>
+                        <small>{badge.subtitle}</small>
+                      </article>
+                    ))}
+                  </div>
                 ) : (
                   <EmptyState
-                    title="No recent contest results"
-                    description="Enter contests to build your competitive history."
+                    title="No trophies unlocked yet"
+                    description="Complete milestones and contests to start filling your trainer trophy case."
                   />
                 )}
-              </div>
+              </section>
 
-              <div className="profile-account-side-stack">
+              <FeaturedCardsStrip
+                cards={featuredCards}
+                emptyState={
+                  <EmptyState
+                    title="No showcase pulls yet"
+                    description="Open packs and collect standout cards to feature them here."
+                  />
+                }
+              />
+
+              <ContestAchievements
+                contestsEntered={competitive?.contestsEntered ?? 0}
+                bestRank={competitive?.bestRank ?? null}
+                rating={competitive?.rating ?? null}
+                leagueTier={competitive?.leagueTier ?? null}
+                seasonRank={competitive?.seasonRank ?? null}
+              />
+
+              <div className="profile-settings-shell">
                 <SolanaWalletCard />
-
-                <ContestAchievements
-                  contestsEntered={competitive?.contestsEntered ?? 0}
-                  bestRank={competitive?.bestRank ?? null}
-                  rating={competitive?.rating ?? null}
-                  leagueTier={competitive?.leagueTier ?? null}
-                  seasonRank={competitive?.seasonRank ?? null}
-                />
-
-                {unlockedMilestoneCount > 0 ? (
-                  <div className="mcg-surface profile-unlocked-strip">
-                    <p className="mcg-eyebrow">Milestone badges unlocked</p>
-                    <strong>{unlockedMilestoneCount} unlocked</strong>
-                    <span>
-                      Trainer-card progression keeps your completed contest
-                      milestones visible here.
-                    </span>
-                  </div>
-                ) : null}
               </div>
             </div>
           </>
