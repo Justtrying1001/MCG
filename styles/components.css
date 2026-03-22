@@ -11892,25 +11892,33 @@ button.mcg-chip:hover {
 
 /* ===== Landing second pass ===== */
 .stitch-landing-screen {
-  gap: clamp(3rem, 6vw, 5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(3rem, 5vw, 4rem);
   padding-bottom: clamp(3.5rem, 6vw, 5rem);
 }
 
 .landing-support-stage {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: clamp(2.25rem, 4vw, 3rem);
+  width: 100%;
 }
 
 .landing-play-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(3rem, 6vw, 4rem);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(3rem, 5vw, 4rem);
+  width: 100%;
 }
 
 .stitch-landing-screen .home-hero-landing {
-  min-height: min(860px, calc(100vh - var(--nav-h) - 18px));
-  padding-block: clamp(3.2rem, 6vw, 5.4rem);
+  width: min(1040px, 100%);
+  min-height: min(760px, calc(100vh - var(--nav-h) - 32px));
+  padding-block: clamp(2.4rem, 5vw, 4rem);
   background:
     radial-gradient(circle at 14% 20%, rgba(18, 241, 255, 0.22), transparent 20%),
     radial-gradient(circle at 84% 18%, rgba(255, 239, 85, 0.12), transparent 16%),
@@ -11944,7 +11952,7 @@ button.mcg-chip:hover {
 .stitch-landing-screen .home-hero-headline {
   max-width: 8ch;
   margin-bottom: 0.35rem;
-  font-size: clamp(48px, 6vw, 72px);
+  font-size: clamp(44px, 5.4vw, 70px);
   line-height: 0.95;
   letter-spacing: -0.07em;
 }
@@ -11959,9 +11967,9 @@ button.mcg-chip:hover {
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
   font-family: var(--font-body);
-  font-size: clamp(1rem, 1.7vw, 1.12rem);
+  font-size: clamp(0.98rem, 1.5vw, 1.08rem);
   font-weight: 700;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .home-hero-cta-stack {
@@ -12059,6 +12067,7 @@ button.mcg-chip:hover {
 .stitch-landing-screen .home-how-it-works {
   display: grid;
   gap: 1.25rem;
+  width: min(900px, 100%);
   min-height: 100%;
   padding: clamp(1.75rem, 3vw, 2.35rem);
   background: linear-gradient(180deg, #fffef7 0%, #ffe5ef 100%);
@@ -12095,13 +12104,15 @@ button.mcg-chip:hover {
 .stitch-landing-screen .home-how-steps {
   position: relative;
   z-index: 1;
-  gap: 1rem;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
 }
 
 .stitch-landing-screen .home-how-step {
   position: relative;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 0.9rem;
+  padding: 1.35rem;
   border-width: 4px;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.98);
@@ -12134,7 +12145,7 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-how-step-top {
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .stitch-landing-screen .home-how-step-kicker {
@@ -12162,7 +12173,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-how-step-desc {
-  max-width: 26ch;
+  max-width: 24ch;
   color: #303030;
   font-weight: 700;
   line-height: 1.45;
@@ -12179,20 +12190,22 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-docs-section {
+  width: min(800px, 100%);
   padding-top: 0;
 }
 
 .stitch-landing-screen .home-docs-panel {
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+  gap: 1rem;
+  align-items: center;
   padding: 1.5rem 1.35rem 1.45rem;
   background: linear-gradient(180deg, #d8fbff 0%, #ffef9a 100%);
   transform: none;
 }
 
 .stitch-landing-screen .home-docs-content {
-  gap: 1rem;
+  gap: 0.9rem;
+  max-width: 31rem;
 }
 
 .stitch-landing-screen .home-docs-eyebrow {
@@ -12202,7 +12215,7 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-docs-title {
   max-width: 10ch;
-  font-size: clamp(2rem, 4.2vw, 4rem);
+  font-size: clamp(2rem, 4vw, 3.4rem);
   color: #111;
 }
 
@@ -12225,7 +12238,10 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-docs-art {
   position: relative;
-  min-height: 196px;
+  width: 100%;
+  min-height: 184px;
+  max-width: 260px;
+  justify-self: end;
   padding-top: 0.35rem;
 }
 
@@ -12271,9 +12287,17 @@ button.mcg-chip:hover {
 }
 
 @media (max-width: 1100px) {
-  .landing-play-grid,
   .stitch-landing-screen .home-hero-body {
     grid-template-columns: 1fr;
+  }
+
+  .stitch-landing-screen .home-how-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-landing-screen .home-docs-panel {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .stitch-landing-screen .home-hero-stage {
