@@ -113,7 +113,7 @@ export function usePrivyLogin() {
     }
   }, [authenticated, getAccessToken, ready, refresh]);
 
-  const startLogin = useCallback(async () => {
+  const loginWithPrivy = useCallback(async () => {
     if (loginAttemptInFlightRef.current) {
       return false;
     }
