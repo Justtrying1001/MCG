@@ -13,11 +13,18 @@ type Props = {
   secondaryAction?: ReactNode;
 };
 
-export function CollectorShowcase({ displayName, points, level, completionPct, primaryAction, secondaryAction }: Props) {
+export function CollectorShowcase({
+  displayName,
+  points,
+  level,
+  completionPct,
+  primaryAction,
+  secondaryAction,
+}: Props) {
   const initial = displayName.slice(0, 1).toUpperCase();
 
   return (
-    <Surface className="profile-showcase" variant="raised">
+    <Surface className="profile-showcase stitch-panel-card" variant="raised">
       <div className="profile-showcase-card-shell">
         <div className="profile-showcase-card-frame">
           <div className="profile-showcase-head">
@@ -27,24 +34,54 @@ export function CollectorShowcase({ displayName, points, level, completionPct, p
 
           <div className="profile-showcase-avatar" aria-hidden="true">
             <span>{initial}</span>
-            <strong>{completionPct === null ? "Memedex" : `${completionPct}%`}</strong>
+            <strong>
+              {completionPct === null ? "Memedex" : `${completionPct}%`}
+            </strong>
+          </div>
+
+          <div
+            className="profile-showcase-prestige-row"
+            aria-label="Trainer card prestige markers"
+          >
+            <div className="profile-showcase-prestige-pill">
+              <span>Collection prestige</span>
+              <strong>
+                {completionPct === null
+                  ? "Vault locked"
+                  : `${completionPct}% complete`}
+              </strong>
+            </div>
+            <div className="profile-showcase-prestige-pill">
+              <span>Point stockpile</span>
+              <strong>{points.toLocaleString()} XP</strong>
+            </div>
           </div>
 
           <SectionHeader
             eyebrow="Trainer identity"
             title={displayName}
-            subtitle="Your premium MCG trainer card, with Memedex progress and competitive momentum in one place."
+            subtitle="Your premium MCG trainer card, with Memedex prestige, collection momentum, and contest-ready status in one place."
           />
 
           <div className="profile-showcase-chips">
             <Chip label={`Level ${level}`} />
             <Chip label={`${points.toLocaleString()} points`} />
-            <Chip label={`Memedex ${completionPct === null ? "—" : `${completionPct}%`}`} />
+            <Chip
+              label={`Memedex ${completionPct === null ? "—" : `${completionPct}%`}`}
+            />
           </div>
 
           <div className="profile-showcase-actions">
-            {primaryAction ?? <Link href="/collection" className="mcg-btn primary">Open Memedex</Link>}
-            {secondaryAction ?? <Link href="/contests" className="mcg-btn ghost">Go to contests</Link>}
+            {primaryAction ?? (
+              <Link href="/collection" className="mcg-btn primary">
+                Open Memedex
+              </Link>
+            )}
+            {secondaryAction ?? (
+              <Link href="/contests" className="mcg-btn ghost">
+                Go to contests
+              </Link>
+            )}
           </div>
         </div>
       </div>

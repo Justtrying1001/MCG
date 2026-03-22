@@ -19,27 +19,41 @@ export function CollectionHeader({
   shown,
   missingCount = null,
   totalTemplates = null,
-  completionWidth = completionPct === null ? 12 : Math.max(6, Math.min(100, completionPct)),
+  completionWidth = completionPct === null
+    ? 12
+    : Math.max(6, Math.min(100, completionPct)),
 }: CollectionHeaderProps) {
   return (
-    <Surface variant="raised" className="memedex-header-shell">
+    <Surface
+      variant="raised"
+      className="memedex-header-shell stitch-panel-card"
+    >
       <div className="collection-header-wrap memedex-header-wrap">
         <div className="memedex-header-copy">
+          <div className="memedex-header-stamp">Collector album</div>
           <SectionHeader
             eyebrow="Your Memedex"
             title="The album"
             subtitle="Complete your Memedex with tactile discovery tools, clearer rarity reads, and a collectible-first inventory view."
           />
           <div className="collection-header-chips memedex-header-chips">
-            <Chip label={`Memedex completion ${completionPct === null ? "—" : `${completionPct}%`}`} />
+            <Chip
+              label={`Memedex completion ${completionPct === null ? "—" : `${completionPct}%`}`}
+            />
             <Chip label={`Owned ${totalCards}`} />
             <Chip label={`Unique ${uniqueCards}`} />
             <Chip label={`Shown ${shown}`} />
-            {typeof missingCount === "number" ? <Chip label={`Locked ${missingCount}`} /> : null}
+            {typeof missingCount === "number" ? (
+              <Chip label={`Locked ${missingCount}`} />
+            ) : null}
           </div>
         </div>
 
-        <div className="memedex-header-progress" aria-label="Memedex completion summary">
+        <div
+          className="memedex-header-progress"
+          aria-label="Memedex completion summary"
+        >
+          <div className="memedex-header-medal" aria-hidden="true">★</div>
           <div className="memedex-header-progress-top">
             <span>Memedex progress</span>
             <strong>
@@ -50,7 +64,10 @@ export function CollectionHeader({
                   : `${completionPct}%`}
             </strong>
           </div>
-          <div className="collection-progress-track memedex-header-track" aria-hidden="true">
+          <div
+            className="collection-progress-track memedex-header-track"
+            aria-hidden="true"
+          >
             <span style={{ width: `${completionWidth}%` }} />
           </div>
           <p>

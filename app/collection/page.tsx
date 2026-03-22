@@ -128,195 +128,217 @@ export default function CollectionPage() {
 
   return (
     <SiteShell>
-      <CollectionHeader
-        completionPct={completionPct}
-        totalCards={me ? totalCards : guestCount}
-        uniqueCards={me ? uniqueCards : guestUnique}
-        shown={shownCount}
-        missingCount={me ? missingTemplates : null}
-        totalTemplates={me ? totalTemplates : null}
-        completionWidth={completionWidth}
-      />
+      <div className="stitch-screen stitch-memedex-screen">
+        <CollectionHeader
+          completionPct={completionPct}
+          totalCards={me ? totalCards : guestCount}
+          uniqueCards={me ? uniqueCards : guestUnique}
+          shown={shownCount}
+          missingCount={me ? missingTemplates : null}
+          totalTemplates={me ? totalTemplates : null}
+          completionWidth={completionWidth}
+        />
 
-      <Surface variant="raised" className="memedex-toolbar-shell">
-        <div className="collection-toolbar memedex-toolbar">
-          <div className="collection-data-block memedex-data-block">
-            <span className="mcg-eyebrow">Memedex status</span>
-            <h1 className="collection-data-title">My Memedex</h1>
-            <p className="memedex-data-copy">
-              Track every meme card you have discovered, spot duplicates
-              instantly, and see how close you are to a full album.
-            </p>
-            <div className="collection-data-stats memedex-data-stats">
-              <span>
-                Memedex completion{" "}
-                {completionPct === null ? "—" : `${completionPct}%`}
-              </span>
-              <span>Owned entries {me ? totalCards : guestCount}</span>
-              <span>Unique discovered {me ? uniqueCards : guestUnique}</span>
-              <span>Visible now {shownCount}</span>
-            </div>
-            {me ? (
-              <div
-                className="memedex-progress-callout"
-                aria-label="Memedex progress summary"
-              >
-                <div>
-                  <strong>
-                    {ownedTemplates.toLocaleString()}/
-                    {totalTemplates.toLocaleString()}
-                  </strong>
-                  <span>Memedex entries discovered</span>
-                </div>
+        <Surface variant="raised" className="memedex-toolbar-shell memedex-control-shell">
+          <div className="memedex-control-ribbon">Album tools</div>
+          <div className="collection-toolbar memedex-toolbar">
+            <div className="collection-data-block memedex-data-block">
+              <span className="mcg-eyebrow">Memedex status</span>
+              <h1 className="collection-data-title">My Memedex</h1>
+              <p className="memedex-data-copy">
+                Track every meme card you have discovered, spot duplicates
+                instantly, and see how close you are to a full album.
+              </p>
+              <div className="collection-data-stats memedex-data-stats">
+                <span>
+                  Memedex completion{" "}
+                  {completionPct === null ? "—" : `${completionPct}%`}
+                </span>
+                <span>Owned entries {me ? totalCards : guestCount}</span>
+                <span>Unique discovered {me ? uniqueCards : guestUnique}</span>
+                <span>Visible now {shownCount}</span>
+              </div>
+              {me ? (
                 <div
-                  className="collection-progress-track memedex-progress-track"
-                  aria-hidden="true"
+                  className="memedex-progress-callout"
+                  aria-label="Memedex progress summary"
                 >
-                  <span style={{ width: `${completionWidth}%` }} />
+                  <div>
+                    <strong>
+                      {ownedTemplates.toLocaleString()}/
+                      {totalTemplates.toLocaleString()}
+                    </strong>
+                    <span>Memedex entries discovered</span>
+                  </div>
+                  <div
+                    className="collection-progress-track memedex-progress-track"
+                    aria-hidden="true"
+                  >
+                    <span style={{ width: `${completionWidth}%` }} />
+                  </div>
                 </div>
+              ) : null}
+            </div>
+
+            <div className="collection-sort-block memedex-sort-block">
+              <div className="memedex-control-head">
+                <span className="mcg-eyebrow">Search + filters</span>
+                <p>
+                  Use tactile controls to browse your Memedex without changing
+                  the underlying collection data.
+                </p>
+              </div>
+
+              <label className="memedex-search-field">
+                <span>Search your Memedex</span>
+                <input
+                  className="collection-search-input memedex-search-input"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search name, set, or edition"
+                />
+              </label>
+
+              <div
+                className="memedex-filter-pills"
+                aria-label="Ownership filters"
+              >
+                {[
+                  { value: "all", label: "All entries" },
+                  { value: "duplicates", label: "Duplicates" },
+                  { value: "singles", label: "Singles" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
+                    onClick={() =>
+                      setOwnershipFilter(option.value as OwnershipFilter)
+                    }
+                    aria-pressed={ownershipFilter === option.value}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="collection-sort-row memedex-sort-row">
+                <label>
+                  Rarity
+                  <select
+                    className="collection-select"
+                    value={rarityFilter}
+                    onChange={(e) => setRarityFilter(e.target.value)}
+                  >
+                    <option value="ALL">All rarities</option>
+                    {rarityOptions.map((rarity) => (
+                      <option key={rarity} value={rarity}>
+                        {rarity}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Sort by
+                  <select
+                    className="collection-select"
+                    value={sortBy}
+                    onChange={(e) =>
+                      setSortBy(e.target.value as CollectionSortKey)
+                    }
+                  >
+                    <option value="rarity">Rarity</option>
+                    <option value="name">Name</option>
+                    <option value="edition">Edition</option>
+                    <option value="quantity">Quantity</option>
+                  </select>
+                </label>
+                <label>
+                  Direction
+                  <select
+                    className="collection-select"
+                    value={sortDir}
+                    onChange={(e) =>
+                      setSortDir(e.target.value as "asc" | "desc")
+                    }
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {!me ? (
+              <div className="memedex-callout-wrap">
+                <ConnectXCallout
+                  layout="inline"
+                  title="Memedex sync"
+                  description="Save your real pulls, rarity counts, and Memedex progress once you connect."
+                  ctaLabel="Connect wallet / X to open your Memedex"
+                />
               </div>
             ) : null}
           </div>
+        </Surface>
 
-          <div className="collection-sort-block memedex-sort-block">
-            <div className="memedex-control-head">
-              <span className="mcg-eyebrow">Search + filters</span>
-              <p>
-                Use tactile controls to browse your Memedex without changing the
-                underlying collection data.
+        <section className="memedex-gallery-stage">
+          <div className="memedex-gallery-head">
+            <div>
+              <p className="mcg-eyebrow">Album view</p>
+              <h2 className="memedex-gallery-title">Collectible slots</h2>
+              <p className="memedex-gallery-copy">
+                Browse discovered cards and locked spaces like a real collectible
+                album instead of a plain inventory table.
               </p>
             </div>
-
-            <label className="memedex-search-field">
-              <span>Search your Memedex</span>
-              <input
-                className="collection-search-input memedex-search-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search name, set, or edition"
-              />
-            </label>
-
-            <div
-              className="memedex-filter-pills"
-              aria-label="Ownership filters"
-            >
-              {[
-                { value: "all", label: "All entries" },
-                { value: "duplicates", label: "Duplicates" },
-                { value: "singles", label: "Singles" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
-                  onClick={() =>
-                    setOwnershipFilter(option.value as OwnershipFilter)
-                  }
-                  aria-pressed={ownershipFilter === option.value}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="collection-sort-row memedex-sort-row">
-              <label>
-                Rarity
-                <select
-                  className="collection-select"
-                  value={rarityFilter}
-                  onChange={(e) => setRarityFilter(e.target.value)}
-                >
-                  <option value="ALL">All rarities</option>
-                  {rarityOptions.map((rarity) => (
-                    <option key={rarity} value={rarity}>
-                      {rarity}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Sort by
-                <select
-                  className="collection-select"
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy(e.target.value as CollectionSortKey)
-                  }
-                >
-                  <option value="rarity">Rarity</option>
-                  <option value="name">Name</option>
-                  <option value="edition">Edition</option>
-                  <option value="quantity">Quantity</option>
-                </select>
-              </label>
-              <label>
-                Direction
-                <select
-                  className="collection-select"
-                  value={sortDir}
-                  onChange={(e) => setSortDir(e.target.value as "asc" | "desc")}
-                >
-                  <option value="desc">Descending</option>
-                  <option value="asc">Ascending</option>
-                </select>
-              </label>
+            <div className="memedex-gallery-stats" aria-label="Album summary">
+              <span>Showing {shownCount}</span>
+              <span>{me ? `${ownedTemplates.toLocaleString()} discovered` : `${guestUnique} preview cards`}</span>
             </div>
           </div>
 
           {!me ? (
-            <div className="memedex-callout-wrap">
-              <ConnectXCallout
-                layout="inline"
-                title="Memedex sync"
-                description="Save your real pulls, rarity counts, and Memedex progress once you connect."
-                ctaLabel="Connect wallet / X to open your Memedex"
-              />
-            </div>
-          ) : null}
-        </div>
-      </Surface>
+            <CardGrid
+              items={guestCollection}
+              onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
+              guestMode
+            />
+          ) : !useMvpCollection ? (
+            <EmptyState
+              title="Memedex data unavailable"
+              description="Refresh your session and verify the Memedex payload."
+            />
+          ) : visibleCards.length > 0 ? (
+            <CardGrid
+              items={visibleCards}
+              onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
+              missingCount={missingTemplates}
+            />
+          ) : me && sourceCollection.length === 0 ? (
+            <EmptyState
+              title="Your Memedex is empty"
+              description="Open your first pack to discover your first Memedex entry."
+            />
+          ) : (
+            <EmptyState
+              title="No Memedex entries match"
+              description="Try a different search or filter to surface more discovered cards."
+            />
+          )}
+        </section>
 
-      {!me ? (
-        <CardGrid
-          items={guestCollection}
-          onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
-          guestMode
-        />
-      ) : !useMvpCollection ? (
-        <EmptyState
-          title="Memedex data unavailable"
-          description="Refresh your session and verify the Memedex payload."
-        />
-      ) : visibleCards.length > 0 ? (
-        <CardGrid
-          items={visibleCards}
-          onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
-          missingCount={missingTemplates}
-        />
-      ) : me && sourceCollection.length === 0 ? (
-        <EmptyState
-          title="Your Memedex is empty"
-          description="Open your first pack to discover your first Memedex entry."
-        />
-      ) : (
-        <EmptyState
-          title="No Memedex entries match"
-          description="Try a different search or filter to surface more discovered cards."
-        />
-      )}
+        {me && missingTemplates > 0 ? (
+          <MissingCardsShelf missingCount={missingTemplates} />
+        ) : null}
 
-      {me && missingTemplates > 0 ? (
-        <MissingCardsShelf missingCount={missingTemplates} />
-      ) : null}
-
-      <CardZoomModal
-        card={zoomedCard.card}
-        quantity={zoomedCard.quantity}
-        open={Boolean(zoomedCard.card)}
-        onClose={() => setZoomedCard({ card: null })}
-      />
+        <CardZoomModal
+          card={zoomedCard.card}
+          quantity={zoomedCard.quantity}
+          open={Boolean(zoomedCard.card)}
+          onClose={() => setZoomedCard({ card: null })}
+        />
+      </div>
     </SiteShell>
   );
 }

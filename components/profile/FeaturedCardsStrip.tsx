@@ -4,25 +4,40 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import type { MvpCollectionItem } from "@/types/cards";
 
-export function FeaturedCardsStrip({ cards, emptyState }: { cards: MvpCollectionItem[]; emptyState?: ReactNode }) {
+export function FeaturedCardsStrip({
+  cards,
+  emptyState,
+}: {
+  cards: MvpCollectionItem[];
+  emptyState?: ReactNode;
+}) {
   return (
     <Surface variant="raised" className="profile-featured-surface">
       <div className="profile-featured-cards-wrap">
         <SectionHeader
           eyebrow="Featured pulls"
-          title="Trainer showcase"
-          subtitle="A quick look at the cards that define your collection identity right now."
+          title="Showcase pulls"
+          subtitle="A prestige-forward rail of the cards that currently define your trainer identity."
         />
         {cards.length > 0 ? (
           <div className="profile-featured-cards-strip">
             {cards.map((item) => (
               <div key={item.templateId} className="profile-featured-card-item">
                 <div className="profile-featured-card-frame">
-                  <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
+                  <MvpCardTile
+                    card={item.card}
+                    quantity={item.instanceCount}
+                    variant="canonical"
+                  />
                 </div>
                 <div className="profile-featured-card-meta">
                   <strong>{item.card.displayName}</strong>
-                  <span>{item.card.rarity} · {item.instanceCount > 1 ? `x${item.instanceCount} copies` : "1 copy"}</span>
+                  <span>
+                    {item.card.rarity} ·{" "}
+                    {item.instanceCount > 1
+                      ? `x${item.instanceCount} copies`
+                      : "1 copy"}
+                  </span>
                 </div>
               </div>
             ))}

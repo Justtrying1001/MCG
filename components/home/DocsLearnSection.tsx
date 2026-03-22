@@ -3,8 +3,8 @@ type Props = {
 };
 
 export function DocsLearnSection({ compact = false }: Props) {
-  const eyebrow = compact ? "Lobby intel" : "Get started";
-  const title = compact ? "Learn the game." : "Join the Memedex obsession.";
+  const eyebrow = compact ? "Lobby intel" : "Start guide";
+  const title = compact ? "Learn the game." : "Enter with the guide.";
   const description = compact
     ? "Rules, packs, contests, and scoring in one place."
     : "Learn the rules, understand scoring, and see how packs, Memedex progress, and contests connect before your first real run.";
@@ -32,6 +32,7 @@ export function DocsLearnSection({ compact = false }: Props) {
         </div>
         {!compact ? (
           <div className="home-docs-art" aria-hidden="true">
+            <div className="home-docs-art-tag">Read before your first run</div>
             <div className="home-docs-art-card home-docs-art-card--back" />
             <div className="home-docs-art-card home-docs-art-card--front">
               <div className="home-docs-art-badge">New season live!</div>

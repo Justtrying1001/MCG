@@ -36,9 +36,9 @@ export function RecentPullsRail({ pulls }: { pulls: RecentPullItem[] }) {
     <Surface className="mcg-anim-fade-up recent-pulls-panel" variant="raised">
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Live feed"
-          title="Recent pulls"
-          subtitle="Legendary reveals rolling through the lobby right now."
+          eyebrow="Broadcast scanner"
+          title="Lobby broadcast"
+          subtitle="Live pull snapshots from around the lobby, framed like a real signal board instead of a plain feed."
           actions={<Link href="/packs" className="mcg-btn ghost">Open packs</Link>}
         />
         {hasPulls ? (

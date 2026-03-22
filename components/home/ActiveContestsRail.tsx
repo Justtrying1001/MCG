@@ -36,9 +36,9 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
       <div className="mcg-home-section">
         <SectionHeader
           eyebrow="Battle arena"
-          title="Active contests"
-          subtitle="Your loudest mode tile: jump into live windows, check lineups, and move straight into the arena."
-          actions={<Link href="/contests" className="mcg-btn ghost">All contests</Link>}
+          title="Choose your contest"
+          subtitle="The main battle destination: pick a live window, inspect your lineup state, and launch straight into the arena."
+          actions={<Link href="/contests" className="mcg-btn ghost">Arena map</Link>}
         />
         {contests.length === 0 ? (
           <EmptyState title="No active contests" description="The next contest window will appear here." />

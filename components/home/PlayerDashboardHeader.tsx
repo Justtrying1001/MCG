@@ -35,11 +35,13 @@ export function PlayerDashboardHeader({
   const highlights = [
     typeof level === "number" ? `Level ${level}` : null,
     typeof seasonRank === "number" ? `Season rank #${seasonRank}` : null,
-    typeof activeEntries === "number" && activeEntries > 0 ? `${activeEntries} active entr${activeEntries > 1 ? "ies" : "y"}` : null,
+    typeof activeEntries === "number" && activeEntries > 0
+      ? `${activeEntries} active entr${activeEntries > 1 ? "ies" : "y"}`
+      : null,
   ].filter(Boolean) as string[];
 
   return (
-    <section className="player-dash-header">
+    <section className="player-dash-header stitch-console-panel">
       <div className="player-dash-hero-copy">
         <p className="player-dash-kicker">Lobby main menu</p>
         <div className="player-dash-title-row">
@@ -50,32 +52,48 @@ export function PlayerDashboardHeader({
             </div>
             <div>
               <p className="player-dash-gm">
-                Trainer <span className="player-dash-name">{shortenAddress(displayName)}</span>
+                Trainer{" "}
+                <span className="player-dash-name">
+                  {shortenAddress(displayName)}
+                </span>
               </p>
               <p className="player-dash-copy">
-                Your lobby for contests, Memedex momentum, and the freshest activity across MCG.
+                Your handheld hub for contest runs, collection goals, rewards,
+                and the loudest moves happening across MCG.
               </p>
             </div>
           </div>
 
           <div className="player-dash-console-stack">
-            <div className="player-dash-points-panel" aria-label="Player points">
-              <span className="player-dash-points-value">{points.toLocaleString()}</span>
+            <div
+              className="player-dash-points-panel"
+              aria-label="Player points"
+            >
+              <span className="player-dash-points-value">
+                {points.toLocaleString()}
+              </span>
               <span className="player-dash-points-label">Points bank</span>
             </div>
 
-            <div className="player-dash-mini-stats" aria-label="Trainer progress">
+            <div
+              className="player-dash-mini-stats"
+              aria-label="Trainer progress"
+            >
               <div className="player-dash-mini-stat">
                 <span>Memedex</span>
                 <strong>{completionLabel}</strong>
               </div>
               <div className="player-dash-mini-stat">
-                <span>Entries</span>
+                <span>Owned</span>
                 <strong>{discoveredCount}</strong>
               </div>
               <div className="player-dash-mini-stat">
                 <span>Missing</span>
-                <strong>{typeof missingTemplates === "number" ? missingTemplates.toLocaleString() : "—"}</strong>
+                <strong>
+                  {typeof missingTemplates === "number"
+                    ? missingTemplates.toLocaleString()
+                    : "—"}
+                </strong>
               </div>
             </div>
           </div>
@@ -93,17 +111,32 @@ export function PlayerDashboardHeader({
       </div>
 
       <div className="player-dash-actions-row">
-        <Link href="/contests" className="player-dash-btn player-dash-btn--primary">
-          Battle arena
+        <Link
+          href="/contests"
+          className="player-dash-btn player-dash-btn--primary"
+        >
+          Enter battle arena
         </Link>
-        <div className="player-dash-secondary-links" aria-label="Secondary actions">
-          <Link href="/collection" className="player-dash-secondary-link player-dash-secondary-link--cyan">
+        <div
+          className="player-dash-secondary-links"
+          aria-label="Secondary actions"
+        >
+          <Link
+            href="/collection"
+            className="player-dash-secondary-link player-dash-secondary-link--cyan"
+          >
             Memedex
           </Link>
-          <Link href="/packs" className="player-dash-secondary-link player-dash-secondary-link--yellow">
-            Booster shop
+          <Link
+            href="/packs"
+            className="player-dash-secondary-link player-dash-secondary-link--yellow"
+          >
+            Open booster shop
           </Link>
-          <Link href="/rewards" className="player-dash-secondary-link player-dash-secondary-link--white">
+          <Link
+            href="/rewards"
+            className="player-dash-secondary-link player-dash-secondary-link--white"
+          >
             Rewards
           </Link>
         </div>
