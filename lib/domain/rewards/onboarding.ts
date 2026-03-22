@@ -42,6 +42,11 @@ function resolveHandle(userHandle?: string | null) {
   return userHandle?.trim() || null;
 }
 
+function resolveInitialHandleFromIdentities(identities: ResolvedIdentityAccount[]) {
+  const twitterIdentity = identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
+  return resolveHandle(twitterIdentity?.username?.toLowerCase() ?? null);
+}
+
 function resolveDisplayName(profile: PrivyIdentityGraph, userDisplayName?: string | null) {
   const twitterIdentity = profile.identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
   return profile.displayName?.trim() || twitterIdentity?.displayName?.trim() || userDisplayName || "MCG Player";
@@ -190,7 +195,7 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
     : await tx.user.create({
         data: {
           displayName: resolveDisplayName(profile),
-          handle: null,
+          handle: resolveInitialHandleFromIdentities(identities),
           avatarUrl: profile.avatarUrl ?? null,
           points: 0,
         },
