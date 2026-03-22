@@ -7,9 +7,7 @@ import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
 const PRIVY_READY_WAIT_TIMEOUT_MS = 3000;
-const PRIVY_LOGOUT_WAIT_TIMEOUT_MS = 3000;
 const PRIVY_STATE_WAIT_INTERVAL_MS = 50;
-const PRIVY_POST_LOGOUT_SETTLE_MS = 150;
 
 function hasPendingLoginRequest() {
   if (typeof window === "undefined") return false;
@@ -52,32 +50,6 @@ export function usePrivyLogin() {
     }
 
     return privyStateRef.current.ready;
-  }, []);
-
-  const waitForPrivyLogout = useCallback(async () => {
-    const startedAt = Date.now();
-
-    while (Date.now() - startedAt < PRIVY_LOGOUT_WAIT_TIMEOUT_MS) {
-      const {
-        authenticated: isAuthenticated,
-        ready: isReady,
-        user: currentUser,
-      } = privyStateRef.current;
-      if (isReady && !isAuthenticated && !currentUser) {
-        await new Promise((resolve) =>
-          window.setTimeout(resolve, PRIVY_POST_LOGOUT_SETTLE_MS),
-        );
-        return (
-          !privyStateRef.current.authenticated && !privyStateRef.current.user
-        );
-      }
-
-      await new Promise((resolve) =>
-        window.setTimeout(resolve, PRIVY_STATE_WAIT_INTERVAL_MS),
-      );
-    }
-
-    return false;
   }, []);
 
   const syncSession = useCallback(async () => {
@@ -128,21 +100,14 @@ export function usePrivyLogin() {
         return false;
       }
 
-      let didLogoutCleanly = true;
-
       if (privyStateRef.current.authenticated || privyStateRef.current.user) {
-        writePendingLoginRequest(false);
-        await logout();
-        didLogoutCleanly = await waitForPrivyLogout();
-      }
+        if (me) {
+          writePendingLoginRequest(false);
+          return true;
+        }
 
-      if (
-        !didLogoutCleanly ||
-        privyStateRef.current.authenticated ||
-        privyStateRef.current.user
-      ) {
-        writePendingLoginRequest(false);
-        return false;
+        writePendingLoginRequest(true);
+        return syncSession();
       }
 
       writePendingLoginRequest(true);
@@ -152,7 +117,7 @@ export function usePrivyLogin() {
       loginAttemptInFlightRef.current = false;
       setIsStartingLogin(false);
     }
-  }, [login, logout, waitForPrivyLogout, waitForPrivyReady]);
+  }, [login, me, syncSession, waitForPrivyReady]);
 
   const logoutFromApp = useCallback(async () => {
     writePendingLoginRequest(false);
