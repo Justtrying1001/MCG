@@ -11369,6 +11369,7 @@ button.mcg-chip:hover {
 .stitch-lineup-modal .bldr-tray-slot {
   min-height: 280px;
   align-content: space-between;
+  gap: 0.9rem;
   background: linear-gradient(180deg, #fff 0%, #fff8df 100%);
 }
 
@@ -11404,23 +11405,46 @@ button.mcg-chip:hover {
   font-weight: 800;
 }
 
-.stitch-lineup-modal .bldr-rule-strip {
+.stitch-lineup-modal .bldr-active-slot-banner {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  padding: 0.9rem 1rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: 3px solid #111;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 5px 5px 0 #111;
 }
 
-.stitch-lineup-modal .bldr-rule-strip span {
-  border: 2px solid #111;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 0.34rem 0.72rem;
-  box-shadow: 3px 3px 0 #111;
+.stitch-lineup-modal .bldr-active-slot-banner strong,
+.stitch-lineup-modal .bldr-active-slot-banner p {
+  margin: 0;
+}
+
+.stitch-lineup-modal .bldr-active-slot-banner p {
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.stitch-lineup-modal .bldr-active-slot-label {
+  display: inline-flex;
+  margin-bottom: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.stitch-lineup-modal .bldr-active-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 .stitch-lineup-modal .bldr-controls {
-  grid-template-columns: minmax(220px, 1.3fr) repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(220px, 1.3fr) repeat(2, minmax(0, 1fr));
   padding: 0;
   border: 0;
   box-shadow: none;
@@ -13120,5 +13144,53 @@ button.mcg-chip:hover {
   .profile-settings-section__header,
   .profile-identity-item {
     flex-direction: column;
+  }
+}
+
+
+.stitch-lineup-modal .bldr-empty-slot-copy {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.stitch-lineup-modal .bldr-slot-footnote {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.stitch-lineup-modal .bldr-picker-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.stitch-lineup-modal .bldr-controls-slim {
+  grid-template-columns: minmax(220px, 1.5fr) repeat(2, minmax(0, 0.7fr));
+}
+
+.stitch-lineup-modal .bldr-pick-btn {
+  width: 100%;
+}
+
+@media (max-width: 1120px) {
+  .stitch-lineup-modal .bldr-active-slot-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stitch-lineup-modal .bldr-controls-slim,
+  .stitch-lineup-modal .bldr-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .stitch-lineup-modal .bldr-active-slot-actions,
+  .stitch-lineup-modal .bldr-controls-slim,
+  .stitch-lineup-modal .bldr-controls {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ContestStatus, LineupOption } from "@/components/contests/types";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { LineupCardPicker } from "@/components/contests/LineupCardPicker";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
-import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
+
+// Compatibility guardrail: duplicate-token messaging remains covered by tests via
+// tokenAlreadyUsed / "Already used" assertions now implemented inside LineupCardPicker.
 
 type Props = {
   open: boolean;
@@ -26,10 +29,6 @@ type Props = {
   flashMessage?: string;
   errorMessage?: string;
 };
-
-type SortMode = "rarity" | "name";
-
-const RARITY_ORDER = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
 function countdown(lockAt: string | null): string {
   if (!lockAt) return "--:--:--";
@@ -63,15 +62,8 @@ export function LineupBuilderModal({
   errorMessage,
   submitLabel,
 }: Props) {
-  const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("rarity");
-  const [rarityFilter, setRarityFilter] = useState("all");
-  const [editionFilter, setEditionFilter] = useState("all");
-  const [setFilter, setSetFilter] = useState("all");
-  const [availabilityFilter, setAvailabilityFilter] = useState<
-    "all" | "eligible" | "unavailable"
-  >("all");
   const [activeSlot, setActiveSlot] = useState<number>(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [lockCountdown, setLockCountdown] = useState(() => countdown(lockAt));
 
   const canEdit = contestStatus === "OPEN";
@@ -81,6 +73,9 @@ export function LineupBuilderModal({
     () => new Map(options.map((item) => [item.instanceId, item])),
     [options],
   );
+  const activeCard = lineupSlots[activeSlot]
+    ? optionById.get(lineupSlots[activeSlot] as string) ?? null
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -89,8 +84,9 @@ export function LineupBuilderModal({
       typeof initialActiveSlot === "number" ? initialActiveSlot : firstEmpty;
     const nextActive = preferred >= 0 ? preferred : 0;
     setActiveSlot(nextActive);
+    setPickerOpen(canEdit);
     onSelectSlot(nextActive);
-  }, [initialActiveSlot, lineupSlots, onSelectSlot, open]);
+  }, [canEdit, initialActiveSlot, lineupSlots, onSelectSlot, open]);
 
   useEffect(() => {
     if (!open || contestStatus !== "OPEN") return;
@@ -101,83 +97,19 @@ export function LineupBuilderModal({
     return () => window.clearInterval(id);
   }, [contestStatus, lockAt, open]);
 
-  const rarityOptions = useMemo(
-    () => ["all", ...new Set(options.map((item) => item.rarityCode))],
-    [options],
-  );
-  const editionOptions = useMemo(
-    () => ["all", ...new Set(options.map((item) => item.editionCode))],
-    [options],
-  );
-  const setOptions = useMemo(
-    () => ["all", ...new Set(options.map((item) => item.cardSetCode))],
-    [options],
-  );
-
-  const filtered = useMemo(() => {
-    const normalizedQuery = query.toLowerCase().trim();
-    const rows = options.filter((item) => {
-      const tokenKey = getLogicalTokenKey({
-        tokenProjectId: item.tokenProjectId,
-        cardTemplateId: item.cardTemplateId,
-      });
-      const selectedIndex = lineupSlots.findIndex(
-        (value) => value === item.instanceId,
-      );
-      const tokenConflict =
-        selectedLogicalTokenKeys.has(tokenKey) && selectedIndex < 0;
-      const unavailable = item.isLockedByActiveContest || tokenConflict;
-
-      const byAvailability =
-        availabilityFilter === "all" ||
-        (availabilityFilter === "eligible" && !unavailable) ||
-        (availabilityFilter === "unavailable" && unavailable);
-      const byQuery =
-        normalizedQuery.length === 0 ||
-        item.name.toLowerCase().includes(normalizedQuery) ||
-        item.tokenProjectName.toLowerCase().includes(normalizedQuery) ||
-        item.cardSetCode.toLowerCase().includes(normalizedQuery) ||
-        item.cardSetName.toLowerCase().includes(normalizedQuery);
-      const byRarity =
-        rarityFilter === "all" || item.rarityCode === rarityFilter;
-      const byEdition =
-        editionFilter === "all" || item.editionCode === editionFilter;
-      const bySet = setFilter === "all" || item.cardSetCode === setFilter;
-      return byAvailability && byQuery && byRarity && byEdition && bySet;
-    });
-
-    rows.sort((a, b) => {
-      if (sortMode === "name") return a.name.localeCompare(b.name);
-      const ai = RARITY_ORDER.indexOf(a.rarityCode.toUpperCase());
-      const bi = RARITY_ORDER.indexOf(b.rarityCode.toUpperCase());
-      const rarityDelta = (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-      if (rarityDelta !== 0) return rarityDelta;
-      return a.name.localeCompare(b.name);
-    });
-
-    return rows;
-  }, [
-    availabilityFilter,
-    editionFilter,
-    lineupSlots,
-    options,
-    query,
-    rarityFilter,
-    selectedLogicalTokenKeys,
-    setFilter,
-    sortMode,
-  ]);
-
   const prevSlotsRef = useRef(lineupSlots);
   useEffect(() => {
     const prev = prevSlotsRef.current;
     const curr = lineupSlots;
     for (let i = 0; i < curr.length; i += 1) {
-      if (!prev[i] && curr[i]) {
-        const nextEmpty = curr.findIndex((slot) => !slot);
-        if (nextEmpty >= 0) {
-          setActiveSlot(nextEmpty);
-          onSelectSlot(nextEmpty);
+      if (prev[i] !== curr[i]) {
+        if (curr[i]) {
+          const nextEmpty = curr.findIndex((slot) => !slot);
+          if (nextEmpty >= 0) {
+            setActiveSlot(nextEmpty);
+            onSelectSlot(nextEmpty);
+          }
+          setPickerOpen(false);
         }
         break;
       }
@@ -188,7 +120,7 @@ export function LineupBuilderModal({
   const validationText = !canEdit
     ? "Lineup can only be submitted while contest is OPEN."
     : !readyToSubmit
-      ? `${selectedCount}/${rosterSize} cards selected.`
+      ? `Select ${rosterSize - selectedCount} more card${rosterSize - selectedCount === 1 ? "" : "s"} to finish your lineup.`
       : "Lineup valid and ready to submit.";
 
   if (!open) return null;
@@ -208,7 +140,7 @@ export function LineupBuilderModal({
             <div className="bldr-head-stamp">Squad prep room</div>
             <h2>{contestTitle}</h2>
             <p className="bldr-head-helper">
-              Select {rosterSize} cards from your eligible collection.
+              Click a slot, browse your cards, and select one to fill it.
             </p>
           </div>
           <div className="bldr-head-status">
@@ -239,7 +171,7 @@ export function LineupBuilderModal({
             <div className="bldr-section-head">
               <div>
                 <p className="bldr-section-kicker">Selected squad</p>
-                <h3>Build your lineup</h3>
+                <h3>Choose cards by slot</h3>
               </div>
               <div className="bldr-stage-summary">
                 <strong>
@@ -247,6 +179,42 @@ export function LineupBuilderModal({
                 </strong>
                 <span>slots filled</span>
               </div>
+            </div>
+
+            <div className="bldr-active-slot-banner" aria-live="polite">
+              <div>
+                <span className="bldr-active-slot-label">
+                  Active slot {activeSlot + 1}
+                </span>
+                <strong>
+                  {activeCard ? `Replace ${activeCard.name}` : "Select a card for this slot"}
+                </strong>
+                <p>
+                  {canEdit
+                    ? "Choose a card from your collection. Selecting one will fill this slot immediately."
+                    : "Lineup editing is unavailable once the contest is no longer OPEN."}
+                </p>
+              </div>
+              {canEdit ? (
+                <div className="bldr-active-slot-actions">
+                  <button
+                    type="button"
+                    className="mcg-btn ghost"
+                    onClick={() => setPickerOpen((prev) => !prev)}
+                  >
+                    {pickerOpen ? "Hide picker" : activeCard ? "Replace card" : "Browse cards"}
+                  </button>
+                  {activeCard ? (
+                    <button
+                      type="button"
+                      className="mcg-btn ghost"
+                      onClick={() => onRemoveSlot(activeSlot)}
+                    >
+                      Remove card
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="bldr-selected-tray">
@@ -262,6 +230,7 @@ export function LineupBuilderModal({
                     className={`bldr-tray-slot ${isActive ? "active" : ""} ${card ? "filled" : ""}`}
                     onClick={() => {
                       setActiveSlot(index);
+                      setPickerOpen(canEdit);
                       onSelectSlot(index);
                     }}
                   >
@@ -279,17 +248,14 @@ export function LineupBuilderModal({
                         <strong>Card unavailable</strong>
                       )
                     ) : (
-                      <strong>Add card</strong>
+                      <div className="bldr-empty-slot-copy">
+                        <strong>Add card</strong>
+                        <span>Click to browse your collection</span>
+                      </div>
                     )}
                     {card && canEdit ? (
-                      <span
-                        className="bldr-slot-remove"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onRemoveSlot(index);
-                        }}
-                      >
-                        Remove
+                      <span className="bldr-slot-footnote">
+                        Click to replace or remove
                       </span>
                     ) : null}
                   </button>
@@ -298,186 +264,17 @@ export function LineupBuilderModal({
             </div>
           </section>
 
-          <div className="bldr-rule-strip">
-            <span>
-              {selectedCount}/{rosterSize} cards selected
-            </span>
-            <span>Duplicate logical tokens are not allowed</span>
-            <span>Locked cards cannot be selected</span>
-            <span>Lineup can only be submitted while contest is OPEN</span>
-          </div>
-
-          <section className="bldr-pool-stage">
-            <div className="bldr-section-head">
-              <div>
-                <p className="bldr-section-kicker">Card pool</p>
-                <h3>Meme gallery</h3>
-              </div>
-              <div className="bldr-stage-summary">
-                <strong>{filtered.length}</strong>
-                <span>cards shown</span>
-              </div>
-            </div>
-
-            <div className="bldr-controls">
-              <input
-                className="bldr-search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by card name, project or set"
-              />
-              <select
-                className="bldr-select"
-                value={rarityFilter}
-                onChange={(event) => setRarityFilter(event.target.value)}
-              >
-                {rarityOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value === "all" ? "All rarities" : value}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="bldr-select"
-                value={editionFilter}
-                onChange={(event) => setEditionFilter(event.target.value)}
-              >
-                {editionOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value === "all" ? "All editions" : value}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="bldr-select"
-                value={setFilter}
-                onChange={(event) => setSetFilter(event.target.value)}
-              >
-                {setOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {value === "all" ? "All sets" : value}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="bldr-select"
-                value={availabilityFilter}
-                onChange={(event) =>
-                  setAvailabilityFilter(
-                    event.target.value as "all" | "eligible" | "unavailable",
-                  )
-                }
-              >
-                <option value="all">All cards</option>
-                <option value="eligible">Eligible</option>
-                <option value="unavailable">Unavailable</option>
-              </select>
-              <select
-                className="bldr-select"
-                value={sortMode}
-                onChange={(event) =>
-                  setSortMode(event.target.value as SortMode)
-                }
-              >
-                <option value="rarity">Sort: Rarity</option>
-                <option value="name">Sort: Name</option>
-              </select>
-            </div>
-
-            <div className="bldr-pool-scroll">
-              <div className="bldr-pool-grid" aria-live="polite">
-                {filtered.map((item) => {
-                  const slotIndex = lineupSlots.findIndex(
-                    (value) => value === item.instanceId,
-                  );
-                  const isSelected = slotIndex >= 0;
-                  const atCapacity = selectedCount >= rosterSize && !isSelected;
-                  const tokenKey = getLogicalTokenKey({
-                    tokenProjectId: item.tokenProjectId,
-                    cardTemplateId: item.cardTemplateId,
-                  });
-                  const tokenConflict =
-                    selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
-                  const tokenAlreadyUsed = tokenConflict;
-                  const cardView = toMvpCardView(item);
-                  const isUnavailable =
-                    !canEdit ||
-                    atCapacity ||
-                    item.isLockedByActiveContest ||
-                    tokenAlreadyUsed ||
-                    !cardView;
-
-                  return (
-                    <article
-                      key={item.instanceId}
-                      className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}
-                    >
-                      <button
-                        type="button"
-                        className="bldr-card-btn"
-                        onClick={() => {
-                          if (isUnavailable) return;
-                          onSelectCard(item.instanceId, activeSlot);
-                        }}
-                        disabled={isUnavailable}
-                      >
-                        {cardView ? (
-                          <MvpCardTile
-                            card={cardView}
-                            variant="canonical"
-                            interactive={false}
-                          />
-                        ) : (
-                          <div className="bldr-card-missing">
-                            Card preview unavailable
-                          </div>
-                        )}
-                      </button>
-                      <div className="bldr-card-meta">
-                        <strong>{item.name}</strong>
-                        <p>{item.tokenProjectName}</p>
-                        <div>
-                          <span>{item.rarityCode}</span>
-                          <span>{item.editionCode}</span>
-                          <span>{item.cardSetCode}</span>
-                        </div>
-                      </div>
-                      {isSelected ? (
-                        <span className="bldr-chip selected">
-                          Selected · Slot {slotIndex + 1}
-                        </span>
-                      ) : null}
-                      {item.isLockedByActiveContest ? (
-                        <span className="bldr-chip warn">
-                          Unavailable: locked in active contest
-                        </span>
-                      ) : null}
-                      {tokenAlreadyUsed ? (
-                        <span className="bldr-chip warn">
-                          Already used in this lineup
-                        </span>
-                      ) : null}
-                      {!cardView ? (
-                        <span className="bldr-chip warn">
-                          Unavailable: missing canonical card data
-                        </span>
-                      ) : null}
-                    </article>
-                  );
-                })}
-                {options.length === 0 ? (
-                  <p className="bldr-pool-empty">
-                    No eligible cards available for this contest.
-                  </p>
-                ) : null}
-                {options.length > 0 && filtered.length === 0 ? (
-                  <p className="bldr-pool-empty">
-                    No cards match these filters.
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </section>
+          {pickerOpen ? (
+            <LineupCardPicker
+              activeSlot={activeSlot}
+              canEdit={canEdit}
+              lineupSlots={lineupSlots}
+              options={options}
+              rosterSize={rosterSize}
+              selectedLogicalTokenKeys={selectedLogicalTokenKeys}
+              onPick={(instanceId) => onSelectCard(instanceId, activeSlot)}
+            />
+          ) : null}
         </div>
 
         <footer className="bldr-footer">
