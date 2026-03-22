@@ -4,6 +4,8 @@ ADD COLUMN IF NOT EXISTS "xUserId" TEXT;
 DO $$
 DECLARE
   has_privy_user_id boolean;
+  has_x_username boolean;
+  backfill_sql text;
 BEGIN
   SELECT EXISTS (
     SELECT 1
@@ -13,26 +15,27 @@ BEGIN
       AND column_name = 'privyUserId'
   ) INTO has_privy_user_id;
 
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'User'
+      AND column_name = 'xUsername'
+  ) INTO has_x_username;
+
+  backfill_sql := 'UPDATE "User" SET "xUserId" = CASE ';
+
   IF has_privy_user_id THEN
-    EXECUTE $update_with_privy$
-      UPDATE "User"
-      SET "xUserId" = CASE
-        WHEN "privyUserId" IS NOT NULL THEN 'privy:' || "privyUserId"
-        WHEN COALESCE(NULLIF("xUsername", ''), '') <> '' THEN 'legacy-x:' || "xUsername" || ':' || "id"
-        ELSE 'legacy-user:' || "id"
-      END
-      WHERE "xUserId" IS NULL
-    $update_with_privy$;
-  ELSE
-    EXECUTE $update_without_privy$
-      UPDATE "User"
-      SET "xUserId" = CASE
-        WHEN COALESCE(NULLIF("xUsername", ''), '') <> '' THEN 'legacy-x:' || "xUsername" || ':' || "id"
-        ELSE 'legacy-user:' || "id"
-      END
-      WHERE "xUserId" IS NULL
-    $update_without_privy$;
+    backfill_sql := backfill_sql || 'WHEN "privyUserId" IS NOT NULL THEN ''privy:'' || "privyUserId" ';
   END IF;
+
+  IF has_x_username THEN
+    backfill_sql := backfill_sql || 'WHEN COALESCE(NULLIF("xUsername", ''''), '''') <> '''' THEN ''legacy-x:'' || "xUsername" || '':'' || "id" ';
+  END IF;
+
+  backfill_sql := backfill_sql || 'ELSE ''legacy-user:'' || "id" END WHERE "xUserId" IS NULL';
+
+  EXECUTE backfill_sql;
 END $$;
 
 ALTER TABLE "User"
