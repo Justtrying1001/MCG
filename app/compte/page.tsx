@@ -138,18 +138,28 @@ export default function AccountPage() {
               />
 
               <section
-                className="profile-spotlight-grid"
+                className="profile-spotlight-panel"
                 aria-label="Guest trainer overview"
               >
-                {spotlightStats.map((stat) => (
-                  <article
-                    key={stat.label}
-                    className={`profile-spotlight-card tone-${stat.tone}`}
-                  >
-                    <span>{stat.label}</span>
-                    <strong>{stat.value}</strong>
-                  </article>
-                ))}
+                <div className="profile-spotlight-heading">
+                  <p className="mcg-eyebrow">Trainer spotlight</p>
+                  <h2>At-a-glance account prestige</h2>
+                  <p>
+                    Core profile signals stay visible here so the trainer card
+                    and supporting panels feel like one curated dashboard.
+                  </p>
+                </div>
+                <div className="profile-spotlight-grid">
+                  {spotlightStats.map((stat) => (
+                    <article
+                      key={stat.label}
+                      className={`profile-spotlight-card tone-${stat.tone}`}
+                    >
+                      <span>{stat.label}</span>
+                      <strong>{stat.value}</strong>
+                    </article>
+                  ))}
+                </div>
               </section>
             </div>
 
@@ -190,36 +200,46 @@ export default function AccountPage() {
               />
 
               <section
-                className="profile-spotlight-grid"
+                className="profile-spotlight-panel"
                 aria-label="Trainer spotlight metrics"
               >
-                {spotlightStats.map((stat) => (
-                  <article
-                    key={stat.label}
-                    className={`profile-spotlight-card tone-${stat.tone}`}
-                  >
-                    <span>{stat.label}</span>
-                    <strong>{stat.value}</strong>
-                  </article>
-                ))}
-                {accountBreakdown ? (
-                  <article className="profile-spotlight-card tone-wide">
-                    <span>Progress breakdown</span>
-                    <div className="profile-breakdown-list">
-                      <strong>
-                        Points {accountBreakdown.pointsXp.toLocaleString()}
-                      </strong>
-                      <strong>
-                        Competitive{" "}
-                        {accountBreakdown.competitiveXp.toLocaleString()}
-                      </strong>
-                      <strong>
-                        Collection{" "}
-                        {accountBreakdown.collectionXp.toLocaleString()}
-                      </strong>
-                    </div>
-                  </article>
-                ) : null}
+                <div className="profile-spotlight-heading">
+                  <p className="mcg-eyebrow">Trainer spotlight</p>
+                  <h2>Account prestige at a glance</h2>
+                  <p>
+                    Identity, progression, and competitive signals sit together
+                    here so the whole page reads like a premium trainer dossier.
+                  </p>
+                </div>
+                <div className="profile-spotlight-grid">
+                  {spotlightStats.map((stat) => (
+                    <article
+                      key={stat.label}
+                      className={`profile-spotlight-card tone-${stat.tone}`}
+                    >
+                      <span>{stat.label}</span>
+                      <strong>{stat.value}</strong>
+                    </article>
+                  ))}
+                  {accountBreakdown ? (
+                    <article className="profile-spotlight-card tone-wide">
+                      <span>Progress breakdown</span>
+                      <div className="profile-breakdown-list">
+                        <strong>
+                          Points {accountBreakdown.pointsXp.toLocaleString()}
+                        </strong>
+                        <strong>
+                          Competitive{" "}
+                          {accountBreakdown.competitiveXp.toLocaleString()}
+                        </strong>
+                        <strong>
+                          Collection{" "}
+                          {accountBreakdown.collectionXp.toLocaleString()}
+                        </strong>
+                      </div>
+                    </article>
+                  ) : null}
+                </div>
               </section>
             </div>
 

@@ -39,10 +39,28 @@ export function CollectorShowcase({
             </strong>
           </div>
 
+          <div
+            className="profile-showcase-prestige-row"
+            aria-label="Trainer card prestige markers"
+          >
+            <div className="profile-showcase-prestige-pill">
+              <span>Collection prestige</span>
+              <strong>
+                {completionPct === null
+                  ? "Vault locked"
+                  : `${completionPct}% complete`}
+              </strong>
+            </div>
+            <div className="profile-showcase-prestige-pill">
+              <span>Point stockpile</span>
+              <strong>{points.toLocaleString()} XP</strong>
+            </div>
+          </div>
+
           <SectionHeader
             eyebrow="Trainer identity"
             title={displayName}
-            subtitle="Your premium MCG trainer card, with Memedex progress and competitive momentum in one place."
+            subtitle="Your premium MCG trainer card, with Memedex prestige, collection momentum, and contest-ready status in one place."
           />
 
           <div className="profile-showcase-chips">

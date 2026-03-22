@@ -15,19 +15,29 @@ export function RecentResults({ results }: { results: ResultRow[] }) {
       <div className="profile-results-wrap">
         <SectionHeader
           eyebrow="Recent record"
-          title="Latest contest finishes"
-          subtitle="Compact history of your latest rankings and return-to-contest actions."
+          title="Recent finishes"
+          subtitle="A clean record of your latest placements, ready to funnel you back into the next contest."
         />
 
         <div className="profile-results-list">
           {results.map((result) => (
-            <div key={`${result.contestId}-${result.rankedAt}`} className="profile-result-row">
+            <div
+              key={`${result.contestId}-${result.rankedAt}`}
+              className="profile-result-row"
+            >
               <span className="profile-result-rank">#{result.rank}</span>
               <div>
                 <strong>{result.contestTitle}</strong>
-                <p className="contest-inline-note">{new Date(result.rankedAt).toLocaleDateString()}</p>
+                <p className="contest-inline-note">
+                  {new Date(result.rankedAt).toLocaleDateString()}
+                </p>
               </div>
-              <Link href={`/contests/${result.contestId}`} className="mcg-btn ghost">Open result</Link>
+              <Link
+                href={`/contests/${result.contestId}`}
+                className="mcg-btn ghost"
+              >
+                Open result
+              </Link>
             </div>
           ))}
         </div>
