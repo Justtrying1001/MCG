@@ -17,10 +17,10 @@ export function FeaturedCardsStrip({
         <SectionHeader
           eyebrow="Featured pulls"
           title="Showcase pulls"
-          subtitle="A prestige-forward rail of the cards that currently define your trainer identity."
+          subtitle="Signature cards from your collection."
         />
         {cards.length > 0 ? (
-          <div className="profile-featured-cards-strip">
+          <div className="profile-featured-cards-strip" data-layout="visual-rail">
             {cards.map((item) => (
               <div key={item.templateId} className="profile-featured-card-item">
                 <div className="profile-featured-card-frame">
@@ -32,12 +32,7 @@ export function FeaturedCardsStrip({
                 </div>
                 <div className="profile-featured-card-meta">
                   <strong>{item.card.displayName}</strong>
-                  <span>
-                    {item.card.rarity} ·{" "}
-                    {item.instanceCount > 1
-                      ? `x${item.instanceCount} copies`
-                      : "1 copy"}
-                  </span>
+                  <span>{item.card.rarity}</span>
                 </div>
               </div>
             ))}

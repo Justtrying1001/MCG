@@ -2,24 +2,24 @@ const steps = [
   {
     num: "01",
     icon: "✦",
-    title: "Open packs",
-    description: "Rip a fresh drop.",
+    title: "Open Packs",
+    description: "Crack a fresh drop and hunt for playable cards tied to your favorite memecoins.",
     accent: "pink",
     tilt: "home-how-step--tilt-left",
   },
   {
     num: "02",
     icon: "◉",
-    title: "Build your roster",
-    description: "Pick your best pulls.",
+    title: "Build Your Roster",
+    description: "Shape a squad from your best pulls and prep a lineup that can actually compete.",
     accent: "cyan",
     tilt: "home-how-step--tilt-right",
   },
   {
     num: "03",
     icon: "⚔",
-    title: "Compete & win",
-    description: "Lock in. Chase rewards.",
+    title: "Compete & Win",
+    description: "Enter tournaments, let coin performance do its work, and play for rewards.",
     accent: "yellow",
     tilt: "home-how-step--tilt-left-soft",
   },
@@ -31,7 +31,7 @@ export function HowItWorks() {
       <div className="home-how-header">
         <p className="home-how-eyebrow">How it works</p>
         <h2 className="home-how-title">Open. Build. Battle.</h2>
-        <p className="home-how-copy">Three quick moves. That&apos;s the loop.</p>
+        <p className="home-how-copy">Three clean steps from your first pack to the tournament bracket.</p>
       </div>
       <div className="home-how-steps">
         {steps.map((step) => (

@@ -520,24 +520,6 @@ export default function PacksPage() {
     return Array.from(grouped.values());
   }, [rewardGrants]);
 
-  const featuredPackDescription = me
-    ? "Rip into the live featured drop using your points balance and reveal the cards instantly."
-    : "Test the tactile reveal flow with a preview, then connect when you want your next pack to count.";
-
-  const featuredPackTags = [
-    `${cardsPerPack} cards`,
-    typeof packRemaining === "number"
-      ? `${packRemaining.toLocaleString()} left`
-      : typeof packPlanned === "number"
-        ? `${packPlanned.toLocaleString()} planned`
-        : "Supply pending",
-    purchaseLimit?.enabled
-      ? purchaseLimit.isBlocked
-        ? "Cooldown active"
-        : `${purchaseLimit.remainingPurchases ?? 0} buys left`
-      : "Cap off",
-  ];
-
   return (
     <SiteShell>
       <div className="stitch-screen stitch-packs-screen">
@@ -547,11 +529,6 @@ export default function PacksPage() {
               <p className="packs-main-kicker">Booster shop</p>
               <h2>Featured drop</h2>
             </div>
-            <p className="packs-main-intro">
-              The main pack-opening destination, using the exact same live
-              inventory, pricing, and reveal actions already wired into this
-              page.
-            </p>
           </div>
 
           <div className="packs-shop-marquee" aria-label="Featured pack summary">
@@ -592,62 +569,21 @@ export default function PacksPage() {
             statusNotice={saleNotice}
             isGuest={!me}
             guestHeadline="Discover what can be inside"
-            guestSupportingCopy="Run a short preview reveal now, then connect with X when you want the next reveal to count toward your real inventory."
+            guestSupportingCopy="Run a demo reveal now, then connect with X when you want your next pack to count."
             onConnectWithX={() => void loginWithPrivy()}
             guestCtaLabel="Connect wallet / X to open your pack"
           />
         </section>
 
-        <section className="packs-shop-section stitch-pack-gallery-shell">
-          <div className="packs-shop-header">
-            <div>
-              <p className="packs-main-kicker">Browse the shelf</p>
-              <h2>Shop packs</h2>
-            </div>
-            <p>
-              Supporting pack cards stay available here, but the featured drop
-              remains the hero destination above.
-            </p>
-          </div>
-
-          <div className="packs-shop-grid">
-            <PackCard
-              imageSrc={officialPackImage}
-              imageAlt={`${packConfig?.pack?.displayName ?? "Genesis pack"} pack`}
-              eyebrow="Featured pack"
-              name={packConfig?.pack?.displayName ?? "GENESIS PACK — SET 01"}
-              description={featuredPackDescription}
-              priceLabel={me ? `${GAME_CONFIG.PACK_COST} pts` : "Preview first"}
-              infoLabel={
-                purchaseLimit?.enabled
-                  ? purchaseLimit.isBlocked
-                    ? "Daily cap reached"
-                    : `${purchaseLimit.used}/${purchaseLimit.limit ?? 0} purchased`
-                  : "Live inventory"
-              }
-              ctaLabel={
-                isOpening || openingPhase === "tearing"
-                  ? "Opening…"
-                  : me
-                    ? "Open featured pack"
-                    : "View preview"
-              }
-              onAction={() => void openPack()}
-              disabled={isOpening || openingPhase === "tearing"}
-              tags={featuredPackTags}
-              accent="gold"
-            />
-
-          </div>
-
-          {me ? (
+        {me ? (
+          <section className="packs-shop-section stitch-pack-gallery-shell">
             <section className="reward-packs-section">
               <div className="reward-packs-header">
                 <p className="reward-packs-kicker">Reward inventory</p>
                 <h2>Reward Packs</h2>
                 <p className="reward-packs-intro">
-                  Packs earned from contests, quests, and future rewards. Open
-                  your earned packs here.
+                  Packs earned from contests, quests, and bonus drops. Open
+                  them here when you are ready to reveal.
                 </p>
               </div>
 
@@ -721,8 +657,8 @@ export default function PacksPage() {
                 </div>
               ) : null}
             </section>
-          ) : null}
-        </section>
+          </section>
+        ) : null}
 
         <PackRevealModal
           open={revealSize > 0 && openingPhase === "revealing"}

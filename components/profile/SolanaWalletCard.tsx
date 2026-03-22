@@ -152,16 +152,12 @@ export function SolanaWalletCard() {
       <div className="profile-wallet-card__header">
         <div>
           <p className="mcg-eyebrow">Account settings</p>
-          <h3>Username & linked accounts</h3>
+          <h3>Username & connections</h3>
         </div>
         <span className={`profile-wallet-badge ${hasWallet && hasTwitter ? "is-linked" : "is-empty"}`}>
           {hasWallet && hasTwitter ? "fully linked" : "setup available"}
         </span>
       </div>
-
-      <p className="profile-wallet-card__copy">
-        Your MCG username is editable here. X and wallet connections stay optional, and whichever one you add later links into this same account.
-      </p>
 
       <div className="profile-settings-section">
         <div className="profile-settings-section__header">
