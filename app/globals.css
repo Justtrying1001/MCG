@@ -1285,7 +1285,10 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.65;
 }
 
-.reveal-progress-wrap { margin-bottom: 1rem; }
+.reveal-progress-wrap {
+  margin-bottom: 1.5rem;
+  padding-inline: clamp(0.1rem, 1vw, 0.4rem);
+}
 
 .reveal-progress-text {
   font-size: 0.74rem;
@@ -1319,9 +1322,10 @@ a { color: inherit; text-decoration: none; }
 .pack-reveal-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1.5rem;
+  gap: clamp(1.35rem, 2.8vw, 2rem);
   justify-items: center;
-  max-width: 1200px;
+  align-items: start;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
@@ -1330,7 +1334,7 @@ a { color: inherit; text-decoration: none; }
   background: transparent;
   padding: 0;
   width: 100%;
-  max-width: 208px;
+  max-width: 228px;
   aspect-ratio: 3 / 4;
   perspective: 1200px;
   cursor: pointer;
@@ -1566,6 +1570,81 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-front { transform: rotateY(180deg); }
 
+.reveal-slot-front .mvp-premium-card {
+  --card-header-height: 42px;
+  --card-footer-height: 30px;
+  aspect-ratio: 63 / 88;
+  height: 100%;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--border-in) 85%, #fff 15%),
+    0 20px 42px rgba(0, 0, 0, 0.72),
+    0 0 56px var(--glow-col);
+  grid-template-rows: var(--card-header-height) minmax(0, 1fr) var(--card-footer-height);
+}
+
+.reveal-slot-front .mvp-card-header {
+  padding: 7px 8px 5px;
+  gap: 6px;
+  min-height: 42px;
+}
+
+.reveal-slot-front .mvp-card-header::after {
+  left: 8px;
+  right: 8px;
+}
+
+.reveal-slot-front .mvp-card-header-text,
+.reveal-slot-front .mvp-card-header-badges {
+  min-height: 0;
+}
+
+.reveal-slot-front .mvp-card-header-text {
+  gap: 2px;
+}
+
+.reveal-slot-front .mvp-card-name {
+  font-size: 13px;
+}
+
+.reveal-slot-front .mvp-card-ticker,
+.reveal-slot-front .mvp-card-textbox,
+.reveal-slot-front .mvp-footer-code,
+.reveal-slot-front .mvp-footer-supply {
+  display: none;
+}
+
+.reveal-slot-front .mvp-badge-rarity { font-size: 6px; padding: 2px 4px; }
+.reveal-slot-front .mvp-badge-edition { font-size: 5.5px; padding: 1px 4px; }
+
+.reveal-slot-front .mvp-card-art-shell,
+.reveal-slot-front .mvp-reverse-art-reveal,
+.reveal-slot-front .mvp-mcgart-art-reveal {
+  margin: 5px 6px 0;
+  border-radius: 8px;
+}
+
+.reveal-slot-front .mvp-card-art-shell::after,
+.reveal-slot-front .mvp-reverse-art-reveal::after,
+.reveal-slot-front .mvp-mcgart-art-reveal::after {
+  background: radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.reveal-slot-front .mvp-card-footer {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  padding: 0 8px;
+}
+
+.reveal-slot-front .mvp-card-footer::before {
+  left: 8px;
+  right: 8px;
+}
+
+.reveal-slot-front .mvp-footer-center {
+  font-size: 7px;
+  letter-spacing: 0.09em;
+}
+
 @keyframes reveal-ring-bloom {
   0% {
     opacity: 0;
@@ -1666,7 +1745,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .reveal-complete-row {
-  margin-top: 2rem;
+  margin-top: 2.25rem;
   padding-top: 1.15rem;
   border-top: 1px solid var(--border);
   display: flex;
