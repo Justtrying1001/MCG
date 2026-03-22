@@ -38,9 +38,8 @@ function uniqueIdentityAccounts(identities: ResolvedIdentityAccount[]) {
   });
 }
 
-function resolveHandle(profile: PrivyIdentityGraph, userHandle?: string | null) {
-  const twitterIdentity = profile.identities.find((identity) => identity.provider === UserIdentityProvider.TWITTER);
-  return userHandle || twitterIdentity?.username?.trim() || null;
+function resolveHandle(userHandle?: string | null) {
+  return userHandle?.trim() || null;
 }
 
 function resolveDisplayName(profile: PrivyIdentityGraph, userDisplayName?: string | null) {
@@ -112,7 +111,7 @@ async function updateUserFromIdentityGraph(
     where: { id: params.userId },
     data: {
       displayName: resolveDisplayName(params.profile, params.currentDisplayName),
-      handle: resolveHandle(params.profile, params.currentHandle),
+      handle: resolveHandle(params.currentHandle),
       avatarUrl: params.profile.avatarUrl ?? undefined,
     },
   });
@@ -184,14 +183,14 @@ export async function upsertUserFromPrivyIdentityGraphWithWelcome(
         where: { id: existingUser.id },
         data: {
           displayName: resolveDisplayName(profile, existingUser.displayName),
-          handle: resolveHandle(profile, existingUser.handle),
+          handle: resolveHandle(existingUser.handle),
           avatarUrl: profile.avatarUrl ?? undefined,
         },
       })
     : await tx.user.create({
         data: {
           displayName: resolveDisplayName(profile),
-          handle: resolveHandle(profile),
+          handle: null,
           avatarUrl: profile.avatarUrl ?? null,
           points: 0,
         },
