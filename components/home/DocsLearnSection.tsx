@@ -3,11 +3,11 @@ type Props = {
 };
 
 export function DocsLearnSection({ compact = false }: Props) {
-  const eyebrow = compact ? "Lobby intel" : "Start guide";
-  const title = compact ? "Learn the game." : "Enter with the guide.";
+  const eyebrow = compact ? "Lobby intel" : "Guide";
+  const title = compact ? "Learn the game." : "Start smart";
   const description = compact
     ? "Rules, packs, contests, and scoring in one place."
-    : "Learn the rules, understand scoring, and see how packs, Memedex progress, and contests connect before your first real run.";
+    : "Learn the basics before your first run.";
 
   return (
     <section className={`home-docs-section${compact ? " home-docs-section--compact" : ""}`}>
@@ -18,9 +18,9 @@ export function DocsLearnSection({ compact = false }: Props) {
           <p className="home-docs-desc">{description}</p>
           {!compact ? (
             <div className="home-docs-points" aria-label="Landing support highlights">
-              <span className="mcg-chip">Guest landing preserved</span>
-              <span className="mcg-chip">Docs always available</span>
-              <span className="mcg-chip">Responsive onboarding</span>
+              <span className="mcg-chip">Rules</span>
+              <span className="mcg-chip">Scoring</span>
+              <span className="mcg-chip">Packs</span>
             </div>
           ) : (
             <div className="home-docs-points home-docs-points--compact" aria-label="Dashboard support highlights">
@@ -32,13 +32,12 @@ export function DocsLearnSection({ compact = false }: Props) {
         </div>
         {!compact ? (
           <div className="home-docs-art" aria-hidden="true">
-            <div className="home-docs-art-tag">Read before your first run</div>
             <div className="home-docs-art-card home-docs-art-card--back" />
             <div className="home-docs-art-card home-docs-art-card--front">
-              <div className="home-docs-art-badge">New season live!</div>
+              <div className="home-docs-art-badge">Quick start</div>
               <div className="home-docs-art-body">
-                <strong>Own the memes.</strong>
-                <span>Read the docs, then connect when you are ready to collect for real.</span>
+                <strong>Know the loop.</strong>
+                <span>Rules, score, then jump in.</span>
               </div>
             </div>
           </div>
