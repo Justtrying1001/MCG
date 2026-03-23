@@ -12,6 +12,7 @@ const HERO_CARDS = [
     symbol: "$PEPE",
     img: "https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg?1696528776",
     cls: "home-float-card--legendary",
+    artPosition: "center 22%",
   },
   {
     name: "WIF",
@@ -20,6 +21,7 @@ const HERO_CARDS = [
     symbol: "$WIF",
     img: "https://coin-images.coingecko.com/coins/images/33566/large/dogwifhat.jpg?1702499428",
     cls: "home-float-card--epic home-float-card--hero",
+    artPosition: "center 30%",
   },
   {
     name: "BONK",
@@ -28,6 +30,7 @@ const HERO_CARDS = [
     symbol: "$BONK",
     img: "https://coin-images.coingecko.com/coins/images/28600/large/bonk.jpg?1696527587",
     cls: "home-float-card--rare",
+    artPosition: "center 24%",
   },
 ];
 
@@ -111,6 +114,7 @@ export function HomeHeroLanding() {
                       fill
                       sizes="(max-width: 900px) 40vw, 220px"
                       className="home-float-card-img"
+                      style={{ objectPosition: card.artPosition }}
                       unoptimized
                     />
                   </div>

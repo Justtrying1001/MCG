@@ -13316,9 +13316,52 @@ button.mcg-chip:hover {
 
 .stitch-landing-screen .home-hero-cards-float {
   position: relative;
-  min-height: 390px;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: clamp(360px, 34vw, 420px);
+  padding: 1rem clamp(0.6rem, 1.8vw, 1.25rem) 0.35rem;
   overflow: hidden;
-  align-items: center;
+  isolation: isolate;
+}
+
+.stitch-landing-screen .home-float-card {
+  transform-origin: 50% 100%;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.stitch-landing-screen .home-float-card .home-float-card-art {
+  overflow: hidden;
+}
+
+.stitch-landing-screen .home-float-card .home-float-card-img {
+  object-fit: cover;
+  transform: scale(1.01);
+}
+
+.stitch-landing-screen .home-float-card:nth-child(1) {
+  top: 17%;
+  left: 5%;
+  width: clamp(168px, 19vw, 208px);
+  transform: rotate(-13deg);
+  z-index: 1;
+}
+
+.stitch-landing-screen .home-float-card:nth-child(2) {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: clamp(220px, 24vw, 278px);
+  transform: translateY(-1%) rotate(-1deg);
+  z-index: 3;
+}
+
+.stitch-landing-screen .home-float-card:nth-child(3) {
+  top: 15%;
+  right: 5%;
+  width: clamp(168px, 19vw, 208px);
+  transform: rotate(13deg);
+  z-index: 2;
 }
 
 .landing-page-section--how .home-how-it-works,
@@ -13465,6 +13508,17 @@ button.mcg-chip:hover {
 
   .stitch-landing-screen .home-hero-cards-float {
     min-height: 330px;
+    padding-inline: 0.35rem;
+  }
+
+  .stitch-landing-screen .home-float-card:nth-child(1) {
+    left: 2%;
+    top: 18%;
+  }
+
+  .stitch-landing-screen .home-float-card:nth-child(3) {
+    right: 2%;
+    top: 17%;
   }
 
   .stitch-landing-screen .home-how-title {
