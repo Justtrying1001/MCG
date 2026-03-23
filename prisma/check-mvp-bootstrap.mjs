@@ -53,6 +53,7 @@ async function run() {
           tokenProjectId: true,
           plannedSupply: true,
           issuedSupply: true,
+          oddsWeight: true,
           rarity: { select: { code: true } },
           edition: { select: { code: true } },
         },
@@ -138,6 +139,9 @@ async function run() {
       if (row.plannedSupply <= 0) failures.push(`Template has plannedSupply<=0`);
       if (row.issuedSupply > row.plannedSupply) {
         failures.push(`Template has issuedSupply=${row.issuedSupply} > plannedSupply=${row.plannedSupply}`);
+      }
+      if (!Number.isInteger(row.oddsWeight) || row.oddsWeight <= 0) {
+        failures.push(`Template has invalid oddsWeight=${row.oddsWeight}`);
       }
       if (row.issuedSupply < row.plannedSupply) hasRemainingSupply = true;
 

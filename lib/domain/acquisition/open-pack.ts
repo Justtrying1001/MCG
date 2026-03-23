@@ -10,7 +10,7 @@ import {
   MVP_SALE_PACK_DEFAULTS,
   MVP_REWARD_PACK_TOTAL_SUPPLY,
 } from "@/lib/domain/acquisition/constants";
-import { drawWeightForTemplate, slotTypeForIndex, type PackSlotType } from "@/lib/domain/acquisition/slot-weights";
+import { drawWeightForTemplate } from "@/lib/domain/acquisition/slot-weights";
 import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
@@ -22,6 +22,7 @@ type CardTemplateStockRow = {
   id: string;
   plannedSupply: number;
   issuedSupply: number;
+  oddsWeight: number;
   rarity: { code: string };
   edition: { code: string };
   tokenProject: { slug: string };
@@ -40,15 +41,13 @@ type RuntimePackDefinition = {
 
 export type RewardPackDeliveryMode = "GRANT_ONLY" | "GRANT_AND_OPEN";
 
-function pickBySlotWeight(candidates: CardTemplateStockRow[], slotType: PackSlotType): CardTemplateStockRow | null {
+function pickByOddsWeight(candidates: CardTemplateStockRow[]): CardTemplateStockRow | null {
   const weighted = candidates
     .map((template) => {
       const remainingSupply = template.plannedSupply - template.issuedSupply;
       const weight = drawWeightForTemplate({
-        slotType,
         remainingSupply,
-        rarityCode: template.rarity.code,
-        editionCode: template.edition.code,
+        oddsWeight: template.oddsWeight,
       });
       return { template, weight, remainingSupply };
     })
@@ -200,7 +199,6 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
   const pulledCardsMvp: MvpCardView[] = [];
 
   for (let slotIndex = 0; slotIndex < params.pack.cardsPerPack; slotIndex += 1) {
-    const slotType = slotTypeForIndex(slotIndex, params.pack.cardsPerPack);
     let slotAwarded = false;
 
     for (let attempt = 0; attempt < MAX_DRAW_ATTEMPTS_PER_CARD; attempt += 1) {
@@ -214,6 +212,7 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
           id: true,
           plannedSupply: true,
           issuedSupply: true,
+          oddsWeight: true,
           rarity: { select: { code: true } },
           edition: { select: { code: true } },
           tokenProject: { select: { slug: true } },
@@ -226,7 +225,7 @@ async function allocatePackCards(tx: Prisma.TransactionClient, params: {
         throw new PackOpenRuntimeError("No remaining template supply for this pack", 409);
       }
 
-      const selected = pickBySlotWeight(candidates, slotType);
+      const selected = pickByOddsWeight(candidates);
       if (!selected) {
         throw new PackOpenRuntimeError("No remaining template supply for this pack", 409);
       }

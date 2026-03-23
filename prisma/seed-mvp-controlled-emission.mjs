@@ -147,6 +147,7 @@ async function run() {
         if (!editionRow) throw new Error(`Missing edition ${edition.code}`);
 
         const plannedSupply = SUPPLY_MATRIX[rarity.code][edition.code];
+        const oddsWeight = rarity.weight * edition.weight;
 
         await prisma.cardTemplate.upsert({
           where: {
@@ -162,6 +163,7 @@ async function run() {
             imageUrl: token.imageUrl,
             isActive: true,
             plannedSupply,
+            oddsWeight,
             metadata: {
               source: "phase_c_mvp_controlled_emission_seed",
               tokenIdentity: {
@@ -188,6 +190,7 @@ async function run() {
             imageUrl: token.imageUrl,
             isActive: true,
             plannedSupply,
+            oddsWeight,
             metadata: {
               source: "phase_c_mvp_controlled_emission_seed",
               tokenIdentity: {

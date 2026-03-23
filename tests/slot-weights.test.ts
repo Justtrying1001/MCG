@@ -1,29 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { drawWeightForTemplate, slotTypeForIndex } from "@/lib/domain/acquisition/slot-weights";
+import { drawWeightForTemplate } from "@/lib/domain/acquisition/slot-weights";
 
-describe("slot weights", () => {
-  it("maps last slot to hit slot and previous to edition boost", () => {
-    expect(slotTypeForIndex(0, 5)).toBe("STANDARD");
-    expect(slotTypeForIndex(3, 5)).toBe("EDITION_BOOST");
-    expect(slotTypeForIndex(4, 5)).toBe("RARITY_HIT");
+describe("card odds weights", () => {
+  it("multiplies remaining supply by the card odds weight", () => {
+    expect(drawWeightForTemplate({ remainingSupply: 10, oddsWeight: 7 })).toBe(70);
   });
 
-  it("favors legendary in hit slot over standard slot", () => {
-    const standardLegendary = drawWeightForTemplate({
-      slotType: "STANDARD",
-      remainingSupply: 10,
-      rarityCode: "LEGENDARY",
-      editionCode: "BASE",
-    });
+  it("falls back to weight 1 when oddsWeight is invalid", () => {
+    expect(drawWeightForTemplate({ remainingSupply: 12, oddsWeight: 0 })).toBe(12);
+    expect(drawWeightForTemplate({ remainingSupply: 12, oddsWeight: Number.NaN })).toBe(12);
+  });
 
-    const hitLegendary = drawWeightForTemplate({
-      slotType: "RARITY_HIT",
-      remainingSupply: 10,
-      rarityCode: "LEGENDARY",
-      editionCode: "BASE",
-    });
-
-    expect(hitLegendary).toBeGreaterThan(standardLegendary);
+  it("returns zero when no remaining supply is available", () => {
+    expect(drawWeightForTemplate({ remainingSupply: 0, oddsWeight: 999 })).toBe(0);
   });
 });

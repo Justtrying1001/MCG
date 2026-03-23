@@ -242,21 +242,19 @@ export function FeaturedPackStage({
             <h2 className="ps-section-title">WHAT&apos;S INSIDE</h2>
             <p className="ps-cards-count">{cardsPerPack} cards per pack</p>
             <div className="ps-slots-row">
-              <span className="ps-slot-pill">STANDARD ×3</span>
-              <span className="ps-slot-pill ps-slot-pill--boost">
-                EDITION BOOST
-              </span>
-              <span className="ps-slot-pill ps-slot-pill--hit">RARITY HIT</span>
+              <span className="ps-slot-pill">Uniform draw for every card</span>
+              <span className="ps-slot-pill ps-slot-pill--boost">Controlled emission stays on</span>
             </div>
           </div>
 
           <div className="ps-section ps-section--odds">
             <h2 className="ps-section-title">ODDS</h2>
+            <p className="ps-cta-subcopy">
+              Every card in the pack uses the same runtime odds: remaining supply × card odds weight.
+            </p>
             <div className="ps-odds-grid">
               <div className="ps-odds-col">
-                <p className="ps-odds-col-title">
-                  RARITY <span className="ps-odds-col-note">Slots 1–3</span>
-                </p>
+                <p className="ps-odds-col-title">RARITY</p>
                 {displayRarity.map((o) => (
                   <div key={o.label} className="ps-odd-row">
                     <span
@@ -269,9 +267,7 @@ export function FeaturedPackStage({
                 ))}
               </div>
               <div className="ps-odds-col">
-                <p className="ps-odds-col-title">
-                  EDITION <span className="ps-odds-col-note">Slot 4↑</span>
-                </p>
+                <p className="ps-odds-col-title">EDITION</p>
                 {displayEdition.map((o) => (
                   <div key={o.label} className="ps-odd-row">
                     <span

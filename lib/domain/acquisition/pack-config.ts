@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MVP_SALE_PACK_CODE } from "@/lib/domain/acquisition/constants";
-import { drawWeightForTemplate, slotLabel, slotTypeForIndex } from "@/lib/domain/acquisition/slot-weights";
+import { drawWeightForTemplate } from "@/lib/domain/acquisition/slot-weights";
 import { getPackPurchaseLimitStatus } from "@/lib/domain/acquisition/purchase-limit";
 
 export async function getSalePackRuntimeConfig(userId?: string) {
@@ -24,8 +24,10 @@ export async function getSalePackRuntimeConfig(userId?: string) {
     return {
       exists: false as const,
       pack: null,
-      slots: [],
       purchaseLimit,
+      rarityOdds: [],
+      editionOdds: [],
+      rarityEditionOdds: [],
     };
   }
 
@@ -38,59 +40,56 @@ export async function getSalePackRuntimeConfig(userId?: string) {
     select: {
       plannedSupply: true,
       issuedSupply: true,
+      oddsWeight: true,
       rarity: { select: { code: true } },
       edition: { select: { code: true } },
     },
   });
 
-  const slots = Array.from({ length: pack.cardsPerPack }).map((_, index) => {
-    const slotType = slotTypeForIndex(index, pack.cardsPerPack);
-    const byRarity = new Map<string, number>();
-    const byRarityEdition = new Map<string, number>();
-    let total = 0;
+  const byRarity = new Map<string, number>();
+  const byEdition = new Map<string, number>();
+  const byRarityEdition = new Map<string, number>();
+  let total = 0;
 
-    for (const template of templates) {
-      const remainingSupply = template.plannedSupply - template.issuedSupply;
-      const weight = drawWeightForTemplate({
-        slotType,
-        remainingSupply,
-        rarityCode: template.rarity.code,
-        editionCode: template.edition.code,
-      });
+  for (const template of templates) {
+    const remainingSupply = template.plannedSupply - template.issuedSupply;
+    const weight = drawWeightForTemplate({
+      remainingSupply,
+      oddsWeight: template.oddsWeight,
+    });
 
-      if (weight <= 0) continue;
-      total += weight;
-      byRarity.set(template.rarity.code, (byRarity.get(template.rarity.code) ?? 0) + weight);
-      const key = `${template.rarity.code}__${template.edition.code}`;
-      byRarityEdition.set(key, (byRarityEdition.get(key) ?? 0) + weight);
-    }
+    if (weight <= 0) continue;
+    total += weight;
+    byRarity.set(template.rarity.code, (byRarity.get(template.rarity.code) ?? 0) + weight);
+    byEdition.set(template.edition.code, (byEdition.get(template.edition.code) ?? 0) + weight);
+    const key = `${template.rarity.code}__${template.edition.code}`;
+    byRarityEdition.set(key, (byRarityEdition.get(key) ?? 0) + weight);
+  }
 
-    const rarityOdds = Array.from(byRarity.entries())
-      .map(([rarityCode, weight]) => ({
+  const rarityOdds = Array.from(byRarity.entries())
+    .map(([rarityCode, weight]) => ({
+      rarityCode,
+      pct: total > 0 ? Number(((weight / total) * 100).toFixed(2)) : 0,
+    }))
+    .sort((a, b) => b.pct - a.pct);
+
+  const editionOdds = Array.from(byEdition.entries())
+    .map(([editionCode, weight]) => ({
+      editionCode,
+      pct: total > 0 ? Number(((weight / total) * 100).toFixed(2)) : 0,
+    }))
+    .sort((a, b) => b.pct - a.pct);
+
+  const rarityEditionOdds = Array.from(byRarityEdition.entries())
+    .map(([key, weight]) => {
+      const [rarityCode, editionCode] = key.split("__");
+      return {
         rarityCode,
+        editionCode,
         pct: total > 0 ? Number(((weight / total) * 100).toFixed(2)) : 0,
-      }))
-      .sort((a, b) => b.pct - a.pct);
-
-    const rarityEditionOdds = Array.from(byRarityEdition.entries())
-      .map(([key, weight]) => {
-        const [rarityCode, editionCode] = key.split("__");
-        return {
-          rarityCode,
-          editionCode,
-          pct: total > 0 ? Number(((weight / total) * 100).toFixed(2)) : 0,
-        };
-      })
-      .sort((a, b) => b.pct - a.pct);
-
-    return {
-      index,
-      type: slotType,
-      label: slotLabel(slotType),
-      rarityOdds,
-      rarityEditionOdds,
-    };
-  });
+      };
+    })
+    .sort((a, b) => b.pct - a.pct);
 
   return {
     exists: true as const,
@@ -104,6 +103,8 @@ export async function getSalePackRuntimeConfig(userId?: string) {
       remainingPackCount: Math.max(pack.plannedPackCount - pack.openedPackCount, 0),
       isActive: pack.isActive,
     },
-    slots,
+    rarityOdds,
+    editionOdds,
+    rarityEditionOdds,
   };
 }

@@ -20,6 +20,7 @@ export function PackOddsDrawer({ open, onClose, rarityRows, editionRows, remaini
           <p>
             {typeof remaining === "number" ? remaining.toLocaleString() : "—"} / {typeof planned === "number" ? planned.toLocaleString() : "—"}
           </p>
+          <p>Each card draw uses the same formula: remaining supply × card odds weight.</p>
         </div>
 
         <div className="pack-odds-tables">

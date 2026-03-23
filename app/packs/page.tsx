@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { CardZoomModal } from "@/components/ui/CardZoomModal";
 import { FeaturedPackStage } from "@/components/packs/FeaturedPackStage";
@@ -29,16 +29,12 @@ type PackConfigPayload = {
     remainingPackCount: number;
     isActive: boolean;
   };
-  slots: Array<{
-    index: number;
-    type: string;
-    label: string;
-    rarityOdds: Array<{ rarityCode: string; pct: number }>;
-    rarityEditionOdds: Array<{
-      rarityCode: string;
-      editionCode: string;
-      pct: number;
-    }>;
+  rarityOdds: Array<{ rarityCode: string; pct: number }>;
+  editionOdds: Array<{ editionCode: string; pct: number }>;
+  rarityEditionOdds: Array<{
+    rarityCode: string;
+    editionCode: string;
+    pct: number;
   }>;
 };
 
@@ -404,7 +400,7 @@ export default function PacksPage() {
   const packPlanned = packConfig?.pack?.plannedPackCount;
   const cardsPerPack =
     packConfig?.pack?.cardsPerPack ?? GAME_CONFIG.CARDS_PER_PACK;
-  const purchaseLimit = useMemo(() => {
+  const purchaseLimit = (() => {
     const base = packConfig?.purchaseLimit;
     if (!base?.resetAt) return base ?? null;
 
@@ -421,62 +417,17 @@ export default function PacksPage() {
       isBlocked,
       remainingPurchases: isBlocked ? 0 : base.remainingPurchases,
     };
-  }, [nowMs, packConfig?.purchaseLimit]);
+  })();
 
-  const rarityRows = useMemo(() => {
-    const totalSlots = Math.max(cardsPerPack, 1);
-    const aggregate = new Map<string, number>();
-    for (const slot of packConfig?.slots ?? []) {
-      for (const odd of slot.rarityOdds ?? []) {
-        const key = odd.rarityCode.toUpperCase();
-        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / totalSlots);
-      }
-    }
-    return Array.from(aggregate.entries())
-      .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
-      .sort((a, b) => b.rate - a.rate);
-  }, [cardsPerPack, packConfig?.slots]);
+  const rarityRows = (packConfig?.rarityOdds ?? [])
+    .map((row) => ({ label: row.rarityCode.toUpperCase(), rate: Number(row.pct.toFixed(2)) }))
+    .sort((a, b) => b.rate - a.rate);
 
-  const editionRows = useMemo(() => {
-    const totalSlots = Math.max(cardsPerPack, 1);
-    const aggregate = new Map<string, number>();
-    for (const slot of packConfig?.slots ?? []) {
-      for (const odd of slot.rarityEditionOdds ?? []) {
-        const key = odd.editionCode.toUpperCase();
-        aggregate.set(key, (aggregate.get(key) ?? 0) + odd.pct / totalSlots);
-      }
-    }
-    return Array.from(aggregate.entries())
-      .map(([label, rate]) => ({ label, rate: Number(rate.toFixed(2)) }))
-      .sort((a, b) => b.rate - a.rate);
-  }, [cardsPerPack, packConfig?.slots]);
+  const editionRows = (packConfig?.editionOdds ?? [])
+    .map((row) => ({ label: row.editionCode.toUpperCase(), rate: Number(row.pct.toFixed(2)) }))
+    .sort((a, b) => b.rate - a.rate);
 
-  const rarityOddsForDisplay = useMemo(() => {
-    const standardSlots = (packConfig?.slots ?? []).filter(
-      (s) => s.type === "STANDARD",
-    );
-    if (standardSlots.length === 0) return undefined;
-    const aggregate = new Map<string, number>();
-    for (const slot of standardSlots) {
-      for (const odd of slot.rarityOdds ?? []) {
-        const key = odd.rarityCode.toUpperCase();
-        aggregate.set(
-          key,
-          (aggregate.get(key) ?? 0) + odd.pct / standardSlots.length,
-        );
-      }
-    }
-    return Array.from(aggregate.entries())
-      .map(([label, pct]) => ({ label, pct: Number(pct.toFixed(1)) }))
-      .sort((a, b) => b.pct - a.pct);
-  }, [packConfig?.slots]);
-
-  const editionOddsForDisplay = useMemo(() => {
-    if (!editionRows.length) return undefined;
-    return editionRows.map((r) => ({ label: r.label, pct: r.rate }));
-  }, [editionRows]);
-
-  const groupedRewardGrants = useMemo(() => {
+  const groupedRewardGrants = (() => {
     const grouped = new Map<
       string,
       {
@@ -518,7 +469,7 @@ export default function PacksPage() {
     }
 
     return Array.from(grouped.values());
-  }, [rewardGrants]);
+  })();
 
   return (
     <SiteShell>
@@ -562,8 +513,8 @@ export default function PacksPage() {
             canOpen={!isOpening && openingPhase !== "tearing"}
             onOpen={() => void openPack()}
             onOpenOdds={() => setOddsOpen(true)}
-            rarityOdds={rarityOddsForDisplay}
-            editionOdds={editionOddsForDisplay}
+            rarityOdds={rarityRows.map((row) => ({ label: row.label, pct: row.rate }))}
+            editionOdds={editionRows.map((row) => ({ label: row.label, pct: row.rate }))}
             userPoints={me?.user?.points}
             purchaseLimit={purchaseLimit}
             statusNotice={saleNotice}
@@ -659,6 +610,15 @@ export default function PacksPage() {
             </section>
           </section>
         ) : null}
+
+        <PackOddsDrawer
+          open={oddsOpen}
+          onClose={() => setOddsOpen(false)}
+          rarityRows={rarityRows}
+          editionRows={editionRows}
+          remaining={packRemaining}
+          planned={packPlanned}
+        />
 
         <PackRevealModal
           open={revealSize > 0 && openingPhase === "revealing"}

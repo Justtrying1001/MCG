@@ -336,6 +336,7 @@ model CardTemplate {
   metadata       Json?
   plannedSupply  Int      @default(0)
   issuedSupply   Int      @default(0)
+  oddsWeight     Int      @default(1)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
