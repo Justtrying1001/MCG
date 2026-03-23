@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Modal } from "@/components/ui/Modal";
 import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CollectorShowcase } from "@/components/profile/CollectorShowcase";
 import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
@@ -29,6 +30,9 @@ export default function AccountPage() {
   const competitive = v2?.competitiveProgression;
 
   const [userQuests, setUserQuests] = useState<UserQuestRow[]>([]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShowcaseEditing, setIsShowcaseEditing] = useState(false);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (me?.mode !== "user") return;
@@ -40,250 +44,251 @@ export default function AccountPage() {
     })();
   }, [me]);
 
-  const featuredCards = useMemo(() => {
+  const sortedCollection = useMemo(() => {
     if (!me?.mvpCollection?.length) return [];
-    return [...me.mvpCollection]
-      .sort((a, b) => {
-        const rarityWeight = (value: string) => {
-          if (value === "LEGENDARY") return 5;
-          if (value === "EPIC") return 4;
-          if (value === "RARE") return 3;
-          if (value === "UNCOMMON") return 2;
-          return 1;
-        };
-        return (
-          rarityWeight(b.card.rarity) - rarityWeight(a.card.rarity) ||
-          b.instanceCount - a.instanceCount
-        );
-      })
-      .slice(0, 6);
+    return [...me.mvpCollection].sort((a, b) => {
+      const rarityWeight = (value: string) => {
+        if (value === "LEGENDARY") return 5;
+        if (value === "EPIC") return 4;
+        if (value === "RARE") return 3;
+        if (value === "UNCOMMON") return 2;
+        return 1;
+      };
+      return (
+        rarityWeight(b.card.rarity) - rarityWeight(a.card.rarity) ||
+        b.instanceCount - a.instanceCount
+      );
+    });
   }, [me?.mvpCollection]);
 
-  const unlockedMilestoneCount = useMemo(
+  useEffect(() => {
+    if (!sortedCollection.length) {
+      setSelectedTemplateIds([]);
+      return;
+    }
+    setSelectedTemplateIds((current) => {
+      const available = new Set(sortedCollection.map((item) => item.templateId));
+      const preserved = current.filter((id) => available.has(id));
+      if (preserved.length > 0) return preserved.slice(0, 6);
+      return sortedCollection.slice(0, 6).map((item) => item.templateId);
+    });
+  }, [sortedCollection]);
+
+  const featuredCards = useMemo(() => {
+    if (!sortedCollection.length) return [];
+    const selected = selectedTemplateIds
+      .map((templateId) =>
+        sortedCollection.find((item) => item.templateId === templateId),
+      )
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+    return selected.slice(0, 6);
+  }, [selectedTemplateIds, sortedCollection]);
+
+  const unlockedMilestones = useMemo(
     () =>
       userQuests.filter(
         (quest) =>
           quest.type === "CONTEST_COUNT_MILESTONE" &&
           quest.status === "COMPLETED",
-      ).length,
+      ),
     [userQuests],
   );
 
-  const accountBreakdown = account?.progressionBreakdown;
-  const trophyBadges = useMemo(() => {
-    const completedMilestones = userQuests
-      .filter((quest) => quest.status === "COMPLETED")
-      .slice(0, 6);
-
-    return completedMilestones.map((quest, index) => ({
-      id: quest.id,
-      icon:
-        quest.type === "CONTEST_COUNT_MILESTONE"
-          ? "🏆"
-          : quest.type === "SUBMISSION_STREAK"
-            ? "🔥"
-            : quest.type === "POINTS_MILESTONE"
-              ? "⚡"
-              : "✨",
-      title: quest.title,
-      subtitle: quest.rewardPoints
-        ? `+${quest.rewardPoints.toLocaleString()} pts`
-        : quest.configSummary?.milestoneType ?? "Milestone",
-      locked: false,
-    }));
-  }, [userQuests]);
-
-  const guestTrophyBadges = [
-    { id: "guest-1", icon: "🏆", title: "First Arena", subtitle: "Battle debut", locked: true },
-    { id: "guest-2", icon: "⚡", title: "Point Surge", subtitle: "Score streak", locked: true },
-    { id: "guest-3", icon: "✨", title: "Collector Rise", subtitle: "Collection milestone", locked: true },
-  ];
-
-  const spotlightStats = [
-    {
-      label: "Player level",
-      value: String(account?.level ?? 1),
-      tone: "primary",
-    },
-    {
-      label: "Total points",
-      value: (me?.user.points ?? 0).toLocaleString(),
-      tone: "secondary",
-    },
-    {
-      label: "Milestones",
-      value: String(unlockedMilestoneCount),
-      tone: "tertiary",
-    },
-    {
-      label: "Competitive rating",
-      value: competitive?.rating ? String(competitive.rating) : "—",
-      tone: "neutral",
-    },
-  ];
-
-  const statsPanel = (
-    <section
-      className="profile-spotlight-panel"
-      aria-label={me ? "Trainer spotlight metrics" : "Guest trainer overview"}
-    >
-      <div className="profile-spotlight-heading">
-        <p className="mcg-eyebrow">Trainer stats</p>
-        <h2>Prestige at a glance</h2>
-      </div>
-      <div className="profile-spotlight-grid">
-        {spotlightStats.map((stat) => (
-          <article
-            key={stat.label}
-            className={`profile-spotlight-card tone-${stat.tone}`}
-          >
-            <span>{stat.label}</span>
-            <strong>{stat.value}</strong>
-          </article>
-        ))}
-      </div>
-      {accountBreakdown ? (
-        <div className="profile-spotlight-footer">
-          <span>Progress mix</span>
-          <strong>
-            {accountBreakdown.pointsXp.toLocaleString()} pts ·{" "}
-            {accountBreakdown.competitiveXp.toLocaleString()} comp ·{" "}
-            {accountBreakdown.collectionXp.toLocaleString()} collection
-          </strong>
-        </div>
-      ) : null}
-    </section>
+  const milestoneBadges = useMemo(
+    () =>
+      unlockedMilestones.map((quest) => ({
+        id: quest.id,
+        icon:
+          quest.type === "CONTEST_COUNT_MILESTONE"
+            ? "🏆"
+            : quest.type === "SUBMISSION_STREAK"
+              ? "🔥"
+              : quest.type === "POINTS_MILESTONE"
+                ? "⚡"
+                : "✨",
+        title: quest.title,
+        subtitle: quest.rewardPoints
+          ? `+${quest.rewardPoints.toLocaleString()} pts`
+          : quest.configSummary?.milestoneType ?? "Milestone",
+      })),
+    [unlockedMilestones],
   );
+
+  const tagline = me
+    ? collection?.completionPct
+      ? `${collection.completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
+      : "Rookie collector building an MCG identity one pull at a time."
+    : "Connect to turn this trainer card into your public player identity.";
 
   return (
     <SiteShell>
       <div className="profile-account-layout stitch-screen stitch-profile-screen">
-        {!me ? (
-          <>
-            <div className="profile-account-hero-grid">
-              <CollectorShowcase
-                displayName="Guest Collector"
-                points={0}
-                level={1}
-                completionPct={null}
-                primaryAction={
-                  <ConnectXCallout
-                    layout="inline"
-                    title="Memedex access"
-                    description="Open your real Memedex vault, saved cards, and ownership counts once you connect."
-                    ctaLabel="Connect wallet / X to open your Memedex"
-                  />
-                }
+        <CollectorShowcase
+          displayName={me?.user.displayName ?? "Guest Collector"}
+          points={me?.user.points ?? 0}
+          level={account?.level ?? 1}
+          completionPct={collection?.completionPct ?? null}
+          tagline={tagline}
+          settingsAction={
+            me ? (
+              <button
+                type="button"
+                className="mcg-btn ghost btn-sm"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                Account settings
+              </button>
+            ) : undefined
+          }
+          primaryAction={
+            me ? undefined : (
+              <ConnectXCallout
+                layout="inline"
+                title="Memedex access"
+                description="Open your real Memedex vault, saved cards, and ownership counts once you connect."
+                ctaLabel="Connect wallet / X to open your Memedex"
               />
-              {statsPanel}
-            </div>
+            )
+          }
+        />
 
-            <div className="profile-account-sections">
-              <section className="mcg-surface profile-trophy-panel">
-                <div className="profile-section-heading">
-                  <p className="mcg-eyebrow">Achievements</p>
-                  <h2>Trophy case</h2>
-                </div>
-                <div className="profile-trophy-row" aria-label="Trainer achievements">
-                  {guestTrophyBadges.map((badge) => (
-                    <article
-                      key={badge.id}
-                      className={`profile-trophy-badge ${badge.locked ? "is-locked" : ""}`}
-                    >
-                      <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
-                      <strong>{badge.title}</strong>
-                      <small>{badge.subtitle}</small>
-                    </article>
-                  ))}
-                </div>
-              </section>
+        <div className="profile-account-sections">
+          <ContestAchievements
+            milestonesUnlocked={unlockedMilestones.length}
+            pointsXp={account?.progressionBreakdown.pointsXp ?? 0}
+            competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
+            collectionXp={account?.progressionBreakdown.collectionXp ?? 0}
+            contestsEntered={competitive?.contestsEntered ?? 0}
+            bestRank={competitive?.bestRank ?? null}
+            rating={competitive?.rating ?? null}
+            leagueTier={competitive?.leagueTier ?? null}
+          />
 
-              <FeaturedCardsStrip
-                cards={[]}
-                emptyState={
-                  <EmptyState
-                    title="No showcase pulls yet"
-                    description="Connect wallet / X to start building a trainer identity with featured cards."
-                  />
-                }
-              />
-
-              <ContestAchievements
-                contestsEntered={0}
-                bestRank={null}
-                rating={null}
-                leagueTier={null}
-                seasonRank={null}
-              />
-
-              <section className="profile-settings-shell">
-                <EmptyState
-                  title="No profile data yet"
-                  description="Connect wallet / X to start collecting cards, entering battles, and building your public MCG identity."
-                />
-              </section>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="profile-account-hero-grid">
-              <CollectorShowcase
-                displayName={me.user.displayName}
-                points={me.user.points}
-                level={account?.level ?? 1}
-                completionPct={collection?.completionPct ?? null}
-              />
-              {statsPanel}
-            </div>
-
-            <div className="profile-account-sections">
-              <section className="mcg-surface profile-trophy-panel">
-                <div className="profile-section-heading">
-                  <p className="mcg-eyebrow">Achievements</p>
-                  <h2>Trophy case</h2>
-                </div>
-                {trophyBadges.length > 0 ? (
-                  <div className="profile-trophy-row" aria-label="Trainer achievements">
-                    {trophyBadges.map((badge) => (
-                      <article key={badge.id} className="profile-trophy-badge">
-                        <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
-                        <strong>{badge.title}</strong>
-                        <small>{badge.subtitle}</small>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="No trophies unlocked yet"
-                    description="Complete milestones and battles to start filling your trainer trophy case."
-                  />
-                )}
-              </section>
-
-              <FeaturedCardsStrip
-                cards={featuredCards}
-                emptyState={
-                  <EmptyState
-                    title="No showcase pulls yet"
-                    description="Open packs and collect standout cards to feature them here."
-                  />
-                }
-              />
-
-              <ContestAchievements
-                contestsEntered={competitive?.contestsEntered ?? 0}
-                bestRank={competitive?.bestRank ?? null}
-                rating={competitive?.rating ?? null}
-                leagueTier={competitive?.leagueTier ?? null}
-                seasonRank={competitive?.seasonRank ?? null}
-              />
-
-              <div className="profile-settings-shell">
-                <SolanaWalletCard />
+          <section className="mcg-surface profile-milestones-panel">
+            <div className="profile-section-heading">
+              <div>
+                <p className="mcg-eyebrow">Milestones</p>
+                <h2>Unlocked milestones</h2>
               </div>
+              <p className="profile-section-caption">Only earned milestones appear here.</p>
             </div>
-          </>
-        )}
+            {milestoneBadges.length > 0 ? (
+              <div className="profile-milestone-row" aria-label="Unlocked milestones">
+                {milestoneBadges.map((badge) => (
+                  <article key={badge.id} className="profile-milestone-badge">
+                    <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
+                    <strong>{badge.title}</strong>
+                    <small>{badge.subtitle}</small>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title={me ? "No milestones unlocked yet" : "Connect to start unlocking milestones"}
+                description={
+                  me
+                    ? "Enter contests and progress through your player journey to fill this milestone rail."
+                    : "Your unlocked milestones will appear here once your profile is active."
+                }
+              />
+            )}
+          </section>
+
+          <FeaturedCardsStrip
+            cards={featuredCards}
+            action={
+              me?.mvpCollection?.length ? (
+                <button
+                  type="button"
+                  className="mcg-btn ghost btn-sm"
+                  onClick={() => setIsShowcaseEditing(true)}
+                >
+                  Edit showcase
+                </button>
+              ) : null
+            }
+            emptyState={
+              <EmptyState
+                title={me ? "No showcase cards selected" : "No showcase pulls yet"}
+                description={
+                  me
+                    ? "Open packs and pick up to 6 collection cards to feature in your showcase."
+                    : "Connect wallet / X to start building a trainer identity with featured cards."
+                }
+              />
+            }
+          />
+
+          {me ? (
+            <div className="profile-settings-entry">
+              <button
+                type="button"
+                className="mcg-btn secondary"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                Account settings
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <Modal
+          title="Account settings"
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          className="profile-settings-modal"
+          contentClassName="profile-settings-modal-content"
+        >
+          <SolanaWalletCard />
+        </Modal>
+
+        <Modal
+          title="Edit showcase"
+          open={isShowcaseEditing}
+          onClose={() => setIsShowcaseEditing(false)}
+          className="profile-showcase-modal"
+          contentClassName="profile-showcase-modal-content"
+        >
+          <div className="profile-showcase-editor">
+            <p className="profile-showcase-editor-copy">
+              Pick up to 6 cards from your collection to feature on your profile.
+            </p>
+            <div className="profile-showcase-picker-grid">
+              {sortedCollection.map((item) => {
+                const selected = selectedTemplateIds.includes(item.templateId);
+                const disabled = !selected && selectedTemplateIds.length >= 6;
+                return (
+                  <button
+                    key={item.templateId}
+                    type="button"
+                    className={`profile-showcase-picker ${selected ? "is-selected" : ""}`}
+                    onClick={() => {
+                      setSelectedTemplateIds((current) => {
+                        if (current.includes(item.templateId)) {
+                          return current.filter((id) => id !== item.templateId);
+                        }
+                        if (current.length >= 6) return current;
+                        return [...current, item.templateId];
+                      });
+                    }}
+                    disabled={disabled}
+                  >
+                    <div className="profile-showcase-picker-frame">
+                      <span className="profile-showcase-picker-state">
+                        {selected ? "Featured" : disabled ? "Limit reached" : "Add to showcase"}
+                      </span>
+                      <div className="profile-showcase-picker-card">
+                        <span>{item.card.displayName}</span>
+                        <strong>{item.card.rarity}</strong>
+                        <small>{item.instanceCount} owned</small>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </Modal>
       </div>
     </SiteShell>
   );

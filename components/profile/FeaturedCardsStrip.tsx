@@ -4,21 +4,24 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import type { MvpCollectionItem } from "@/types/cards";
 
-export function FeaturedCardsStrip({
-  cards,
-  emptyState,
-}: {
+type Props = {
   cards: MvpCollectionItem[];
   emptyState?: ReactNode;
-}) {
+  action?: ReactNode;
+};
+
+export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
   return (
     <Surface variant="raised" className="profile-featured-surface">
       <div className="profile-featured-cards-wrap">
-        <SectionHeader
-          eyebrow="Featured pulls"
-          title="Showcase pulls"
-          subtitle="Signature cards from your collection."
-        />
+        <div className="profile-featured-head">
+          <SectionHeader
+            eyebrow="Showcase"
+            title="Showcase"
+            subtitle="Curated cards that define your player identity."
+          />
+          {action}
+        </div>
         {cards.length > 0 ? (
           <div className="profile-featured-cards-strip" data-layout="visual-rail">
             {cards.map((item) => (
