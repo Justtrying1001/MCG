@@ -23,6 +23,10 @@ export function CollectorShowcase({
 }: Props) {
   const initial = displayName.slice(0, 1).toUpperCase();
   const memedexLabel = completionPct === null ? "Memedex locked" : `${completionPct}% complete`;
+  const trainerId = `${level.toString().padStart(2, "0")}-${points
+    .toString()
+    .slice(-4)
+    .padStart(4, "0")}`;
 
   return (
     <Surface className="profile-showcase stitch-panel-card" variant="raised">
@@ -37,12 +41,16 @@ export function CollectorShowcase({
             <div className="profile-showcase-avatar" aria-hidden="true">
               <div className="profile-showcase-avatar-top">
                 <span className="profile-showcase-card-tag">Trainer card</span>
-                <span className="profile-showcase-card-id">ID · {level.toString().padStart(2, "0")}-{points.toString().slice(-4).padStart(4, "0")}</span>
+                <span className="profile-showcase-card-id">ID · {trainerId}</span>
               </div>
+
               <div className="profile-showcase-avatar-core">
-                <span>{initial}</span>
-                <strong>LVL {level}</strong>
-                <small>Collector identity online</small>
+                <div className="profile-showcase-avatar-badge">Collector profile</div>
+                <div className="profile-showcase-avatar-emblem">{initial}</div>
+                <div className="profile-showcase-avatar-rank">
+                  <strong>LVL {level}</strong>
+                  <small>Identity online</small>
+                </div>
               </div>
             </div>
 
@@ -51,7 +59,6 @@ export function CollectorShowcase({
                 <p className="profile-showcase-identity-kicker">Your trainer</p>
                 <h1 className="profile-showcase-name">{displayName}</h1>
                 <p className="profile-showcase-subtitle">{tagline}</p>
-                <p className="profile-showcase-memedex-line">Memedex completion · {memedexLabel}</p>
               </div>
 
               <div className="profile-showcase-metrics" aria-label="Trainer card summary">
@@ -68,6 +75,8 @@ export function CollectorShowcase({
                   <strong>{completionPct === null ? "Locked" : `${completionPct}%`}</strong>
                 </article>
               </div>
+
+              <p className="profile-showcase-memedex-line">Memedex completion · {memedexLabel}</p>
 
               <div className="profile-showcase-actions">
                 {primaryAction ?? (
