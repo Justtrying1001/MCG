@@ -2,21 +2,37 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { LineupOption } from "@/components/contests/types";
 import { LineupCardTile } from "@/components/contests/LineupCardTile";
+import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 
 type Props = {
   open: boolean;
   options: LineupOption[];
   selectedIds: string[];
-  onToggle: (instanceId: string) => void;
+  lineupSlots: Array<string | null>;
+  activeSlot: number | null;
+  rosterSize: number;
+  canManage: boolean;
+  selectedLogicalTokenKeys: Set<string>;
+  onSelect: (instanceId: string) => void;
   onClose: () => void;
-  canEnter: boolean;
 };
 
 type SortMode = "rarity" | "name" | "potential";
 
 const RARITY_ORDER = ["LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"];
 
-export function CardSelectorModal({ open, options, selectedIds, onToggle, onClose, canEnter }: Props) {
+export function CardSelectorModal({
+  open,
+  options,
+  selectedIds,
+  lineupSlots,
+  activeSlot,
+  rosterSize,
+  canManage,
+  selectedLogicalTokenKeys,
+  onSelect,
+  onClose,
+}: Props) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
   const [edition, setEdition] = useState("all");
@@ -61,7 +77,7 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
       <div className="contest-modal team-builder-modal" role="dialog" aria-modal="true" aria-label="Select cards" onClick={(event) => event.stopPropagation()}>
         <div className="contest-modal-head">
           <div>
-            <h4>Choose lineup card</h4>
+            <h4>{activeSlot !== null ? `Adding to Slot ${activeSlot + 1}` : "Choose lineup card"}</h4>
             <p className="contest-inline-note">{selectedIds.length} selected · {filtered.length} available</p>
           </div>
           <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
@@ -94,16 +110,46 @@ export function CardSelectorModal({ open, options, selectedIds, onToggle, onClos
         <div className="contest-modal-grid visual">
           {filtered.length ? (
             filtered.map((item) => {
-              const isSelected = selectedIds.includes(item.instanceId);
+              const slotIndex = lineupSlots.findIndex((value) => value === item.instanceId);
+              const isSelected = slotIndex >= 0;
+              const atCapacity = selectedIds.length >= rosterSize && !isSelected;
+              const tokenKey = getLogicalTokenKey({
+                tokenProjectId: item.tokenProjectId,
+                cardTemplateId: item.cardTemplateId,
+              });
+              const tokenConflict = selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
               const isLocked = item.isLockedByActiveContest && !isSelected;
+              const disabled = !canManage || isLocked || atCapacity || tokenConflict;
               return (
-                <LineupCardTile
-                  key={item.instanceId}
-                  option={item}
-                  selected={isSelected}
-                  disabled={isLocked || !canEnter}
-                  onClick={() => onToggle(item.instanceId)}
-                />
+                <div key={item.instanceId} className="contest-modal-card-option">
+                  <LineupCardTile
+                    option={item}
+                    selected={isSelected}
+                    disabled={disabled}
+                    onClick={() => {
+                      if (disabled) return;
+                      onSelect(item.instanceId);
+                    }}
+                  />
+                  <div className="contest-modal-card-option-meta">
+                    {isSelected ? (
+                      <span className="contest-inline-note">
+                        Already selected{slotIndex >= 0 ? ` · Slot ${slotIndex + 1}` : ""}
+                      </span>
+                    ) : tokenConflict ? (
+                      <span className="contest-inline-note">Already used in this lineup</span>
+                    ) : isLocked ? (
+                      <span className="contest-inline-note">Locked in another active contest</span>
+                    ) : null}
+                    <Button
+                      type="button"
+                      onClick={() => onSelect(item.instanceId)}
+                      disabled={disabled}
+                    >
+                      {activeSlot !== null ? `Add to slot ${activeSlot + 1}` : "Add to lineup"}
+                    </Button>
+                  </div>
+                </div>
               );
             })
           ) : (
