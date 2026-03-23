@@ -18,7 +18,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
           <SectionHeader
             eyebrow="Showcase"
             title="Showcase"
-            subtitle="Curate the cards that define your public profile — selected highlights only."
+            subtitle="Choose the cards that represent your profile best — curated highlights, not your whole vault."
           />
           {action}
         </div>
@@ -27,15 +27,12 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
             {cards.map((item) => (
               <div key={item.templateId} className="profile-featured-card-item">
                 <div className="profile-featured-card-frame">
-                  <MvpCardTile
-                    card={item.card}
-                    quantity={item.instanceCount}
-                    variant="canonical"
-                  />
+                  <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
                 </div>
                 <div className="profile-featured-card-meta">
                   <strong>{item.card.displayName}</strong>
-                  <span>{item.card.rarity} · {item.instanceCount} owned</span>
+                  <span>{item.card.rarity}</span>
+                  <small>{item.instanceCount} owned</small>
                 </div>
               </div>
             ))}

@@ -6,7 +6,10 @@ import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useSession } from "@/components/useSession";
-import type { MilestoneType } from "@/lib/domain/quests/social";
+import {
+  getMilestoneObjectiveText,
+  type MilestoneType,
+} from "@/lib/domain/quests/social";
 
 import styles from "./rewards.module.css";
 
@@ -90,7 +93,7 @@ function formatReward(
 ) {
   const parts: string[] = [];
   if (quest.rewardPoints > 0) {
-    parts.push(`+${quest.rewardPoints.toLocaleString()} XP`);
+    parts.push(`+${quest.rewardPoints.toLocaleString()} Points`);
   }
   if (quest.rewardPackCode) {
     parts.push(`${quest.rewardPackQuantity ?? 1}× ${quest.rewardPackCode}`);
@@ -373,8 +376,18 @@ export default function RewardsPage() {
       });
   }, [milestoneQuests, justCompleted]);
 
-  const featuredMilestone = milestoneCards[0] ?? null;
-  const secondaryMilestones = featuredMilestone ? milestoneCards.slice(1) : milestoneCards;
+  const unlockedMilestones = useMemo(() => {
+    return milestoneCards
+      .filter(({ state }) => state === "COMPLETED" || state === "CLAIMABLE")
+      .sort((left, right) => {
+        const leftTime = new Date(left.quest.completedAt ?? left.quest.claimedAt ?? 0).getTime();
+        const rightTime = new Date(right.quest.completedAt ?? right.quest.claimedAt ?? 0).getTime();
+        return rightTime - leftTime;
+      });
+  }, [milestoneCards]);
+
+  const lastUnlockedMilestone = unlockedMilestones[0] ?? null;
+  const secondaryMilestones = milestoneCards.filter(({ quest }) => quest.id !== lastUnlockedMilestone?.quest.id);
 
   const pointsEarned = ledger
     .filter((entry) => entry.entryType === "CREDIT")
@@ -388,15 +401,7 @@ export default function RewardsPage() {
     Math.min(1, (currentPoints - currentLevelFloor) / 500),
   );
 
-  const featuredProgressValue = featuredMilestone?.quest.progressValue ?? 0;
-  const featuredProgressTarget =
-    featuredMilestone?.quest.targetValue ??
-    featuredMilestone?.quest.configSummary.targetValue ??
-    1;
-  const featuredProgress = Math.max(
-    0,
-    Math.min(1, featuredProgressValue / Math.max(featuredProgressTarget, 1)),
-  );
+  const lastMilestoneReward = lastUnlockedMilestone ? formatReward(lastUnlockedMilestone.quest) : null;
 
   const showLoading = loading || (me && loadingData && quests.length === 0);
 
@@ -491,7 +496,7 @@ export default function RewardsPage() {
                   <p className={styles.sectionEyebrow}>Social quests</p>
                   <h2 className={styles.sectionTitle}>Active social quests</h2>
                   <p className={styles.sectionCopy}>
-                    Jump into quick actions and keep the XP meter moving.
+                    Jump into quick actions and keep your points climbing.
                   </p>
                 </div>
                 <div className={styles.sectionCount}>{activeSocialQuests.length}</div>
@@ -579,44 +584,66 @@ export default function RewardsPage() {
                 </div>
               </div>
 
-              {featuredMilestone ? (
-                <article className={styles.featuredMilestoneCard}>
-                  <div className={styles.featuredMilestoneIcon}>🏆</div>
-                  <div className={styles.featuredMilestoneContent}>
-                    <p className={styles.milestoneLabel}>Featured milestone</p>
-                    <h3 className={styles.featuredMilestoneTitle}>{featuredMilestone.quest.title}</h3>
-                    <p className={styles.featuredMilestoneDescription}>
-                      {featuredMilestone.quest.description ?? "Your main progression target right now."}
-                    </p>
-                    <div className={styles.featuredMilestoneTrack} aria-hidden="true">
-                      <span style={{ width: `${featuredProgress * 100}%` }} />
+              <article className={styles.featuredMilestoneCard}>
+                <div className={styles.featuredMilestoneIcon}>{lastUnlockedMilestone ? "🏆" : "✨"}</div>
+                <div className={styles.featuredMilestoneContent}>
+                  <p className={styles.milestoneLabel}>Last Milestone</p>
+                  <h3 className={styles.featuredMilestoneTitle}>
+                    {lastUnlockedMilestone?.quest.title ?? "No milestone unlocked yet"}
+                  </h3>
+                  <p className={styles.featuredMilestoneDescription}>
+                    {lastUnlockedMilestone
+                      ? lastUnlockedMilestone.quest.description ??
+                        getMilestoneObjectiveText(
+                          lastUnlockedMilestone.quest.configSummary.milestoneType,
+                          lastUnlockedMilestone.quest.targetValue ??
+                            lastUnlockedMilestone.quest.configSummary.targetValue ??
+                            0,
+                        )
+                      : "Keep progressing through contests, packs, and rewards to reveal your first milestone win."}
+                  </p>
+                  {lastUnlockedMilestone ? (
+                    <div className={styles.featuredMilestoneMeta}>
+                      <span>Unlocked {formatDate(lastUnlockedMilestone.quest.completedAt ?? lastUnlockedMilestone.quest.claimedAt)}</span>
+                      {lastMilestoneReward ? <span>{lastMilestoneReward}</span> : null}
                     </div>
-                    <div className={styles.featuredMilestoneFooter}>
-                      <span>
-                        {Math.min(featuredProgressValue, featuredProgressTarget)} / {featuredProgressTarget}
-                      </span>
-                      <span>{formatReward(featuredMilestone.quest)}</span>
+                  ) : (
+                    <div className={styles.featuredMilestoneMeta}>
+                      <span>Your latest milestone success will appear here.</span>
                     </div>
-                  </div>
-                </article>
-              ) : (
-                <div className={styles.emptyCard}>Milestones will appear here when quests are available.</div>
-              )}
+                  )}
+                </div>
+              </article>
 
               {secondaryMilestones.length > 0 ? (
                 <div className={styles.milestoneGrid}>
                   {secondaryMilestones.map(({ quest, state }, index) => {
                     const unlocked = state === "COMPLETED" || state === "CLAIMABLE";
+                    const milestoneDetails =
+                      quest.description ??
+                      getMilestoneObjectiveText(
+                        quest.configSummary.milestoneType,
+                        quest.targetValue ?? quest.configSummary.targetValue ?? 0,
+                      );
+
                     return (
                       <article
                         key={quest.id}
-                        className={`${styles.milestoneCard} ${unlocked ? styles.milestoneUnlocked : styles.milestoneLocked}`}
+                        className={`${styles.milestoneCard} ${unlocked ? styles.milestoneUnlocked : styles.milestoneLocked} ${unlocked ? styles.milestoneCardInteractive : ""}`}
+                        tabIndex={unlocked ? 0 : undefined}
+                        aria-label={unlocked ? `${quest.title}. ${milestoneDetails}` : undefined}
                       >
                         <div className={styles.milestoneIcon}>{unlocked ? getMilestoneIcon(index) : "❔"}</div>
                         <div>
                           <p className={styles.milestoneLabel}>{unlocked ? "Unlocked" : "Hidden"}</p>
                           <h3 className={styles.milestoneTitle}>{unlocked ? quest.title : "???"}</h3>
                         </div>
+                        {unlocked ? (
+                          <div className={styles.milestoneTooltip} role="note">
+                            <p className={styles.milestoneTooltipTitle}>{quest.title}</p>
+                            <p className={styles.milestoneTooltipCopy}>{milestoneDetails}</p>
+                          </div>
+                        ) : null}
                       </article>
                     );
                   })}
