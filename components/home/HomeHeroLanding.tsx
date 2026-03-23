@@ -51,7 +51,6 @@ export function HomeHeroLanding() {
         <div className="home-hero-content">
           <div className="home-hero-topline">
             <p className="home-hero-kicker">Join the fun</p>
-            <div className="stitch-stamp">Press start</div>
           </div>
           <h1 className="home-hero-headline">
             MCG — THE <span>MEME</span>

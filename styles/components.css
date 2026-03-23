@@ -12035,9 +12035,13 @@ button.mcg-chip:hover {
   min-height: 460px;
 }
 
+.stitch-landing-screen .home-float-card {
+  max-width: min(100%, 250px);
+}
+
 .stitch-landing-screen .home-float-card:nth-child(1) {
-  left: 1%;
-  top: 24%;
+  left: 2%;
+  top: 27%;
 }
 
 .stitch-landing-screen .home-float-card:nth-child(2) {
@@ -12045,8 +12049,8 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-float-card:nth-child(3) {
-  right: 1%;
-  top: 21%;
+  right: 2%;
+  top: 24%;
 }
 
 .stitch-landing-screen .home-hero-stage-note {
@@ -13252,12 +13256,14 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-hero-landing {
+  position: relative;
   min-height: auto;
   padding: clamp(2rem, 4vw, 3rem);
+  overflow: hidden;
 }
 
 .stitch-landing-screen .home-hero-body {
-  grid-template-columns: minmax(0, 0.94fr) minmax(320px, 0.96fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1fr);
   align-items: center;
   gap: clamp(1.75rem, 4vw, 3.5rem);
 }
@@ -13296,12 +13302,23 @@ button.mcg-chip:hover {
 }
 
 .home-hero-stage-frame {
+  position: relative;
   gap: 1.1rem;
   padding: 1.35rem 1.1rem 1.1rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.stitch-landing-screen .home-hero-stage {
+  position: relative;
+  width: 100%;
 }
 
 .stitch-landing-screen .home-hero-cards-float {
+  position: relative;
   min-height: 390px;
+  overflow: hidden;
+  align-items: center;
 }
 
 .landing-page-section--how .home-how-it-works,
@@ -13328,7 +13345,9 @@ button.mcg-chip:hover {
 }
 
 .stitch-landing-screen .home-how-title {
-  font-size: clamp(2.35rem, 4vw, 3.5rem);
+  width: 100%;
+  font-size: clamp(2.1rem, 3.5vw, 3.2rem);
+  white-space: nowrap;
 }
 
 .stitch-landing-screen .home-how-copy {
@@ -13446,6 +13465,10 @@ button.mcg-chip:hover {
 
   .stitch-landing-screen .home-hero-cards-float {
     min-height: 330px;
+  }
+
+  .stitch-landing-screen .home-how-title {
+    white-space: normal;
   }
 
   .stitch-landing-screen .home-docs-art,
