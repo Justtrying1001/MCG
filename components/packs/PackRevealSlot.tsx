@@ -65,10 +65,6 @@ export function PackRevealSlot({
       data-reveal-phase={revealPhase}
       type="button"
     >
-      <div className="reveal-slot-spotlight" aria-hidden="true" />
-      <div className="reveal-slot-ring" aria-hidden="true" />
-      <div className="reveal-slot-edition-flare" aria-hidden="true" />
-
       <div className="reveal-slot-inner">
         <div className="reveal-slot-face reveal-slot-back">
           <Image
@@ -81,8 +77,10 @@ export function PackRevealSlot({
           <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
         </div>
         <div className="reveal-slot-face reveal-slot-front">
-          <div className="collection-card-tile-trigger memedex-card-trigger">
-            <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
+          <div className="reveal-slot-card collection-card-tile memedex-card-tile">
+            <div className="collection-card-tile-trigger memedex-card-trigger">
+              <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
+            </div>
           </div>
         </div>
       </div>
