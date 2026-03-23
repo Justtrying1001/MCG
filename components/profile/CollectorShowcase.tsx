@@ -6,9 +6,11 @@ import { Surface } from "@/components/ui/Surface";
 type Props = {
   displayName: string;
   title: string;
-  trainerId: string;
+  trencherId: string;
   level: number;
   avatarUrl?: string | null;
+  totalPointsLabel: string;
+  completionLabel: string;
   rankLabel: string;
   leagueLabel: string;
   prestigeLabel: string;
@@ -22,9 +24,11 @@ type Props = {
 export function CollectorShowcase({
   displayName,
   title,
-  trainerId,
+  trencherId,
   level,
   avatarUrl,
+  totalPointsLabel,
+  completionLabel,
   rankLabel,
   leagueLabel,
   prestigeLabel,
@@ -41,13 +45,13 @@ export function CollectorShowcase({
       <div className="profile-showcase-card-shell">
         <div className="profile-showcase-card-frame">
           <div className="profile-showcase-head">
-            <span className="profile-showcase-label">Trainer card</span>
+            <span className="profile-showcase-label">Trencher card</span>
             <div className="profile-showcase-head-actions">{settingsAction}</div>
           </div>
 
           <div className="profile-showcase-card-topline">
-            <span className="profile-showcase-card-tag">TRAINER CARD</span>
-            <span className="profile-showcase-card-id">ID · {trainerId}</span>
+            <span className="profile-showcase-card-tag">TRENCHER CARD</span>
+            <span className="profile-showcase-card-id">ID · {trencherId}</span>
           </div>
 
           <div className="profile-showcase-avatar" aria-hidden="true">
@@ -71,16 +75,27 @@ export function CollectorShowcase({
             <p className="profile-showcase-subtitle">{tagline}</p>
           </div>
 
-          <div className="profile-showcase-prestige-row" aria-label="Trainer card summary">
+          <div className="profile-showcase-prestige-row" aria-label="Trencher card summary">
             <article className="profile-showcase-prestige-pill tone-primary">
-              <span>Rank</span>
-              <strong>{rankLabel}</strong>
+              <span>Total points</span>
+              <strong>{totalPointsLabel}</strong>
             </article>
             <article className="profile-showcase-prestige-pill tone-secondary">
+              <span>Memedex</span>
+              <strong>{completionLabel}</strong>
+            </article>
+            <article className="profile-showcase-prestige-pill tone-tertiary">
               <span>League</span>
               <strong>{leagueLabel}</strong>
             </article>
-            <article className="profile-showcase-prestige-pill tone-tertiary">
+          </div>
+
+          <div className="profile-showcase-meta-row" aria-label="Profile rank and prestige">
+            <article className="profile-showcase-meta-pill tone-dark">
+              <span>Rank</span>
+              <strong>{rankLabel}</strong>
+            </article>
+            <article className="profile-showcase-meta-pill tone-dark">
               <span>Prestige</span>
               <strong>{prestigeLabel}</strong>
             </article>

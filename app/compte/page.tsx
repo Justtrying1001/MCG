@@ -69,8 +69,8 @@ export default function AccountPage() {
     setSelectedTemplateIds((current) => {
       const available = new Set(sortedCollection.map((item) => item.templateId));
       const preserved = current.filter((id) => available.has(id));
-      if (preserved.length > 0) return preserved.slice(0, 6);
-      return sortedCollection.slice(0, 6).map((item) => item.templateId);
+      if (preserved.length > 0) return preserved.slice(0, 5);
+      return sortedCollection.slice(0, 5).map((item) => item.templateId);
     });
   }, [sortedCollection]);
 
@@ -81,7 +81,7 @@ export default function AccountPage() {
         sortedCollection.find((item) => item.templateId === templateId),
       )
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
-    return selected.slice(0, 6);
+    return selected.slice(0, 5);
   }, [selectedTemplateIds, sortedCollection]);
 
   const unlockedMilestones = useMemo(
@@ -119,7 +119,7 @@ export default function AccountPage() {
     ? completionPct
       ? `${completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
       : "Rookie collector building an MCG identity one pull at a time."
-    : "Connect to turn this trainer card into your public player identity.";
+    : "Connect to turn this trencher card into your public player identity.";
 
   return (
     <SiteShell>
@@ -136,9 +136,11 @@ export default function AccountPage() {
                     ? "Collector"
                     : "Rookie Collector"
             }
-            trainerId={`${String(account?.level ?? 1).padStart(2, "0")}-${String(me?.user.points ?? 0).slice(-4).padStart(4, "0")}`}
+            trencherId={`${String(account?.level ?? 1).padStart(2, "0")}-${String(me?.user.points ?? 0).slice(-4).padStart(4, "0")}`}
             level={account?.level ?? 1}
             avatarUrl={me?.user.avatarUrl}
+            totalPointsLabel={(me?.user.points ?? 0).toLocaleString()}
+            completionLabel={completionPct === null ? "—" : `${completionPct}%`}
             rankLabel={competitive?.bestRank ? `#${competitive.bestRank}` : "Unranked"}
             leagueLabel={competitive?.leagueTier ?? "Open"}
             prestigeLabel={
@@ -175,44 +177,49 @@ export default function AccountPage() {
           />
 
           <div className="profile-account-sections">
-            <section className="profile-stat-bento mcg-surface">
-              <div className="profile-section-heading profile-stat-bento__heading">
-                <div>
-                  <p className="mcg-eyebrow">Collection stats</p>
-                  <h2>Collection stats</h2>
+            <div className="profile-hero-side-stack">
+              <section className="profile-stat-bento mcg-surface">
+                <div className="profile-section-heading profile-stat-bento__heading">
+                  <div>
+                    <p className="mcg-eyebrow">Collection stats</p>
+                    <h2>Collection stats</h2>
+                  </div>
+                  <p className="profile-section-caption">Compact collector snapshot inspired by Stitch, adapted to your real vault data.</p>
                 </div>
-              </div>
-              <div className="profile-stat-bento__grid">
-                <article className="profile-stat-bento__card tone-primary">
-                  <span>Total cards</span>
-                  <strong>{(collection?.totalOwnedInstances ?? 0).toLocaleString()}</strong>
-                  <small>Memedex owned</small>
-                </article>
-                <article className="profile-stat-bento__card tone-secondary">
-                  <span>Completion</span>
-                  <strong>{completionPct === null ? "—" : `${completionPct}%`}</strong>
-                  <small>Memedex completion</small>
-                </article>
-                <article className="profile-stat-bento__card tone-tertiary">
-                  <span>Total points</span>
-                  <strong>{(me?.user.points ?? 0).toLocaleString()}</strong>
-                  <small>Lifetime score</small>
-                </article>
-                <article className="profile-stat-bento__card tone-gold">
-                  <span>Milestones</span>
-                  <strong>{unlockedMilestones.length}</strong>
-                  <small>Unlocked trophies</small>
-                </article>
-              </div>
-            </section>
+                <div className="profile-stat-bento__grid">
+                  <article className="profile-stat-bento__card tone-primary">
+                    <span>Total cards owned</span>
+                    <strong>{(collection?.totalOwnedInstances ?? 0).toLocaleString()}</strong>
+                    <small>Across your Memedex</small>
+                  </article>
+                  <article className="profile-stat-bento__card tone-secondary">
+                    <span>Memedex completion</span>
+                    <strong>{completionPct === null ? "—" : `${completionPct}%`}</strong>
+                    <small>{(collection?.ownedTemplateCount ?? 0).toLocaleString()} unique templates</small>
+                  </article>
+                  <article className="profile-stat-bento__card tone-tertiary">
+                    <span>Collection XP</span>
+                    <strong>{(account?.progressionBreakdown.collectionXp ?? 0).toLocaleString()}</strong>
+                    <small>Collector progression</small>
+                  </article>
+                  <article className="profile-stat-bento__card tone-gold">
+                    <span>Milestones unlocked</span>
+                    <strong>{unlockedMilestones.length}</strong>
+                    <small>Trophies earned</small>
+                  </article>
+                </div>
+              </section>
 
-            <ContestAchievements
-              collectionXp={account?.progressionBreakdown.collectionXp ?? 0}
-              competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
-              contestsEntered={competitive?.contestsEntered ?? 0}
-              rating={competitive?.rating ?? null}
-              leagueTier={competitive?.leagueTier ?? null}
-            />
+              <ContestAchievements
+                competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
+                contestsEntered={competitive?.contestsEntered ?? 0}
+                contestsWon={competitive?.contestsWon ?? 0}
+                bestRank={competitive?.bestRank ?? null}
+                averageRank={competitive?.averageRank ?? null}
+                rating={competitive?.rating ?? null}
+                leagueTier={competitive?.leagueTier ?? null}
+              />
+            </div>
 
             <section className="mcg-surface profile-milestones-panel">
               <div className="profile-section-heading">
@@ -262,8 +269,8 @@ export default function AccountPage() {
                   title={me ? "No showcase cards selected" : "No showcase pulls yet"}
                   description={
                     me
-                      ? "Open packs and pick up to 6 collection cards to feature in your showcase."
-                      : "Connect wallet / X to start building a trainer identity with featured cards."
+                      ? "Open packs and pick up to 5 collection cards to feature in your showcase."
+                      : "Connect wallet / X to start building a trencher identity with featured cards."
                   }
                 />
               }
@@ -290,12 +297,12 @@ export default function AccountPage() {
         >
           <div className="profile-showcase-editor">
             <p className="profile-showcase-editor-copy">
-              Pick up to 6 cards from your collection to feature on your profile.
+              Pick up to 5 cards from your collection to feature on your profile.
             </p>
             <div className="profile-showcase-picker-grid">
               {sortedCollection.map((item) => {
                 const selected = selectedTemplateIds.includes(item.templateId);
-                const disabled = !selected && selectedTemplateIds.length >= 6;
+                const disabled = !selected && selectedTemplateIds.length >= 5;
                 return (
                   <button
                     key={item.templateId}
@@ -306,7 +313,7 @@ export default function AccountPage() {
                         if (current.includes(item.templateId)) {
                           return current.filter((id) => id !== item.templateId);
                         }
-                        if (current.length >= 6) return current;
+                        if (current.length >= 5) return current;
                         return [...current, item.templateId];
                       });
                     }}

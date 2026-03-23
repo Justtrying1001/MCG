@@ -18,7 +18,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
           <SectionHeader
             eyebrow="Showcase"
             title="Showcase"
-            subtitle="Choose the cards that represent your profile best — curated highlights, not your whole vault."
+            subtitle="Up to 5 cards only — your public highlights, not the full collection."
           />
           {action}
         </div>
