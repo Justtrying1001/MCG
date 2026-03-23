@@ -48,42 +48,45 @@ export function PackRevealSlot({
   }, [isRevealed]);
 
   return (
-    <button
+    <div
       className={`reveal-slot${isRevealed ? " is-revealed" : ""}${isNext ? " is-next" : ""}`}
-      onClick={() => {
-        if (isRevealed) {
-          onZoom(card);
-          return;
-        }
-        onReveal(index);
-      }}
-      disabled={!isRevealed && !isNext}
       data-reveal-intensity={classification.revealIntensity}
       data-reveal-preset={classification.revealPreset}
       data-edition-effect={classification.editionEffect}
       data-spotlight-level={classification.spotlightLevel}
       data-reveal-phase={revealPhase}
-      type="button"
     >
-      <div className="reveal-slot-inner">
-        <div className="reveal-slot-face reveal-slot-back">
-          <Image
-            src={cardBackSrc}
-            alt="Card back"
-            fill
-            sizes="(max-width: 1280px) 18vw, 210px"
-            className="reveal-slot-back-image"
-          />
-          <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
+      {isRevealed ? (
+        <div className="reveal-slot-card collection-card-tile memedex-card-tile">
+          <button
+            className="collection-card-tile-trigger memedex-card-trigger"
+            onClick={() => onZoom(card)}
+            type="button"
+          >
+            <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
+          </button>
         </div>
-        <div className="reveal-slot-face reveal-slot-front">
-          <div className="reveal-slot-card collection-card-tile memedex-card-tile">
-            <div className="collection-card-tile-trigger memedex-card-trigger">
-              <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
+      ) : (
+        <button
+          className="reveal-slot-back-button"
+          onClick={() => onReveal(index)}
+          disabled={!isNext}
+          type="button"
+        >
+          <div className="reveal-slot-inner">
+            <div className="reveal-slot-face reveal-slot-back">
+              <Image
+                src={cardBackSrc}
+                alt="Card back"
+                fill
+                sizes="(max-width: 1280px) 18vw, 210px"
+                className="reveal-slot-back-image"
+              />
+              <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
             </div>
           </div>
-        </div>
-      </div>
-    </button>
+        </button>
+      )}
+    </div>
   );
 }
