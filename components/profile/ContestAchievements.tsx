@@ -34,6 +34,7 @@ export function ContestAchievements({
       <div className="profile-progression-wrap">
         <div className="profile-section-heading profile-progression-heading">
           <div>
+            <span className="profile-section-chip">Battle Stats</span>
             <h2>Battle Stats</h2>
           </div>
         </div>

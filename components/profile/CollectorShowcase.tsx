@@ -50,7 +50,7 @@ export function CollectorShowcase({
           </div>
 
           <div className="profile-showcase-main-grid">
-            <div className="profile-showcase-avatar" aria-hidden="true">
+            <div className="profile-showcase-visual-column" aria-hidden="true">
               <div className="profile-showcase-avatar-core">
                 {avatarUrl ? (
                   <Image src={avatarUrl} alt="" fill sizes="(max-width: 1024px) 100vw, 360px" className="profile-showcase-avatar-image" />
@@ -62,68 +62,65 @@ export function CollectorShowcase({
                 )}
                 <strong className="profile-showcase-level-badge">LVL {level}</strong>
               </div>
-            </div>
-
-            <div className="profile-showcase-primary-column">
-              <div className="profile-showcase-card-topline">
+              <div className="profile-showcase-visual-footer">
                 <span className="profile-showcase-card-tag">{title}</span>
                 <span className="profile-showcase-card-id">ID · {trencherId}</span>
               </div>
+            </div>
 
+            <div className="profile-showcase-primary-column">
               <div className="profile-showcase-identity-copy">
                 <h1 className="profile-showcase-name">{displayName}</h1>
+                <p className="profile-showcase-role">{title}</p>
                 <p className="profile-showcase-subtitle">{tagline}</p>
               </div>
 
-              <div className="profile-showcase-prestige-row" aria-label="Trencher card summary">
-                <article className="profile-showcase-prestige-pill tone-primary">
+              <div className="profile-showcase-stat-grid" aria-label="Trencher card summary">
+                <article className="profile-showcase-stat-pill tone-primary">
                   <span>Total points</span>
                   <strong>{totalPointsLabel}</strong>
                 </article>
-                <article className="profile-showcase-prestige-pill tone-secondary">
-                  <span>Memedex</span>
+                <article className="profile-showcase-stat-pill tone-secondary">
+                  <span>Memedex %</span>
                   <strong>{completionLabel}</strong>
                 </article>
-                <article className="profile-showcase-prestige-pill tone-tertiary">
+                <article className="profile-showcase-stat-pill tone-tertiary">
                   <span>League</span>
                   <strong>{leagueLabel}</strong>
                 </article>
-              </div>
-
-              <div className="profile-showcase-meta-row" aria-label="Profile rank and prestige">
-                <article className="profile-showcase-meta-pill tone-dark">
+                <article className="profile-showcase-stat-pill tone-neutral">
                   <span>Rank</span>
                   <strong>{rankLabel}</strong>
                 </article>
-                <article className="profile-showcase-meta-pill tone-dark">
+                <article className="profile-showcase-stat-pill tone-neutral">
                   <span>Prestige</span>
                   <strong>{prestigeLabel}</strong>
                 </article>
               </div>
-            </div>
-          </div>
 
-          <div className="profile-showcase-progress-block">
-            <div className="profile-showcase-progress-copy">
-              <span>XP to next level</span>
-              <strong>{xpLabel}</strong>
-            </div>
-            <div className="profile-showcase-progress-bar" aria-hidden="true">
-              <div className="profile-showcase-progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-          </div>
+              <div className="profile-showcase-progress-block">
+                <div className="profile-showcase-progress-copy">
+                  <span>XP progress</span>
+                  <strong>{xpLabel}</strong>
+                </div>
+                <div className="profile-showcase-progress-bar" aria-hidden="true">
+                  <div className="profile-showcase-progress-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+              </div>
 
-          <div className="profile-showcase-actions">
-            {primaryAction ?? (
-              <>
-                <Link href="/collection" className="mcg-btn primary btn-sm">
-                  Open Memedex
-                </Link>
-                <Link href="/combats" className="mcg-btn ghost btn-sm">
-                  Go to Battles
-                </Link>
-              </>
-            )}
+              <div className="profile-showcase-actions">
+                {primaryAction ?? (
+                  <>
+                    <Link href="/collection" className="mcg-btn primary btn-sm">
+                      Open Memedex
+                    </Link>
+                    <Link href="/combats" className="mcg-btn ghost btn-sm">
+                      Go to Battles
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
