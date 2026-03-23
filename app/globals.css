@@ -8451,6 +8451,123 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 5px 5px 0 #111111;
 }
 
+.home-lobby-card-hero--split {
+  align-items: center;
+}
+
+.home-lobby-battle-spotlight,
+.home-lobby-inline-note,
+.home-lobby-pack-stage,
+.home-lobby-memedex-single-card {
+  border: 3px solid #111111;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.home-lobby-battle-spotlight {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem 1.05rem;
+}
+
+.home-lobby-battle-spotlight-label {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.66);
+}
+
+.home-lobby-battle-spotlight strong,
+.home-lobby-inline-note strong,
+.home-lobby-memedex-single-card p,
+.home-lobby-pack-stage-label strong {
+  color: #111111;
+}
+
+.home-lobby-battle-spotlight strong {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.home-lobby-battle-spotlight p,
+.home-lobby-inline-note span,
+.home-lobby-inline-note strong,
+.home-lobby-memedex-single-card p,
+.home-lobby-pack-stage-label span,
+.home-lobby-pack-stage-label strong {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.home-lobby-battle-spotlight p,
+.home-lobby-inline-note span,
+.home-lobby-pack-stage-label span,
+.home-lobby-memedex-single-card p {
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.home-lobby-inline-note {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.8rem 0.9rem;
+}
+
+.home-lobby-inline-note--soft {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.home-lobby-memedex-preview,
+.home-lobby-shop-preview {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.home-lobby-memedex-single-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.home-lobby-memedex-card--single {
+  width: 64px;
+  flex-shrink: 0;
+  transform: rotate(-4deg);
+}
+
+.home-lobby-shop-preview {
+  grid-template-columns: minmax(112px, 132px) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.home-lobby-pack-stage {
+  display: grid;
+  place-items: center;
+  padding: 0.75rem;
+}
+
+.home-lobby-pack-art {
+  width: 100%;
+  height: auto;
+  max-width: 92px;
+}
+
+.home-lobby-shop-copy {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.home-lobby-stat-row--dense {
+  gap: 0.65rem;
+}
+
+.home-lobby-stat-row--dense > div {
+  min-width: 0;
+}
+
 .home-lobby-battle-status-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8541,9 +8658,14 @@ a { color: inherit; text-decoration: none; }
   .home-lobby-card-head,
   .home-lobby-card-hero,
   .home-lobby-stat-row,
-  .home-lobby-utility-head {
+  .home-lobby-utility-head,
+  .home-lobby-memedex-single-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .home-lobby-shop-preview {
+    grid-template-columns: 1fr;
   }
 
   .home-lobby-level-cluster {
