@@ -1325,32 +1325,33 @@ a { color: inherit; text-decoration: none; }
 }
 
 .pack-reveal-grid {
-  --reveal-grid-columns: 5;
   --reveal-grid-gap: clamp(16px, 1.8vw, 20px);
-  --reveal-slot-max-width: 189px;
   display: flex;
+  flex-direction: row;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: var(--reveal-grid-gap);
   width: 100%;
-  max-width: 1120px;
+  max-width: 100%;
   margin: 0 auto;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.35rem 0.35rem 0.9rem;
 }
 
 .reveal-slot {
   --reveal-card-base-width: 210px;
-  --reveal-card-width: min(
-    var(--reveal-slot-max-width),
-    calc((100% - (var(--reveal-grid-gap) * (var(--reveal-grid-columns) - 1))) / var(--reveal-grid-columns))
-  );
-  --reveal-card-scale: calc(var(--reveal-card-width) / var(--reveal-card-base-width));
+  --reveal-card-base-height: 406px;
+  --reveal-card-scale: 0.78;
+  --reveal-card-width: calc(var(--reveal-card-base-width) * var(--reveal-card-scale));
+  --reveal-card-height: calc(var(--reveal-card-base-height) * var(--reveal-card-scale));
   border: 0;
   background: transparent;
   padding: 0;
   width: var(--reveal-card-width);
-  flex: 0 1 var(--reveal-card-width);
-  min-width: 0;
+  min-width: var(--reveal-card-width);
+  flex: 0 0 var(--reveal-card-width);
   perspective: 1200px;
   cursor: pointer;
   justify-self: center;
@@ -1362,6 +1363,7 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-inner {
   width: 100%;
+  min-height: var(--reveal-card-height);
   position: relative;
   display: grid;
   transform-style: preserve-3d;
@@ -1545,11 +1547,13 @@ a { color: inherit; text-decoration: none; }
 .reveal-slot-face {
   grid-area: 1 / 1;
   width: 100%;
+  min-height: var(--reveal-card-height);
   border-radius: var(--radius-sm);
   backface-visibility: hidden;
 }
 
 .reveal-slot-back {
+  position: relative;
   border: 1px solid rgba(200, 155, 60, 0.28);
   background: #0b0b0d;
   overflow: hidden;
@@ -1587,8 +1591,9 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-card-scale {
   width: var(--reveal-card-base-width);
+  min-width: var(--reveal-card-base-width);
   transform: scale(var(--reveal-card-scale));
-  transform-origin: top center;
+  transform-origin: top left;
 }
 
 .reveal-slot-card-surface {
