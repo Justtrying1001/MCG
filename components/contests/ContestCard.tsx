@@ -53,6 +53,10 @@ function toBadgeTone(status: ContestStatus) {
   return "settled";
 }
 
+function getStatusChipLabel(status: ContestStatus) {
+  return status === "OPEN" ? "OPEN" : "CLOSED";
+}
+
 function getGroupCta(group: ContestCardGroup, contest: ContestListItem) {
   if (group === "active") {
     return "Open";
@@ -119,6 +123,7 @@ export function ContestCard({
   );
   const ctaLabel = getGroupCta(group, contest);
   const contestImage = getContestImage(contest);
+  const phaseLabel = getPhaseLabel(contest.status);
   const detailItems = [
     { label: timing.label, value: timing.value },
     { label: "Entry", value: getEntryLabel(rule) },
@@ -143,7 +148,7 @@ export function ContestCard({
             src={contestImage}
             alt={`${contest.title} cover`}
             className="contest-lobby-card-image"
-            width={1280}
+            width={720}
             height={720}
             unoptimized
           />
@@ -155,7 +160,6 @@ export function ContestCard({
             </div>
           </div>
         )}
-        <div className="contest-lobby-card-media-overlay" aria-hidden="true" />
       </div>
 
       <div className="contest-lobby-card-body">
@@ -163,33 +167,35 @@ export function ContestCard({
           <h3>{contest.title}</h3>
           <StatusBadge
             tone={toBadgeTone(contest.status)}
-            label={getPhaseLabel(contest.status)}
+            label={getStatusChipLabel(contest.status)}
           />
         </div>
 
         <div className="contest-lobby-card-meta-list" aria-label="Battle quick details">
-          {detailItems.map((item, index) => (
+          {detailItems.map((item) => (
             <div key={item.label} className="contest-lobby-card-meta-item">
               <span>{item.label}</span>
               <strong>{item.value}</strong>
-              {index < detailItems.length - 1 ? (
-                <span className="contest-lobby-card-meta-divider" aria-hidden="true">
-                  •
-                </span>
-              ) : null}
             </div>
           ))}
         </div>
 
+        <div
+          className="contest-lobby-card-reward"
+          aria-label={`Reward summary for ${contest.title}`}
+        >
+          <span className="contest-lobby-card-reward-label">Reward</span>
+          <strong>{rewardHighlight}</strong>
+        </div>
+
         <div className="contest-lobby-card-footer">
-          <div className="contest-lobby-card-panel contest-lobby-card-panel-highlight">
-            <span>Reward</span>
-            <strong>{rewardHighlight}</strong>
-            <small>
+          <div className="contest-lobby-card-status-copy">
+            <span>{phaseLabel}</span>
+            <strong>
               {bonusSummary
                 ? `Bonus: ${bonusSummary}`
                 : `${rosterSize}-card lineup · ${getLeagueTierLabel(contest)} tier`}
-            </small>
+            </strong>
           </div>
 
           <div className="contest-lobby-card-actions">
