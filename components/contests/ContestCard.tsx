@@ -128,7 +128,7 @@ export function ContestCard({
   const ctaLabel = getGroupCta(group, contest);
   const contestImage = getContestImage(contest);
   const detailItems = [
-    { label: "Start", value: timing.value },
+    { label: timing.label, value: timing.value },
     { label: "Entry", value: getEntryLabel(rule) },
     {
       label: "Players",
@@ -151,38 +151,35 @@ export function ContestCard({
             src={contestImage}
             alt={`${contest.title} cover`}
             className="contest-lobby-card-image"
-            width={640}
-            height={480}
+            width={1280}
+            height={720}
             unoptimized
           />
         ) : (
           <div className="contest-lobby-card-image contest-lobby-card-image-fallback">
-            <span>{contest.code}</span>
-            <strong>{getContestTypeLabel(contest)}</strong>
+            <div className="contest-lobby-card-image-fallback-copy">
+              <span className="contest-lobby-card-code">{contest.code}</span>
+              <strong>{contest.title}</strong>
+            </div>
           </div>
         )}
+        <div className="contest-lobby-card-media-overlay" aria-hidden="true" />
       </div>
 
       <div className="contest-lobby-card-body">
         <div className="contest-lobby-card-topline">
-          <span className="contest-lobby-card-code">{contest.code}</span>
+          <p className="contest-lobby-card-kicker">
+            {getContestTypeLabel(contest)}
+          </p>
           <StatusBadge
             tone={toBadgeTone(contest.status)}
             label={getPhaseLabel(contest.status)}
           />
         </div>
-        <div className="contest-lobby-card-head">
-          <div>
-            <p className="contest-lobby-card-kicker">
-              {getContestTypeLabel(contest)}
-            </p>
-            <h3>{contest.title}</h3>
-          </div>
-        </div>
 
-        <p className="contest-lobby-card-copy">
-          {timing.label}: {timing.value}
-        </p>
+        <div className="contest-lobby-card-head">
+          <h3>{contest.title}</h3>
+        </div>
 
         <div className="contest-lobby-card-meta-list" aria-label="Battle quick details">
           {detailItems.map((item) => (
@@ -193,29 +190,31 @@ export function ContestCard({
           ))}
         </div>
 
-        <div className="contest-lobby-card-panel contest-lobby-card-panel-highlight">
-          <span>Reward</span>
-          <strong>{rewardHighlight}</strong>
-          <small>
-            {bonusSummary
-              ? `Bonus: ${bonusSummary}`
-              : `${rosterSize}-card lineup · ${getLeagueTierLabel(contest)} tier`}
-          </small>
-        </div>
-
         <div className="contest-lobby-card-footer">
-          <div className="contest-lobby-card-status-copy">
-            <span>Status</span>
-            <strong>{stateMessaging.shortLabel}</strong>
+          <div className="contest-lobby-card-panel contest-lobby-card-panel-highlight">
+            <span>Reward</span>
+            <strong>{rewardHighlight}</strong>
+            <small>
+              {bonusSummary
+                ? `Bonus: ${bonusSummary}`
+                : `${rosterSize}-card lineup · ${getLeagueTierLabel(contest)} tier`}
+            </small>
           </div>
 
-          <Link
-            href={`/contests/${contest.id}`}
-            className="mcg-btn primary contest-lobby-card-cta"
-            aria-label={`${ctaLabel} ${contest.title}`}
-          >
-            {ctaLabel}
-          </Link>
+          <div className="contest-lobby-card-actions">
+            <div className="contest-lobby-card-status-copy">
+              <span>Status</span>
+              <strong>{stateMessaging.shortLabel}</strong>
+            </div>
+
+            <Link
+              href={`/contests/${contest.id}`}
+              className="mcg-btn primary contest-lobby-card-cta"
+              aria-label={`${ctaLabel} ${contest.title}`}
+            >
+              {ctaLabel}
+            </Link>
+          </div>
         </div>
       </div>
     </Surface>
