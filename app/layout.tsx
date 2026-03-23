@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { AppBackground } from "@/components/layout/AppBackground";
 import { RootProviders } from "@/components/providers/RootProviders";
 import { ensureContestLifecycleSchedulerStarted } from "@/lib/domain/contests/lifecycle-scheduler";
 import { getCanonicalSiteUrl } from "@/lib/site-url";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <AppBackground />
         <RootProviders>{children}</RootProviders>
         <Analytics />
       </body>
