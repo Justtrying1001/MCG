@@ -115,10 +115,6 @@ export default function AccountPage() {
   );
 
   const completionPct = collection?.completionPct ?? null;
-  const totalXp =
-    (account?.progressionBreakdown.pointsXp ?? 0) +
-    (account?.progressionBreakdown.competitiveXp ?? 0) +
-    (account?.progressionBreakdown.collectionXp ?? 0);
   const tagline = me
     ? completionPct
       ? `${completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
@@ -131,9 +127,29 @@ export default function AccountPage() {
         <div className="profile-account-shell">
           <CollectorShowcase
             displayName={me?.user.displayName ?? "Guest Collector"}
-            points={me?.user.points ?? 0}
+            title={
+              completionPct !== null && completionPct >= 75
+                ? "Dex Master"
+                : competitive?.rating && competitive.rating >= 1400
+                  ? "Arena Climber"
+                  : completionPct !== null && completionPct >= 35
+                    ? "Collector"
+                    : "Rookie Collector"
+            }
+            trainerId={`${String(account?.level ?? 1).padStart(2, "0")}-${String(me?.user.points ?? 0).slice(-4).padStart(4, "0")}`}
             level={account?.level ?? 1}
-            completionPct={completionPct}
+            avatarUrl={me?.user.avatarUrl}
+            rankLabel={competitive?.bestRank ? `#${competitive.bestRank}` : "Unranked"}
+            leagueLabel={competitive?.leagueTier ?? "Open"}
+            prestigeLabel={
+              account?.level && account.level >= 25
+                ? "Tier III"
+                : account?.level && account.level >= 10
+                  ? "Tier II"
+                  : "Tier I"
+            }
+            xpLabel={`${account?.xp?.toLocaleString?.() ?? "0"} / ${account?.levelXpCeil?.toLocaleString?.() ?? "0"} XP`}
+            progressPct={Math.max(8, Math.min(100, account?.progressPct ?? 8))}
             tagline={tagline}
             settingsAction={
               me ? (
@@ -159,13 +175,41 @@ export default function AccountPage() {
           />
 
           <div className="profile-account-sections">
+            <section className="profile-stat-bento mcg-surface">
+              <div className="profile-section-heading profile-stat-bento__heading">
+                <div>
+                  <p className="mcg-eyebrow">Collection stats</p>
+                  <h2>Collection stats</h2>
+                </div>
+              </div>
+              <div className="profile-stat-bento__grid">
+                <article className="profile-stat-bento__card tone-primary">
+                  <span>Total cards</span>
+                  <strong>{(collection?.totalOwnedInstances ?? 0).toLocaleString()}</strong>
+                  <small>Memedex owned</small>
+                </article>
+                <article className="profile-stat-bento__card tone-secondary">
+                  <span>Completion</span>
+                  <strong>{completionPct === null ? "—" : `${completionPct}%`}</strong>
+                  <small>Memedex completion</small>
+                </article>
+                <article className="profile-stat-bento__card tone-tertiary">
+                  <span>Total points</span>
+                  <strong>{(me?.user.points ?? 0).toLocaleString()}</strong>
+                  <small>Lifetime score</small>
+                </article>
+                <article className="profile-stat-bento__card tone-gold">
+                  <span>Milestones</span>
+                  <strong>{unlockedMilestones.length}</strong>
+                  <small>Unlocked trophies</small>
+                </article>
+              </div>
+            </section>
+
             <ContestAchievements
-              milestonesUnlocked={unlockedMilestones.length}
-              totalXp={totalXp}
               collectionXp={account?.progressionBreakdown.collectionXp ?? 0}
               competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
               contestsEntered={competitive?.contestsEntered ?? 0}
-              bestRank={competitive?.bestRank ?? null}
               rating={competitive?.rating ?? null}
               leagueTier={competitive?.leagueTier ?? null}
             />
@@ -176,7 +220,7 @@ export default function AccountPage() {
                   <p className="mcg-eyebrow">Unlocked milestones</p>
                   <h2>Unlocked milestones</h2>
                 </div>
-                <p className="profile-section-caption">Only earned badges appear here — no locked filler.</p>
+                <p className="profile-section-caption">Unlocked only, presented like collectibles instead of admin tiles.</p>
               </div>
               {milestoneBadges.length > 0 ? (
                 <div className="profile-milestone-row" aria-label="Unlocked milestones">
