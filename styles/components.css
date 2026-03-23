@@ -10297,9 +10297,11 @@ button.mcg-chip:hover {
 .memedex-card-frame-shell {
   display: grid;
   width: 100%;
-  min-height: var(--mvp-min-height, 320px);
+  min-height: 0;
+  aspect-ratio: 3 / 4;
   border-radius: 18px;
   overflow: hidden;
+  align-items: start;
 }
 
 .memedex-card-meta {
@@ -10446,7 +10448,6 @@ button.mcg-chip:hover {
 }
 
 .memedex-card-frame--locked .memedex-card-frame-shell {
-  min-height: var(--mvp-min-height, 320px);
   aspect-ratio: 3 / 4;
   place-items: stretch;
   padding: 0.6rem;
