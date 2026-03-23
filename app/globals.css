@@ -1285,7 +1285,7 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.65;
 }
 
-.reveal-progress-wrap { margin-bottom: 1rem; }
+.reveal-progress-wrap { margin-bottom: 0.35rem; }
 
 .reveal-progress-text {
   font-size: 0.74rem;
@@ -1298,7 +1298,7 @@ a { color: inherit; text-decoration: none; }
 .reveal-next-copy {
   font-size: 0.75rem;
   color: var(--text-2);
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
 }
 
 .reveal-progress-track {
@@ -1322,30 +1322,34 @@ a { color: inherit; text-decoration: none; }
 
 .pack-reveal-modal-content {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  gap: clamp(0.85rem, 1.5vw, 1.15rem);
-  min-height: min(76vh, 940px);
-  padding-inline: clamp(14px, 1.5vw, 22px);
-  padding-bottom: clamp(0.9rem, 1.3vw, 1.2rem);
+  grid-template-rows: auto auto auto auto;
+  align-content: center;
+  gap: clamp(0.75rem, 1.15vw, 1rem);
+  padding-inline: clamp(14px, 1.35vw, 20px);
+  padding-bottom: clamp(0.85rem, 1.1vw, 1.05rem);
 }
 
 .pack-reveal-stage {
+  display: grid;
+  place-items: center;
   min-height: 0;
-  padding-block: 0.3rem 0.65rem;
+  padding-block: 0.1rem 0.3rem;
   overflow: hidden;
 }
 
 .pack-reveal-grid {
-  --reveal-grid-gap: clamp(14px, 1.2vw, 20px);
+  --reveal-grid-gap: clamp(12px, 0.95vw, 18px);
+  --reveal-card-width: clamp(180px, calc((100vw - 176px) / 5), 248px);
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, var(--reveal-card-width)));
   justify-content: center;
-  align-items: start;
+  align-items: center;
   gap: var(--reveal-grid-gap);
-  width: 100%;
-  min-height: 100%;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   overflow: visible;
-  padding: 0.5rem clamp(4px, 0.6vw, 8px) 0.9rem;
+  padding: 0.2rem 0.1rem 0.35rem;
 }
 
 .reveal-slot {
@@ -1709,8 +1713,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .reveal-complete-row {
-  margin-top: 2rem;
-  padding-top: 1.15rem;
+  margin-top: 0.35rem;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -2331,19 +2335,21 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 767px) {
   .pack-reveal-modal-content {
-    min-height: min(84vh, 920px);
+    gap: 0.75rem;
   }
 
   .pack-reveal-grid {
-    --reveal-grid-gap: 12px;
+    --reveal-grid-gap: 10px;
+    --reveal-card-width: clamp(140px, calc((100vw - 92px) / 5), 172px);
   }
 }
 
 @media (max-width: 479px) {
   .pack-reveal-modal { width: min(100vw, calc(100vw - 12px)); }
-  .pack-reveal-modal-content { min-height: auto; }
+  .pack-reveal-modal-content { gap: 0.65rem; }
   .pack-reveal-grid {
-    --reveal-grid-gap: 8px;
+    --reveal-grid-gap: 6px;
+    --reveal-card-width: clamp(84px, calc((100vw - 44px) / 5), 104px);
   }
 }
 
@@ -2403,7 +2409,7 @@ a { color: inherit; text-decoration: none; }
   .pack-reveal-modal         { width: min(100%, calc(100vw - 12px)); }
   .pack-reveal-modal-content { padding-inline: 0.75rem; }
   .pack-reveal-stage         { padding-inline: 0; }
-  .pack-reveal-grid          { --reveal-grid-gap: 8px; padding-inline: 0; }
+  .pack-reveal-grid          { --reveal-grid-gap: 6px; padding-inline: 0; }
 
   /* Profile */
   .profile-banner       { padding: 1.2rem; }
