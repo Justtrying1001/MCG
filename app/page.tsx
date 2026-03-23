@@ -325,17 +325,17 @@ export default function HomePage() {
                 <div className="home-lobby-card-hero home-lobby-card-hero--split">
                   <div className="home-lobby-card-body">
                     <h2>Memedex</h2>
-                    <p>Track your binder progress and push toward the next collector milestone.</p>
+                    <p>Your quick collector snapshot for progress, gaps, and what still needs chasing.</p>
                   </div>
                   <div className="home-lobby-collector-badge" aria-hidden="true">◎</div>
                 </div>
                 <div className="home-lobby-memedex-preview" aria-label="Memedex preview">
-                  <div className="home-lobby-stat-row home-lobby-stat-row--dense">
-                    <div>
+                  <div className="home-lobby-memedex-primary-row" aria-label="Memedex primary stats">
+                    <div className="home-lobby-memedex-pill">
                       <span>Completion</span>
                       <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
                     </div>
-                    <div>
+                    <div className="home-lobby-memedex-pill">
                       <span>Owned</span>
                       <strong>
                         {collectionTotal > 0
@@ -343,29 +343,31 @@ export default function HomePage() {
                           : collectionCount.toLocaleString()}
                       </strong>
                     </div>
-                  </div>
-                  <div className="home-lobby-memedex-summary-grid">
-                    <div className="home-lobby-memedex-section">
-                      <span className="home-lobby-memedex-section-label">Rarity</span>
-                      <div className="home-lobby-memedex-breakdown" aria-label="Memedex rarity breakdown">
-                        {memedexRarityRows.map((item) => (
-                          <div key={item.label} className="home-lobby-memedex-breakdown-item">
-                            <span>{item.label}</span>
-                            <strong>{item.count.toLocaleString()}</strong>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="home-lobby-memedex-pill">
+                      <span>Missing</span>
+                      <strong>{(userInfo.missingTemplates ?? 0).toLocaleString()}</strong>
                     </div>
-                    <div className="home-lobby-memedex-section">
-                      <span className="home-lobby-memedex-section-label">Finish</span>
-                      <div className="home-lobby-memedex-breakdown" aria-label="Memedex finish breakdown">
-                        {memedexFinishRows.map((item) => (
-                          <div key={item.label} className="home-lobby-memedex-breakdown-item">
-                            <span>{item.label}</span>
-                            <strong>{item.count.toLocaleString()}</strong>
-                          </div>
-                        ))}
-                      </div>
+                  </div>
+                  <div className="home-lobby-memedex-compact-breakdown" aria-label="Memedex rarity breakdown">
+                    <span className="home-lobby-memedex-compact-label">Rarity</span>
+                    <div className="home-lobby-memedex-chip-row">
+                      {memedexRarityRows.map((item) => (
+                        <span key={item.label} className="home-lobby-memedex-chip">
+                          <strong>{item.label.slice(0, 1)}</strong>
+                          <span>{item.count.toLocaleString()}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="home-lobby-memedex-compact-breakdown" aria-label="Memedex finish breakdown">
+                    <span className="home-lobby-memedex-compact-label">Finish</span>
+                    <div className="home-lobby-memedex-chip-row home-lobby-memedex-chip-row--finish">
+                      {memedexFinishRows.map((item) => (
+                        <span key={item.label} className="home-lobby-memedex-chip home-lobby-memedex-chip--finish">
+                          <strong>{item.label}</strong>
+                          <span>{item.count.toLocaleString()}</span>
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
