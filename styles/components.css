@@ -13619,3 +13619,319 @@ button.mcg-chip:hover {
     justify-self: center;
   }
 }
+
+/* ===== Home lobby block polish pass ===== */
+.home-lobby-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-lobby-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.9;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.14), transparent 30%);
+}
+
+.home-lobby-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-lobby-card-hero--battle,
+.home-lobby-card-hero--split {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.home-lobby-card-hero--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.home-lobby-card--battle .home-lobby-card-body,
+.home-lobby-card--memedex .home-lobby-card-body,
+.home-lobby-card--shop .home-lobby-card-body {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.home-lobby-card--battle .home-lobby-card-body p,
+.home-lobby-card--memedex .home-lobby-card-body p,
+.home-lobby-card--shop .home-lobby-card-body p {
+  max-width: 40ch;
+}
+
+.home-lobby-battle-spotlight,
+.home-lobby-memedex-preview,
+.home-lobby-shop-preview {
+  border: 3px solid #111;
+  border-radius: 24px;
+  box-shadow: 5px 5px 0 #111;
+}
+
+.home-lobby-battle-spotlight {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 244, 188, 0.98) 100%);
+}
+
+.home-lobby-battle-spotlight-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.home-lobby-battle-spotlight-label,
+.home-lobby-inline-note span {
+  display: block;
+  margin-bottom: 0.24rem;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.56);
+}
+
+.home-lobby-battle-spotlight-head strong,
+.home-lobby-inline-note strong {
+  display: block;
+  color: #111;
+  line-height: 1.1;
+}
+
+.home-lobby-battle-spotlight-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0.4rem 0.78rem;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-lobby-battle-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.home-lobby-battle-fact,
+.home-lobby-inline-note,
+.home-lobby-memedex-empty {
+  padding: 0.75rem 0.8rem;
+  border: 2px solid rgba(17, 17, 17, 0.92);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.home-lobby-battle-fact {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.home-lobby-battle-fact span,
+.home-lobby-stat-row--dense span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.6);
+}
+
+.home-lobby-battle-fact strong,
+.home-lobby-stat-row--dense strong {
+  color: #111;
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.home-lobby-inline-note {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.home-lobby-inline-note--soft {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.home-lobby-collector-badge,
+.home-lobby-shop-burst {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 4px 4px 0 #111;
+  color: #111;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.home-lobby-memedex-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(210px, 0.85fr);
+  gap: 0.85rem;
+  padding: 0.9rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(218, 252, 255, 0.94) 100%);
+}
+
+.home-lobby-memedex-cards {
+  display: flex;
+  align-items: flex-end;
+  min-height: 208px;
+  padding: 0.4rem 0.35rem 0.3rem;
+}
+
+.home-lobby-memedex-card {
+  width: min(118px, 32%);
+  transform-origin: bottom center;
+}
+
+.home-lobby-memedex-card .mvp-card-tile {
+  pointer-events: none;
+}
+
+.home-lobby-memedex-card--1 {
+  z-index: 1;
+  transform: rotate(-10deg) translateY(10px);
+}
+
+.home-lobby-memedex-card--2 {
+  z-index: 2;
+  margin-left: -0.9rem;
+  transform: translateY(-2px);
+}
+
+.home-lobby-memedex-card--3 {
+  z-index: 1;
+  margin-left: -0.9rem;
+  transform: rotate(10deg) translateY(14px);
+}
+
+.home-lobby-memedex-progress {
+  display: grid;
+  align-content: space-between;
+  gap: 0.8rem;
+}
+
+.home-lobby-stat-row--dense {
+  gap: 0.65rem;
+}
+
+.home-lobby-stat-row--dense > div {
+  min-height: 88px;
+  padding: 0.8rem 0.85rem;
+  border: 2px solid #111;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.9);
+}
+
+.home-lobby-memedex-empty {
+  display: grid;
+  place-content: center;
+  gap: 0.28rem;
+  width: 100%;
+  min-height: 180px;
+  text-align: center;
+}
+
+.home-lobby-memedex-empty span {
+  color: rgba(17, 17, 17, 0.7);
+}
+
+.home-lobby-shop-preview {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.78fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 0.95rem;
+  background: linear-gradient(180deg, rgba(255, 248, 196, 0.98) 0%, rgba(255, 225, 149, 0.98) 100%);
+}
+
+.home-lobby-pack-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  padding: 0.8rem;
+  border: 2px dashed rgba(17, 17, 17, 0.44);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.home-lobby-pack-art {
+  width: min(100%, 118px);
+  height: auto;
+  filter: drop-shadow(0 12px 18px rgba(17, 17, 17, 0.22));
+}
+
+.home-lobby-pack-stamp {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.65rem;
+  width: 52px;
+  height: 52px;
+  border: 3px solid #111;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 4px 4px 0 #111;
+  background: #fff;
+}
+
+.home-lobby-pack-stamp img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-lobby-shop-copy {
+  display: grid;
+  align-content: space-between;
+  gap: 0.8rem;
+}
+
+@media (max-width: 980px) {
+  .home-lobby-battle-facts,
+  .home-lobby-memedex-preview,
+  .home-lobby-shop-preview,
+  .home-lobby-card-hero--split {
+    grid-template-columns: 1fr;
+  }
+
+  .home-lobby-battle-spotlight-head {
+    flex-direction: column;
+  }
+
+  .home-lobby-memedex-cards {
+    min-height: 190px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-lobby-battle-facts,
+  .home-lobby-stat-row--dense {
+    grid-template-columns: 1fr;
+  }
+
+  .home-lobby-memedex-card {
+    width: min(108px, 34%);
+  }
+}
