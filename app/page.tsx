@@ -240,54 +240,29 @@ export default function HomePage() {
                   <h2>Battle Arena</h2>
                   <p>
                     {battleContest
-                      ? "Featured battle from the active rotation, ready for your next move."
+                      ? "Step into the featured battle and make your next ranked move."
                       : "Jump into the live battle rotation and keep your lineup moving."}
                   </p>
                 </div>
                 <div className="home-lobby-battle-mark" aria-hidden="true">⚔</div>
               </div>
               <div className="home-lobby-battle-spotlight">
-                <div className="home-lobby-battle-spotlight-head">
-                  <div>
-                    <span className="home-lobby-battle-spotlight-label">Featured battle</span>
-                    <strong>{battleContest?.title ?? "Battle rotation ready"}</strong>
-                  </div>
-                  <span className="home-lobby-battle-spotlight-status">{battleContest ? getBattleStatusLabel(battleContest.status) : "Open arena"}</span>
-                </div>
-                <div className="home-lobby-battle-facts">
-                  <div className="home-lobby-battle-fact">
-                    <span>Entries</span>
-                    <strong>{battleContest?._count.entries?.toLocaleString() ?? "—"}</strong>
-                  </div>
-                  <div className="home-lobby-battle-fact">
-                    <span>Your status</span>
-                    <strong>{battleContest?.userEntry ? "Entered" : "Open slot"}</strong>
-                  </div>
-                  <div className="home-lobby-battle-fact">
-                    <span>{battleContest?.status === "LIVE" ? "Season" : "Locks"}</span>
-                    <strong>{battleContest?.status === "LIVE" ? (battleContest?.seasonName ?? "Active") : (battleLockLabel ?? "TBA")}</strong>
-                  </div>
-                </div>
-                {battleContest?.rewardPreview?.label ? (
-                  <div className="home-lobby-inline-note">
-                    <span>Reward spotlight</span>
-                    <strong>
-                      {battleContest.rewardPreview.label}
-                      {typeof battleContest.rewardPreview.amount === "number"
-                        ? ` · ${battleContest.rewardPreview.amount.toLocaleString()}`
-                        : ""}
-                    </strong>
-                  </div>
-                ) : null}
+                <span className="home-lobby-battle-spotlight-label">Featured battle</span>
+                <strong>{battleContest?.title ?? "Battle rotation ready"}</strong>
+                <p>
+                  {battleContest?.rewardPreview?.label
+                    ? `${battleContest.rewardPreview.label}${typeof battleContest.rewardPreview.amount === "number" ? ` · ${battleContest.rewardPreview.amount.toLocaleString()}` : ""}`
+                    : battleContest?.seasonName ?? "Queue up for the current arena rotation."}
+                </p>
               </div>
               <div className="home-lobby-battle-status-row">
                 <div className="home-lobby-battle-status-chip">
-                  <span>Active battles</span>
-                  <strong>{contests.length}</strong>
+                  <span>{battleContest?.status === "LIVE" ? "Season" : "Lock"}</span>
+                  <strong>{battleContest?.status === "LIVE" ? (battleContest?.seasonName ?? "Active") : (battleLockLabel ?? "TBA")}</strong>
                 </div>
                 <div className="home-lobby-battle-status-chip">
-                  <span>Your live entries</span>
-                  <strong>{typeof userInfo.activeEntries === "number" ? userInfo.activeEntries : "—"}</strong>
+                  <span>Your status</span>
+                  <strong>{battleContest?.userEntry ? "Entered" : "Open slot"}</strong>
                 </div>
               </div>
               <div className="home-lobby-card-cta">{battleContest ? getContestCtaLabel(battleContest.status) : "Open arena"} →</div>
@@ -302,47 +277,39 @@ export default function HomePage() {
                 <div className="home-lobby-card-hero home-lobby-card-hero--split">
                   <div className="home-lobby-card-body">
                     <h2>Memedex</h2>
-                    <p>Track completion, review your latest owned cards, and push toward the next collector milestone.</p>
+                    <p>Track your binder progress and push toward the next collector milestone.</p>
                   </div>
                   <div className="home-lobby-collector-badge" aria-hidden="true">◎</div>
                 </div>
                 <div className="home-lobby-memedex-preview" aria-label="Memedex preview">
-                  <div className="home-lobby-memedex-cards">
-                    {userInfo.collectionPreview.length > 0 ? (
-                      userInfo.collectionPreview.map((card, index) => (
-                        <div key={card.templateId} className={`home-lobby-memedex-card home-lobby-memedex-card--${index + 1}`}>
-                          <MvpCardTile card={card} variant="canonical" interactive={false} imageLoading="eager" />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="home-lobby-memedex-empty">
-                        <strong>Collection preview locked</strong>
-                        <span>Open your next pack to start filling the binder.</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="home-lobby-memedex-progress">
-                    <div className="home-lobby-stat-row home-lobby-stat-row--dense">
-                      <div>
-                        <span>Completion</span>
-                        <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
-                      </div>
-                      <div>
-                        <span>Owned</span>
-                        <strong>
-                          {collectionTotal > 0
-                            ? `${collectionCount.toLocaleString()}/${collectionTotal.toLocaleString()}`
-                            : collectionCount.toLocaleString()}
-                        </strong>
-                      </div>
+                  <div className="home-lobby-stat-row home-lobby-stat-row--dense">
+                    <div>
+                      <span>Completion</span>
+                      <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
                     </div>
-                    <div className="home-lobby-inline-note home-lobby-inline-note--soft">
-                      <span>Collector focus</span>
+                    <div>
+                      <span>Owned</span>
                       <strong>
-                        {topRarity ? `${topRarity.rarityCode} · ${topRarity.count.toLocaleString()} owned` : "Your binder updates as pulls land"}
+                        {collectionTotal > 0
+                          ? `${collectionCount.toLocaleString()}/${collectionTotal.toLocaleString()}`
+                          : collectionCount.toLocaleString()}
                       </strong>
                     </div>
                   </div>
+                  <div className="home-lobby-inline-note home-lobby-inline-note--soft">
+                    <span>Collector cue</span>
+                    <strong>
+                      {topRarity ? `${topRarity.rarityCode} · ${topRarity.count.toLocaleString()} owned` : "Your binder updates as pulls land"}
+                    </strong>
+                  </div>
+                  {userInfo.collectionPreview[0] ? (
+                    <div className="home-lobby-memedex-single-card">
+                      <div className="home-lobby-memedex-card home-lobby-memedex-card--single">
+                        <MvpCardTile card={userInfo.collectionPreview[0]} variant="canonical" interactive={false} imageLoading="eager" />
+                      </div>
+                      <p>Latest owned spotlight</p>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="home-lobby-card-cta">Open Memedex →</div>
               </Link>
@@ -355,18 +322,13 @@ export default function HomePage() {
                 <div className="home-lobby-card-hero home-lobby-card-hero--split">
                   <div className="home-lobby-card-body">
                     <h2>Booster Shop</h2>
-                    <p>Jump straight into packs with points ready to spend and a live signal from the latest pull activity.</p>
+                    <p>Spend points on fresh packs and head straight into your next opening run.</p>
                   </div>
                   <div className="home-lobby-shop-burst" aria-hidden="true">✦</div>
                 </div>
                 <div className="home-lobby-shop-preview" aria-label="Booster Shop preview">
                   <div className="home-lobby-pack-stage">
                     <Image src="/pack.png" alt="MCG booster pack" className="home-lobby-pack-art" width={180} height={252} />
-                    {featuredPull?.card.imageUrl ? (
-                      <div className="home-lobby-pack-stamp">
-                        <Image src={featuredPull.card.imageUrl} alt={featuredPull.card.displayName} width={52} height={52} />
-                      </div>
-                    ) : null}
                   </div>
                   <div className="home-lobby-shop-copy">
                     <div className="home-lobby-stat-row home-lobby-stat-row--dense">
@@ -380,7 +342,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="home-lobby-inline-note">
-                      <span>Latest lobby pull</span>
+                      <span>Shop signal</span>
                       <strong>
                         {featuredPull
                           ? `${featuredPull.card.displayName} · ${formatRelativeTime(featuredPull.openedAt)}`
@@ -401,22 +363,22 @@ export default function HomePage() {
             </div>
             <div className="home-lobby-utility-list">
               <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Arena status</span>
+                <span className="home-lobby-utility-label">Arena</span>
                 <strong>{battleContest ? battleContest.status : "Ready"}</strong>
                 <small>{battleContest ? getContestCtaLabel(battleContest.status) : "Arena rotation available"}</small>
               </article>
               <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Collection progress</span>
+                <span className="home-lobby-utility-label">Memedex</span>
                 <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
-                <small>{collectionCount.toLocaleString()} cards owned</small>
+                <small>{collectionCount.toLocaleString()} owned</small>
               </article>
               <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Points ready</span>
+                <span className="home-lobby-utility-label">Points</span>
                 <strong>{userInfo.points.toLocaleString()}</strong>
-                <small>Use them in the shop or for entries</small>
+                <small>Ready for packs or entries</small>
               </article>
               <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Live activity</span>
+                <span className="home-lobby-utility-label">Live pull</span>
                 <strong>{recentPulls[0] ? recentPulls[0].card.displayName : "No recent pull"}</strong>
                 <small>{recentPulls[0] ? `${recentPulls[0].playerName} · ${formatRelativeTime(recentPulls[0].openedAt)}` : "Check back after the next pack opens"}</small>
               </article>
