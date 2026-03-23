@@ -32,6 +32,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     ready,
   } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
     if (!me) return;
@@ -45,7 +46,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   }, [me, pathname, router]);
 
   return (
-    <div className="mcg-app">
+    <div className={`mcg-app${isAdminRoute ? " mcg-app--admin" : ""}`}>
+      {!isAdminRoute ? <div className="mcg-app-background" aria-hidden="true" /> : null}
       <header className="mcg-topnav">
         <div className="mcg-container mcg-topnav-inner">
           <Link
