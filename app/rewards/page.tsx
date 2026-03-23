@@ -130,15 +130,47 @@ function getQuestCta(quest: QuestRow, state: CardState) {
 }
 
 function getQuestTypeLabel(quest: QuestRow) {
-  return (
+  const raw =
     quest.configSummary.socialAction ??
-    (quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : "Social quest")
+    (quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : "Social quest");
+
+  const upper = raw.toUpperCase();
+  if (upper.includes("COMMENT")) return "COMMENT";
+  if (upper.includes("LIKE")) return "LIKE";
+  if (upper.includes("RETWEET") || upper === "RT" || upper.includes("REPOST")) {
+    return "RT";
+  }
+  if (upper.includes("FOLLOW")) return "FOLLOW";
+  return upper;
+}
+
+function getQuestFlavorText(quest: QuestRow) {
+  return (
+    quest.description ??
+    quest.configSummary.instructions ??
+    "Take the action, lock the XP, keep the streak alive."
   );
+}
+
+function getQuestStatusCopy(quest: QuestRow, state: CardState) {
+  if (state === "CLAIMABLE") return "XP secured.";
+  if (state === "IN_PROGRESS") {
+    if (quest.latestSubmissionStatus === "SUBMITTED") return "Review pending.";
+    if (quest.status === "PENDING_VALIDATION") return "Checking proof.";
+    return "Quest live.";
+  }
+  if (state === "COMPLETED") return "Already cleared.";
+  return "Ready to roll.";
+}
+
+function getMilestoneIcon(index: number) {
+  return ["🏆", "💎", "⚡", "🌟", "🎯", "👑"][index % 6];
 }
 
 function QuestCard(props: {
   quest: QuestRow;
   state: CardState;
+  index: number;
   busy: boolean;
   proofUrl: string;
   note: string;
@@ -149,6 +181,7 @@ function QuestCard(props: {
   const {
     quest,
     state,
+    index,
     busy,
     proofUrl,
     note,
@@ -165,20 +198,18 @@ function QuestCard(props: {
     quest.latestSubmissionStatus === "SUBMITTED";
 
   return (
-    <article className={`${styles.questCard} ${styles[`questCard${state}`]}`}>
+    <article
+      className={`${styles.questCard} ${styles[`questCard${state}`]} ${styles[`questTone${index % 4}`]}`}
+    >
       <div className={styles.questCardTop}>
-        <div>
-          <p className={styles.questMeta}>{getQuestTypeLabel(quest)}</p>
-          <h3 className={styles.questTitle}>{quest.title}</h3>
-        </div>
-        <div className={styles.questReward}>{formatReward(quest)}</div>
+        <span className={styles.questTag}>{getQuestTypeLabel(quest)}</span>
+        <div className={styles.questRewardBadge}>{formatReward(quest)}</div>
       </div>
 
-      <p className={styles.questDescription}>
-        {quest.description ??
-          quest.configSummary.instructions ??
-          "Complete this quest to earn more XP."}
-      </p>
+      <div className={styles.questBody}>
+        <h3 className={styles.questTitle}>{quest.title}</h3>
+        <p className={styles.questDescription}>{getQuestFlavorText(quest)}</p>
+      </div>
 
       {manual && state !== "COMPLETED" && state !== "CLAIMABLE" ? (
         <div className={styles.questProofFields}>
@@ -201,24 +232,14 @@ function QuestCard(props: {
       ) : null}
 
       <div className={styles.questFooter}>
-        <div className={styles.questStatusText}>
-          {state === "CLAIMABLE"
-            ? "Completed and credited."
-            : state === "IN_PROGRESS"
-              ? quest.status === "PENDING_VALIDATION"
-                ? "Validation in progress."
-                : quest.latestSubmissionStatus === "SUBMITTED"
-                  ? "Submitted for review."
-                  : "Quest already started."
-              : "Ready to start."}
-        </div>
+        <span className={styles.questStatusBadge}>{getQuestStatusCopy(quest, state)}</span>
         <button
           type="button"
           onClick={onAction}
           disabled={disabled}
           className={`btn ${styles.questActionButton} ${styles[`questActionButton${state}`]}`}
         >
-          {busy ? "Working…" : getQuestCta(quest, state)}
+          {busy ? "Working…" : getQuestCta(quest, state).toUpperCase()}
         </button>
       </div>
     </article>
@@ -339,13 +360,21 @@ export default function RewardsPage() {
       });
   }, [socialQuests, justCompleted]);
 
-  const visibleMilestones = useMemo(() => {
-    const unlocked = milestoneQuests.filter(
-      (quest) => resolveCardState(quest, justCompleted) === "COMPLETED",
-    );
-    const lockedCount = Math.max(milestoneQuests.length - unlocked.length, 0);
-    return { unlocked, lockedCount };
+  const milestoneCards = useMemo(() => {
+    return [...milestoneQuests]
+      .map((quest) => ({
+        quest,
+        state: resolveCardState(quest, justCompleted),
+      }))
+      .sort((left, right) => {
+        const leftProgress = (left.quest.targetValue ?? left.quest.configSummary.targetValue ?? 1) - left.quest.progressValue;
+        const rightProgress = (right.quest.targetValue ?? right.quest.configSummary.targetValue ?? 1) - right.quest.progressValue;
+        return leftProgress - rightProgress;
+      });
   }, [milestoneQuests, justCompleted]);
+
+  const featuredMilestone = milestoneCards[0] ?? null;
+  const secondaryMilestones = featuredMilestone ? milestoneCards.slice(1) : milestoneCards;
 
   const pointsEarned = ledger
     .filter((entry) => entry.entryType === "CREDIT")
@@ -359,6 +388,16 @@ export default function RewardsPage() {
     Math.min(1, (currentPoints - currentLevelFloor) / 500),
   );
 
+  const featuredProgressValue = featuredMilestone?.quest.progressValue ?? 0;
+  const featuredProgressTarget =
+    featuredMilestone?.quest.targetValue ??
+    featuredMilestone?.quest.configSummary.targetValue ??
+    1;
+  const featuredProgress = Math.max(
+    0,
+    Math.min(1, featuredProgressValue / Math.max(featuredProgressTarget, 1)),
+  );
+
   const showLoading = loading || (me && loadingData && quests.length === 0);
 
   return (
@@ -368,11 +407,11 @@ export default function RewardsPage() {
 
         {!showLoading && !me ? (
           <div className={styles.boardLayout}>
-            <section className={styles.overviewSection}>
+            <section className={styles.heroSection}>
               <div>
                 <p className={styles.sectionEyebrow}>Quest system</p>
-                <h1 className={styles.pageTitle}>Quests</h1>
-                <p className={styles.sectionCopy}>
+                <h1 className={styles.pageTitle}>QUESTS</h1>
+                <p className={styles.heroCopy}>
                   Track active quests, hidden milestones, and your XP progress in one place.
                 </p>
               </div>
@@ -388,39 +427,49 @@ export default function RewardsPage() {
 
         {!showLoading && me ? (
           <div className={styles.boardLayout}>
-            <section className={styles.overviewSection}>
-              <div className={styles.overviewHeader}>
-                <div>
-                  <p className={styles.sectionEyebrow}>Quest overview</p>
-                  <h1 className={styles.pageTitle}>Quests</h1>
+            <section className={styles.heroSection}>
+              <div className={styles.heroTopRow}>
+                <div className={styles.heroHeading}>
+                  <p className={styles.sectionEyebrow}>Quest progression</p>
+                  <h1 className={styles.pageTitle}>QUESTS</h1>
+                  <p className={styles.heroCopy}>
+                    Chase XP, clear social missions, and unlock mystery milestones.
+                  </p>
                 </div>
-                <div className={styles.overviewStats}>
-                  <div className={styles.statCard}>
+                <div className={styles.heroStats}>
+                  <div className={styles.heroStatCard}>
                     <span className={styles.statLabel}>Current XP</span>
                     <strong className={styles.statValue}>{currentPoints.toLocaleString()}</strong>
                   </div>
-                  <div className={styles.statCard}>
+                  <div className={styles.heroStatCard}>
                     <span className={styles.statLabel}>Level</span>
                     <strong className={styles.statValue}>{currentLevel}</strong>
                   </div>
-                  <div className={styles.statCard}>
+                  <div className={styles.heroStatCard}>
                     <span className={styles.statLabel}>Total earned</span>
                     <strong className={styles.statValue}>{pointsEarned.toLocaleString()}</strong>
                   </div>
                 </div>
               </div>
-              <div className={styles.levelRow}>
+
+              <div className={styles.heroProgressPanel}>
                 <div>
-                  <p className={styles.levelLabel}>Level progression</p>
+                  <p className={styles.levelLabel}>XP progress</p>
                   <p className={styles.levelMeta}>
                     {Math.max(nextLevelPoints - currentPoints, 0).toLocaleString()} XP to Level {currentLevel + 1}
                   </p>
                 </div>
-                <div className={styles.levelTrack} aria-hidden="true">
-                  <span
-                    className={styles.levelFill}
-                    style={{ width: `${levelProgress * 100}%` }}
-                  />
+                <div className={styles.heroTrackWrap}>
+                  <div className={styles.levelTrack} aria-hidden="true">
+                    <span
+                      className={styles.levelFill}
+                      style={{ width: `${levelProgress * 100}%` }}
+                    />
+                  </div>
+                  <div className={styles.heroProgressTicks}>
+                    <span>{currentLevelFloor.toLocaleString()} XP</span>
+                    <span>{nextLevelPoints.toLocaleString()} XP</span>
+                  </div>
                 </div>
               </div>
             </section>
@@ -436,13 +485,13 @@ export default function RewardsPage() {
               </div>
             ) : null}
 
-            <section className={styles.boardSection}>
+            <section className={styles.questSection}>
               <div className={styles.sectionHeader}>
                 <div>
                   <p className={styles.sectionEyebrow}>Social quests</p>
                   <h2 className={styles.sectionTitle}>Active social quests</h2>
                   <p className={styles.sectionCopy}>
-                    Complete social actions to earn XP and unlock hidden milestones.
+                    Jump into quick actions and keep the XP meter moving.
                   </p>
                 </div>
                 <div className={styles.sectionCount}>{activeSocialQuests.length}</div>
@@ -452,11 +501,12 @@ export default function RewardsPage() {
                 <div className={styles.emptyCard}>No active social quests right now.</div>
               ) : (
                 <div className={styles.questGrid}>
-                  {activeSocialQuests.map(({ quest, state }) => (
+                  {activeSocialQuests.map(({ quest, state }, index) => (
                     <QuestCard
                       key={quest.id}
                       quest={quest}
                       state={state}
+                      index={index}
                       busy={submittingId === quest.id}
                       proofUrl={proofUrlByQuest[quest.id] ?? ""}
                       note={noteByQuest[quest.id] ?? ""}
@@ -508,63 +558,77 @@ export default function RewardsPage() {
               )}
             </section>
 
-            <section className={styles.boardSection}>
+            <section className={styles.dailySection}>
               <div className={styles.sectionHeader}>
                 <div>
                   <p className={styles.sectionEyebrow}>Daily quests</p>
                   <h2 className={styles.sectionTitle}>Daily quests</h2>
                 </div>
               </div>
-              <div className={styles.emptyCard}>Daily quests coming soon.</div>
+              <div className={styles.dailyComingSoon}>Daily quests coming soon</div>
             </section>
 
-            <section className={styles.boardSection}>
+            <section className={styles.milestoneSection}>
               <div className={styles.sectionHeader}>
                 <div>
                   <p className={styles.sectionEyebrow}>Milestones</p>
                   <h2 className={styles.sectionTitle}>Hidden milestones</h2>
                   <p className={styles.sectionCopy}>
-                    Only unlocked milestones are revealed. The rest stay hidden until discovered.
+                    One big goal up front. The rest stay mysterious until you earn them.
                   </p>
                 </div>
               </div>
-              <div className={styles.milestoneGrid}>
-                {visibleMilestones.unlocked.map((quest) => (
-                  <article key={quest.id} className={`${styles.milestoneCard} ${styles.milestoneUnlocked}`}>
-                    <p className={styles.milestoneLabel}>Unlocked milestone</p>
-                    <h3 className={styles.milestoneTitle}>{quest.title}</h3>
-                    <p className={styles.milestoneDescription}>
-                      {quest.description ?? "Milestone completed."}
+
+              {featuredMilestone ? (
+                <article className={styles.featuredMilestoneCard}>
+                  <div className={styles.featuredMilestoneIcon}>🏆</div>
+                  <div className={styles.featuredMilestoneContent}>
+                    <p className={styles.milestoneLabel}>Featured milestone</p>
+                    <h3 className={styles.featuredMilestoneTitle}>{featuredMilestone.quest.title}</h3>
+                    <p className={styles.featuredMilestoneDescription}>
+                      {featuredMilestone.quest.description ?? "Your main progression target right now."}
                     </p>
-                    <div className={styles.milestoneFooter}>
-                      <span>{formatReward(quest)}</span>
-                      <span>{formatDate(quest.completedAt ?? quest.claimedAt)}</span>
+                    <div className={styles.featuredMilestoneTrack} aria-hidden="true">
+                      <span style={{ width: `${featuredProgress * 100}%` }} />
                     </div>
-                  </article>
-                ))}
-                {Array.from({ length: visibleMilestones.lockedCount }).map((_, index) => (
-                  <article key={`mystery-${index}`} className={`${styles.milestoneCard} ${styles.milestoneHidden}`}>
-                    <p className={styles.milestoneLabel}>Hidden milestone</p>
-                    <h3 className={styles.milestoneTitle}>??? milestone</h3>
-                    <p className={styles.milestoneDescription}>
-                      Keep completing quests to uncover this milestone.
-                    </p>
-                  </article>
-                ))}
-                {visibleMilestones.unlocked.length === 0 && visibleMilestones.lockedCount === 0 ? (
-                  <div className={styles.emptyCard}>Milestones will appear here when quests are available.</div>
-                ) : null}
-              </div>
+                    <div className={styles.featuredMilestoneFooter}>
+                      <span>
+                        {Math.min(featuredProgressValue, featuredProgressTarget)} / {featuredProgressTarget}
+                      </span>
+                      <span>{formatReward(featuredMilestone.quest)}</span>
+                    </div>
+                  </div>
+                </article>
+              ) : (
+                <div className={styles.emptyCard}>Milestones will appear here when quests are available.</div>
+              )}
+
+              {secondaryMilestones.length > 0 ? (
+                <div className={styles.milestoneGrid}>
+                  {secondaryMilestones.map(({ quest, state }, index) => {
+                    const unlocked = state === "COMPLETED" || state === "CLAIMABLE";
+                    return (
+                      <article
+                        key={quest.id}
+                        className={`${styles.milestoneCard} ${unlocked ? styles.milestoneUnlocked : styles.milestoneLocked}`}
+                      >
+                        <div className={styles.milestoneIcon}>{unlocked ? getMilestoneIcon(index) : "❔"}</div>
+                        <div>
+                          <p className={styles.milestoneLabel}>{unlocked ? "Unlocked" : "Hidden"}</p>
+                          <h3 className={styles.milestoneTitle}>{unlocked ? quest.title : "???"}</h3>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : null}
             </section>
 
-            <section className={styles.boardSection}>
+            <section className={styles.archiveSection}>
               <div className={styles.sectionHeader}>
                 <div>
                   <p className={styles.sectionEyebrow}>Archive</p>
                   <h2 className={styles.sectionTitle}>Completed quests</h2>
-                  <p className={styles.sectionCopy}>
-                    A compact archive of quests you already cleared.
-                  </p>
                 </div>
                 <div className={styles.sectionCount}>{completedSocialQuests.length}</div>
               </div>
@@ -572,9 +636,9 @@ export default function RewardsPage() {
               {completedSocialQuests.length === 0 ? (
                 <div className={styles.emptyCard}>No completed quests yet.</div>
               ) : (
-                <div className={styles.archiveGrid}>
+                <div className={styles.archiveList}>
                   {completedSocialQuests.map((quest) => (
-                    <article key={quest.id} className={styles.archiveCard}>
+                    <article key={quest.id} className={styles.archiveRow}>
                       <div>
                         <p className={styles.archiveMeta}>{getQuestTypeLabel(quest)}</p>
                         <h3 className={styles.archiveTitle}>{quest.title}</h3>
