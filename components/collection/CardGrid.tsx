@@ -1,4 +1,5 @@
 import { MemedexCardSurface } from "@/components/ui/MemedexCardSurface";
+import { formatMemedexFinish } from "@/components/collection/memedexFinish";
 import type { MvpCardView } from "@/types/cards";
 
 type CardGridItem = {
@@ -23,7 +24,8 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
     <div className="collection-card-grid memedex-grid">
       {items.map((item, index) => {
         const hasMultipleCopies = item.instanceCount > 1;
-        const editionLabel = item.card.setEditionLabel ?? item.card.edition;
+        const finishLabel = formatMemedexFinish(item.card.edition);
+        const slotLabel = item.card.cardNumber ?? `#${String(index + 1).padStart(3, "0")}`;
 
         return (
           <div key={item.templateId} className="collection-card-tile memedex-card-tile">
@@ -39,16 +41,16 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
 
             <div className="collection-card-meta memedex-card-meta" aria-label={`Inventory details for ${item.card.displayName}`}>
               <strong className="collection-card-meta-title">{item.card.displayName}</strong>
-              <div className="collection-card-meta-pills">
-                <span className="memedex-meta-chip memedex-meta-chip--rarity">{item.card.rarity}</span>
-                <span className="memedex-meta-chip">{editionLabel}</span>
+              <div className="memedex-card-detail-line memedex-card-detail-line--muted">
+                <span>{item.card.rarity}</span>
+                <span aria-hidden="true">•</span>
+                <span>{finishLabel}</span>
               </div>
-              <div className="memedex-card-footer">
+              <div className="memedex-card-detail-line memedex-card-detail-line--footer">
                 <span className={`collection-card-copies${hasMultipleCopies ? " is-multiple" : ""}`}>
                   {hasMultipleCopies ? `×${item.instanceCount} copies` : "1 copy"}
                 </span>
-                <span className="memedex-card-index">#{String(index + 1).padStart(3, "0")}</span>
-                <span className="memedex-card-status">Discovered</span>
+                <span className="memedex-card-index">{slotLabel}</span>
               </div>
             </div>
           </div>
@@ -67,13 +69,13 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
           </div>
           <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
             <strong className="collection-card-meta-title">Undiscovered meme</strong>
-            <div className="collection-card-meta-pills">
-              <span className="memedex-meta-chip memedex-meta-chip--locked">Locked</span>
-              <span className="memedex-meta-chip memedex-meta-chip--locked">Hidden finish</span>
+            <div className="memedex-card-detail-line memedex-card-detail-line--muted">
+              <span>Locked</span>
+              <span aria-hidden="true">•</span>
+              <span>Finish hidden</span>
             </div>
-            <div className="memedex-card-footer">
-              <span className="collection-card-copies">0 copies</span>
-              <span className="memedex-card-index">???</span>
+            <div className="memedex-card-detail-line memedex-card-detail-line--footer">
+              <span className="memedex-card-index">Slot hidden</span>
               <span className="memedex-card-status memedex-card-status--locked">Open packs to reveal</span>
             </div>
           </div>
