@@ -9885,10 +9885,10 @@ button.mcg-chip:hover {
 
 .memedex-header-wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
-  gap: 24px;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.55fr);
+  gap: 18px;
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  align-items: stretch;
 }
 
 .memedex-header-shell {
@@ -9911,16 +9911,96 @@ button.mcg-chip:hover {
     );
 }
 
-.memedex-header-chips {
+.memedex-header-title-row {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.memedex-header-eyebrow,
+.memedex-header-section-label {
+  margin: 0;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.memedex-header-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.memedex-header-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.45rem 1rem;
+  margin: 0;
+  font-family: var(--font-label);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.memedex-header-summary strong {
+  color: var(--color-text-primary);
+}
+
+.memedex-header-section-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.memedex-header-section {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.memedex-header-inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.memedex-header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-height: 28px;
+  padding: 0 0.6rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-hard-sm);
+  font-family: var(--font-label);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.memedex-header-pill--accent {
+  background: color-mix(in srgb, var(--color-brand-yellow) 34%, white);
+}
+
+.memedex-header-inline-note {
+  font-size: 0.76rem;
+  color: var(--color-text-secondary);
 }
 
 .memedex-header-progress {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 14px 16px;
   border: 3px solid var(--color-ink);
   border-radius: 28px;
   background: color-mix(in srgb, var(--color-brand-yellow) 28%, white);
@@ -9956,13 +10036,13 @@ button.mcg-chip:hover {
 
 .memedex-header-progress-top strong {
   font-family: var(--font-display);
-  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
   font-weight: 900;
   letter-spacing: -0.06em;
 }
 
 .memedex-header-track {
-  height: 22px;
+  height: 18px;
 }
 
 .memedex-toolbar {
@@ -10049,13 +10129,14 @@ button.mcg-chip:hover {
 
 .memedex-filter-pills {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .memedex-filter-pill {
+  width: 100%;
   min-height: 36px;
-  padding: 0 14px;
+  padding: 0 10px;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
   background: white;
@@ -10109,17 +10190,17 @@ button.mcg-chip:hover {
 
 .memedex-card-tile {
   display: grid;
-  grid-template-rows: auto auto;
+  grid-template-rows: minmax(0, auto) auto;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .memedex-card-trigger {
   position: relative;
   display: grid;
   align-content: start;
+  align-self: start;
   gap: 0;
-  min-height: 352px;
   padding: 10px;
   border: 3px solid var(--color-ink);
   border-radius: 28px;
@@ -10158,7 +10239,6 @@ button.mcg-chip:hover {
 
 .memedex-card-frame {
   display: grid;
-  min-height: 312px;
   padding: 4px;
   border-radius: 22px;
   background: color-mix(
@@ -10192,12 +10272,13 @@ button.mcg-chip:hover {
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   font-weight: 800;
 }
 
 .memedex-card-meta .collection-card-meta-title {
   line-height: 1.08;
+  margin: 0;
 }
 
 .memedex-card-detail-line--footer {
@@ -10276,22 +10357,12 @@ button.mcg-chip:hover {
   background: rgba(255, 255, 255, 0.7);
 }
 
-.memedex-card-lock-copy {
-  font-family: var(--font-label);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #42515f;
-}
-
 .memedex-card-tile--locked {
   opacity: 0.88;
 }
 
 .memedex-card-trigger--locked {
   cursor: default;
-  min-height: 352px;
   background: color-mix(
     in srgb,
     var(--color-surface-0) 84%,
@@ -10300,7 +10371,6 @@ button.mcg-chip:hover {
 }
 
 .memedex-card-frame--locked {
-  min-height: 312px;
   display: grid;
   place-items: center;
   gap: 8px;
@@ -12900,30 +12970,14 @@ button.mcg-chip:hover {
 }
 
 .stitch-memedex-screen .memedex-header-wrap {
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 1.5rem;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.5fr);
+  gap: 1rem;
+  align-items: stretch;
 }
 
 .stitch-memedex-screen .memedex-header-copy {
   display: grid;
-  gap: 0.85rem;
-}
-
-.stitch-memedex-screen .memedex-header-copy .section-header {
-  gap: 0.5rem;
-}
-
-.stitch-memedex-screen .memedex-header-copy .section-header__title {
-  margin: 0;
-}
-
-.stitch-memedex-screen .memedex-header-copy .section-header__subtitle {
-  max-width: 52ch;
-}
-
-.stitch-memedex-screen .memedex-header-chips {
-  gap: 0.5rem;
+  gap: 0.7rem;
 }
 
 .stitch-memedex-screen .memedex-header-progress {
@@ -12955,6 +13009,11 @@ button.mcg-chip:hover {
   background: linear-gradient(180deg, #ffef55 0%, #ffd96a 100%);
 }
 
+.stitch-memedex-screen .memedex-filter-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .stitch-memedex-screen .collection-select,
 .stitch-memedex-screen .memedex-search-input {
   background: linear-gradient(180deg, #fff 0%, #fffdf2 100%);
@@ -12973,7 +13032,7 @@ button.mcg-chip:hover {
 .memedex-gallery-head {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -12986,7 +13045,7 @@ button.mcg-chip:hover {
 .memedex-gallery-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
   font-weight: 900;
   line-height: 0.92;
   letter-spacing: -0.05em;
@@ -13025,9 +13084,7 @@ button.mcg-chip:hover {
 
 .memedex-gallery-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1.45fr) minmax(260px, 1.2fr) repeat(3, minmax(132px, 0.68fr));
   gap: 0.7rem;
-  align-items: end;
   padding: 0.85rem;
   border: 3px solid #111;
   border-radius: 26px;
@@ -13035,10 +13092,24 @@ button.mcg-chip:hover {
   box-shadow: 8px 8px 0 #111;
 }
 
+.memedex-toolbar-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.memedex-toolbar-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
 .memedex-toolbar-search,
 .memedex-filter-field {
   display: grid;
   gap: 0.3rem;
+  min-width: 0;
 }
 
 .memedex-toolbar-search > span,
@@ -13062,28 +13133,22 @@ button.mcg-chip:hover {
 }
 
 .memedex-filter-pills {
-  display: inline-flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.4rem;
   align-items: center;
   min-height: 38px;
-  white-space: nowrap;
-  overflow-x: auto;
-  padding-bottom: 0.1rem;
-  scrollbar-width: none;
 }
 
-.memedex-filter-pills::-webkit-scrollbar {
-  display: none;
-}
 
 .stitch-memedex-screen .memedex-grid {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.25rem 1.1rem;
+  gap: 1rem 1rem;
+  align-items: start;
 }
 
 .stitch-memedex-screen .memedex-card-tile {
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .stitch-memedex-screen .memedex-card-trigger {
@@ -13108,7 +13173,12 @@ button.mcg-chip:hover {
 }
 
 .stitch-memedex-screen .memedex-card-meta {
-  padding: 0.05rem 0.25rem 0;
+  padding: 0.05rem 0.15rem 0;
+}
+
+.stitch-memedex-screen .memedex-card-trigger,
+.stitch-memedex-screen .memedex-card-trigger--locked {
+  height: auto;
 }
 
 .stitch-memedex-screen .missing-shelf-surface {
@@ -13133,16 +13203,8 @@ button.mcg-chip:hover {
 }
 
 @media (max-width: 1200px) {
-  .memedex-gallery-toolbar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .memedex-toolbar-search {
-    grid-column: span 3;
-  }
-
-  .memedex-filter-field--chips {
-    grid-column: span 2;
+  .memedex-toolbar-top {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -13162,13 +13224,8 @@ button.mcg-chip:hover {
     padding: 1.15rem;
   }
 
-  .memedex-gallery-toolbar {
+  .memedex-toolbar-bottom {
     grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .memedex-filter-pills {
-    justify-content: flex-start;
   }
 
   .stitch-memedex-screen .memedex-grid {

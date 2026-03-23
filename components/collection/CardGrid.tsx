@@ -24,7 +24,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
     <div className="collection-card-grid memedex-grid">
       {items.map((item, index) => {
         const hasMultipleCopies = item.instanceCount > 1;
-        const finishLabel = formatMemedexFinish(item.card.edition);
+        const finishLabel = formatMemedexFinish(item.card.edition).toUpperCase();
         const slotLabel = item.card.cardNumber ?? `#${String(index + 1).padStart(3, "0")}`;
 
         return (
@@ -47,7 +47,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
               </div>
               <div className="memedex-card-detail-line memedex-card-detail-line--footer">
                 <span className={`collection-card-copies${hasMultipleCopies ? " is-multiple" : ""}`}>
-                  {hasMultipleCopies ? `×${item.instanceCount} copies` : "1 copy"}
+                  {hasMultipleCopies ? `${item.instanceCount} copies` : "1 copy"}
                 </span>
                 <span className="memedex-card-index">{slotLabel}</span>
               </div>
@@ -62,16 +62,12 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
             <span className="memedex-card-rarity-bar rarity-locked" />
             <div className="memedex-card-frame memedex-card-frame--locked">
               <div className="memedex-card-lock-mark">?</div>
-              <span className="memedex-card-lock-copy">Locked entry</span>
             </div>
           </div>
           <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
             <strong className="collection-card-meta-title">Undiscovered meme</strong>
             <div className="memedex-card-detail-line memedex-card-detail-line--muted">
-              <span>Locked entry</span>
-            </div>
-            <div className="memedex-card-detail-line memedex-card-detail-line--footer">
-              <span className="memedex-card-status memedex-card-status--locked">Open packs to reveal</span>
+              <span>Reveal to discover</span>
             </div>
           </div>
         </div>
