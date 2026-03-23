@@ -143,13 +143,13 @@ export default function HomePage() {
       completionPct: collectionProjection?.completionPct ?? null,
       ownedTemplates: collectionProjection?.ownedTemplateCount ?? null,
       missingTemplates: collectionProjection?.missingTemplateCount ?? null,
-      byRarity: collectionProjection?.byRarity ?? [],
       activeEntries: competitiveProgression?.activeEntries ?? null,
       seasonRank: competitiveProgression?.seasonRank ?? null,
     };
   }, [me]);
 
-  const battleContest = contests[0] ?? null;
+  const activeBattleContests = contests.slice(0, 3);
+  const battleContest = activeBattleContests[0] ?? null;
   const featuredPull = recentPulls[0] ?? null;
   const collectionCount = userInfo?.ownedTemplates ?? 0;
   const collectionTotal =
@@ -168,10 +168,10 @@ export default function HomePage() {
       ? Math.max(1, userInfo.levelXpCeil - userInfo.levelXpFloor)
       : 100;
   const playerInitial = userInfo?.displayName.slice(0, 1).toUpperCase() ?? "P";
-  const topRarity = userInfo?.byRarity?.[0] ?? null;
-  const battleLockLabel = formatLockTime(battleContest?.lockAt ?? null);
-  const battleCoverImage =
-    battleContest?.rules?.[0]?.config?.coverImageUrl?.trim() || "/Contest.png";
+  const memedexRarityRows = ["Common", "Uncommon", "Rare", "Epic", "Legendary"].map((label) => ({
+    label,
+    count: me?.coexistence?.v2?.collectionProjection?.byRarity?.find((item) => item.rarityCode === label)?.count ?? 0,
+  }));
   const memedexFinishRows = (me?.coexistence?.v2?.collectionProjection?.byEdition ?? [])
     .map((item) => ({
       label: formatMemedexFinish(item.editionCode),
@@ -247,7 +247,7 @@ export default function HomePage() {
           </section>
 
           <section className="home-lobby-main-grid" aria-label="Main actions">
-            <Link href={battleContest ? `/contests/${battleContest.id}` : "/contests"} className="home-lobby-card home-lobby-card--battle">
+            <div className="home-lobby-card home-lobby-card--battle">
               <div className="home-lobby-card-head">
                 <span className="home-lobby-card-kicker">Primary mode</span>
                 <span className="home-lobby-status-badge">{battleContest ? getBattleStatusLabel(battleContest.status) : "Ready"}</span>
@@ -257,52 +257,64 @@ export default function HomePage() {
                   <h2>Battle Arena</h2>
                   <p>
                     {battleContest
-                      ? "Step into the featured battle and make your next ranked move."
+                      ? "Track the live rotation and jump straight into the battles that matter now."
                       : "Jump into the live battle rotation and keep your lineup moving."}
                   </p>
                 </div>
               </div>
-              <div className="home-lobby-battle-spotlight home-lobby-battle-spotlight--card">
-                <div className="home-lobby-battle-visual">
-                  <Image
-                    src={battleCoverImage}
-                    alt={battleContest ? `${battleContest.title} cover` : "Battle Arena cover"}
-                    fill
-                    className="home-lobby-battle-visual-image"
-                    sizes="(max-width: 900px) 100vw, 420px"
-                  />
-                  <span className="home-lobby-battle-spotlight-label">Featured battle</span>
-                </div>
-                <div className="home-lobby-battle-spotlight-copy">
-                  <strong>{battleContest?.title ?? "Battle rotation ready"}</strong>
-                  <div className="home-lobby-battle-facts" aria-label="Featured battle details">
-                    <div className="home-lobby-battle-fact">
-                      <span>{battleContest?.status === "LIVE" ? "Season" : "Status"}</span>
-                      <strong>{battleContest?.status === "LIVE" ? (battleContest?.seasonName ?? "Live now") : getBattleStatusLabel(battleContest?.status ?? "OPEN")}</strong>
-                    </div>
-                    <div className="home-lobby-battle-fact">
-                      <span>{battleContest?.rewardPreview?.label ? "Reward" : "Entries"}</span>
-                      <strong>
-                        {battleContest?.rewardPreview?.label
-                          ? battleContest.rewardPreview.label
-                          : `${battleContest?._count.entries.toLocaleString() ?? "0"} entered`}
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <div className="home-lobby-battle-status-row">
                 <div className="home-lobby-battle-status-chip">
-                  <span>{battleContest?.status === "LIVE" ? "Season" : "Lock"}</span>
-                  <strong>{battleContest?.status === "LIVE" ? (battleContest?.seasonName ?? "Active") : (battleLockLabel ?? "TBA")}</strong>
+                  <span>Season</span>
+                  <strong>{battleContest?.seasonName ?? "Active rotation"}</strong>
                 </div>
                 <div className="home-lobby-battle-status-chip">
-                  <span>Your status</span>
-                  <strong>{battleContest?.userEntry ? "Entered" : "Open slot"}</strong>
+                  <span>Status</span>
+                  <strong>{battleContest ? getBattleStatusLabel(battleContest.status) : "No live battle"}</strong>
                 </div>
               </div>
-              <div className="home-lobby-card-cta">{battleContest ? getContestCtaLabel(battleContest.status) : "Open arena"} →</div>
-            </Link>
+              <div className="home-lobby-battle-list" aria-label="Active and open battles">
+                {activeBattleContests.length > 0 ? activeBattleContests.map((contest, index) => {
+                  const contestCoverImage = contest.rules?.[0]?.config?.coverImageUrl?.trim() || "/Contest.png";
+                  const contestLockLabel = formatLockTime(contest.lockAt);
+                  return (
+                    <article key={contest.id} className="home-lobby-battle-row">
+                      <div className="home-lobby-battle-row-visual">
+                        <Image
+                          src={contestCoverImage}
+                          alt={`${contest.title} cover`}
+                          fill
+                          className="home-lobby-battle-visual-image"
+                          sizes="(max-width: 900px) 100vw, 220px"
+                        />
+                        <span className="home-lobby-battle-spotlight-label">{index === 0 ? "Featured battle" : "Open battle"}</span>
+                      </div>
+                      <div className="home-lobby-battle-row-copy">
+                        <div className="home-lobby-battle-row-head">
+                          <strong>{contest.title}</strong>
+                          <span className="home-lobby-battle-row-status">{getBattleStatusLabel(contest.status)}</span>
+                        </div>
+                        <div className="home-lobby-battle-facts" aria-label={`${contest.title} details`}>
+                          <div className="home-lobby-battle-fact">
+                            <span>Entries</span>
+                            <strong>{contest._count.entries.toLocaleString()} entered</strong>
+                          </div>
+                          <div className="home-lobby-battle-fact">
+                            <span>{contest.rewardPreview?.label ? "Reward" : "Lock"}</span>
+                            <strong>{contest.rewardPreview?.label ?? contestLockLabel ?? "TBA"}</strong>
+                          </div>
+                        </div>
+                        <div className="home-lobby-battle-row-footer">
+                          <span className="home-lobby-battle-row-meta">{contest.userEntry ? "You are entered" : contest.status === "LIVE" ? "Live now" : "Open slot available"}</span>
+                          <Link href={`/contests/${contest.id}`} className="home-lobby-card-cta home-lobby-card-cta--inline">{getContestCtaLabel(contest.status)} →</Link>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                }) : (
+                  <div className="home-lobby-battle-empty" role="status">No battle right now. Come back later.</div>
+                )}
+              </div>
+            </div>
 
             <div className="home-lobby-side-actions">
               <Link href="/collection" className="home-lobby-card home-lobby-card--secondary home-lobby-card--memedex">
@@ -332,13 +344,29 @@ export default function HomePage() {
                       </strong>
                     </div>
                   </div>
-                  <div className="home-lobby-memedex-breakdown" aria-label="Memedex finish breakdown">
-                    {(memedexFinishRows.length > 0 ? memedexFinishRows : topRarity ? [{ label: topRarity.rarityCode, count: topRarity.count }] : []).map((item) => (
-                      <div key={item.label} className="home-lobby-memedex-breakdown-item">
-                        <span>{item.label}</span>
-                        <strong>{item.count.toLocaleString()}</strong>
+                  <div className="home-lobby-memedex-summary-grid">
+                    <div className="home-lobby-memedex-section">
+                      <span className="home-lobby-memedex-section-label">Rarity</span>
+                      <div className="home-lobby-memedex-breakdown" aria-label="Memedex rarity breakdown">
+                        {memedexRarityRows.map((item) => (
+                          <div key={item.label} className="home-lobby-memedex-breakdown-item">
+                            <span>{item.label}</span>
+                            <strong>{item.count.toLocaleString()}</strong>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                    <div className="home-lobby-memedex-section">
+                      <span className="home-lobby-memedex-section-label">Finish</span>
+                      <div className="home-lobby-memedex-breakdown" aria-label="Memedex finish breakdown">
+                        {memedexFinishRows.map((item) => (
+                          <div key={item.label} className="home-lobby-memedex-breakdown-item">
+                            <span>{item.label}</span>
+                            <strong>{item.count.toLocaleString()}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="home-lobby-card-cta">Open Memedex →</div>
@@ -386,34 +414,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="home-lobby-utility-strip" aria-label="Quick progress">
-            <div className="home-lobby-utility-head">
-              <p className="home-lobby-eyebrow">Quick progress</p>
-              <h2>See what is moving across your account right now.</h2>
-            </div>
-            <div className="home-lobby-utility-list">
-              <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Arena</span>
-                <strong>{battleContest ? battleContest.status : "Ready"}</strong>
-                <small>{battleContest ? getContestCtaLabel(battleContest.status) : "Arena rotation available"}</small>
-              </article>
-              <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Memedex</span>
-                <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
-                <small>{collectionCount.toLocaleString()} owned</small>
-              </article>
-              <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Points</span>
-                <strong>{userInfo.points.toLocaleString()}</strong>
-                <small>Ready for packs or entries</small>
-              </article>
-              <article className="home-lobby-utility-item">
-                <span className="home-lobby-utility-label">Live pull</span>
-                <strong>{recentPulls[0] ? recentPulls[0].card.displayName : "No recent pull"}</strong>
-                <small>{recentPulls[0] ? `${recentPulls[0].playerName} · ${formatRelativeTime(recentPulls[0].openedAt)}` : "Check back after the next pack opens"}</small>
-              </article>
-            </div>
-          </section>
         </div>
       ) : (
         <div className="stitch-screen stitch-landing-screen landing-page-flow">

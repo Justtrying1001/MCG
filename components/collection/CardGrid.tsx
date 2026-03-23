@@ -61,7 +61,15 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
           <div className="memedex-card-trigger memedex-card-trigger--locked" aria-hidden="true">
             <span className="memedex-card-rarity-bar rarity-locked" />
             <div className="memedex-card-frame memedex-card-frame--locked">
-              <div className="memedex-card-lock-mark">?</div>
+              <div className="memedex-card-frame-shell">
+                <div className="memedex-card-placeholder">
+                  <div className="memedex-card-placeholder__mark">?</div>
+                  <div className="memedex-card-placeholder__copy">
+                    <span>Undiscovered</span>
+                    <strong>Hidden slot</strong>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
@@ -69,7 +77,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
             <div className="memedex-card-detail-line memedex-card-detail-line--muted">
               <span>Locked</span>
               <span aria-hidden="true">•</span>
-              <span>Slot</span>
+              <span>Hidden finish</span>
             </div>
             <div className="memedex-card-detail-line memedex-card-detail-line--footer">
               <span className="collection-card-copies">Reveal to discover</span>

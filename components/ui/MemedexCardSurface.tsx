@@ -19,12 +19,14 @@ export function MemedexCardSurface({
         aria-hidden="true"
       />
       <div className="memedex-card-frame">
-        <MvpCardTile
-          card={card}
-          quantity={quantity}
-          variant="canonical"
-          imageLoading={imageLoading}
-        />
+        <div className="memedex-card-frame-shell">
+          <MvpCardTile
+            card={card}
+            quantity={quantity}
+            variant="canonical"
+            imageLoading={imageLoading}
+          />
+        </div>
       </div>
     </>
   );

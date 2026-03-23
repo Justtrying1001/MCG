@@ -10293,6 +10293,14 @@ button.mcg-chip:hover {
   );
 }
 
+.memedex-card-frame-shell {
+  display: grid;
+  width: 100%;
+  min-height: var(--mvp-min-height, 320px);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
 .memedex-card-meta {
   display: grid;
   align-self: start;
@@ -10304,6 +10312,13 @@ button.mcg-chip:hover {
 
 .memedex-card-meta--locked {
   opacity: 0.82;
+}
+
+.memedex-card-meta--locked .collection-card-meta-title,
+.memedex-card-meta--locked .memedex-card-detail-line,
+.memedex-card-meta--locked .collection-card-copies,
+.memedex-card-meta--locked .memedex-card-index {
+  white-space: nowrap;
 }
 
 .memedex-card-detail-line {
@@ -10423,32 +10438,77 @@ button.mcg-chip:hover {
 }
 
 .memedex-card-frame--locked {
-  display: grid;
-  place-items: center;
-  gap: 8px;
   width: 100%;
   aspect-ratio: 63 / 88;
-  min-height: var(--mvp-min-height, 320px);
+}
+
+.memedex-card-frame--locked .memedex-card-frame-shell {
+  place-items: center;
+  padding: 0.85rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(238, 242, 247, 0.98) 100%);
+}
+
+.memedex-card-placeholder {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
   border: 3px dashed var(--color-ink);
+  border-radius: 16px;
   background: repeating-linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.04) 0 14px,
-    rgba(255, 255, 255, 0.8) 14px 28px
+    rgba(255, 255, 255, 0.82) 14px 28px
   );
+  text-align: center;
+  box-sizing: border-box;
 }
 
-.memedex-card-lock-mark {
-  width: 72px;
-  height: 72px;
+.memedex-card-placeholder__mark {
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   border: 3px solid var(--color-ink);
-  background: white;
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--shadow-hard-sm);
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 900;
+  color: var(--color-text-primary);
+}
+
+.memedex-card-placeholder__copy {
+  display: grid;
+  gap: 0.18rem;
+  justify-items: center;
+}
+
+.memedex-card-placeholder__copy span,
+.memedex-card-placeholder__copy strong {
+  max-width: 100%;
+}
+
+.memedex-card-placeholder__copy span {
+  font-family: var(--font-label);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.memedex-card-placeholder__copy strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
 }
 
 .missing-shelf-surface {
