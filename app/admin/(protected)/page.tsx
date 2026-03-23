@@ -119,7 +119,7 @@ export default function AdminHomePage() {
                   <span>{row.displayName || row.code}</span>
                   <span>{row.openedPackCount}</span>
                   <span>{row.plannedPackCount}</span>
-                  <span className="contest-inline-note">{row.source}</span>
+                  <span className={`admin-v2-source-tag ${row.source.toLowerCase() === "sale" ? "sale" : row.source.toLowerCase() === "reward" ? "reward" : ""}`}>{row.source}</span>
                 </AdminTableRow>
               ))}
               {data.packs.rows.length === 0 ? <AdminTableRow><span>No pack rows found.</span></AdminTableRow> : null}
