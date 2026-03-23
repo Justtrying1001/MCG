@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-import { MemedexCardSurface } from "@/components/ui/MemedexCardSurface";
+import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import type { MvpCardView } from "@/types/cards";
 import { classifyReveal } from "@/components/packs/reveal-classifier";
 
@@ -81,8 +81,8 @@ export function PackRevealSlot({
           <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
         </div>
         <div className="reveal-slot-face reveal-slot-front">
-          <div className="memedex-card-trigger reveal-slot-front-trigger">
-            <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
+          <div className="reveal-slot-front-trigger">
+            <MvpCardTile card={card} quantity={1} variant="canonical" interactive={false} imageLoading="eager" />
           </div>
         </div>
       </div>

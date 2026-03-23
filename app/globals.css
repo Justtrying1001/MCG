@@ -1326,8 +1326,8 @@ a { color: inherit; text-decoration: none; }
 
 .pack-reveal-grid {
   --reveal-grid-gap: 16px;
-  --memedex-card-native-width: 210px;
-  --reveal-card-width: min(var(--memedex-card-native-width), calc((100% - (var(--reveal-grid-gap) * 4)) / 5));
+  --reveal-card-native-width: 210px;
+  --reveal-card-width: min(var(--reveal-card-native-width), calc((100% - (var(--reveal-grid-gap) * 4)) / 5));
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -1350,6 +1350,7 @@ a { color: inherit; text-decoration: none; }
   min-width: var(--reveal-card-width);
   max-width: var(--reveal-card-width);
   flex: 0 0 var(--reveal-card-width);
+  aspect-ratio: 63 / 88;
   perspective: 1200px;
   cursor: pointer;
   justify-self: center;
@@ -1361,6 +1362,7 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-inner {
   width: 100%;
+  height: 100%;
   position: relative;
   display: grid;
   transform-style: preserve-3d;
@@ -1544,6 +1546,7 @@ a { color: inherit; text-decoration: none; }
 .reveal-slot-face {
   grid-area: 1 / 1;
   width: 100%;
+  height: 100%;
   border-radius: var(--radius-sm);
   backface-visibility: hidden;
 }
@@ -1590,6 +1593,13 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-front-trigger {
   width: 100%;
+  height: 100%;
+}
+
+.reveal-slot-front-trigger .mvp-premium-card {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 
