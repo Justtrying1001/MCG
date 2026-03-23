@@ -7,6 +7,10 @@ type MemedexCardSurfaceProps = {
   imageLoading?: "lazy" | "eager";
 };
 
+type MemedexCardTriggerSurfaceProps = MemedexCardSurfaceProps & {
+  className?: string;
+};
+
 export function MemedexCardSurface({
   card,
   quantity = 1,
@@ -29,5 +33,22 @@ export function MemedexCardSurface({
         </div>
       </div>
     </>
+  );
+}
+
+export function MemedexCardTriggerSurface({
+  card,
+  quantity = 1,
+  imageLoading = "lazy",
+  className = "collection-card-tile-trigger memedex-card-trigger",
+}: MemedexCardTriggerSurfaceProps) {
+  return (
+    <div className={className}>
+      <MemedexCardSurface
+        card={card}
+        quantity={quantity}
+        imageLoading={imageLoading}
+      />
+    </div>
   );
 }

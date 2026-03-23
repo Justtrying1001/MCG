@@ -1,4 +1,4 @@
-import { MemedexCardSurface } from "@/components/ui/MemedexCardSurface";
+import { MemedexCardTriggerSurface } from "@/components/ui/MemedexCardSurface";
 import { formatMemedexFinish } from "@/components/collection/memedexFinish";
 import type { MvpCardView } from "@/types/cards";
 
@@ -31,11 +31,11 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
           <div key={item.templateId} className="collection-card-tile memedex-card-tile">
             <button
               type="button"
-              className="collection-card-tile-trigger memedex-card-trigger"
+              className="collection-card-tile-trigger"
               onClick={() => onOpenCard(item.card, item.instanceCount)}
               title={`${item.card.displayName} · ×${item.instanceCount}`}
             >
-              <MemedexCardSurface card={item.card} quantity={item.instanceCount} />
+              <MemedexCardTriggerSurface card={item.card} quantity={item.instanceCount} />
             </button>
 
             <div className="collection-card-meta memedex-card-meta" aria-label={`Inventory details for ${item.card.displayName}`}>
