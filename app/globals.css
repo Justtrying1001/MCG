@@ -1326,7 +1326,8 @@ a { color: inherit; text-decoration: none; }
 
 .pack-reveal-grid {
   --reveal-grid-gap: 16px;
-  --reveal-card-width: min(180px, calc((100% - (var(--reveal-grid-gap) * 4)) / 5));
+  --memedex-card-native-width: 210px;
+  --reveal-card-width: min(var(--memedex-card-native-width), calc((100% - (var(--reveal-grid-gap) * 4)) / 5));
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -1585,6 +1586,10 @@ a { color: inherit; text-decoration: none; }
 .reveal-slot-front {
   transform: rotateY(180deg);
   overflow: visible;
+}
+
+.reveal-slot-front-trigger {
+  width: 100%;
 }
 
 
