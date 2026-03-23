@@ -16,8 +16,8 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
       <div className="profile-featured-cards-wrap">
         <div className="profile-featured-head">
           <SectionHeader
-            eyebrow="Showcase"
-            title="Showcase"
+            eyebrow="Public display"
+            title="Showcase picks"
             subtitle="Up to 5 cards only — your public highlights, not the full collection."
           />
           {action}
