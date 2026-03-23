@@ -54,7 +54,7 @@
 .questFooter,
 .archiveRow,
 .featuredMilestoneCard,
-.featuredMilestoneFooter,
+.featuredMilestoneMeta,
 .heroProgressPanel,
 .heroProgressTicks {
   display: flex;
@@ -362,22 +362,7 @@
   font-size: clamp(1.4rem, 3vw, 2rem);
 }
 
-.featuredMilestoneTrack {
-  height: 18px;
-  overflow: hidden;
-  border: 3px solid #111;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.58);
-}
-
-.featuredMilestoneTrack span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #111 0%, #0058ff 45%, #00d3b7 100%);
-}
-
-.featuredMilestoneFooter {
+.featuredMilestoneMeta {
   font-size: 0.84rem;
   font-weight: 900;
 }
@@ -388,10 +373,21 @@
 }
 
 .milestoneCard {
+  position: relative;
   display: flex;
   gap: 0.8rem;
   align-items: center;
   padding: 0.9rem;
+}
+
+.milestoneCardInteractive {
+  cursor: help;
+  outline: none;
+}
+
+.milestoneCardInteractive:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 11px 0 #111;
 }
 
 .milestoneUnlocked {
@@ -409,6 +405,50 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.84);
   font-size: 1.45rem;
+}
+
+.milestoneTooltip {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: calc(100% + 0.6rem);
+  z-index: 2;
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.75rem 0.85rem;
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: #fffdf7;
+  box-shadow: 0 6px 0 #111;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.milestoneCardInteractive:hover .milestoneTooltip,
+.milestoneCardInteractive:focus-visible .milestoneTooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.milestoneTooltipTitle,
+.milestoneTooltipCopy {
+  margin: 0;
+  color: #111;
+}
+
+.milestoneTooltipTitle {
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.milestoneTooltipCopy {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: rgba(17, 17, 17, 0.78);
 }
 
 .archiveSection {
