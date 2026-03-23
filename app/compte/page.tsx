@@ -155,9 +155,11 @@ export default function AccountPage() {
         <div className="profile-account-sections">
           <ContestAchievements
             milestonesUnlocked={unlockedMilestones.length}
-            pointsXp={account?.progressionBreakdown.pointsXp ?? 0}
-            competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
-            collectionXp={account?.progressionBreakdown.collectionXp ?? 0}
+            totalXp={
+              (account?.progressionBreakdown.pointsXp ?? 0) +
+              (account?.progressionBreakdown.competitiveXp ?? 0) +
+              (account?.progressionBreakdown.collectionXp ?? 0)
+            }
             contestsEntered={competitive?.contestsEntered ?? 0}
             bestRank={competitive?.bestRank ?? null}
             rating={competitive?.rating ?? null}
@@ -203,7 +205,7 @@ export default function AccountPage() {
                   className="mcg-btn ghost btn-sm"
                   onClick={() => setIsShowcaseEditing(true)}
                 >
-                  Edit showcase
+                  Manage showcase
                 </button>
               ) : null
             }
@@ -219,17 +221,6 @@ export default function AccountPage() {
             }
           />
 
-          {me ? (
-            <div className="profile-settings-entry">
-              <button
-                type="button"
-                className="mcg-btn secondary"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                Account settings
-              </button>
-            </div>
-          ) : null}
         </div>
 
         <Modal

@@ -4229,27 +4229,27 @@ a { color: inherit; text-decoration: none; }
    -------------------------------------------------------------------------- */
 .profile-account-layout {
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .profile-account-sections {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.9rem;
 }
 
 .profile-section-heading {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 0.8rem;
+  gap: 0.7rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .profile-section-heading h2,
 .profile-wallet-card__header h3 {
   font-family: 'Barlow Condensed', 'Inter', sans-serif;
-  font-size: 1.7rem;
+  font-size: 1.55rem;
   line-height: 1;
   letter-spacing: 0.01em;
   text-transform: uppercase;
@@ -4260,8 +4260,8 @@ a { color: inherit; text-decoration: none; }
 .profile-showcase-editor-copy {
   max-width: 42ch;
   color: var(--text-2);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .profile-showcase,
@@ -4273,17 +4273,18 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.28);
 }
 
+.profile-showcase-card-shell,
 .profile-showcase-card-frame,
 .profile-progression-wrap,
 .profile-featured-cards-wrap,
 .profile-wallet-card,
 .profile-showcase-editor {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .profile-showcase-card-frame {
-  gap: 1.2rem;
+  gap: 1rem;
 }
 
 .profile-showcase-head,
@@ -4294,13 +4295,14 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
   flex-wrap: wrap;
 }
 
 .profile-showcase-label,
 .profile-showcase-identity-kicker,
 .profile-showcase-tagline,
+.profile-showcase-memedex-line,
 .profile-progression-stat span,
 .profile-milestone-badge small,
 .profile-featured-card-meta span,
@@ -4311,28 +4313,32 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-3);
 }
 
-.profile-showcase-tagline {
-  display: block;
-  margin-top: 0.25rem;
-}
-
 .profile-showcase-hero-row {
   display: grid;
-  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1rem;
   align-items: stretch;
 }
 
 .profile-showcase-avatar {
-  min-height: 220px;
+  min-height: 250px;
   border-radius: 22px;
-  border: 3px solid rgba(200, 155, 60, 0.4);
+  border: 3px solid rgba(200, 155, 60, 0.42);
   background:
-    radial-gradient(circle at top, rgba(106, 169, 255, 0.28), transparent 40%),
-    linear-gradient(155deg, rgba(200, 155, 60, 0.14), rgba(17, 24, 39, 0.92));
+    radial-gradient(circle at top, rgba(106, 169, 255, 0.28), transparent 44%),
+    linear-gradient(155deg, rgba(200, 155, 60, 0.15), rgba(12, 13, 16, 0.94));
+  padding: 1rem;
+  display: grid;
+}
+
+.profile-showcase-avatar-core {
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(12,13,16,0.85));
   display: grid;
   place-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  min-height: 100%;
   text-align: center;
 }
 
@@ -4344,41 +4350,46 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-avatar span {
-  font-size: clamp(4rem, 12vw, 6rem);
+  font-size: clamp(4.5rem, 12vw, 6.5rem);
   line-height: 1;
   text-transform: uppercase;
 }
 
-.profile-showcase-avatar strong {
-  font-size: 1.05rem;
-  letter-spacing: 0.12em;
+.profile-showcase-avatar-core small {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--text-3);
 }
 
 .profile-showcase-identity {
   display: grid;
   align-content: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
 }
 
 .profile-showcase-name {
-  font-size: clamp(2.2rem, 5vw, 4rem);
-  line-height: 0.95;
+  font-size: clamp(2.2rem, 5vw, 3.9rem);
+  line-height: 0.92;
   text-transform: uppercase;
 }
 
 .profile-showcase-subtitle {
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   color: var(--text-2);
-  line-height: 1.55;
-  max-width: 44ch;
+  line-height: 1.5;
+  max-width: 42ch;
+}
+
+.profile-showcase-memedex-line {
+  font-weight: 700;
 }
 
 .profile-showcase-metrics,
 .profile-progression-grid,
 .profile-showcase-picker-grid {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.8rem;
 }
 
 .profile-showcase-metrics {
@@ -4400,77 +4411,82 @@ a { color: inherit; text-decoration: none; }
 
 .profile-showcase-metric,
 .profile-progression-stat {
-  padding: 1rem;
+  padding: 0.9rem 1rem;
   display: grid;
-  gap: 0.4rem;
+  gap: 0.25rem;
 }
 
 .profile-showcase-metric strong,
 .profile-progression-stat strong {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-size: clamp(1.55rem, 4vw, 2.1rem);
   line-height: 0.95;
 }
 
 .profile-progression-surface,
 .profile-featured-surface,
 .profile-milestones-panel {
-  padding: 1.2rem;
+  padding: 1rem;
 }
 
 .profile-progression-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
 }
 
 .profile-progression-group {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .profile-progression-group-head {
   display: grid;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .profile-progression-stat-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .profile-progression-stat-grid.compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.profile-progression-stat-grid--duo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .profile-milestone-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(180px, 220px);
-  gap: 0.9rem;
+  grid-auto-columns: minmax(150px, 190px);
+  gap: 0.75rem;
   overflow-x: auto;
-  padding-bottom: 0.2rem;
+  padding-bottom: 0.1rem;
 }
 
 .profile-milestone-badge {
-  padding: 1rem;
+  padding: 0.9rem;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.4rem;
   justify-items: start;
 }
 
 .profile-milestone-badge strong,
 .profile-featured-card-meta strong {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .profile-trophy-icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   border: 3px solid rgba(200, 155, 60, 0.5);
   background: linear-gradient(145deg, rgba(200, 155, 60, 0.22), rgba(106, 169, 255, 0.16));
   display: grid;
   place-items: center;
-  font-size: 1.6rem;
+  font-size: 1.35rem;
 }
 
 .profile-featured-head {
@@ -4480,16 +4496,16 @@ a { color: inherit; text-decoration: none; }
 .profile-featured-cards-strip {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(180px, 220px);
-  gap: 1rem;
+  grid-auto-columns: minmax(165px, 205px);
+  gap: 0.85rem;
   overflow-x: auto;
-  padding-bottom: 0.2rem;
+  padding-bottom: 0.1rem;
 }
 
 .profile-featured-card-item {
-  padding: 0.8rem;
+  padding: 0.75rem;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .profile-featured-card-frame {
@@ -4499,7 +4515,7 @@ a { color: inherit; text-decoration: none; }
 
 .profile-featured-card-meta {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.15rem;
   text-align: center;
 }
 
@@ -4603,7 +4619,7 @@ a { color: inherit; text-decoration: none; }
 .mcg-empty {
   border: 2px dashed rgba(255,255,255,0.18);
   border-radius: 18px;
-  padding: 1.25rem;
+  padding: 1.1rem;
   background: rgba(255,255,255,0.03);
   display: grid;
   gap: 0.45rem;
@@ -4617,9 +4633,10 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 
+  .profile-showcase-metrics,
   .profile-progression-stat-grid,
   .profile-progression-stat-grid.compact,
-  .profile-showcase-metrics {
+  .profile-progression-stat-grid--duo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -4628,16 +4645,19 @@ a { color: inherit; text-decoration: none; }
   .profile-showcase-metrics,
   .profile-progression-stat-grid,
   .profile-progression-stat-grid.compact,
+  .profile-progression-stat-grid--duo,
   .profile-showcase-picker-grid {
     grid-template-columns: 1fr;
   }
 
   .profile-showcase-avatar {
-    min-height: 180px;
+    min-height: 210px;
   }
 
   .profile-featured-head,
-  .profile-section-heading {
+  .profile-section-heading,
+  .profile-showcase-head,
+  .profile-showcase-actions {
     align-items: stretch;
   }
 }
