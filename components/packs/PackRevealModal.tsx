@@ -76,19 +76,21 @@ export function PackRevealModal({
         </div>
       </div>
 
-      <div className="pack-reveal-grid">
-        {cards.map((card, index) => (
-          <PackRevealSlot
-            key={`${card.templateId}_${index}`}
-            card={card}
-            cardBackSrc={cardBackSrc}
-            index={index}
-            isRevealed={Boolean(revealed[index])}
-            isNext={index === nextRevealIndex}
-            onReveal={onReveal}
-            onZoom={onZoom}
-          />
-        ))}
+      <div className="pack-reveal-stage">
+        <div className="pack-reveal-grid" aria-label="Pack reveal card rail">
+          {cards.map((card, index) => (
+            <PackRevealSlot
+              key={`${card.templateId}_${index}`}
+              card={card}
+              cardBackSrc={cardBackSrc}
+              index={index}
+              isRevealed={Boolean(revealed[index])}
+              isNext={index === nextRevealIndex}
+              onReveal={onReveal}
+              onZoom={onZoom}
+            />
+          ))}
+        </div>
       </div>
 
       {allRevealed ? (
