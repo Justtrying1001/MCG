@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
-import { formatMemedexFinish } from "@/components/collection/memedexFinish";
+import { buildMemedexFinishRows, buildMemedexRarityRows } from "@/components/home/memedexSummary";
 import type { MvpCardView } from "@/types/cards";
 import officialPackImage from "../pack.png";
 
@@ -168,21 +168,10 @@ export default function HomePage() {
       ? Math.max(1, userInfo.levelXpCeil - userInfo.levelXpFloor)
       : 100;
   const playerInitial = userInfo?.displayName.slice(0, 1).toUpperCase() ?? "P";
-  const memedexRarityRows = ["Common", "Uncommon", "Rare", "Epic", "Legendary"].map((label) => ({
-    label,
-    count: me?.coexistence?.v2?.collectionProjection?.byRarity?.find((item) => item.rarityCode === label)?.count ?? 0,
-  }));
-  const memedexFinishRows = (me?.coexistence?.v2?.collectionProjection?.byEdition ?? [])
-    .map((item) => ({
-      label: formatMemedexFinish(item.editionCode),
-      count: item.count,
-    }))
-    .filter((item, index, rows) =>
-      ["Base", "Reverse", "Holo", "Full Art"].includes(item.label) &&
-      rows.findIndex((row) => row.label === item.label) === index
-    )
-    .sort((a, b) => ["Base", "Reverse", "Holo", "Full Art"].indexOf(a.label) - ["Base", "Reverse", "Holo", "Full Art"].indexOf(b.label))
-    .slice(0, 4);
+  const collectionProjection = me?.coexistence?.v2?.collectionProjection;
+  const memedexRarityRows = buildMemedexRarityRows(collectionProjection);
+  const memedexFinishRows = buildMemedexFinishRows(collectionProjection);
+  const memedexSummaryReady = Boolean(collectionProjection);
 
   return (
     <SiteShell>
@@ -350,22 +339,22 @@ export default function HomePage() {
                   </div>
                   <div className="home-lobby-memedex-compact-breakdown" aria-label="Memedex rarity breakdown">
                     <span className="home-lobby-memedex-compact-label">Rarity</span>
-                    <div className="home-lobby-memedex-chip-row">
+                    <div className="home-lobby-memedex-stat-grid home-lobby-memedex-stat-grid--rarity">
                       {memedexRarityRows.map((item) => (
-                        <span key={item.label} className="home-lobby-memedex-chip">
-                          <strong>{item.label.slice(0, 1)}</strong>
-                          <span>{item.count.toLocaleString()}</span>
+                        <span key={item.key} className="home-lobby-memedex-stat-block">
+                          <span className="home-lobby-memedex-stat-label">{item.label}</span>
+                          <strong>{item.count === null ? (memedexSummaryReady ? "—" : "Loading") : item.count.toLocaleString()}</strong>
                         </span>
                       ))}
                     </div>
                   </div>
                   <div className="home-lobby-memedex-compact-breakdown" aria-label="Memedex finish breakdown">
                     <span className="home-lobby-memedex-compact-label">Finish</span>
-                    <div className="home-lobby-memedex-chip-row home-lobby-memedex-chip-row--finish">
+                    <div className="home-lobby-memedex-stat-grid home-lobby-memedex-stat-grid--finish">
                       {memedexFinishRows.map((item) => (
-                        <span key={item.label} className="home-lobby-memedex-chip home-lobby-memedex-chip--finish">
-                          <strong>{item.label}</strong>
-                          <span>{item.count.toLocaleString()}</span>
+                        <span key={item.key} className="home-lobby-memedex-stat-block home-lobby-memedex-stat-block--finish">
+                          <span className="home-lobby-memedex-stat-label">{item.label}</span>
+                          <strong>{item.count === null ? (memedexSummaryReady ? "—" : "Loading") : item.count.toLocaleString()}</strong>
                         </span>
                       ))}
                     </div>
