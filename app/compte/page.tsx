@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CollectorShowcase } from "@/components/profile/CollectorShowcase";
 import { FeaturedCardsStrip } from "@/components/profile/FeaturedCardsStrip";
-import { ContestAchievements } from "@/components/profile/ContestAchievements";
+import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import { SolanaWalletCard } from "@/components/profile/SolanaWalletCard";
 
 type UserQuestRow = {
@@ -33,6 +33,9 @@ export default function AccountPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShowcaseEditing, setIsShowcaseEditing] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [showcaseNameFilter, setShowcaseNameFilter] = useState("");
+  const [showcaseRarityFilter, setShowcaseRarityFilter] = useState("ALL");
+  const [showcaseOwnedFilter, setShowcaseOwnedFilter] = useState("ALL");
 
   useEffect(() => {
     if (me?.mode !== "user") return;
@@ -83,6 +86,28 @@ export default function AccountPage() {
       .filter((item): item is NonNullable<typeof item> => Boolean(item));
     return selected.slice(0, 5);
   }, [selectedTemplateIds, sortedCollection]);
+
+  const showcaseRarityOptions = useMemo(() => {
+    const rarities = Array.from(new Set(sortedCollection.map((item) => item.card.rarity))).sort();
+    return ["ALL", ...rarities];
+  }, [sortedCollection]);
+
+  const filteredShowcaseCollection = useMemo(() => {
+    const nameNeedle = showcaseNameFilter.trim().toLowerCase();
+
+    return sortedCollection.filter((item) => {
+      const matchesName = !nameNeedle || item.card.displayName.toLowerCase().includes(nameNeedle);
+      const matchesRarity = showcaseRarityFilter === "ALL" || item.card.rarity === showcaseRarityFilter;
+      const matchesOwned =
+        showcaseOwnedFilter === "ALL"
+          ? true
+          : showcaseOwnedFilter === "MULTI"
+            ? item.instanceCount > 1
+            : item.instanceCount === 1;
+
+      return matchesName && matchesRarity && matchesOwned;
+    });
+  }, [showcaseNameFilter, showcaseOwnedFilter, showcaseRarityFilter, sortedCollection]);
 
   const unlockedMilestones = useMemo(
     () =>
@@ -177,55 +202,9 @@ export default function AccountPage() {
           />
 
           <div className="profile-account-sections">
-            <section className="profile-stats-grid-two">
-              <section className="profile-stat-bento mcg-surface">
-                <div className="profile-section-heading profile-stat-bento__heading">
-                  <div>
-                    <span className="profile-section-chip">Collection Stats</span>
-                    <h2>Collection Stats</h2>
-                  </div>
-                </div>
-                <div className="profile-stat-bento__grid">
-                  <article className="profile-stat-bento__card tone-primary">
-                    <span>Total cards owned</span>
-                    <strong>{(collection?.totalOwnedInstances ?? 0).toLocaleString()}</strong>
-                    <small>Across your Memedex</small>
-                  </article>
-                  <article className="profile-stat-bento__card tone-secondary">
-                    <span>Memedex completion</span>
-                    <strong>{completionPct === null ? "—" : `${completionPct}%`}</strong>
-                    <small>{(collection?.ownedTemplateCount ?? 0).toLocaleString()} unique templates</small>
-                  </article>
-                  <article className="profile-stat-bento__card tone-tertiary">
-                    <span>Collection XP</span>
-                    <strong>{(account?.progressionBreakdown.collectionXp ?? 0).toLocaleString()}</strong>
-                    <small>Collector progression</small>
-                  </article>
-                  <article className="profile-stat-bento__card tone-gold">
-                    <span>Milestones unlocked</span>
-                    <strong>{unlockedMilestones.length}</strong>
-                    <small>Trophies earned</small>
-                  </article>
-                </div>
-              </section>
-
-              <ContestAchievements
-                competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
-                contestsEntered={competitive?.contestsEntered ?? 0}
-                contestsWon={competitive?.contestsWon ?? 0}
-                bestRank={competitive?.bestRank ?? null}
-                averageRank={competitive?.averageRank ?? null}
-                rating={competitive?.rating ?? null}
-                leagueTier={competitive?.leagueTier ?? null}
-              />
-            </section>
-
             <section className="mcg-surface profile-milestones-panel">
               <div className="profile-section-heading">
-                <div>
-                  <span className="profile-section-chip">Unlocked Milestones</span>
-                  <h2>Unlocked Milestones</h2>
-                </div>
+                <span className="profile-section-chip">Unlocked Milestones</span>
               </div>
               {milestoneBadges.length > 0 ? (
                 <div className="profile-milestone-row" aria-label="Unlocked milestones">
@@ -294,17 +273,64 @@ export default function AccountPage() {
           contentClassName="profile-showcase-modal-content"
         >
           <div className="profile-showcase-editor">
-            <p className="profile-showcase-editor-copy">
-              Pick up to 5 cards from your collection to feature on your profile.
-            </p>
-            <div className="profile-showcase-picker-grid">
-              {sortedCollection.map((item) => {
+            <div className="profile-showcase-editor-head">
+              <div>
+                <p className="profile-showcase-editor-copy">
+                  Pick up to 5 real cards from your collection to feature on your profile.
+                </p>
+                <p className="profile-showcase-editor-status">
+                  {selectedTemplateIds.length} / 5 selected
+                </p>
+              </div>
+            </div>
+
+            <div className="profile-showcase-filters" aria-label="Showcase filters">
+              <label className="profile-showcase-filter-field">
+                <span>Name</span>
+                <input
+                  type="search"
+                  value={showcaseNameFilter}
+                  onChange={(event) => setShowcaseNameFilter(event.target.value)}
+                  placeholder="Search by card name"
+                />
+              </label>
+
+              <label className="profile-showcase-filter-field">
+                <span>Rarity</span>
+                <select
+                  value={showcaseRarityFilter}
+                  onChange={(event) => setShowcaseRarityFilter(event.target.value)}
+                >
+                  {showcaseRarityOptions.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {rarity === "ALL" ? "All rarities" : rarity}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="profile-showcase-filter-field">
+                <span>Owned</span>
+                <select
+                  value={showcaseOwnedFilter}
+                  onChange={(event) => setShowcaseOwnedFilter(event.target.value)}
+                >
+                  <option value="ALL">Any ownership</option>
+                  <option value="MULTI">2+ copies</option>
+                  <option value="SINGLE">1 copy</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="profile-showcase-picker-grid" role="list" aria-label="Selectable showcase cards">
+              {filteredShowcaseCollection.map((item) => {
                 const selected = selectedTemplateIds.includes(item.templateId);
                 const disabled = !selected && selectedTemplateIds.length >= 5;
                 return (
                   <button
                     key={item.templateId}
                     type="button"
+                    aria-pressed={selected}
                     className={`profile-showcase-picker ${selected ? "is-selected" : ""}`}
                     onClick={() => {
                       setSelectedTemplateIds((current) => {
@@ -318,19 +344,31 @@ export default function AccountPage() {
                     disabled={disabled}
                   >
                     <div className="profile-showcase-picker-frame">
-                      <span className="profile-showcase-picker-state">
-                        {selected ? "Featured" : disabled ? "Limit reached" : "Add to showcase"}
-                      </span>
+                      <div className="profile-showcase-picker-media">
+                        <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
+                      </div>
                       <div className="profile-showcase-picker-card">
-                        <span>{item.card.displayName}</span>
-                        <strong>{item.card.rarity}</strong>
+                        <div>
+                          <strong>{item.card.displayName}</strong>
+                          <span>{item.card.rarity}</span>
+                        </div>
                         <small>{item.instanceCount} owned</small>
                       </div>
                     </div>
+                    <span className="profile-showcase-picker-state">
+                      {selected ? "Selected" : disabled ? "Limit reached" : "Select card"}
+                    </span>
                   </button>
                 );
               })}
             </div>
+
+            {filteredShowcaseCollection.length === 0 ? (
+              <EmptyState
+                title="No cards match these filters"
+                description="Try a different name, rarity, or ownership filter to find cards for your showcase."
+              />
+            ) : null}
           </div>
         </Modal>
       </div>
