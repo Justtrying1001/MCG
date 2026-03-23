@@ -18,7 +18,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
           <SectionHeader
             eyebrow="Showcase"
             title="Showcase"
-            subtitle="Curated cards that define your player identity."
+            subtitle="Selected cards only. Manage which pulls appear on your profile."
           />
           {action}
         </div>

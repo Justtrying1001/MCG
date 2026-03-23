@@ -20,7 +20,7 @@ export function LobbyModeDeck({ completionPct, points, activeEntries }: Props) {
         <p className="mcg-eyebrow">Quick select</p>
         <h2 className="mcg-title">Mode deck</h2>
         <p className="mcg-subtitle">
-          Jump straight to your next collectible, reward, or pack run from the
+          Jump straight to your next collectible, quest, or pack run from the
           lobby.
         </p>
       </div>
@@ -41,7 +41,7 @@ export function LobbyModeDeck({ completionPct, points, activeEntries }: Props) {
             ★
           </span>
           <div>
-            <strong>Rewards board</strong>
+            <strong>Quest board</strong>
             <span>{points.toLocaleString()} points banked</span>
           </div>
         </Link>

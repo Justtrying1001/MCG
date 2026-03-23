@@ -58,7 +58,7 @@ export function PlayerDashboardHeader({
                 </span>
               </p>
               <p className="player-dash-copy">
-                Your handheld hub for contest runs, collection goals, rewards,
+                Your handheld hub for contest runs, collection goals, quests,
                 and the loudest moves happening across MCG.
               </p>
             </div>
@@ -137,7 +137,7 @@ export function PlayerDashboardHeader({
             href="/rewards"
             className="player-dash-secondary-link player-dash-secondary-link--white"
           >
-            Rewards
+            Quests
           </Link>
         </div>
       </div>

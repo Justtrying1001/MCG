@@ -1,183 +1,233 @@
 .boardLayout {
   display: grid;
-  gap: 2rem;
-  padding: 1.5rem 0 3rem;
+  gap: 1rem;
+  padding: 1rem 0 2rem;
 }
 
-.heroBoard,
-.questBoardHero,
-.passSection,
+.overviewSection,
 .boardSection,
-.emptySectionCard,
 .questCard,
 .statCard,
 .statusBanner,
-.heroProgressCard,
-.passNode,
+.emptyCard,
 .milestoneCard,
-.completedCard {
+.archiveCard {
   border: 3px solid #111;
   box-shadow: 0 8px 0 #111;
 }
 
-.heroBoard,
-.questBoardHero,
-.passSection,
+.overviewSection,
 .boardSection,
-.emptySectionCard,
-.completedCard {
-  border-radius: 28px;
+.emptyCard,
+.milestoneCard,
+.archiveCard {
+  border-radius: 24px;
 }
 
-.heroBoard {
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8ed78, #ffb8d2 55%, #8ee7ff);
+.overviewSection,
+.boardSection {
+  background: #fffdf7;
+  padding: 1rem;
 }
 
-.boardEyebrow,
-.sectionKicker,
-.questCardEyebrow,
-.statLabel,
-.questRewardLabel,
-.milestoneEyebrow,
-.completedLabel,
-.heroProgressTopline,
-.passNodeBadge {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.heroTitle,
-.questBoardTitle,
-.sectionTitle,
-.questCardTitle,
-.milestoneTitle,
-.completedTitle,
-.passNodeTitle {
-  margin: 0;
-  color: #111;
-  font-weight: 900;
-}
-
-.heroTitle,
-.questBoardTitle {
-  font-size: clamp(2.5rem, 4vw, 4.25rem);
-  line-height: 0.95;
-}
-
-.heroCopy,
-.questBoardCopy,
-.boardSectionCopy,
-.questCardDescription,
-.questHint,
-.milestoneDescription,
-.completedMeta,
-.heroProgressMeta,
-.passNodeReward {
-  color: rgba(17, 17, 17, 0.72);
-}
-
-.heroCopy,
-.questBoardCopy,
-.boardSectionCopy,
-.milestoneDescription {
-  margin: 0.4rem 0 0;
-  max-width: 48rem;
-  line-height: 1.5;
-}
-
-.questBoardHero {
-  padding: 1.5rem;
+.overviewSection {
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.45), transparent 22%),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.5), transparent 22%),
     linear-gradient(135deg, #86b7ff, #9df1ff 42%, #ffe99a 100%);
 }
 
-.questBoardHeroHeader,
-.sectionHeadingRow,
-.milestoneHeader,
-.questCardHead,
-.heroStatsRow {
+.overviewHeader,
+.sectionHeader,
+.questCardTop,
+.questFooter,
+.archiveFooter,
+.milestoneFooter,
+.levelRow {
   display: flex;
+  gap: 0.75rem;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.heroCopyBlock {
-  max-width: 44rem;
+.overviewStats,
+.questGrid,
+.milestoneGrid,
+.archiveGrid {
+  display: grid;
+  gap: 0.75rem;
 }
 
-.heroProgressCard {
-  min-width: min(100%, 320px);
-  padding: 1rem 1.1rem;
-  border-radius: 24px;
-  background: #fffdf4;
-}
-
-.heroProgressValue,
-.statValue {
-  color: #111;
-  font-size: 1.75rem;
-  font-weight: 900;
-}
-
-.heroProgressMeta {
-  margin-top: 0.35rem;
-  font-size: 0.9rem;
-}
-
-.heroProgressTrack,
-.passRailTrack,
-.missionProgressTrack,
-.milestoneTrack {
-  overflow: hidden;
-  border: 3px solid #111;
-  border-radius: 999px;
-}
-
-.heroProgressTrack {
-  height: 18px;
-  margin-top: 0.85rem;
-  background: rgba(17, 17, 17, 0.08);
-}
-
-.heroProgressFill,
-.passRailFill,
-.missionProgressFill,
-.milestoneFill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-}
-
-.heroProgressFill {
-  background: linear-gradient(90deg, #0f67ff, #12d8fa);
-}
-
-.heroStatsRow {
-  margin-top: 1rem;
+.overviewStats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: min(100%, 420px);
 }
 
 .statCard {
-  min-width: 180px;
-  padding: 0.9rem 1rem;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  padding: 0.75rem 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
 }
 
+.sectionEyebrow,
 .statLabel,
-.questRewardLabel,
-.completedLabel,
-.passNodeBadge {
-  color: rgba(17, 17, 17, 0.56);
+.questMeta,
+.milestoneLabel,
+.archiveMeta,
+.levelLabel {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.pageTitle,
+.sectionTitle,
+.questTitle,
+.milestoneTitle,
+.archiveTitle {
+  margin: 0;
+  color: #111;
+  font-weight: 900;
+}
+
+.pageTitle {
+  font-size: clamp(2.3rem, 4vw, 3.6rem);
+  line-height: 0.95;
+}
+
+.sectionTitle {
+  margin-top: 0.15rem;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.sectionCopy,
+.questDescription,
+.questStatusText,
+.levelMeta,
+.milestoneDescription,
+.archiveFooter,
+.milestoneFooter {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.levelRow {
+  margin-top: 0.85rem;
+  align-items: center;
+}
+
+.levelTrack {
+  flex: 1;
+  min-width: 220px;
+  height: 14px;
+  overflow: hidden;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.levelFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0f67ff, #12d8fa);
+}
+
+.statValue,
+.questReward,
+.sectionCount {
+  color: #111;
+  font-weight: 900;
+}
+
+.statValue {
+  font-size: 1.4rem;
+}
+
+.sectionCount {
+  min-width: 44px;
+  padding: 0.45rem 0.7rem;
+  text-align: center;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: #ffe56f;
+  box-shadow: 0 4px 0 #111;
+}
+
+.questGrid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 0.75rem;
+}
+
+.questCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.questCardAVAILABLE {
+  background: #fffdf4;
+}
+
+.questCardIN_PROGRESS {
+  background: #eef8ff;
+}
+
+.questCardCLAIMABLE {
+  background: #ecffe7;
+}
+
+.questTitle,
+.archiveTitle,
+.milestoneTitle {
+  font-size: 1rem;
+}
+
+.questReward {
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.questProofFields {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.questInput {
+  width: 100%;
+}
+
+.questFooter {
+  align-items: center;
+}
+
+.questStatusText {
+  font-size: 0.88rem;
+}
+
+.questActionButton {
+  min-width: 108px;
+  justify-content: center;
+}
+
+.questActionButtonAVAILABLE,
+.questActionButtonIN_PROGRESS,
+.questActionButtonCLAIMABLE,
+.questActionButtonCOMPLETED {
+  background: #111;
+  color: #fff;
 }
 
 .statusBanner {
-  padding: 0.95rem 1.1rem;
+  padding: 0.8rem 1rem;
   background: #fff;
 }
 
@@ -189,396 +239,43 @@
   background: #ffd7d2;
 }
 
-.passSection,
-.boardSection,
-.milestoneSection {
-  padding: 1.5rem;
-  background: #fffdf7;
-}
-
-.passSection {
-  background: linear-gradient(180deg, #fffbe9, #fff6f8);
-}
-
-.sectionKicker {
-  color: #0f67ff;
-}
-
-.sectionTitle {
-  margin-top: 0.2rem;
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-}
-
-.passPill,
-.sectionCounter,
-.questStateBadge,
-.milestoneReward {
-  align-self: flex-start;
-  padding: 0.5rem 0.9rem;
-  border: 3px solid #111;
-  border-radius: 999px;
+.emptyCard {
+  padding: 0.9rem 1rem;
   background: #fff;
-  color: #111;
-  font-size: 0.8rem;
-  font-weight: 900;
-  box-shadow: 0 4px 0 #111;
-}
-
-.passPill {
-  background: #8ee7ff;
-}
-
-.sectionCounter {
-  background: #ffe56f;
-}
-
-.passRailWrap {
-  position: relative;
-  margin-top: 1.25rem;
-  overflow-x: auto;
-  padding-bottom: 0.35rem;
-}
-
-.passRailTrack {
-  position: absolute;
-  top: 3.3rem;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: #fff;
-}
-
-.passRailFill {
-  background: linear-gradient(90deg, #0f67ff, #ff5fa2, #ffe56f);
-}
-
-.passNodeGrid {
-  position: relative;
-  min-width: 760px;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 1rem;
-  align-items: start;
-}
-
-.passNode {
-  position: relative;
-  z-index: 1;
-  margin-top: 2rem;
-  padding: 0.9rem 0.75rem 1rem;
-  border-radius: 24px;
-  background: #fff;
-  text-align: center;
-}
-
-.passNodeActive {
-  background: #ffdef0;
-  transform: translateY(-6px);
-}
-
-.passNodeComplete {
-  background: #dcfff6;
-}
-
-.passNodeOrb {
-  width: 64px;
-  height: 64px;
-  margin: 0.75rem auto;
-  border: 3px solid #111;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ffe56f, #12d8fa);
-  box-shadow: 0 5px 0 #111;
-}
-
-.passNodeTitle {
-  font-size: 1rem;
-}
-
-.passNodeReward {
-  margin: 0.3rem 0 0;
-  font-size: 0.86rem;
-}
-
-.boardSectionclaimable {
-  background: linear-gradient(180deg, #fff2c8, #fff9eb);
-}
-
-.boardSectionin_progress {
-  background: linear-gradient(180deg, #def4ff, #fffdf7);
-}
-
-.boardSectionavailable {
-  background: linear-gradient(180deg, #ffe8f1, #fffdf7);
-}
-
-.boardSectioncompleted {
-  background: #fffdf7;
-}
-
-.emptySectionCard {
-  padding: 1rem 1.2rem;
-  background: rgba(255, 255, 255, 0.7);
-  color: rgba(17, 17, 17, 0.68);
-}
-
-.questGrid,
-.milestoneGrid,
-.completedGrid {
-  display: grid;
-  gap: 1.1rem;
-}
-
-.questGrid {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.questCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.95rem;
-  padding: 1.2rem;
-  border-radius: 24px;
-  background: #fff;
-}
-
-.questCardAVAILABLE {
-  background: #fff4fa;
-}
-
-.questCardIN_PROGRESS {
-  background: #ecf9ff;
-}
-
-.questCardCLAIMABLE {
-  background: #fff2bf;
-}
-
-.questCardCOMPLETED {
-  background: #f4f4f0;
-  opacity: 0.88;
-}
-
-.questCardEyebrow {
-  color: rgba(17, 17, 17, 0.55);
-}
-
-.questCardTitle {
-  margin-top: 0.25rem;
-  font-size: 1.2rem;
-}
-
-.questStateBadgeAVAILABLE {
-  background: #ffbed7;
-}
-
-.questStateBadgeIN_PROGRESS {
-  background: #8ee7ff;
-}
-
-.questStateBadgeCLAIMABLE {
-  background: #ffe56f;
-}
-
-.questStateBadgeCOMPLETED {
-  background: #dff8df;
-}
-
-.questCardDescription {
-  margin: 0;
-  min-height: 48px;
-  line-height: 1.45;
-}
-
-.questRewardPanel {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.85rem 0.95rem;
-  border: 3px solid #111;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.questRewardValue {
-  color: #111;
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.questProgressMeta,
-.completedMeta {
-  font-size: 0.82rem;
-  text-align: right;
-}
-
-.missionProgressBlock {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.missionProgressLabels,
-.milestoneProgressRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 0.82rem;
-  font-weight: 800;
   color: rgba(17, 17, 17, 0.72);
 }
 
-.missionProgressTrack,
-.milestoneTrack {
-  height: 16px;
-  background: rgba(17, 17, 17, 0.08);
-}
-
-.missionProgressFill {
-  background: linear-gradient(90deg, #ff5fa2, #0f67ff);
-}
-
-.questProofFields {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.questInput {
-  border: 3px solid #111 !important;
-  border-radius: 18px !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  box-shadow: none !important;
-}
-
-.questActionButton {
-  width: 100%;
-  justify-content: center;
-  border-radius: 999px;
-  border: 3px solid #111 !important;
-  box-shadow: 0 5px 0 #111;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
-.questActionButtonAVAILABLE {
-  background: #0f67ff;
-  color: #fff;
-}
-
-.questActionButtonIN_PROGRESS {
-  background: #111;
-  color: #fff;
-}
-
-.questActionButtonCLAIMABLE {
-  background: #ffe56f;
-  color: #111;
-}
-
-.questActionButtonCOMPLETED {
-  background: #e7e7de;
-  color: #111;
-}
-
-.questActionButton:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
-}
-
-.questHint {
-  margin: 0;
-  font-size: 0.82rem;
-}
-
-.milestoneSection {
-  display: grid;
-  gap: 1rem;
-}
-
-.milestoneGrid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.milestoneCard {
-  padding: 1.2rem;
-  border-radius: 26px;
-}
-
-.milestoneCardSky {
-  background: linear-gradient(180deg, #d9f2ff, #ffffff);
-}
-
-.milestoneCardLemon {
-  background: linear-gradient(180deg, #fff0a9, #ffffff);
-}
-
-.milestoneCardPink {
-  background: linear-gradient(180deg, #ffd8eb, #ffffff);
-}
-
-.milestoneCardMint {
-  background: linear-gradient(180deg, #d9fff0, #ffffff);
-}
-
-.milestoneTitle {
-  margin-top: 0.5rem;
-  font-size: 1.35rem;
-}
-
-.milestoneReward {
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.milestoneFill {
-  background: linear-gradient(90deg, #111, #0f67ff);
-}
-
-.completedSection {
-  box-shadow: none;
-  border-style: solid;
-}
-
-.completedGrid {
+.milestoneGrid,
+.archiveGrid {
+  margin-top: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-.completedCard {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
+.milestoneCard,
+.archiveCard {
+  padding: 0.85rem 0.9rem;
+  background: #fff;
 }
 
-.completedTitle {
-  margin-top: 0.2rem;
-  font-size: 1rem;
+.milestoneUnlocked {
+  background: linear-gradient(180deg, #fffbe8, #fff3fb);
 }
 
-.completedMeta {
-  display: grid;
-  gap: 0.2rem;
-  margin-top: 0.8rem;
+.milestoneHidden {
+  background: linear-gradient(180deg, #f5f7fb, #eef2ff);
+}
+
+.milestoneFooter,
+.archiveFooter {
+  font-size: 0.84rem;
 }
 
 @media (max-width: 720px) {
-  .boardLayout {
-    gap: 1.5rem;
-  }
-
-  .questBoardHero,
-  .passSection,
-  .boardSection,
-  .milestoneSection {
-    padding: 1.1rem;
-  }
-
-  .questRewardPanel {
+  .overviewStats {
     grid-template-columns: 1fr;
   }
 
-  .questProgressMeta {
-    text-align: left;
-  }
-
-  .heroProgressCard,
-  .statCard {
-    min-width: 100%;
+  .levelTrack {
+    width: 100%;
   }
 }

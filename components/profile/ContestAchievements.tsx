@@ -2,9 +2,7 @@ import { Surface } from "@/components/ui/Surface";
 
 type Props = {
   milestonesUnlocked: number;
-  pointsXp: number;
-  competitiveXp: number;
-  collectionXp: number;
+  totalXp: number;
   contestsEntered: number;
   bestRank: number | null;
   rating: number | null;
@@ -13,19 +11,15 @@ type Props = {
 
 export function ContestAchievements({
   milestonesUnlocked,
-  pointsXp,
-  competitiveXp,
-  collectionXp,
+  totalXp,
   contestsEntered,
   bestRank,
   rating,
   leagueTier,
 }: Props) {
-  const globalStats = [
+  const progressionStats = [
     { label: "Milestones unlocked", value: String(milestonesUnlocked) },
-    { label: "Points XP", value: pointsXp.toLocaleString() },
-    { label: "Competitive XP", value: competitiveXp.toLocaleString() },
-    { label: "Collection XP", value: collectionXp.toLocaleString() },
+    { label: "Total XP", value: totalXp.toLocaleString() },
   ];
 
   const competitiveStats = [
@@ -41,19 +35,19 @@ export function ContestAchievements({
         <div className="profile-section-heading profile-progression-heading">
           <div>
             <p className="mcg-eyebrow">Progression & stats</p>
-            <h2>Progression</h2>
+            <h2>Progression & stats</h2>
           </div>
-          <p className="profile-progression-summary">One compact view for your account momentum and competitive track.</p>
+          <p className="profile-progression-summary">Compact progression on the left, competitive track on the right.</p>
         </div>
 
         <div className="profile-progression-grid">
           <section className="profile-progression-group">
             <div className="profile-progression-group-head">
-              <p className="mcg-eyebrow">Global progression</p>
-              <strong>Identity growth</strong>
+              <p className="mcg-eyebrow">Progression</p>
+              <strong>Account momentum</strong>
             </div>
-            <div className="profile-progression-stat-grid compact">
-              {globalStats.map((stat) => (
+            <div className="profile-progression-stat-grid compact profile-progression-stat-grid--duo">
+              {progressionStats.map((stat) => (
                 <article key={stat.label} className="profile-progression-stat">
                   <span>{stat.label}</span>
                   <strong>{stat.value}</strong>
