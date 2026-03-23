@@ -108,8 +108,12 @@ export function LineupBuilderModal({
           if (nextEmpty >= 0) {
             setActiveSlot(nextEmpty);
             onSelectSlot(nextEmpty);
+            setPickerOpen(true);
+          } else {
+            setActiveSlot(i);
+            onSelectSlot(i);
+            setPickerOpen(false);
           }
-          setPickerOpen(false);
         }
         break;
       }
@@ -140,7 +144,7 @@ export function LineupBuilderModal({
             <div className="bldr-head-stamp">Squad prep room</div>
             <h2>{contestTitle}</h2>
             <p className="bldr-head-helper">
-              Click a slot, browse your cards, and select one to fill it.
+              Pick a slot and add a card. Your selection lands instantly.
             </p>
           </div>
           <div className="bldr-head-status">
@@ -187,11 +191,11 @@ export function LineupBuilderModal({
                   Active slot {activeSlot + 1}
                 </span>
                 <strong>
-                  {activeCard ? `Replace ${activeCard.name}` : "Select a card for this slot"}
+                  {activeCard ? `Active: ${activeCard.name}` : "Active slot ready for a card"}
                 </strong>
                 <p>
                   {canEdit
-                    ? "Choose a card from your collection. Selecting one will fill this slot immediately."
+                    ? "Choose any available card below to fill this slot now."
                     : "Lineup editing is unavailable once the contest is no longer OPEN."}
                 </p>
               </div>

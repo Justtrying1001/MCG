@@ -864,35 +864,6 @@ export default function ContestDetailPage({
   ]
     .filter((value): value is string => Boolean(value))
     .join(" • ");
-  const eventRailItems = [
-    {
-      label: "Arena status",
-      value: contest.status,
-      tone: isLive
-        ? "live"
-        : isLocked
-          ? "locked"
-          : isSettled
-            ? "settled"
-            : "open",
-    },
-    {
-      label: "Entry mode",
-      value: entryFee,
-      tone: "neutral",
-    },
-    {
-      label: "Roster size",
-      value: `${rosterSize} cards`,
-      tone: "neutral",
-    },
-    {
-      label: "Arena crowd",
-      value: `${contest._count.entries.toLocaleString()} entries`,
-      tone: "neutral",
-    },
-  ];
-
   return (
     <SiteShell>
       <div className="contest-detail-page-v2 stitch-screen stitch-contest-detail-screen">
@@ -909,30 +880,17 @@ export default function ContestDetailPage({
           error={error || builderError || null}
         />
 
-        <section
-          className="contest-detail-event-rail"
-          aria-label="Battle event summary"
-        >
-          {eventRailItems.map((item) => (
-            <article
-              key={`${item.label}-${item.value}`}
-              className={`contest-detail-event-chip tone-${item.tone}`}
-            >
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </article>
-          ))}
-        </section>
-
         <section className="contest-detail-main-layout">
           <div className="contest-detail-primary-zone">
-            <div className="contest-detail-zone-banner">
-              <span className="contest-detail-zone-banner-kicker">
-                Participation bay
-              </span>
-              <strong>Your battle station</strong>
+            <div className="contest-detail-lineup-priority-bar">
+              <div>
+                <span className="contest-detail-lineup-priority-kicker">
+                  Primary focus
+                </span>
+                <strong>Lineup builder</strong>
+              </div>
               <p>
-                Build, review, and track the lineup tied to this arena event.
+                Pick cards slot-by-slot and lock in your battle entry before the timer expires.
               </p>
             </div>
             <div ref={leaderboardSectionRef}>
@@ -949,23 +907,13 @@ export default function ContestDetailPage({
                 isSettled={isSettled}
                 canInteract={isOpen && Boolean(me)}
                 onOpenBuilder={isOpen ? openBuilder : undefined}
-                emptyMessage={isOpen ? "Add a card" : "No lineup submitted"}
+                emptyMessage={isOpen ? "Add card" : "No lineup submitted"}
                 embedded
               />
             </div>
           </div>
 
-          <aside className="contest-detail-support-zone">
-            <div className="contest-detail-zone-banner support-zone">
-              <span className="contest-detail-zone-banner-kicker">
-                Arena modules
-              </span>
-              <strong>Rewards + rankings</strong>
-              <p>
-                Supporting event boards for payouts, standings, and battle
-                context.
-              </p>
-            </div>
+          <aside className="contest-detail-support-zone" aria-label="Battle rewards and leaderboard">
             <RewardsPanel
               status={contest.status}
               tiers={rewards?.tiers ?? []}
