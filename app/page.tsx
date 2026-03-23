@@ -142,41 +142,61 @@ export default function HomePage() {
     <SiteShell>
       {isAuth && userInfo ? (
         <div className="home-lobby-shell">
-          <section className="home-lobby-player-strip mcg-surface raised" aria-label="Player overview">
+          <section className="home-lobby-player-strip" aria-label="Player overview">
             <div className="home-lobby-player-main">
               <div className="home-lobby-avatar" aria-hidden="true">{playerInitial}</div>
               <div className="home-lobby-player-copy">
                 <div className="home-lobby-name-row">
                   <div>
-                    <p className="home-lobby-eyebrow">Player lobby</p>
+                    <p className="home-lobby-eyebrow">Main lobby</p>
                     <h1>{userInfo.displayName}</h1>
                   </div>
-                  {typeof userInfo.seasonRank === "number" ? (
-                    <span className="home-lobby-rank-pill">Rank #{userInfo.seasonRank}</span>
-                  ) : null}
+                  <div className="home-lobby-level-cluster">
+                    <span className="home-lobby-level-pill">Lvl {userInfo.level ?? "—"}</span>
+                    {typeof userInfo.seasonRank === "number" ? (
+                      <span className="home-lobby-rank-pill">Rank #{userInfo.seasonRank}</span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="home-lobby-level-row">
-                  <span className="home-lobby-level-pill">Level {userInfo.level ?? "—"}</span>
-                  <div className="home-lobby-progress-block">
-                    <div className="home-lobby-progress-head">
-                      <span>XP progress</span>
-                      <strong>
-                        {typeof userInfo.xp === "number" ? `${userInfo.xp.toLocaleString()} XP` : "Syncing"}
-                      </strong>
-                    </div>
-                    <ProgressBar value={progressValue} max={progressMax} label="XP progress" />
+                <div className="home-lobby-progress-block">
+                  <div className="home-lobby-progress-head">
+                    <span>XP progress</span>
+                    <strong>
+                      {typeof userInfo.xp === "number" ? `${userInfo.xp.toLocaleString()} XP` : "Syncing"}
+                    </strong>
+                  </div>
+                  <ProgressBar value={progressValue} max={progressMax} label="XP progress" />
+                  <div className="home-lobby-progress-caption-row">
                     <span className="home-lobby-progress-caption">
-                      {typeof userInfo.levelXpCeil === "number" ? `Next level at ${userInfo.levelXpCeil.toLocaleString()} XP` : "Progress updates as you play"}
+                      {typeof userInfo.levelXpCeil === "number"
+                        ? `${Math.max(0, userInfo.levelXpCeil - (userInfo.xp ?? 0)).toLocaleString()} XP to next level`
+                        : "Progress updates as you play"}
                     </span>
+                    <span className="home-lobby-points-inline">{userInfo.points.toLocaleString()} pts</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="home-lobby-points-card" aria-label="Points balance">
-              <span>Points</span>
-              <strong>{userInfo.points.toLocaleString()}</strong>
-              <small>Ready for packs, entries, and upgrades</small>
+            <div className="home-lobby-account-meters" aria-label="Account status">
+              <div className="home-lobby-meter home-lobby-meter--points">
+                <span>Points balance</span>
+                <strong>{userInfo.points.toLocaleString()}</strong>
+                <small>Ready for entries and packs</small>
+              </div>
+              <div className="home-lobby-meter home-lobby-meter--collection">
+                <span>Collection</span>
+                <strong>
+                  {collectionTotal > 0
+                    ? `${collectionCount.toLocaleString()}/${collectionTotal.toLocaleString()}`
+                    : collectionCount.toLocaleString()}
+                </strong>
+                <small>
+                  {typeof userInfo.completionPct === "number"
+                    ? `${userInfo.completionPct}% complete`
+                    : "Completion syncing"}
+                </small>
+              </div>
             </div>
           </section>
 
@@ -184,7 +204,7 @@ export default function HomePage() {
             <Link href={battleContest ? `/contests/${battleContest.id}` : "/contests"} className="home-lobby-card home-lobby-card--battle">
               <div className="home-lobby-card-head">
                 <span className="home-lobby-card-kicker">Primary mode</span>
-                <span className="home-lobby-status-badge">{battleContest?.status ?? "LIVE"}</span>
+                <span className="home-lobby-status-badge">{battleContest?.status ?? "READY"}</span>
               </div>
               <div className="home-lobby-card-hero">
                 <div className="home-lobby-card-body">
@@ -192,27 +212,19 @@ export default function HomePage() {
                   <p>
                     {battleContest
                       ? battleContest.title
-                      : "Jump straight into active contests and the current arena rotation."}
+                      : "Jump into the live contest rotation and keep your lineup moving."}
                   </p>
                 </div>
                 <div className="home-lobby-battle-mark" aria-hidden="true">⚔</div>
               </div>
               <div className="home-lobby-battle-status-row">
                 <div className="home-lobby-battle-status-chip">
-                  <span>Status</span>
-                  <strong>{battleContest ? (battleContest.status === "LIVE" ? "Battle in motion" : battleContest.status) : "Arena ready"}</strong>
+                  <span>Active battles</span>
+                  <strong>{contests.length}</strong>
                 </div>
                 <div className="home-lobby-battle-status-chip">
-                  <span>Active</span>
-                  <strong>{contests.length} battle{contests.length === 1 ? "" : "s"}</strong>
-                </div>
-                <div className="home-lobby-battle-status-chip">
-                  <span>Your entries</span>
-                  <strong>
-                    {typeof userInfo.activeEntries === "number"
-                      ? `${userInfo.activeEntries} live`
-                      : "Ready"}
-                  </strong>
+                  <span>Your live entries</span>
+                  <strong>{typeof userInfo.activeEntries === "number" ? userInfo.activeEntries : "—"}</strong>
                 </div>
               </div>
               <div className="home-lobby-card-cta">{battleContest ? getContestCtaLabel(battleContest.status) : "Open arena"} →</div>
@@ -222,11 +234,11 @@ export default function HomePage() {
               <Link href="/collection" className="home-lobby-card home-lobby-card--secondary home-lobby-card--memedex">
                 <div className="home-lobby-card-head">
                   <span className="home-lobby-card-kicker">Collection</span>
-                  <span className="home-lobby-mini-pill">Progress</span>
+                  <span className="home-lobby-mini-pill">Memedex</span>
                 </div>
                 <div className="home-lobby-card-body">
                   <h2>Memedex</h2>
-                  <p>Track completion, review your owned cards, and push toward full set coverage.</p>
+                  <p>See what you own, what you are missing, and how close you are to the next milestone.</p>
                 </div>
                 <div className="home-lobby-stat-row">
                   <div>
@@ -234,7 +246,7 @@ export default function HomePage() {
                     <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
                   </div>
                   <div>
-                    <span>Owned cards</span>
+                    <span>Owned</span>
                     <strong>
                       {collectionTotal > 0
                         ? `${collectionCount.toLocaleString()}/${collectionTotal.toLocaleString()}`
@@ -248,20 +260,20 @@ export default function HomePage() {
               <Link href="/packs" className="home-lobby-card home-lobby-card--secondary home-lobby-card--shop">
                 <div className="home-lobby-card-head">
                   <span className="home-lobby-card-kicker">Packs</span>
-                  <span className="home-lobby-mini-pill">Shop</span>
+                  <span className="home-lobby-mini-pill">Booster Shop</span>
                 </div>
                 <div className="home-lobby-card-body">
                   <h2>Booster Shop</h2>
-                  <p>Open fresh packs, convert points into pulls, and keep momentum across the lobby.</p>
+                  <p>Spend your points on fresh pulls and stay on top of what is opening across the app.</p>
                 </div>
                 <div className="home-lobby-stat-row">
                   <div>
-                    <span>Live pulls</span>
-                    <strong>{recentPulls.length.toLocaleString()}</strong>
+                    <span>Points ready</span>
+                    <strong>{userInfo.points.toLocaleString()} pts</strong>
                   </div>
                   <div>
-                    <span>Balance</span>
-                    <strong>{userInfo.points.toLocaleString()} pts</strong>
+                    <span>Live pulls</span>
+                    <strong>{recentPulls.length.toLocaleString()}</strong>
                   </div>
                 </div>
                 <div className="home-lobby-card-cta">Enter shop →</div>
@@ -269,35 +281,33 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="home-lobby-broadcast mcg-surface raised" aria-label="Lobby broadcast">
-            <div className="home-lobby-section-head">
-              <div>
-                <p className="home-lobby-eyebrow">Broadcast</p>
-                <h2>Live pull feed</h2>
-              </div>
-              <Link href="/packs" className="mcg-btn ghost">Open packs</Link>
+          <section className="home-lobby-utility-strip" aria-label="Quick progress">
+            <div className="home-lobby-utility-head">
+              <p className="home-lobby-eyebrow">Quick progress</p>
+              <h2>See what is moving across your account right now.</h2>
             </div>
-
-            {recentPulls.length > 0 ? (
-              <div className="home-lobby-feed-list">
-                {recentPulls.slice(0, 6).map((pull) => (
-                  <article key={pull.id} className="home-lobby-feed-item">
-                    <div className="home-lobby-feed-avatar" aria-hidden="true">{pull.playerName.slice(0, 1).toUpperCase()}</div>
-                    <div className="home-lobby-feed-copy">
-                      <strong>{pull.playerName}</strong>
-                      <span>Pulled {pull.card.displayName}</span>
-                    </div>
-                    <span className="home-lobby-feed-rarity">{pull.card.rarity}</span>
-                    <time className="home-lobby-feed-time">{formatRelativeTime(pull.openedAt)}</time>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="home-lobby-feed-empty">
-                <strong>No live pulls yet</strong>
-                <span>The next pack reveal will land here.</span>
-              </div>
-            )}
+            <div className="home-lobby-utility-list">
+              <article className="home-lobby-utility-item">
+                <span className="home-lobby-utility-label">Arena status</span>
+                <strong>{battleContest ? battleContest.status : "Ready"}</strong>
+                <small>{battleContest ? getContestCtaLabel(battleContest.status) : "Arena rotation available"}</small>
+              </article>
+              <article className="home-lobby-utility-item">
+                <span className="home-lobby-utility-label">Collection progress</span>
+                <strong>{typeof userInfo.completionPct === "number" ? `${userInfo.completionPct}%` : "—"}</strong>
+                <small>{collectionCount.toLocaleString()} cards owned</small>
+              </article>
+              <article className="home-lobby-utility-item">
+                <span className="home-lobby-utility-label">Points ready</span>
+                <strong>{userInfo.points.toLocaleString()}</strong>
+                <small>Use them in the shop or for entries</small>
+              </article>
+              <article className="home-lobby-utility-item">
+                <span className="home-lobby-utility-label">Live activity</span>
+                <strong>{recentPulls[0] ? recentPulls[0].card.displayName : "No recent pull"}</strong>
+                <small>{recentPulls[0] ? `${recentPulls[0].playerName} · ${formatRelativeTime(recentPulls[0].openedAt)}` : "Check back after the next pack opens"}</small>
+              </article>
+            </div>
           </section>
         </div>
       ) : (
