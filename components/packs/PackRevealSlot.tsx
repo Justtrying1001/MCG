@@ -71,7 +71,13 @@ export function PackRevealSlot({
 
       <div className="reveal-slot-inner">
         <div className="reveal-slot-face reveal-slot-back">
-          <Image src={cardBackSrc} alt="Card back" fill sizes="168px" className="reveal-slot-back-image" />
+          <Image
+            src={cardBackSrc}
+            alt="Card back"
+            fill
+            sizes="(max-width: 1280px) 18vw, 210px"
+            className="reveal-slot-back-image"
+          />
           <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
         </div>
         <div className="reveal-slot-face reveal-slot-front">
