@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { useSession } from "@/components/useSession";
-import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { formatMemedexFinish } from "@/components/collection/memedexFinish";
 import type { MvpCardView } from "@/types/cards";
+import officialPackImage from "../pack.png";
 
 // State A — landing
 import { HomeHeroLanding } from "@/components/home/HomeHeroLanding";
@@ -29,6 +30,12 @@ type ContestListItem = {
     id: string;
     status: string;
   } | null;
+  rules?: Array<{
+    id: string;
+    config?: {
+      coverImageUrl?: string | null;
+    } | null;
+  }>;
   _count: { entries: number };
 };
 
@@ -124,8 +131,6 @@ export default function HomePage() {
     const collectionProjection = me.coexistence?.v2?.collectionProjection;
     const accountProgression = me.coexistence?.v2?.accountProgression;
     const competitiveProgression = me.coexistence?.v2?.competitiveProgression;
-    const collectionRows = me.coexistence?.v2?.mvpCollection ?? me.mvpCollection ?? [];
-
     return {
       displayName: me.user.displayName,
       points: me.user.points,
@@ -141,7 +146,6 @@ export default function HomePage() {
       byRarity: collectionProjection?.byRarity ?? [],
       activeEntries: competitiveProgression?.activeEntries ?? null,
       seasonRank: competitiveProgression?.seasonRank ?? null,
-      collectionPreview: collectionRows.slice(0, 3).map((item) => item.card),
     };
   }, [me]);
 
@@ -166,6 +170,19 @@ export default function HomePage() {
   const playerInitial = userInfo?.displayName.slice(0, 1).toUpperCase() ?? "P";
   const topRarity = userInfo?.byRarity?.[0] ?? null;
   const battleLockLabel = formatLockTime(battleContest?.lockAt ?? null);
+  const battleCoverImage =
+    battleContest?.rules?.[0]?.config?.coverImageUrl?.trim() || "/Contest.png";
+  const memedexFinishRows = (me?.coexistence?.v2?.collectionProjection?.byEdition ?? [])
+    .map((item) => ({
+      label: formatMemedexFinish(item.editionCode),
+      count: item.count,
+    }))
+    .filter((item, index, rows) =>
+      ["Base", "Reverse", "Holo", "Full Art"].includes(item.label) &&
+      rows.findIndex((row) => row.label === item.label) === index
+    )
+    .sort((a, b) => ["Base", "Reverse", "Holo", "Full Art"].indexOf(a.label) - ["Base", "Reverse", "Holo", "Full Art"].indexOf(b.label))
+    .slice(0, 4);
 
   return (
     <SiteShell>
@@ -244,16 +261,35 @@ export default function HomePage() {
                       : "Jump into the live battle rotation and keep your lineup moving."}
                   </p>
                 </div>
-                <div className="home-lobby-battle-mark" aria-hidden="true">⚔</div>
               </div>
-              <div className="home-lobby-battle-spotlight">
-                <span className="home-lobby-battle-spotlight-label">Featured battle</span>
-                <strong>{battleContest?.title ?? "Battle rotation ready"}</strong>
-                <p>
-                  {battleContest?.rewardPreview?.label
-                    ? `${battleContest.rewardPreview.label}${typeof battleContest.rewardPreview.amount === "number" ? ` · ${battleContest.rewardPreview.amount.toLocaleString()}` : ""}`
-                    : battleContest?.seasonName ?? "Queue up for the current arena rotation."}
-                </p>
+              <div className="home-lobby-battle-spotlight home-lobby-battle-spotlight--card">
+                <div className="home-lobby-battle-visual">
+                  <Image
+                    src={battleCoverImage}
+                    alt={battleContest ? `${battleContest.title} cover` : "Battle Arena cover"}
+                    fill
+                    className="home-lobby-battle-visual-image"
+                    sizes="(max-width: 900px) 100vw, 420px"
+                  />
+                  <span className="home-lobby-battle-spotlight-label">Featured battle</span>
+                </div>
+                <div className="home-lobby-battle-spotlight-copy">
+                  <strong>{battleContest?.title ?? "Battle rotation ready"}</strong>
+                  <div className="home-lobby-battle-facts" aria-label="Featured battle details">
+                    <div className="home-lobby-battle-fact">
+                      <span>{battleContest?.status === "LIVE" ? "Season" : "Status"}</span>
+                      <strong>{battleContest?.status === "LIVE" ? (battleContest?.seasonName ?? "Live now") : getBattleStatusLabel(battleContest?.status ?? "OPEN")}</strong>
+                    </div>
+                    <div className="home-lobby-battle-fact">
+                      <span>{battleContest?.rewardPreview?.label ? "Reward" : "Entries"}</span>
+                      <strong>
+                        {battleContest?.rewardPreview?.label
+                          ? battleContest.rewardPreview.label
+                          : `${battleContest?._count.entries.toLocaleString() ?? "0"} entered`}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="home-lobby-battle-status-row">
                 <div className="home-lobby-battle-status-chip">
@@ -296,20 +332,14 @@ export default function HomePage() {
                       </strong>
                     </div>
                   </div>
-                  <div className="home-lobby-inline-note home-lobby-inline-note--soft">
-                    <span>Collector cue</span>
-                    <strong>
-                      {topRarity ? `${topRarity.rarityCode} · ${topRarity.count.toLocaleString()} owned` : "Your binder updates as pulls land"}
-                    </strong>
-                  </div>
-                  {userInfo.collectionPreview[0] ? (
-                    <div className="home-lobby-memedex-single-card">
-                      <div className="home-lobby-memedex-card home-lobby-memedex-card--single">
-                        <MvpCardTile card={userInfo.collectionPreview[0]} variant="canonical" interactive={false} imageLoading="eager" />
+                  <div className="home-lobby-memedex-breakdown" aria-label="Memedex finish breakdown">
+                    {(memedexFinishRows.length > 0 ? memedexFinishRows : topRarity ? [{ label: topRarity.rarityCode, count: topRarity.count }] : []).map((item) => (
+                      <div key={item.label} className="home-lobby-memedex-breakdown-item">
+                        <span>{item.label}</span>
+                        <strong>{item.count.toLocaleString()}</strong>
                       </div>
-                      <p>Latest owned spotlight</p>
-                    </div>
-                  ) : null}
+                    ))}
+                  </div>
                 </div>
                 <div className="home-lobby-card-cta">Open Memedex →</div>
               </Link>
@@ -328,7 +358,7 @@ export default function HomePage() {
                 </div>
                 <div className="home-lobby-shop-preview" aria-label="Booster Shop preview">
                   <div className="home-lobby-pack-stage">
-                    <Image src="/pack.png" alt="MCG booster pack" className="home-lobby-pack-art" width={180} height={252} />
+                    <Image src={officialPackImage} alt="MCG booster pack" className="home-lobby-pack-art" width={180} height={252} priority />
                   </div>
                   <div className="home-lobby-shop-copy">
                     <div className="home-lobby-stat-row home-lobby-stat-row--dense">
