@@ -1,155 +1,191 @@
 .boardLayout {
   display: grid;
-  gap: 1rem;
+  gap: 1.2rem;
   padding: 1rem 0 2rem;
 }
 
-.overviewSection,
-.boardSection,
+.heroSection,
+.questSection,
+.dailySection,
+.milestoneSection,
+.archiveSection,
 .questCard,
-.statCard,
+.heroStatCard,
 .statusBanner,
 .emptyCard,
+.featuredMilestoneCard,
 .milestoneCard,
-.archiveCard {
+.archiveRow,
+.dailyComingSoon {
   border: 3px solid #111;
   box-shadow: 0 8px 0 #111;
 }
 
-.overviewSection,
-.boardSection,
+.heroSection,
+.questSection,
+.dailySection,
+.milestoneSection,
+.archiveSection,
 .emptyCard,
+.featuredMilestoneCard,
 .milestoneCard,
-.archiveCard {
-  border-radius: 24px;
+.archiveRow,
+.dailyComingSoon {
+  border-radius: 28px;
 }
 
-.overviewSection,
-.boardSection {
-  background: #fffdf7;
-  padding: 1rem;
+.heroSection,
+.questSection,
+.dailySection,
+.milestoneSection,
+.archiveSection {
+  padding: 1.15rem;
 }
 
-.overviewSection {
+.heroSection {
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.5), transparent 22%),
-    linear-gradient(135deg, #86b7ff, #9df1ff 42%, #ffe99a 100%);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 22%),
+    linear-gradient(125deg, #3a77ff 0%, #26d7c9 48%, #ffe16f 100%);
 }
 
-.overviewHeader,
+.heroTopRow,
 .sectionHeader,
 .questCardTop,
 .questFooter,
-.archiveFooter,
-.milestoneFooter,
-.levelRow {
+.archiveRow,
+.featuredMilestoneCard,
+.featuredMilestoneFooter,
+.heroProgressPanel,
+.heroProgressTicks {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.9rem;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.overviewStats,
+.heroHeading {
+  max-width: 32rem;
+}
+
+.heroStats,
 .questGrid,
-.milestoneGrid,
-.archiveGrid {
+.milestoneGrid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.9rem;
 }
 
-.overviewStats {
+.heroStats {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-width: min(100%, 420px);
+  min-width: min(100%, 460px);
 }
 
-.statCard {
-  border-radius: 18px;
-  padding: 0.75rem 0.9rem;
-  background: rgba(255, 255, 255, 0.8);
+.heroStatCard {
+  border-radius: 20px;
+  padding: 0.85rem 0.95rem;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .sectionEyebrow,
 .statLabel,
-.questMeta,
 .milestoneLabel,
 .archiveMeta,
-.levelLabel {
+.levelLabel,
+.questTag {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.7rem;
   font-weight: 900;
-  color: rgba(17, 17, 17, 0.58);
+  color: rgba(17, 17, 17, 0.62);
 }
 
 .pageTitle,
 .sectionTitle,
 .questTitle,
 .milestoneTitle,
-.archiveTitle {
+.archiveTitle,
+.featuredMilestoneTitle {
   margin: 0;
   color: #111;
   font-weight: 900;
 }
 
 .pageTitle {
-  font-size: clamp(2.3rem, 4vw, 3.6rem);
-  line-height: 0.95;
+  font-size: clamp(2.9rem, 6vw, 4.6rem);
+  line-height: 0.9;
 }
 
 .sectionTitle {
   margin-top: 0.15rem;
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.45rem, 3vw, 2rem);
 }
 
+.heroCopy,
 .sectionCopy,
 .questDescription,
-.questStatusText,
 .levelMeta,
-.milestoneDescription,
 .archiveFooter,
-.milestoneFooter {
+.featuredMilestoneDescription,
+.dailyComingSoon {
   margin: 0;
-  color: rgba(17, 17, 17, 0.72);
+  color: rgba(17, 17, 17, 0.74);
 }
 
-.levelRow {
-  margin-top: 0.85rem;
+.heroCopy {
+  max-width: 32rem;
+  font-size: 1rem;
+}
+
+.heroProgressPanel {
+  margin-top: 1rem;
   align-items: center;
+  padding: 1rem 1.1rem;
+  border: 3px solid #111;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 0 #111;
+}
+
+.heroTrackWrap {
+  flex: 1;
+  min-width: 240px;
 }
 
 .levelTrack {
-  flex: 1;
-  min-width: 220px;
-  height: 14px;
+  height: 20px;
   overflow: hidden;
   border: 3px solid #111;
   border-radius: 999px;
-  background: rgba(17, 17, 17, 0.08);
+  background: rgba(17, 17, 17, 0.1);
 }
 
 .levelFill {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #0f67ff, #12d8fa);
+  background: linear-gradient(90deg, #0f67ff 0%, #16d8f2 50%, #ffe05a 100%);
+}
+
+.heroProgressTicks {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .statValue,
-.questReward,
 .sectionCount {
   color: #111;
   font-weight: 900;
 }
 
 .statValue {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
 }
 
 .sectionCount {
-  min-width: 44px;
-  padding: 0.45rem 0.7rem;
+  min-width: 48px;
+  padding: 0.45rem 0.72rem;
   text-align: center;
   border: 3px solid #111;
   border-radius: 999px;
@@ -157,43 +193,73 @@
   box-shadow: 0 4px 0 #111;
 }
 
+.questSection {
+  background: linear-gradient(180deg, #f9fbff 0%, #fffdf7 100%);
+}
+
 .questGrid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  margin-top: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  margin-top: 0.85rem;
 }
 
 .questCard {
   display: grid;
-  gap: 0.7rem;
-  padding: 0.9rem;
-  border-radius: 20px;
-  background: #ffffff;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 22px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.questCardAVAILABLE {
-  background: #fffdf4;
+.questCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 13px 0 #111;
 }
 
-.questCardIN_PROGRESS {
-  background: #eef8ff;
+.questTone0 { background: linear-gradient(180deg, #fffef6 0%, #fff3d8 100%); }
+.questTone1 { background: linear-gradient(180deg, #f8ffff 0%, #ddfff5 100%); }
+.questTone2 { background: linear-gradient(180deg, #fff7fd 0%, #ffe0ef 100%); }
+.questTone3 { background: linear-gradient(180deg, #f9f8ff 0%, #e6e4ff 100%); }
+
+.questCardAVAILABLE,
+.questCardIN_PROGRESS,
+.questCardCLAIMABLE,
+.questCardCOMPLETED {
+  border-color: #111;
 }
 
-.questCardCLAIMABLE {
-  background: #ecffe7;
+.questTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.6rem;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #111;
+}
+
+.questRewardBadge {
+  padding: 0.42rem 0.68rem;
+  border-radius: 999px;
+  border: 2px solid #111;
+  background: #111;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.questBody {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .questTitle,
 .archiveTitle,
 .milestoneTitle {
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
-.questReward {
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  background: #111;
-  color: #fff;
-  font-size: 0.8rem;
+.questDescription {
+  font-size: 0.92rem;
 }
 
 .questProofFields {
@@ -209,13 +275,21 @@
   align-items: center;
 }
 
-.questStatusText {
-  font-size: 0.88rem;
+.questStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.08);
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .questActionButton {
-  min-width: 108px;
+  min-width: 110px;
   justify-content: center;
+  border: 2px solid #111;
+  box-shadow: 0 4px 0 #111;
 }
 
 .questActionButtonAVAILABLE,
@@ -226,56 +300,151 @@
   color: #fff;
 }
 
+.dailySection {
+  background: #fffdf7;
+}
+
+.dailyComingSoon {
+  padding: 1rem 1.1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fff8de 100%);
+  font-weight: 800;
+}
+
 .statusBanner {
   padding: 0.8rem 1rem;
   background: #fff;
 }
 
-.statusBannerSuccess {
-  background: #d9ffd8;
-}
-
-.statusBannerError {
-  background: #ffd7d2;
-}
+.statusBannerSuccess { background: #d9ffd8; }
+.statusBannerError { background: #ffd7d2; }
 
 .emptyCard {
-  padding: 0.9rem 1rem;
+  padding: 0.95rem 1rem;
   background: #fff;
   color: rgba(17, 17, 17, 0.72);
 }
 
-.milestoneGrid,
-.archiveGrid {
-  margin-top: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+.milestoneSection {
+  background: linear-gradient(180deg, #fff9ef 0%, #f6f7ff 100%);
 }
 
-.milestoneCard,
-.archiveCard {
-  padding: 0.85rem 0.9rem;
-  background: #fff;
+.featuredMilestoneCard {
+  margin-top: 0.85rem;
+  padding: 1rem;
+  align-items: stretch;
+  background: linear-gradient(135deg, #ffe867 0%, #54ebff 55%, #ff95cc 100%);
+}
+
+.featuredMilestoneIcon,
+.milestoneIcon {
+  display: grid;
+  place-items: center;
+  border: 3px solid #111;
+  box-shadow: 0 6px 0 #111;
+}
+
+.featuredMilestoneIcon {
+  width: 88px;
+  height: 88px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 2.4rem;
+}
+
+.featuredMilestoneContent {
+  flex: 1;
+  min-width: 240px;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.featuredMilestoneTitle {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.featuredMilestoneTrack {
+  height: 18px;
+  overflow: hidden;
+  border: 3px solid #111;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.featuredMilestoneTrack span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #111 0%, #0058ff 45%, #00d3b7 100%);
+}
+
+.featuredMilestoneFooter {
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.milestoneGrid {
+  margin-top: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.milestoneCard {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.9rem;
 }
 
 .milestoneUnlocked {
-  background: linear-gradient(180deg, #fffbe8, #fff3fb);
+  background: linear-gradient(180deg, #eafff8 0%, #fef0ff 100%);
 }
 
-.milestoneHidden {
-  background: linear-gradient(180deg, #f5f7fb, #eef2ff);
+.milestoneLocked {
+  background: linear-gradient(180deg, #f2f3f7 0%, #e6e8ef 100%);
+  color: rgba(17, 17, 17, 0.62);
 }
 
-.milestoneFooter,
+.milestoneIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  font-size: 1.45rem;
+}
+
+.archiveSection {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+}
+
+.archiveList {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.archiveRow {
+  padding: 0.85rem 1rem;
+  background: #fff;
+  align-items: center;
+}
+
 .archiveFooter {
+  display: grid;
+  gap: 0.15rem;
   font-size: 0.84rem;
+  text-align: right;
 }
 
-@media (max-width: 720px) {
-  .overviewStats {
+@media (max-width: 820px) {
+  .heroStats {
     grid-template-columns: 1fr;
+    min-width: 100%;
   }
 
-  .levelTrack {
-    width: 100%;
+  .archiveRow {
+    align-items: flex-start;
+  }
+
+  .archiveFooter {
+    text-align: left;
   }
 }

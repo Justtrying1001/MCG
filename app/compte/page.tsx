@@ -114,113 +114,117 @@ export default function AccountPage() {
     [unlockedMilestones],
   );
 
+  const completionPct = collection?.completionPct ?? null;
+  const totalXp =
+    (account?.progressionBreakdown.pointsXp ?? 0) +
+    (account?.progressionBreakdown.competitiveXp ?? 0) +
+    (account?.progressionBreakdown.collectionXp ?? 0);
   const tagline = me
-    ? collection?.completionPct
-      ? `${collection.completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
+    ? completionPct
+      ? `${completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
       : "Rookie collector building an MCG identity one pull at a time."
     : "Connect to turn this trainer card into your public player identity.";
 
   return (
     <SiteShell>
       <div className="profile-account-layout stitch-screen stitch-profile-screen">
-        <CollectorShowcase
-          displayName={me?.user.displayName ?? "Guest Collector"}
-          points={me?.user.points ?? 0}
-          level={account?.level ?? 1}
-          completionPct={collection?.completionPct ?? null}
-          tagline={tagline}
-          settingsAction={
-            me ? (
-              <button
-                type="button"
-                className="mcg-btn ghost btn-sm"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                Account settings
-              </button>
-            ) : undefined
-          }
-          primaryAction={
-            me ? undefined : (
-              <ConnectXCallout
-                layout="inline"
-                title="Memedex access"
-                description="Open your real Memedex vault, saved cards, and ownership counts once you connect."
-                ctaLabel="Connect wallet / X to open your Memedex"
-              />
-            )
-          }
-        />
-
-        <div className="profile-account-sections">
-          <ContestAchievements
-            milestonesUnlocked={unlockedMilestones.length}
-            totalXp={
-              (account?.progressionBreakdown.pointsXp ?? 0) +
-              (account?.progressionBreakdown.competitiveXp ?? 0) +
-              (account?.progressionBreakdown.collectionXp ?? 0)
-            }
-            contestsEntered={competitive?.contestsEntered ?? 0}
-            bestRank={competitive?.bestRank ?? null}
-            rating={competitive?.rating ?? null}
-            leagueTier={competitive?.leagueTier ?? null}
-          />
-
-          <section className="mcg-surface profile-milestones-panel">
-            <div className="profile-section-heading">
-              <div>
-                <p className="mcg-eyebrow">Milestones</p>
-                <h2>Unlocked milestones</h2>
-              </div>
-              <p className="profile-section-caption">Only earned milestones appear here.</p>
-            </div>
-            {milestoneBadges.length > 0 ? (
-              <div className="profile-milestone-row" aria-label="Unlocked milestones">
-                {milestoneBadges.map((badge) => (
-                  <article key={badge.id} className="profile-milestone-badge">
-                    <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
-                    <strong>{badge.title}</strong>
-                    <small>{badge.subtitle}</small>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title={me ? "No milestones unlocked yet" : "Connect to start unlocking milestones"}
-                description={
-                  me
-                    ? "Enter contests and progress through your player journey to fill this milestone rail."
-                    : "Your unlocked milestones will appear here once your profile is active."
-                }
-              />
-            )}
-          </section>
-
-          <FeaturedCardsStrip
-            cards={featuredCards}
-            action={
-              me?.mvpCollection?.length ? (
+        <div className="profile-account-shell">
+          <CollectorShowcase
+            displayName={me?.user.displayName ?? "Guest Collector"}
+            points={me?.user.points ?? 0}
+            level={account?.level ?? 1}
+            completionPct={completionPct}
+            tagline={tagline}
+            settingsAction={
+              me ? (
                 <button
                   type="button"
                   className="mcg-btn ghost btn-sm"
-                  onClick={() => setIsShowcaseEditing(true)}
+                  onClick={() => setIsSettingsOpen(true)}
                 >
-                  Manage showcase
+                  Account settings
                 </button>
-              ) : null
+              ) : undefined
             }
-            emptyState={
-              <EmptyState
-                title={me ? "No showcase cards selected" : "No showcase pulls yet"}
-                description={
-                  me
-                    ? "Open packs and pick up to 6 collection cards to feature in your showcase."
-                    : "Connect wallet / X to start building a trainer identity with featured cards."
-                }
-              />
+            primaryAction={
+              me ? undefined : (
+                <ConnectXCallout
+                  layout="inline"
+                  title="Memedex access"
+                  description="Open your real Memedex vault, saved cards, and ownership counts once you connect."
+                  ctaLabel="Connect wallet / X to open your Memedex"
+                />
+              )
             }
           />
 
+          <div className="profile-account-sections">
+            <ContestAchievements
+              milestonesUnlocked={unlockedMilestones.length}
+              totalXp={totalXp}
+              collectionXp={account?.progressionBreakdown.collectionXp ?? 0}
+              competitiveXp={account?.progressionBreakdown.competitiveXp ?? 0}
+              contestsEntered={competitive?.contestsEntered ?? 0}
+              bestRank={competitive?.bestRank ?? null}
+              rating={competitive?.rating ?? null}
+              leagueTier={competitive?.leagueTier ?? null}
+            />
+
+            <section className="mcg-surface profile-milestones-panel">
+              <div className="profile-section-heading">
+                <div>
+                  <p className="mcg-eyebrow">Unlocked milestones</p>
+                  <h2>Unlocked milestones</h2>
+                </div>
+                <p className="profile-section-caption">Only earned badges appear here — no locked filler.</p>
+              </div>
+              {milestoneBadges.length > 0 ? (
+                <div className="profile-milestone-row" aria-label="Unlocked milestones">
+                  {milestoneBadges.map((badge) => (
+                    <article key={badge.id} className="profile-milestone-badge">
+                      <span className="profile-trophy-icon" aria-hidden="true">{badge.icon}</span>
+                      <strong>{badge.title}</strong>
+                      <small>{badge.subtitle}</small>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={me ? "No milestones unlocked yet" : "Connect to start unlocking milestones"}
+                  description={
+                    me
+                      ? "Enter contests and progress through your player journey to fill this milestone rail."
+                      : "Your unlocked milestones will appear here once your profile is active."
+                  }
+                />
+              )}
+            </section>
+
+            <FeaturedCardsStrip
+              cards={featuredCards}
+              action={
+                me?.mvpCollection?.length ? (
+                  <button
+                    type="button"
+                    className="mcg-btn ghost btn-sm"
+                    onClick={() => setIsShowcaseEditing(true)}
+                  >
+                    Edit showcase
+                  </button>
+                ) : null
+              }
+              emptyState={
+                <EmptyState
+                  title={me ? "No showcase cards selected" : "No showcase pulls yet"}
+                  description={
+                    me
+                      ? "Open packs and pick up to 6 collection cards to feature in your showcase."
+                      : "Connect wallet / X to start building a trainer identity with featured cards."
+                  }
+                />
+              }
+            />
+          </div>
         </div>
 
         <Modal

@@ -18,7 +18,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
           <SectionHeader
             eyebrow="Showcase"
             title="Showcase"
-            subtitle="Selected cards only. Manage which pulls appear on your profile."
+            subtitle="Curate the cards that define your public profile — selected highlights only."
           />
           {action}
         </div>
@@ -35,7 +35,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
                 </div>
                 <div className="profile-featured-card-meta">
                   <strong>{item.card.displayName}</strong>
-                  <span>{item.card.rarity}</span>
+                  <span>{item.card.rarity} · {item.instanceCount} owned</span>
                 </div>
               </div>
             ))}
