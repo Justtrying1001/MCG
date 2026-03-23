@@ -15,6 +15,11 @@ import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 type CollectionSortKey = "name" | "rarity" | "finish" | "quantity";
 type OwnershipFilter = "all" | "owned" | "missing" | "duplicates";
 
+type CountRow = {
+  label: string;
+  count: number;
+};
+
 const rarityRank: Record<string, number> = {
   COMMON: 0,
   UNCOMMON: 1,
@@ -56,6 +61,7 @@ export default function CollectionPage() {
     0,
   );
   const uniqueCards = sourceCollection.length;
+  const statsCollection = me ? sourceCollection : guestCollection;
   const collectionProg = me?.coexistence?.v2?.collectionProgression;
   const projection = me?.coexistence?.v2?.collectionProjection;
   const projectionPct = projection?.completionPct;
@@ -94,19 +100,47 @@ export default function CollectionPage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [sourceCollection]);
 
-  const hasDuplicateCards = useMemo(
-    () => sourceCollection.some((item) => item.instanceCount > 1),
+  const duplicateCount = useMemo(
+    () => sourceCollection.reduce((acc, item) => acc + Math.max(item.instanceCount - 1, 0), 0),
     [sourceCollection],
   );
 
+  const hasDuplicateCards = duplicateCount > 0;
+
   const hasMissingCards = Boolean(me && missingTemplates > 0);
+
+
+  const rarityCounts = useMemo<CountRow[]>(() => {
+    const counts = new Map<string, number>();
+    statsCollection.forEach((item) => {
+      counts.set(item.card.rarity, (counts.get(item.card.rarity) ?? 0) + 1);
+    });
+
+    return ["COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY"].map((label) => ({
+      label,
+      count: counts.get(label) ?? 0,
+    }));
+  }, [statsCollection]);
+
+  const finishCounts = useMemo<CountRow[]>(() => {
+    const counts = new Map<string, number>();
+    statsCollection.forEach((item) => {
+      const finish = formatMemedexFinish(item.card.edition);
+      counts.set(finish, (counts.get(finish) ?? 0) + 1);
+    });
+
+    return ["Base", "Reverse", "Holo", "Full Art"].map((label) => ({
+      label,
+      count: counts.get(label) ?? 0,
+    }));
+  }, [statsCollection]);
 
   const ownershipOptions = useMemo(
     () => [
       { value: "all" as const, label: "All" },
       { value: "owned" as const, label: "Owned" },
-      ...(hasMissingCards ? [{ value: "missing" as const, label: "Missing" }] : []),
-      ...(hasDuplicateCards ? [{ value: "duplicates" as const, label: "Duplicates" }] : []),
+      { value: "missing" as const, label: "Missing", disabled: !hasMissingCards },
+      { value: "duplicates" as const, label: "Duplicates", disabled: !hasDuplicateCards },
     ],
     [hasDuplicateCards, hasMissingCards],
   );
@@ -171,7 +205,9 @@ export default function CollectionPage() {
           completionPct={completionPct}
           totalCards={me ? totalCards : guestCount}
           uniqueCards={me ? uniqueCards : guestUnique}
-          missingCount={me ? missingTemplates : null}
+          duplicateCount={me ? duplicateCount : Math.max(guestCount - guestUnique, 0)}
+          rarityCounts={rarityCounts}
+          finishCounts={finishCounts}
           totalTemplates={me ? totalTemplates : null}
           completionWidth={completionWidth}
         />
@@ -196,80 +232,83 @@ export default function CollectionPage() {
           </div>
 
           <div className="memedex-gallery-toolbar" aria-label="Collectible slot filters">
-            <label className="memedex-toolbar-search">
-              <span>Search</span>
-              <input
-                className="collection-search-input memedex-search-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search name, rarity, or finish"
-              />
-            </label>
-
-            <div className="memedex-filter-field memedex-filter-field--chips">
-              <span>Ownership</span>
-              <div className="memedex-filter-pills" aria-label="Entry type">
-                {ownershipOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
-                    onClick={() =>
-                      setOwnershipFilter(option.value as OwnershipFilter)
-                    }
-                    aria-pressed={ownershipFilter === option.value}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+            <div className="memedex-toolbar-top">
+              <div className="memedex-filter-field memedex-filter-field--chips">
+                <span>Ownership</span>
+                <div className="memedex-filter-pills" aria-label="Entry type">
+                  {ownershipOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
+                      onClick={() => setOwnershipFilter(option.value as OwnershipFilter)}
+                      aria-pressed={ownershipFilter === option.value}
+                      disabled={option.disabled}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <label className="memedex-toolbar-search">
+                <span>Search</span>
+                <input
+                  className="collection-search-input memedex-search-input"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search name, rarity, or finish"
+                />
+              </label>
             </div>
 
-            <label className="memedex-filter-field">
-              <span>Rarity</span>
-              <select
-                className="collection-select"
-                value={rarityFilter}
-                onChange={(e) => setRarityFilter(e.target.value)}
-              >
-                <option value="ALL">All rarities</option>
-                {rarityOptions.map((rarity) => (
-                  <option key={rarity} value={rarity}>
-                    {rarity}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="memedex-toolbar-bottom">
+              <label className="memedex-filter-field">
+                <span>Rarity</span>
+                <select
+                  className="collection-select"
+                  value={rarityFilter}
+                  onChange={(e) => setRarityFilter(e.target.value)}
+                >
+                  <option value="ALL">All rarities</option>
+                  {rarityOptions.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {rarity}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="memedex-filter-field">
-              <span>Finish</span>
-              <select
-                className="collection-select"
-                value={finishFilter}
-                onChange={(e) => setFinishFilter(e.target.value)}
-              >
-                <option value="ALL">All finishes</option>
-                {finishOptions.map((finish) => (
-                  <option key={finish} value={finish}>
-                    {finish}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="memedex-filter-field">
+                <span>Finish</span>
+                <select
+                  className="collection-select"
+                  value={finishFilter}
+                  onChange={(e) => setFinishFilter(e.target.value)}
+                >
+                  <option value="ALL">All finishes</option>
+                  {finishOptions.map((finish) => (
+                    <option key={finish} value={finish}>
+                      {finish}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="memedex-filter-field">
-              <span>Sort</span>
-              <select
-                className="collection-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}
-              >
-                <option value="rarity">Rarity</option>
-                <option value="name">Name</option>
-                <option value="finish">Finish</option>
-                <option value="quantity">Quantity</option>
-              </select>
-            </label>
+              <label className="memedex-filter-field">
+                <span>Sort</span>
+                <select
+                  className="collection-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as CollectionSortKey)}
+                >
+                  <option value="rarity">Rarity</option>
+                  <option value="name">Name</option>
+                  <option value="finish">Finish</option>
+                  <option value="quantity">Quantity</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           {!me ? (
