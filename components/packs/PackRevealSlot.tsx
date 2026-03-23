@@ -75,10 +75,8 @@ export function PackRevealSlot({
           <span className="back-label">{isNext ? "Click to reveal" : "Awaiting previous"}</span>
         </div>
         <div className="reveal-slot-face reveal-slot-front">
-          <div className="reveal-slot-card-scale">
-            <div className="memedex-card-trigger reveal-slot-card-surface">
-              <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
-            </div>
+          <div className="memedex-card-trigger reveal-slot-card-surface">
+            <MemedexCardSurface card={card} quantity={1} imageLoading="eager" />
           </div>
         </div>
       </div>
