@@ -8,11 +8,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CardGrid } from "@/components/collection/CardGrid";
 import { CollectionHeader } from "@/components/collection/CollectionHeader";
+import { formatMemedexFinish } from "@/components/collection/memedexFinish";
 import { useSession } from "@/components/useSession";
 import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 
-type CollectionSortKey = "name" | "rarity" | "edition" | "quantity";
-type OwnershipFilter = "all" | "duplicates" | "singles";
+type CollectionSortKey = "name" | "rarity" | "finish" | "quantity";
+type OwnershipFilter = "all" | "owned" | "missing" | "duplicates";
 
 const rarityRank: Record<string, number> = {
   COMMON: 0,
@@ -28,7 +29,7 @@ export default function CollectionPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
   const [rarityFilter, setRarityFilter] = useState<string>("ALL");
-  const [editionFilter, setEditionFilter] = useState<string>("ALL");
+  const [finishFilter, setFinishFilter] = useState<string>("ALL");
   const [ownershipFilter, setOwnershipFilter] =
     useState<OwnershipFilter>("all");
   const [zoomedCard, setZoomedCard] = useState<{
@@ -84,33 +85,51 @@ export default function CollectionPage() {
     );
   }, [sourceCollection]);
 
-  const editionOptions = useMemo(() => {
+  const finishOptions = useMemo(() => {
     const values = new Set(
       sourceCollection
-        .map((item) => item.card.setEditionLabel ?? item.card.edition)
+        .map((item) => formatMemedexFinish(item.card.edition))
         .filter((value): value is string => Boolean(value)),
     );
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [sourceCollection]);
 
+  const hasDuplicateCards = useMemo(
+    () => sourceCollection.some((item) => item.instanceCount > 1),
+    [sourceCollection],
+  );
+
+  const hasMissingCards = Boolean(me && missingTemplates > 0);
+
+  const ownershipOptions = useMemo(
+    () => [
+      { value: "all" as const, label: "All" },
+      { value: "owned" as const, label: "Owned" },
+      ...(hasMissingCards ? [{ value: "missing" as const, label: "Missing" }] : []),
+      ...(hasDuplicateCards ? [{ value: "duplicates" as const, label: "Duplicates" }] : []),
+    ],
+    [hasDuplicateCards, hasMissingCards],
+  );
+
   const visibleCards = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const filtered = sourceCollection.filter((item) => {
-      const editionValue = item.card.setEditionLabel ?? item.card.edition ?? "";
+      const finishValue = formatMemedexFinish(item.card.edition);
       const matchesQuery =
         normalizedQuery.length === 0 ||
         item.card.displayName.toLowerCase().includes(normalizedQuery) ||
-        (item.card.edition ?? "").toLowerCase().includes(normalizedQuery) ||
-        editionValue.toLowerCase().includes(normalizedQuery);
+        finishValue.toLowerCase().includes(normalizedQuery) ||
+        item.card.rarity.toLowerCase().includes(normalizedQuery);
       const matchesRarity =
         rarityFilter === "ALL" || item.card.rarity === rarityFilter;
-      const matchesEdition =
-        editionFilter === "ALL" || editionValue === editionFilter;
+      const matchesFinish =
+        finishFilter === "ALL" || finishValue === finishFilter;
       const matchesOwnership =
         ownershipFilter === "all" ||
+        ownershipFilter === "owned" ||
         (ownershipFilter === "duplicates" && item.instanceCount > 1) ||
-        (ownershipFilter === "singles" && item.instanceCount === 1);
-      return matchesQuery && matchesRarity && matchesEdition && matchesOwnership;
+        ownershipFilter === "missing";
+      return matchesQuery && matchesRarity && matchesFinish && matchesOwnership;
     });
 
     const sorted = [...filtered].sort((a, b) => {
@@ -120,9 +139,9 @@ export default function CollectionPage() {
           (rarityRank[b.card.rarity] ?? Number.MAX_SAFE_INTEGER)
         );
       }
-      if (sortBy === "edition") {
-        return (a.card.setEditionLabel ?? a.card.edition ?? "").localeCompare(
-          b.card.setEditionLabel ?? b.card.edition ?? "",
+      if (sortBy === "finish") {
+        return formatMemedexFinish(a.card.edition).localeCompare(
+          formatMemedexFinish(b.card.edition),
         );
       }
       if (sortBy === "quantity") return a.instanceCount - b.instanceCount;
@@ -130,15 +149,20 @@ export default function CollectionPage() {
     });
 
     return sortDir === "asc" ? sorted : sorted.reverse();
-  }, [editionFilter, ownershipFilter, query, rarityFilter, sortBy, sortDir, sourceCollection]);
+  }, [finishFilter, ownershipFilter, query, rarityFilter, sortBy, sortDir, sourceCollection]);
+
+  const gridItems = ownershipFilter === "missing" ? [] : visibleCards;
+  const lockedPreviewCount = ownershipFilter === "owned" || ownershipFilter === "duplicates"
+    ? 0
+    : missingTemplates;
 
   const guestCount = guestCollection.reduce(
     (acc, item) => acc + item.instanceCount,
     0,
   );
   const guestUnique = guestCollection.length;
-  const displayedItems = me ? visibleCards : guestCollection;
-  const shownCount = displayedItems.length;
+  const displayedItems = me ? gridItems : guestCollection;
+  const shownCount = ownershipFilter === "missing" ? lockedPreviewCount : displayedItems.length;
 
   return (
     <SiteShell>
@@ -185,11 +209,7 @@ export default function CollectionPage() {
             <div className="memedex-filter-field memedex-filter-field--chips">
               <span>Ownership</span>
               <div className="memedex-filter-pills" aria-label="Entry type">
-                {[
-                  { value: "all", label: "All" },
-                  { value: "duplicates", label: "Duplicates" },
-                  { value: "singles", label: "Singles" },
-                ].map((option) => (
+                {ownershipOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
@@ -222,16 +242,16 @@ export default function CollectionPage() {
             </label>
 
             <label className="memedex-filter-field">
-              <span>Edition finish</span>
+              <span>Finish</span>
               <select
                 className="collection-select"
-                value={editionFilter}
-                onChange={(e) => setEditionFilter(e.target.value)}
+                value={finishFilter}
+                onChange={(e) => setFinishFilter(e.target.value)}
               >
                 <option value="ALL">All finishes</option>
-                {editionOptions.map((edition) => (
-                  <option key={edition} value={edition}>
-                    {edition}
+                {finishOptions.map((finish) => (
+                  <option key={finish} value={finish}>
+                    {finish}
                   </option>
                 ))}
               </select>
@@ -246,7 +266,7 @@ export default function CollectionPage() {
               >
                 <option value="rarity">Rarity</option>
                 <option value="name">Name</option>
-                <option value="edition">Edition</option>
+                <option value="finish">Finish</option>
                 <option value="quantity">Quantity</option>
               </select>
             </label>
@@ -286,11 +306,11 @@ export default function CollectionPage() {
               title="Memedex data unavailable"
               description="Refresh your session and verify the Memedex payload."
             />
-          ) : visibleCards.length > 0 ? (
+          ) : visibleCards.length > 0 || ownershipFilter === "missing" ? (
             <CardGrid
-              items={visibleCards}
+              items={gridItems}
               onOpenCard={(card, quantity) => setZoomedCard({ card, quantity })}
-              missingCount={missingTemplates}
+              missingCount={lockedPreviewCount}
             />
           ) : me && sourceCollection.length === 0 ? (
             <EmptyState

@@ -10177,6 +10177,28 @@ button.mcg-chip:hover {
   opacity: 0.82;
 }
 
+.memedex-card-detail-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.memedex-card-detail-line--muted {
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.memedex-card-detail-line--footer {
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
 .memedex-card-footer {
   display: flex;
   flex-wrap: wrap;
@@ -10266,7 +10288,7 @@ button.mcg-chip:hover {
 }
 
 .memedex-card-frame--locked {
-  min-height: 330px;
+  min-height: 356px;
   display: grid;
   place-items: center;
   gap: 8px;
@@ -13029,14 +13051,9 @@ button.mcg-chip:hover {
 .memedex-filter-pills {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.45rem;
   align-items: center;
-  min-height: 48px;
-  padding: 4px;
-  border: 3px solid #111;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow-hard-sm);
+  min-height: 40px;
 }
 
 .memedex-slot-tab {
@@ -13065,6 +13082,7 @@ button.mcg-chip:hover {
 
 .stitch-memedex-screen .memedex-card-trigger--locked {
   background: linear-gradient(180deg, #fffdf2 0%, #f0f2f5 100%);
+  min-height: 396px;
 }
 
 .stitch-memedex-screen .memedex-card-frame {
