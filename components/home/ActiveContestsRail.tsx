@@ -36,12 +36,12 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
       <div className="mcg-home-section">
         <SectionHeader
           eyebrow="Battle arena"
-          title="Choose your contest"
+          title="Choose your battle"
           subtitle="The main battle destination: pick a live window, inspect your lineup state, and launch straight into the arena."
           actions={<Link href="/contests" className="mcg-btn ghost">Arena map</Link>}
         />
         {contests.length === 0 ? (
-          <EmptyState title="No active contests" description="The next contest window will appear here." />
+          <EmptyState title="No active battles" description="The next battle window will appear here." />
         ) : (
           <div className="active-contests-grid">
             {contests.map((contest) => {
@@ -59,14 +59,14 @@ export function ActiveContestsRail({ contests }: { contests: ContestListItem[] }
 
                   <div className="active-contest-body">
                     <div className="mcg-contest-meta active-contest-meta">
-                      <span>{contest._count.entries.toLocaleString()} entries</span>
+                      <span>{contest._count.entries.toLocaleString()} battle entries</span>
                       <span>{contest.lockAt ? `Locks ${new Date(contest.lockAt).toLocaleDateString()}` : "No lock"}</span>
                     </div>
 
                     <div className="active-contest-chip-row">
                       {contest.seasonName ? <span className="mcg-chip">Season {contest.seasonName}</span> : null}
                       {contest.rewardPreview?.label ? <span className="mcg-chip">{contest.rewardPreview.label}</span> : null}
-                      <span className="mcg-chip">{contest.userEntry ? `Entry ${contest.userEntry.status}` : "No entry yet"}</span>
+                      <span className="mcg-chip">{contest.userEntry ? `Battle entry ${contest.userEntry.status}` : "No entry yet"}</span>
                     </div>
 
                     <p className="contest-inline-note active-contest-note">{stateMessaging.helper}</p>

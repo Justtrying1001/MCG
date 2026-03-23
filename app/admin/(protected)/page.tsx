@@ -50,7 +50,7 @@ export default function AdminHomePage() {
   const alerts = useMemo(() => {
     if (!data) return [] as Array<{ label: string; tone: "warn" | "danger" | "success" }>;
     const rows: Array<{ label: string; tone: "warn" | "danger" | "success" }> = [];
-    if (data.contests.live === 0) rows.push({ label: "No live contest", tone: "warn" });
+    if (data.contests.live === 0) rows.push({ label: "No live battle", tone: "warn" });
     if (data.packs.onSale === 0) rows.push({ label: "No pack on sale", tone: "danger" });
     if (data.quests.totalSocial < 3) rows.push({ label: "Low social quest inventory", tone: "warn" });
     if (rows.length === 0) rows.push({ label: "Core systems healthy", tone: "success" });
@@ -64,7 +64,7 @@ export default function AdminHomePage() {
         subtitle="Operator overview for health, workload and quick execution paths."
         actions={
           <div className="admin-v2-action-row">
-            <Link href="/admin/contests" className="admin-v2-link-chip">Contests</Link>
+            <Link href="/admin/contests" className="admin-v2-link-chip">Battles</Link>
             <Link href="/admin/moderation" className="admin-v2-link-chip">Moderation queue</Link>
             <Link href="/admin/rewards" className="admin-v2-link-chip">Manual rewards</Link>
           </div>
@@ -79,7 +79,7 @@ export default function AdminHomePage() {
           <AdminStatStrip items={[
             { label: "Packs opened", value: String(data.packs.opened) },
             { label: "Packs on sale", value: String(data.packs.onSale), tone: data.packs.onSale > 0 ? "success" : "danger" },
-            { label: "Contests live", value: String(data.contests.live), tone: data.contests.live > 0 ? "success" : "warn" },
+            { label: "Battles live", value: String(data.contests.live), tone: data.contests.live > 0 ? "success" : "warn" },
             { label: "Social quests", value: String(data.quests.totalSocial), tone: data.quests.totalSocial >= 3 ? "success" : "warn" },
             { label: "Milestones", value: String(data.milestones.total) },
           ]} />
@@ -100,7 +100,7 @@ export default function AdminHomePage() {
             <AdminPanel>
               <p className="admin-v2-section-title">Quick execution paths</p>
               <div className="admin-v2-quick-grid">
-                <Link href="/admin/contests/create" className="admin-v2-quick-card">Create contest</Link>
+                <Link href="/admin/contests/create" className="admin-v2-quick-card">Create battle</Link>
                 <Link href="/admin/moderation" className="admin-v2-quick-card">Review submissions</Link>
                 <Link href="/admin/quests/builder" className="admin-v2-quick-card">Build quest</Link>
                 <Link href="/admin/users" className="admin-v2-quick-card">Inspect user context</Link>

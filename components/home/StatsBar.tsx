@@ -6,7 +6,7 @@ const STATS = [
   { value: formatter.format(GAME_CONFIG.GENESIS_SET.TOKEN_COUNT), label: "Tokens in Set 1", accent: "cyan" },
   { value: formatter.format(GAME_DERIVED_STATS.TOTAL_PLANNED_CARDS), label: "Cards planned", accent: "pink" },
   { value: formatter.format(GAME_CONFIG.GENESIS_SET.PACK_COUNT), label: "Planned packs", accent: "yellow" },
-  { value: "Live", label: "Contest season", accent: "blue" },
+  { value: "Live", label: "Battle season", accent: "blue" },
 ] as const;
 
 export function StatsBar() {

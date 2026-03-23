@@ -24,7 +24,7 @@ export function ContestProgressTimeline({
   const phase = toUserPhase(status);
   const activeIndex = Math.max(0, steps.findIndex((step) => step.key === phase));
   return (
-    <section className="contest-timeline-shell" aria-label="Contest lifecycle timeline">
+    <section className="contest-timeline-shell" aria-label="Battle lifecycle timeline">
       {steps.map((step, index) => {
         const date =
           step.key === "OPEN"

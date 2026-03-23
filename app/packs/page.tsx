@@ -490,7 +490,7 @@ export default function PacksPage() {
 
     const sourceLabelForGrant = (grant: RewardPackGrant) => {
       if (grant.sourceContestSettlement?.contest?.title) {
-        return `Contest reward · ${grant.sourceContestSettlement.contest.title}`;
+        return `Battle reward · ${grant.sourceContestSettlement.contest.title}`;
       }
       if (grant.sourcePackOpeningEvent?.packDefinition?.displayName) {
         return `Pack bonus · ${grant.sourcePackOpeningEvent.packDefinition.displayName}`;
@@ -582,7 +582,7 @@ export default function PacksPage() {
                 <p className="reward-packs-kicker">Reward inventory</p>
                 <h2>Reward Packs</h2>
                 <p className="reward-packs-intro">
-                  Packs earned from contests, quests, and bonus drops. Open
+                  Packs earned from battles, quests, and bonus drops. Open
                   them here when you are ready to reveal.
                 </p>
               </div>

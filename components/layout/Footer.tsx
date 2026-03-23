@@ -35,7 +35,7 @@ export function Footer() {
             Packs
           </Link>
           <Link href="/contests" className="mcg-footer-link">
-            Contests
+            Battles
           </Link>
         </nav>
 

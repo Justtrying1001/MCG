@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 const ITEMS = [
   { title: "Complete 1 social quest", reward: "+150 points", tone: "open" as const },
   { title: "Reach 40% collection", reward: "Milestone badge", tone: "live" as const },
-  { title: "Enter 3 contests", reward: "+300 points", tone: "locked" as const },
+  { title: "Enter 3 battles", reward: "+300 points", tone: "locked" as const },
 ];
 
 export function RewardsMiniPanel() {

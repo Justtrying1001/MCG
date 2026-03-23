@@ -37,7 +37,7 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
     : "No lineup";
 
   return (
-    <Link href={`/contests/${contest.id}`} className="contest-premium-link-wrap" aria-label={`Open contest ${contest.title}`}>
+    <Link href={`/contests/${contest.id}`} className="contest-premium-link-wrap" aria-label={`Open battle ${contest.title}`}>
       <Surface as="article" variant="raised" className={`contest-premium-card tone-${contest.status.toLowerCase()}`}>
         <div className="contest-premium-card-art" aria-hidden>
           <span>{visualToken}</span>
@@ -52,7 +52,7 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
 
           <h3 title={contest.title}>{contest.title}</h3>
 
-          <div className="contest-premium-meta-grid" aria-label="Contest quick stats">
+          <div className="contest-premium-meta-grid" aria-label="Battle quick stats">
             <span><b>{timingLabel}</b>{formatDate(contest.status === "OPEN" ? contest.lockAt : contest.endsAt)}</span>
             <span><b>Countdown</b>{countdown}</span>
             <span><b>Reward</b>{rewardPreview}</span>

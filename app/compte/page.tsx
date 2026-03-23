@@ -94,7 +94,7 @@ export default function AccountPage() {
   }, [userQuests]);
 
   const guestTrophyBadges = [
-    { id: "guest-1", icon: "🏆", title: "First Arena", subtitle: "Contest debut", locked: true },
+    { id: "guest-1", icon: "🏆", title: "First Arena", subtitle: "Battle debut", locked: true },
     { id: "guest-2", icon: "⚡", title: "Point Surge", subtitle: "Score streak", locked: true },
     { id: "guest-3", icon: "✨", title: "Collector Rise", subtitle: "Collection milestone", locked: true },
   ];
@@ -219,7 +219,7 @@ export default function AccountPage() {
               <section className="profile-settings-shell">
                 <EmptyState
                   title="No profile data yet"
-                  description="Connect wallet / X to start collecting cards, entering contests, and building your public MCG identity."
+                  description="Connect wallet / X to start collecting cards, entering battles, and building your public MCG identity."
                 />
               </section>
             </div>
@@ -255,7 +255,7 @@ export default function AccountPage() {
                 ) : (
                   <EmptyState
                     title="No trophies unlocked yet"
-                    description="Complete milestones and contests to start filling your trainer trophy case."
+                    description="Complete milestones and battles to start filling your trainer trophy case."
                   />
                 )}
               </section>

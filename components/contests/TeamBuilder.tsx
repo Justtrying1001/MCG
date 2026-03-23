@@ -53,7 +53,7 @@ export function TeamBuilder({
             <p className="mcg-eyebrow">Selected slots</p>
             <strong>Arrange your starting lineup</strong>
           </div>
-          <p className="contest-inline-note">Your selected cards stay editable here until contest lock.</p>
+          <p className="contest-inline-note">Your selected cards stay editable here until battle lock.</p>
         </div>
 
         <div className="contest-lineup-progress-track"><span style={{ width: `${pct}%` }} /></div>

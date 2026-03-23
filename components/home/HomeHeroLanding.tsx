@@ -129,7 +129,7 @@ export function HomeHeroLanding() {
             <div className="home-hero-stage-note">
               <strong>Collectible obsession unlocked.</strong>
               <span>
-                Every pack can feed collection, contests, and progression once you
+                Every pack can feed collection, battles, and progression once you
                 connect.
               </span>
             </div>

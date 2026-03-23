@@ -13,7 +13,7 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/packs", label: "Packs" },
   { href: "/collection", label: "Memedex" },
-  { href: "/contests", label: "Contests" },
+  { href: "/contests", label: "Battles" },
   { href: "/rewards", label: "Rewards" },
   { href: "/compte", label: "Profile" },
 ];

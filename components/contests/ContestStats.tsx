@@ -6,7 +6,7 @@ export type ContestStatItem = {
 
 export function ContestStats({ items }: { items: ContestStatItem[] }) {
   return (
-    <div className="contest-arena-stats" aria-label="Contest arena quick stats">
+    <div className="contest-arena-stats" aria-label="Battle arena quick stats">
       {items.map((item) => (
         <article key={item.label} className={`contest-arena-stat-card tone-${item.tone}`}>
           <span>{item.label}</span>

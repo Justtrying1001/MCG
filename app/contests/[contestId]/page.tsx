@@ -215,7 +215,7 @@ export default function ContestDetailPage({
           error?: string;
         } | null;
         setError(
-          payload?.error ?? "Contest is unavailable or still being prepared.",
+          payload?.error ?? "Battle is unavailable or still being prepared.",
         );
         setDetail(null);
         setRanking(null);
@@ -385,7 +385,7 @@ export default function ContestDetailPage({
       setMyRewards(null);
       setOptions([]);
       setScoreBreakdown(null);
-      setError("Contest is unavailable or still being prepared.");
+      setError("Battle is unavailable or still being prepared.");
     } finally {
       setIsLoadingPage(false);
     }
@@ -596,7 +596,7 @@ export default function ContestDetailPage({
       const payload = (await res.json().catch(() => null)) as {
         error?: string;
       } | null;
-      setError(payload?.error ?? "Contest entry failed");
+      setError(payload?.error ?? "Battle entry failed");
       setSubmitBusy(false);
       return;
     }
@@ -694,7 +694,7 @@ export default function ContestDetailPage({
       <SiteShell>
         <section
           className="contest-command-loading"
-          aria-label="Loading contest detail"
+          aria-label="Loading battle detail"
         >
           <div className="contest-command-skeleton-lg" />
           <div className="contest-command-skeleton-md" />
@@ -711,10 +711,10 @@ export default function ContestDetailPage({
     return (
       <SiteShell>
         <section className="contest-command-empty">
-          <h1>Contest unavailable</h1>
+          <h1>Battle unavailable</h1>
           <p>
             {error ||
-              "This contest is currently unavailable. Please try again in a few moments."}
+              "This battle is currently unavailable. Please try again in a few moments."}
           </p>
         </section>
       </SiteShell>
@@ -764,7 +764,7 @@ export default function ContestDetailPage({
       : "Closes at";
   const heroTiming = isSettled
     ? {
-        label: "Contest settled",
+        label: "Battle settled",
         value: formatContestTimestamp(
           contest.endsAt ?? contest.liveAt ?? contest.lockAt,
         ),
@@ -773,13 +773,13 @@ export default function ContestDetailPage({
       }
     : isLive
       ? {
-          label: "Contest ends in",
+          label: "Battle ends in",
           value: formatCountdown(countdownTarget, nowTs),
           helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
         }
       : {
-          label: isLocked ? "Contest starts in" : "Entry closes in",
+          label: isLocked ? "Battle starts in" : "Entry closes in",
           value: formatCountdown(countdownTarget, nowTs),
           helper: `${countdownTimestampLabel} ${countdownTimestampValue}`,
           details: timingDetails,
@@ -806,7 +806,7 @@ export default function ContestDetailPage({
   const heroAction = isOpen
     ? {
         label: !me
-          ? "Connect wallet / X to enter contest"
+          ? "Connect wallet / X to enter battle"
           : hasEntry
             ? "Edit lineup"
             : selectedIds.length > 0
@@ -825,7 +825,7 @@ export default function ContestDetailPage({
           ? getPrimaryCtaLabel(contest.status)
           : isLive
             ? getPrimaryCtaLabel(contest.status)
-            : "Track contest",
+            : "Track battle",
         onClick: scrollToLeaderboard,
       };
 
@@ -843,14 +843,14 @@ export default function ContestDetailPage({
   const lineupHelperText = isSettled
     ? "These are the cards that counted in your final result."
     : isLive
-      ? "Your lineup is read-only while the contest is live."
+      ? "Your lineup is read-only while the battle is live."
       : isLocked
         ? "Lineup changes are disabled now that the lock milestone has passed."
         : !me
-          ? "Connect wallet / X to build a lineup, submit your entry, and track your personal contest results."
+          ? "Connect wallet / X to build a lineup, submit your entry, and track your personal battle results."
           : duplicateLineupKeys.length > 0
             ? "Your draft contains a duplicate token conflict. Replace the duplicate before submitting."
-            : "Fill every slot to complete your contest entry.";
+            : "Fill every slot to complete your battle entry.";
   const heroCoverImageUrl =
     contest.rules[0]?.config?.coverImageUrl?.trim() ||
     slotCards.find((slot) => slot?.card.imageUrl)?.card.imageUrl ||
@@ -911,7 +911,7 @@ export default function ContestDetailPage({
 
         <section
           className="contest-detail-event-rail"
-          aria-label="Contest event summary"
+          aria-label="Battle event summary"
         >
           {eventRailItems.map((item) => (
             <article
@@ -930,7 +930,7 @@ export default function ContestDetailPage({
               <span className="contest-detail-zone-banner-kicker">
                 Participation bay
               </span>
-              <strong>Your contest station</strong>
+              <strong>Your battle station</strong>
               <p>
                 Build, review, and track the lineup tied to this arena event.
               </p>
@@ -962,7 +962,7 @@ export default function ContestDetailPage({
               </span>
               <strong>Rewards + rankings</strong>
               <p>
-                Supporting event boards for payouts, standings, and contest
+                Supporting event boards for payouts, standings, and battle
                 context.
               </p>
             </div>
@@ -989,7 +989,7 @@ export default function ContestDetailPage({
       {/* Compatibility guardrails: slotCard.finalScore !== null ? `${slotCard.finalScore.toFixed(2)} pts` : "—" */}
       {/* Compatibility guardrails: cpd-slot-lock-overlay */}
       {/* Compatibility guardrails: Sign in to build and submit your lineup. */}
-      {/* Compatibility guardrails: Contest unavailable or still being prepared */}
+      {/* Compatibility guardrails: Battle unavailable or still being prepared */}
       <LineupBuilderModal
         open={showBuilder}
         contestTitle={contest.title}

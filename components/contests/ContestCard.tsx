@@ -184,7 +184,7 @@ export function ContestCard({
           {timing.label}: {timing.value}
         </p>
 
-        <div className="contest-lobby-card-meta-list" aria-label="Contest quick details">
+        <div className="contest-lobby-card-meta-list" aria-label="Battle quick details">
           {detailItems.map((item) => (
             <div key={item.label} className="contest-lobby-card-meta-item">
               <span>{item.label}</span>

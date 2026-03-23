@@ -22,7 +22,7 @@ export function ContestResultPanel({
         <Surface className="contest-result-panel" variant="raised">
           <p className="mcg-eyebrow">End phase</p>
           <h3 className="mcg-title">Scoring / result pending</h3>
-          <p className="contest-inline-note">When the contest ends, scoring computes and the result phase appears here.</p>
+          <p className="contest-inline-note">When the battle ends, scoring computes and the result phase appears here.</p>
         </Surface>
       );
     }
@@ -52,8 +52,8 @@ export function ContestResultPanel({
       ) : myRank ? (
         <p className="contest-inline-note">No rewards assigned for your final rank.</p>
       ) : null}
-      <p className="contest-inline-note">Rewards are granted during settlement processing. Your cards are unlocked once the contest is settled.</p>
-      <Link href="/contests" className="mcg-btn ghost">Explore next contests</Link>
+      <p className="contest-inline-note">Rewards are granted during settlement processing. Your cards are unlocked once the battle is settled.</p>
+      <Link href="/contests" className="mcg-btn ghost">Explore next battles</Link>
     </Surface>
   );
 }

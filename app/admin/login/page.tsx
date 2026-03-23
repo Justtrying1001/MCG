@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Admin Login</h1>
-          <p className="page-subtitle">Authenticate to access internal contest operations.</p>
+          <p className="page-subtitle">Authenticate to access internal battle operations.</p>
         </div>
       </div>
 
