@@ -9,7 +9,6 @@ import {
 } from "@/components/contests/contestLifecycle";
 import { useSession } from "@/components/useSession";
 import { usePrivyLogin } from "@/components/auth/usePrivyLogin";
-import { LineupBuilderModal } from "@/components/contests/LineupBuilderModal";
 import { getLogicalTokenKey } from "@/lib/domain/contests/lineup-token";
 import type {
   ContestEntryStatus,
@@ -156,7 +155,6 @@ export default function ContestDetailPage({
   const [lineupSlots, setLineupSlots] = useState<Array<string | null>>(
     cachedState?.lineupSlots ?? [],
   );
-  const [showBuilder, setShowBuilder] = useState(false);
   const [activeBuilderSlot, setActiveBuilderSlot] = useState(0);
   const [error, setError] = useState("");
   const [submitBusy, setSubmitBusy] = useState(false);
@@ -603,7 +601,6 @@ export default function ContestDetailPage({
     localStorage.removeItem(`lineup-draft-${params.contestId}`);
     await loadAll();
     setSubmitBusy(false);
-    setShowBuilder(false);
     setBuilderFlash(
       isDraft ? "Draft saved." : "Lineup submitted successfully.",
     );
@@ -679,7 +676,6 @@ export default function ContestDetailPage({
           : 0,
     );
     setBuilderFlash("");
-    setShowBuilder(true);
   };
 
   const scrollToLeaderboard = () => {
@@ -876,23 +872,12 @@ export default function ContestDetailPage({
           contextBody={stateContextBody}
           helpHref="https://mcg-2.gitbook.io/mcg/contests/how-contests-work"
           primaryAction={heroAction}
-          flash={builderFlash && !showBuilder ? builderFlash : null}
+          flash={builderFlash}
           error={error || builderError || null}
         />
 
         <section className="contest-detail-main-layout">
           <div className="contest-detail-primary-zone">
-            <div className="contest-detail-lineup-priority-bar">
-              <div>
-                <span className="contest-detail-lineup-priority-kicker">
-                  Primary focus
-                </span>
-                <strong>Lineup builder</strong>
-              </div>
-              <p>
-                Pick cards slot-by-slot and lock in your battle entry before the timer expires.
-              </p>
-            </div>
             <div ref={leaderboardSectionRef}>
               <LineupPanel
                 title="Your lineup"
@@ -909,6 +894,36 @@ export default function ContestDetailPage({
                 onOpenBuilder={isOpen ? openBuilder : undefined}
                 emptyMessage={isOpen ? "Add card" : "No lineup submitted"}
                 embedded
+                activeSlot={activeBuilderSlot}
+                options={options}
+                selectedLogicalTokenKeys={selectedLogicalTokenKeys}
+                onSelectCard={handleSelectCard}
+                onRemoveSlot={(slotIndex) => {
+                  if (!canManageLineup) return;
+                  setBuilderError("");
+                  setError("");
+                  setLineupSlots((prev) => {
+                    const next = [...prev];
+                    next[slotIndex] = null;
+                    return next;
+                  });
+                }}
+                onSaveDraft={async () => {
+                  if (selectedIds.length === rosterSize) {
+                    await submitLineup(true);
+                  } else {
+                    localStorage.setItem(
+                      `lineup-draft-${params.contestId}`,
+                      JSON.stringify(lineupSlots),
+                    );
+                    setBuilderFlash("Draft saved.");
+                  }
+                }}
+                onSubmit={() => void submitLineup()}
+                busy={submitBusy}
+                flashMessage={builderFlash}
+                errorMessage={builderError || error}
+                submitLabel={hasEntry ? "Update lineup" : "Submit lineup"}
               />
             </div>
           </div>
@@ -938,53 +953,6 @@ export default function ContestDetailPage({
       {/* Compatibility guardrails: cpd-slot-lock-overlay */}
       {/* Compatibility guardrails: Sign in to build and submit your lineup. */}
       {/* Compatibility guardrails: Battle unavailable or still being prepared */}
-      <LineupBuilderModal
-        open={showBuilder}
-        contestTitle={contest.title}
-        contestCode={contest.code}
-        contestStatus={contest.status}
-        lockAt={contest.lockAt}
-        rosterSize={rosterSize}
-        initialActiveSlot={activeBuilderSlot}
-        lineupSlots={
-          lineupSlots.length === rosterSize
-            ? lineupSlots
-            : toSlots(selectedIds, rosterSize)
-        }
-        options={options}
-        selectedLogicalTokenKeys={selectedLogicalTokenKeys}
-        busy={submitBusy}
-        flashMessage={builderFlash}
-        errorMessage={builderError || error}
-        submitLabel={hasEntry ? "Update lineup" : "Submit lineup"}
-        onClose={() => setShowBuilder(false)}
-        onSelectSlot={(slot) => setActiveBuilderSlot(slot)}
-        onSelectCard={handleSelectCard}
-        onRemoveSlot={(slotIndex) => {
-          if (!canManageLineup) return;
-          setBuilderError("");
-          setError("");
-          setLineupSlots((prev) => {
-            const next = [...prev];
-            next[slotIndex] = null;
-            return next;
-          });
-        }}
-        onSaveDraft={async () => {
-          if (selectedIds.length === rosterSize) {
-            await submitLineup(true);
-          } else {
-            localStorage.setItem(
-              `lineup-draft-${params.contestId}`,
-              JSON.stringify(lineupSlots),
-            );
-            setBuilderFlash("Draft saved.");
-            setShowBuilder(false);
-          }
-        }}
-        onSubmit={() => void submitLineup()}
-      />
-
       <style jsx>{`
         .cpd-topbar {
           position: sticky;
