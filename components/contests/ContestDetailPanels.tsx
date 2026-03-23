@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { LineupCardPicker } from "@/components/contests/LineupCardPicker";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import {
   ScoreBreakdownPanel,
@@ -631,6 +632,17 @@ export type LineupPanelProps = {
   onOpenBuilder?: (slotIndex: number) => void;
   emptyMessage?: string;
   embedded?: boolean;
+  activeSlot?: number;
+  options?: LineupOption[];
+  selectedLogicalTokenKeys?: Set<string>;
+  onSelectCard?: (instanceId: string, targetSlotIndex: number | null) => void;
+  onRemoveSlot?: (slotIndex: number) => void;
+  onSaveDraft?: () => void;
+  onSubmit?: () => void;
+  busy?: boolean;
+  flashMessage?: string;
+  errorMessage?: string;
+  submitLabel?: string;
 };
 
 export function LineupPanel({
@@ -648,10 +660,29 @@ export function LineupPanel({
   onOpenBuilder,
   emptyMessage,
   embedded = false,
+  activeSlot = 0,
+  options = [],
+  selectedLogicalTokenKeys = new Set<string>(),
+  onSelectCard,
+  onRemoveSlot,
+  onSaveDraft,
+  onSubmit,
+  busy = false,
+  flashMessage,
+  errorMessage,
+  submitLabel,
 }: LineupPanelProps) {
   const slotCountClass =
     rosterSize >= 6 ? "dense" : rosterSize === 5 ? "balanced" : "wide";
   const hasLineup = slotCards.some(Boolean);
+  const activeSlotCard = slotCards[activeSlot] ?? null;
+  const canEditInline = embedded && isOpen && canInteract;
+  const readyToSubmit = selectedCount === rosterSize;
+  const validationText = !canEditInline
+    ? "Lineup can only be edited while the battle is OPEN."
+    : !readyToSubmit
+      ? `Select ${rosterSize - selectedCount} more card${rosterSize - selectedCount === 1 ? "" : "s"} to finish your lineup.`
+      : "Lineup valid and ready to submit.";
   const content = (
     <>
       {embedded ? (
@@ -702,15 +733,17 @@ export function LineupPanel({
       <div className={`contest-detail-lineup-grid ${slotCountClass}`} role="list" aria-label="Lineup slots">
         {Array.from({ length: rosterSize }).map((_, index) => {
           const slotCard = slotCards[index];
+          const isActive = canEditInline && index === activeSlot;
           if (!slotCard) {
             const actionable = isOpen && canInteract && onOpenBuilder;
             return (
               <button
                 key={index}
                 type="button"
-                className={`contest-detail-lineup-slot empty ${actionable ? "actionable" : "static"}`}
+                className={`contest-detail-lineup-slot empty ${actionable ? "actionable" : "static"} ${isActive ? "active" : ""}`}
                 onClick={() => actionable && onOpenBuilder(index)}
                 disabled={!actionable}
+                aria-pressed={isActive}
               >
                 <span className="contest-detail-lineup-slot-label">
                   Slot {index + 1}
@@ -728,9 +761,10 @@ export function LineupPanel({
             <button
               key={index}
               type="button"
-              className={`contest-detail-lineup-slot filled ${canInteract && isOpen ? "actionable" : "static"}`}
+              className={`contest-detail-lineup-slot filled ${canInteract && isOpen ? "actionable" : "static"} ${isActive ? "active" : ""}`}
               onClick={() => canInteract && isOpen && onOpenBuilder?.(index)}
               disabled={!(canInteract && isOpen && onOpenBuilder)}
+              aria-pressed={isActive}
             >
               <span className="contest-detail-lineup-slot-label">
                 Slot {index + 1}
@@ -768,6 +802,74 @@ export function LineupPanel({
         <p className="contest-detail-empty-note">
           {emptyMessage ?? "No lineup was submitted for this battle."}
         </p>
+      ) : null}
+
+      {canEditInline ? (
+        <div className="contest-detail-inline-builder">
+          <div className="contest-detail-inline-builder-banner" aria-live="polite">
+            <div>
+              <span className="contest-detail-inline-builder-label">
+                Active slot {activeSlot + 1}
+              </span>
+              <strong>
+                {activeSlotCard ? activeSlotCard.card.name : "Pick a card for this slot"}
+              </strong>
+              <p>
+                Click any card below to assign it to the active slot immediately.
+              </p>
+            </div>
+            {activeSlotCard && onRemoveSlot ? (
+              <button
+                type="button"
+                className="mcg-btn ghost"
+                onClick={() => onRemoveSlot(activeSlot)}
+              >
+                Remove card
+              </button>
+            ) : null}
+          </div>
+
+          <LineupCardPicker
+            activeSlot={activeSlot}
+            canEdit={canEditInline}
+            lineupSlots={slotCards.map((slot) => slot?.card.instanceId ?? null)}
+            options={options}
+            rosterSize={rosterSize}
+            selectedLogicalTokenKeys={selectedLogicalTokenKeys}
+            onPick={(instanceId) => onSelectCard?.(instanceId, activeSlot)}
+          />
+
+          <div className="contest-detail-inline-builder-footer">
+            <div>
+              <strong>
+                {selectedCount}/{rosterSize} selected
+              </strong>
+              <p>{errorMessage || flashMessage || validationText}</p>
+            </div>
+            <div className="contest-detail-inline-builder-actions">
+              {onSaveDraft ? (
+                <button
+                  type="button"
+                  className="mcg-btn ghost"
+                  onClick={onSaveDraft}
+                  disabled={busy}
+                >
+                  Save draft
+                </button>
+              ) : null}
+              {onSubmit ? (
+                <button
+                  type="button"
+                  className="mcg-btn primary"
+                  onClick={onSubmit}
+                  disabled={!readyToSubmit || busy}
+                >
+                  {busy ? "Submitting…" : (submitLabel ?? "Submit lineup")}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
       ) : null}
     </>
   );
