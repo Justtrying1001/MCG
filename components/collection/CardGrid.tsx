@@ -23,6 +23,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
     <div className="collection-card-grid memedex-grid">
       {items.map((item, index) => {
         const hasMultipleCopies = item.instanceCount > 1;
+        const editionLabel = item.card.setEditionLabel ?? item.card.edition;
 
         return (
           <div key={item.templateId} className="collection-card-tile memedex-card-tile">
@@ -37,19 +38,17 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
             </button>
 
             <div className="collection-card-meta memedex-card-meta" aria-label={`Inventory details for ${item.card.displayName}`}>
-              <div className="collection-card-meta-row">
-                <strong className="collection-card-meta-title">{item.card.displayName}</strong>
-                <span className="collection-card-meta-edition">{item.card.setEditionLabel ?? item.card.edition}</span>
-              </div>
-              <div className="collection-card-meta-row">
-                <span className="collection-card-meta-rarity">{item.card.rarity}</span>
-                <span className={`collection-card-copies${hasMultipleCopies ? " is-multiple" : ""}`}>
-                  {hasMultipleCopies ? `x${item.instanceCount} copies` : "1 copy"}
-                </span>
+              <strong className="collection-card-meta-title">{item.card.displayName}</strong>
+              <div className="collection-card-meta-pills">
+                <span className="memedex-meta-chip memedex-meta-chip--rarity">{item.card.rarity}</span>
+                <span className="memedex-meta-chip">{editionLabel}</span>
               </div>
               <div className="memedex-card-footer">
-                <span className="memedex-card-status">Discovered</span>
+                <span className={`collection-card-copies${hasMultipleCopies ? " is-multiple" : ""}`}>
+                  {hasMultipleCopies ? `×${item.instanceCount} copies` : "1 copy"}
+                </span>
                 <span className="memedex-card-index">#{String(index + 1).padStart(3, "0")}</span>
+                <span className="memedex-card-status">Discovered</span>
               </div>
             </div>
           </div>
@@ -63,21 +62,19 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
             <span className="memedex-card-rarity-bar rarity-locked" />
             <div className="memedex-card-frame memedex-card-frame--locked">
               <div className="memedex-card-lock-mark">?</div>
-              <span>Locked entry</span>
+              <span className="memedex-card-lock-copy">Locked entry</span>
             </div>
           </div>
-          <div className="collection-card-meta memedex-card-meta">
-            <div className="collection-card-meta-row">
-              <strong className="collection-card-meta-title">Undiscovered meme</strong>
-              <span className="collection-card-meta-edition">Hidden</span>
-            </div>
-            <div className="collection-card-meta-row">
-              <span className="collection-card-meta-rarity">Locked</span>
-              <span className="collection-card-copies">0 copies</span>
+          <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
+            <strong className="collection-card-meta-title">Undiscovered meme</strong>
+            <div className="collection-card-meta-pills">
+              <span className="memedex-meta-chip memedex-meta-chip--locked">Locked</span>
+              <span className="memedex-meta-chip memedex-meta-chip--locked">Hidden finish</span>
             </div>
             <div className="memedex-card-footer">
-              <span className="memedex-card-status memedex-card-status--locked">Open packs to reveal</span>
+              <span className="collection-card-copies">0 copies</span>
               <span className="memedex-card-index">???</span>
+              <span className="memedex-card-status memedex-card-status--locked">Open packs to reveal</span>
             </div>
           </div>
         </div>
