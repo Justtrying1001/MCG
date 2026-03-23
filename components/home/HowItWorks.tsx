@@ -30,7 +30,7 @@ export function HowItWorks() {
     <section className="home-how-it-works">
       <div className="home-how-header">
         <p className="home-how-eyebrow">How it works</p>
-        <h2 className="home-how-title">Open. Build. Battle.</h2>
+        <h2 className="home-how-title">OPEN. BUILD. BATTLE.</h2>
         <p className="home-how-copy">Three clean steps from your first pack to the tournament bracket.</p>
       </div>
       <div className="home-how-steps">
