@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ConnectXCallout } from "@/components/auth/ConnectXCallout";
 import { CardGrid } from "@/components/collection/CardGrid";
 import { CollectionHeader } from "@/components/collection/CollectionHeader";
-import { MissingCardsShelf } from "@/components/collection/MissingCardsShelf";
 import { useSession } from "@/components/useSession";
 import { GUEST_PACK_PREVIEW_CARDS } from "@/lib/packs/guest-preview";
 
@@ -29,6 +28,7 @@ export default function CollectionPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [query, setQuery] = useState("");
   const [rarityFilter, setRarityFilter] = useState<string>("ALL");
+  const [editionFilter, setEditionFilter] = useState<string>("ALL");
   const [ownershipFilter, setOwnershipFilter] =
     useState<OwnershipFilter>("all");
   const [zoomedCard, setZoomedCard] = useState<{
@@ -80,42 +80,57 @@ export default function CollectionPage() {
       sourceCollection.map((item) => item.card.rarity).filter(Boolean),
     );
     return Array.from(values).sort(
-      (a, b) => (rarityRank[a] ?? -1) - (rarityRank[b] ?? -1),
+      (a, b) => (rarityRank[a] ?? Number.MAX_SAFE_INTEGER) - (rarityRank[b] ?? Number.MAX_SAFE_INTEGER) || a.localeCompare(b),
     );
+  }, [sourceCollection]);
+
+  const editionOptions = useMemo(() => {
+    const values = new Set(
+      sourceCollection
+        .map((item) => item.card.setEditionLabel ?? item.card.edition)
+        .filter((value): value is string => Boolean(value)),
+    );
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [sourceCollection]);
 
   const visibleCards = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const filtered = sourceCollection.filter((item) => {
+      const editionValue = item.card.setEditionLabel ?? item.card.edition ?? "";
       const matchesQuery =
         normalizedQuery.length === 0 ||
         item.card.displayName.toLowerCase().includes(normalizedQuery) ||
         (item.card.edition ?? "").toLowerCase().includes(normalizedQuery) ||
-        (item.card.setEditionLabel ?? "")
-          .toLowerCase()
-          .includes(normalizedQuery);
+        editionValue.toLowerCase().includes(normalizedQuery);
       const matchesRarity =
         rarityFilter === "ALL" || item.card.rarity === rarityFilter;
+      const matchesEdition =
+        editionFilter === "ALL" || editionValue === editionFilter;
       const matchesOwnership =
         ownershipFilter === "all" ||
         (ownershipFilter === "duplicates" && item.instanceCount > 1) ||
         (ownershipFilter === "singles" && item.instanceCount === 1);
-      return matchesQuery && matchesRarity && matchesOwnership;
+      return matchesQuery && matchesRarity && matchesEdition && matchesOwnership;
     });
 
     const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === "rarity")
+      if (sortBy === "rarity") {
         return (
-          (rarityRank[a.card.rarity] ?? -1) - (rarityRank[b.card.rarity] ?? -1)
+          (rarityRank[a.card.rarity] ?? Number.MAX_SAFE_INTEGER) -
+          (rarityRank[b.card.rarity] ?? Number.MAX_SAFE_INTEGER)
         );
-      if (sortBy === "edition")
-        return (a.card.edition ?? "").localeCompare(b.card.edition ?? "");
+      }
+      if (sortBy === "edition") {
+        return (a.card.setEditionLabel ?? a.card.edition ?? "").localeCompare(
+          b.card.setEditionLabel ?? b.card.edition ?? "",
+        );
+      }
       if (sortBy === "quantity") return a.instanceCount - b.instanceCount;
       return a.card.displayName.localeCompare(b.card.displayName);
     });
 
     return sortDir === "asc" ? sorted : sorted.reverse();
-  }, [ownershipFilter, query, rarityFilter, sortBy, sortDir, sourceCollection]);
+  }, [editionFilter, ownershipFilter, query, rarityFilter, sortBy, sortDir, sourceCollection]);
 
   const guestCount = guestCollection.reduce(
     (acc, item) => acc + item.instanceCount,
@@ -158,33 +173,36 @@ export default function CollectionPage() {
 
           <div className="memedex-gallery-toolbar" aria-label="Collectible slot filters">
             <label className="memedex-toolbar-search">
-              <span className="sr-only">Search your Memedex</span>
+              <span>Search</span>
               <input
                 className="collection-search-input memedex-search-input"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search name, set, or edition"
+                placeholder="Search name, rarity, or finish"
               />
             </label>
 
-            <div className="memedex-filter-pills" aria-label="Entry type">
-              {[
-                { value: "all", label: "All" },
-                { value: "duplicates", label: "Duplicates" },
-                { value: "singles", label: "Singles" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
-                  onClick={() =>
-                    setOwnershipFilter(option.value as OwnershipFilter)
-                  }
-                  aria-pressed={ownershipFilter === option.value}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="memedex-filter-field memedex-filter-field--chips">
+              <span>Ownership</span>
+              <div className="memedex-filter-pills" aria-label="Entry type">
+                {[
+                  { value: "all", label: "All" },
+                  { value: "duplicates", label: "Duplicates" },
+                  { value: "singles", label: "Singles" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`memedex-filter-pill${ownershipFilter === option.value ? " is-active" : ""}`}
+                    onClick={() =>
+                      setOwnershipFilter(option.value as OwnershipFilter)
+                    }
+                    aria-pressed={ownershipFilter === option.value}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <label className="memedex-filter-field">
@@ -204,7 +222,23 @@ export default function CollectionPage() {
             </label>
 
             <label className="memedex-filter-field">
-              <span>Sort by</span>
+              <span>Edition finish</span>
+              <select
+                className="collection-select"
+                value={editionFilter}
+                onChange={(e) => setEditionFilter(e.target.value)}
+              >
+                <option value="ALL">All finishes</option>
+                {editionOptions.map((edition) => (
+                  <option key={edition} value={edition}>
+                    {edition}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memedex-filter-field">
+              <span>Sort</span>
               <select
                 className="collection-select"
                 value={sortBy}
@@ -270,10 +304,6 @@ export default function CollectionPage() {
             />
           )}
         </section>
-
-        {me && missingTemplates > 0 ? (
-          <MissingCardsShelf missingCount={missingTemplates} />
-        ) : null}
 
         <CardZoomModal
           card={zoomedCard.card}
