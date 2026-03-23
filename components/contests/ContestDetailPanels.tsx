@@ -658,7 +658,7 @@ export function LineupPanel({
         <div className="contest-detail-lineup-meta">
           <div className="contest-detail-lineup-headline">
             <div>
-              <p className="mcg-eyebrow">Lineup</p>
+              <p className="mcg-eyebrow">Lineup builder</p>
               {title ? <h3>{title}</h3> : null}
             </div>
             <div className="contest-detail-lineup-progress">
@@ -699,7 +699,7 @@ export function LineupPanel({
         </>
       )}
 
-      <div className={`contest-detail-lineup-grid ${slotCountClass}`}>
+      <div className={`contest-detail-lineup-grid ${slotCountClass}`} role="list" aria-label="Lineup slots">
         {Array.from({ length: rosterSize }).map((_, index) => {
           const slotCard = slotCards[index];
           if (!slotCard) {
@@ -718,6 +718,7 @@ export function LineupPanel({
                 <strong>
                   {isOpen ? "Add card" : (emptyMessage ?? "No card submitted")}
                 </strong>
+                {isOpen ? <span className="contest-detail-slot-note">Tap to open picker</span> : null}
               </button>
             );
           }
@@ -745,6 +746,9 @@ export function LineupPanel({
                   Card preview unavailable
                 </span>
               )}
+              {isOpen && canInteract ? (
+                <span className="contest-detail-slot-note">Tap to replace</span>
+              ) : null}
               {isLocked || isLive ? (
                 <span className="contest-detail-slot-note">Locked</span>
               ) : null}
