@@ -181,6 +181,7 @@ export default function AccountPage() {
               <section className="profile-stat-bento mcg-surface">
                 <div className="profile-section-heading profile-stat-bento__heading">
                   <div>
+                    <span className="profile-section-chip">Collection Stats</span>
                     <h2>Collection Stats</h2>
                   </div>
                 </div>
@@ -222,6 +223,7 @@ export default function AccountPage() {
             <section className="mcg-surface profile-milestones-panel">
               <div className="profile-section-heading">
                 <div>
+                  <span className="profile-section-chip">Unlocked Milestones</span>
                   <h2>Unlocked Milestones</h2>
                 </div>
               </div>
