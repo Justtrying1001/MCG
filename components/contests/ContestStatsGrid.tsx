@@ -29,7 +29,7 @@ export function ContestStatsGrid({
     { label: "Entries", value: String(entries), hint: "Registered lineups" },
     { label: "Roster Size", value: `${rosterSize} cards`, hint: "Required lineup size" },
     { label: "Reward", value: `${rewardPoints} pts`, hint: "Base reward preview" },
-    { label: "Goes Live", value: formatDate(liveAt), hint: "Contest goes live" },
+    { label: "Goes Live", value: formatDate(liveAt), hint: "Battle goes live" },
     { label: "Team Lock", value: formatDate(lockAt), hint: "Lineup freeze time" },
     { label: "Ends", value: formatDate(endsAt), hint: "Scoring cutoff" },
     { label: "Next Milestone", value: nextMilestone, hint: status === "OPEN" ? "Time to lock" : "Time to end" },
@@ -39,7 +39,7 @@ export function ContestStatsGrid({
     <Surface className="contest-stats-grid-panel" variant="raised">
       <div className="contest-stats-grid-head">
         <p className="mcg-eyebrow">Tournament intelligence</p>
-        <strong>At-a-glance contest stats</strong>
+        <strong>At-a-glance battle stats</strong>
       </div>
       <div className="contest-stats-grid">
         {cards.map((card) => (

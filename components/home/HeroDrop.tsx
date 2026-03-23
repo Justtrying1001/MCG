@@ -19,7 +19,7 @@ export function HeroDrop() {
         <div className="mcg-home-hero-chips">
           <Chip label="5 cards per pack" />
           <Chip label="Legendary chase" />
-          <Chip label="Contest-ready pulls" />
+          <Chip label="Battle-ready pulls" />
         </div>
       </div>
 

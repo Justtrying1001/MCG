@@ -79,7 +79,7 @@ export function CollectorShowcase({
             )}
             {secondaryAction ?? (
               <Link href="/contests" className="mcg-btn ghost">
-                Go to contests
+                Go to battles
               </Link>
             )}
           </div>

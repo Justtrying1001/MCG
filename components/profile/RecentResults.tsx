@@ -16,7 +16,7 @@ export function RecentResults({ results }: { results: ResultRow[] }) {
         <SectionHeader
           eyebrow="Recent record"
           title="Recent finishes"
-          subtitle="A clean record of your latest placements, ready to funnel you back into the next contest."
+          subtitle="A clean record of your latest placements, ready to funnel you back into the next battle."
         />
 
         <div className="profile-results-list">

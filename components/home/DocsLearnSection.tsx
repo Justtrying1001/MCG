@@ -6,7 +6,7 @@ export function DocsLearnSection({ compact = false }: Props) {
   const eyebrow = compact ? "Lobby intel" : "Guide";
   const title = compact ? "Learn the game." : "Start smart";
   const description = compact
-    ? "Rules, packs, contests, and scoring in one place."
+    ? "Rules, packs, battles, and scoring in one place."
     : "Rules, scoring, and pack basics without the clutter.";
 
   return (
@@ -24,7 +24,7 @@ export function DocsLearnSection({ compact = false }: Props) {
             </div>
           ) : (
             <div className="home-docs-points home-docs-points--compact" aria-label="Dashboard support highlights">
-              <span className="mcg-chip">Contest rules</span>
+              <span className="mcg-chip">Battle rules</span>
               <span className="mcg-chip">Pack odds</span>
               <span className="mcg-chip">Scoring guide</span>
             </div>
@@ -47,7 +47,7 @@ export function DocsLearnSection({ compact = false }: Props) {
               <div className="home-docs-art-badge">Lobby guide</div>
               <div className="home-docs-art-body">
                 <strong>Need a refresher?</strong>
-                <span>Open the docs for scoring, contest timing, and pack fundamentals.</span>
+                <span>Open the docs for scoring, battle timing, and pack fundamentals.</span>
               </div>
             </div>
           </div>

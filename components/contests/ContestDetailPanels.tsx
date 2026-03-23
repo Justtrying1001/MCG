@@ -217,12 +217,12 @@ export function HeroPanel({
 
         <div className="contest-detail-hero-copy">
           <div className="contest-detail-hero-copy-panel">
-            <p className="contest-detail-hero-kicker">Contest spotlight</p>
+            <p className="contest-detail-hero-kicker">Battle spotlight</p>
             <h1>{title}</h1>
             {infoItems.length > 0 ? (
               <div
                 className="contest-detail-hero-meta-list"
-                aria-label="Contest quick facts"
+                aria-label="Battle quick facts"
               >
                 {infoItems.map((item) => (
                   <span key={item} className="contest-detail-hero-meta-pill">
@@ -402,7 +402,7 @@ export function MainStateBlock({
       : status === "LOCKED"
         ? "Locked lineup"
         : status === "LIVE"
-          ? "Live contest"
+          ? "Live battle"
           : "Final result";
   const rewardSummary = myRewards
     ? [
@@ -762,7 +762,7 @@ export function LineupPanel({
 
       {!hasLineup && !isOpen ? (
         <p className="contest-detail-empty-note">
-          {emptyMessage ?? "No lineup was submitted for this contest."}
+          {emptyMessage ?? "No lineup was submitted for this battle."}
         </p>
       ) : null}
     </>
@@ -959,7 +959,7 @@ export function RewardsPanel({
           <>
             <p className="contest-detail-panel-copy">
               See the pool at a glance now. The exact payout table becomes
-              relevant once the contest is live.
+              relevant once the battle is live.
             </p>
             <div className="contest-detail-reward-pool-grid">
               {openPoolItems.map((item) => (
@@ -975,7 +975,7 @@ export function RewardsPanel({
           </>
         ) : (
           <p className="contest-detail-empty-note">
-            Rewards are still being published for this contest.
+            Rewards are still being published for this battle.
           </p>
         )
       ) : hasExactTierRows ? (
@@ -983,7 +983,7 @@ export function RewardsPanel({
           <p className="contest-detail-panel-copy">
             {isSettled
               ? "Final placements are locked. Review the payout table below."
-              : "Track the current payout by placement while the contest is live."}
+              : "Track the current payout by placement while the battle is live."}
           </p>
 
           {isSettled && myRewards ? (
@@ -1058,7 +1058,7 @@ export function RewardsPanel({
         </>
       ) : isLive ? (
         <p className="contest-detail-empty-note">
-          Exact live payouts are not available yet for this contest.
+          Exact live payouts are not available yet for this battle.
         </p>
       ) : hasPolicyData && summary ? (
         <>
@@ -1080,7 +1080,7 @@ export function RewardsPanel({
         </>
       ) : (
         <p className="contest-detail-empty-note">
-          Rewards are still being published for this contest.
+          Rewards are still being published for this battle.
         </p>
       )}
     </Surface>
@@ -1115,7 +1115,7 @@ export function FactsLifecyclePanel_UNUSED({
     <Surface className="contest-detail-block facts-panel" variant="raised">
       <div className="contest-detail-block-head">
         <div>
-          <p className="mcg-eyebrow">Contest facts</p>
+          <p className="mcg-eyebrow">Battle facts</p>
           <h3>{lifecycleLabel}</h3>
         </div>
       </div>

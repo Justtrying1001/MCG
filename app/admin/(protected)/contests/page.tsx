@@ -67,7 +67,7 @@ export default function AdminContestsLibraryPage() {
     const response = await fetch("/api/internal/contests", { cache: "no-store" });
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setError(payload?.error ?? "Cannot load contests");
+      setError(payload?.error ?? "Cannot load battles");
       setLoading(false);
       return;
     }
@@ -113,7 +113,7 @@ export default function AdminContestsLibraryPage() {
   }, [contests, query, statusFilter]);
 
   const stopContest = async (contestId: string) => {
-    if (!window.confirm("Stop this contest? It will be moved to CANCELED status.")) return;
+    if (!window.confirm("Stop this battle? It will be moved to CANCELED status.")) return;
     setBusyId(contestId);
     setMessage("");
     setError("");
@@ -126,7 +126,7 @@ export default function AdminContestsLibraryPage() {
     });
     const validatePayload = (await validateRes.json().catch(() => null)) as { validationToken?: string; blocking?: boolean; error?: string } | null;
     if (!validateRes.ok || !validatePayload?.validationToken || validatePayload.blocking) {
-      setError(validatePayload?.error ?? "Cannot stop contest: validation failed");
+      setError(validatePayload?.error ?? "Cannot stop battle: validation failed");
       setBusyId(null);
       return;
     }
@@ -139,16 +139,16 @@ export default function AdminContestsLibraryPage() {
     });
     const execPayload = (await execRes.json().catch(() => null)) as { error?: string } | null;
     if (!execRes.ok) {
-      setError(execPayload?.error ?? "Cannot stop contest");
+      setError(execPayload?.error ?? "Cannot stop battle");
     } else {
-      setMessage("Contest stopped successfully.");
+      setMessage("Battle stopped successfully.");
       await load();
     }
     setBusyId(null);
   };
 
   const runAction = async (contestId: string, action: "publish" | "unpublish" | "archive" | "delete") => {
-    if (action === "delete" && !window.confirm("Delete this contest? This action is permanent.")) {
+    if (action === "delete" && !window.confirm("Delete this battle? This action is permanent.")) {
       return;
     }
 
@@ -172,9 +172,9 @@ export default function AdminContestsLibraryPage() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setError(payload?.error ?? `Cannot ${action} contest`);
+      setError(payload?.error ?? `Cannot ${action} battle`);
     } else {
-      setMessage(`Contest ${action} successful.`);
+      setMessage(`Battle ${action} successful.`);
       await load();
     }
 
@@ -184,11 +184,11 @@ export default function AdminContestsLibraryPage() {
   return (
     <div className="admin-v2-page contest-library-page">
       <AdminPageHeader
-        title="Contest Catalog"
-        subtitle="Admin control center for draft, active, live, settled, and canceled contests."
+        title="Battle Catalog"
+        subtitle="Admin control center for draft, active, live, settled, and canceled battles."
         actions={
           <div className="admin-v2-action-row">
-            <Link href="/admin/contests/create" className="contest-console-cta">Create contest</Link>
+            <Link href="/admin/contests/create" className="contest-console-cta">Create battle</Link>
             <Button variant="ghost" onClick={() => void load()}>Refresh</Button>
           </div>
         }
@@ -206,13 +206,13 @@ export default function AdminContestsLibraryPage() {
       {params.get("published") === "1" ? (
         <AdminPanel>
           <div className="admin-callout success">
-            <p className="contest-inline-note"><strong>Contest published successfully.</strong> It is visible in contest library and ready for user-facing surfaces.</p>
+            <p className="contest-inline-note"><strong>Battle published successfully.</strong> It is visible in the battle library and ready for user-facing surfaces.</p>
           </div>
         </AdminPanel>
       ) : null}
 
       <AdminToolbar>
-        <input className="input" placeholder="Search contest name, code, or description" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <input className="input" placeholder="Search battle name, code, or description" value={query} onChange={(event) => setQuery(event.target.value)} />
         <div className="contest-library-filter-row">
           {FILTER_OPTIONS.map((option) => (
             <button

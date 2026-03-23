@@ -437,7 +437,7 @@ export default function QuestBuilderPage() {
                         setMilestoneType(event.target.value as MilestoneType)
                       }
                     >
-                      <option value="CONTESTS_JOINED">Contests joined</option>
+                      <option value="CONTESTS_JOINED">Battles joined</option>
                       <option value="PACK_OPEN_COUNT">Packs opened</option>
                       <option value="TOTAL_CARDS_COLLECTED">
                         Total cards collected
@@ -445,8 +445,8 @@ export default function QuestBuilderPage() {
                       <option value="UNIQUE_CARDS_COLLECTED">
                         Unique cards collected
                       </option>
-                      <option value="CONTESTS_WON">Contests won</option>
-                      <option value="CONTESTS_TOP3">Contests top 3</option>
+                      <option value="CONTESTS_WON">Battles won</option>
+                      <option value="CONTESTS_TOP3">Battles top 3</option>
                       <option value="RARE_PLUS_CARDS_OWNED">
                         Rare+ cards owned
                       </option>
@@ -466,7 +466,7 @@ export default function QuestBuilderPage() {
                         Roster submissions
                       </option>
                       <option value="CONTESTS_SETTLED_COUNT">
-                        Settled contests
+                        Settled battles
                       </option>
                       <option value="POINTS_BALANCE_REACHED">
                         Points balance reached

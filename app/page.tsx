@@ -212,7 +212,7 @@ export default function HomePage() {
                   <p>
                     {battleContest
                       ? battleContest.title
-                      : "Jump into the live contest rotation and keep your lineup moving."}
+                      : "Jump into the live battle rotation and keep your lineup moving."}
                   </p>
                 </div>
                 <div className="home-lobby-battle-mark" aria-hidden="true">⚔</div>

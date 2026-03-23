@@ -16,7 +16,7 @@ export function LeaderboardCard({ rankings, currentUserId }: { rankings: Ranking
       <Surface className="contest-sidebar-panel leaderboard-panel" variant="raised">
         <p className="mcg-eyebrow">Leaderboard</p>
         <h4>Ranking pending</h4>
-        <p className="contest-inline-note">Scores appear after end snapshot + scoring compute. Check back after contest end.</p>
+        <p className="contest-inline-note">Scores appear after end snapshot + scoring compute. Check back after battle end.</p>
       </Surface>
     );
   }

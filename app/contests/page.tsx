@@ -21,22 +21,22 @@ function getZoneTone(group: LobbyGroupKey) {
 function getSectionEmptyState(group: LobbyGroupKey) {
   if (group === "active") {
     return {
-      title: "No contests live right now",
+      title: "No battles live right now",
       description: "New tournaments are coming soon.",
     };
   }
 
   if (group === "upcoming") {
     return {
-      title: "No upcoming contests right now",
+      title: "No upcoming battles right now",
       description:
-        "Fresh lobbies will appear here when the next contest wave opens.",
+        "Fresh lobbies will appear here when the next battle wave opens.",
     };
   }
 
   return {
-    title: "No completed contests yet",
-    description: "Finished contests and published results will land here.",
+    title: "No completed battles yet",
+    description: "Finished battles and published results will land here.",
   };
 }
 
@@ -84,7 +84,7 @@ export default function ContestsPage() {
           } | null;
           setError(
             payload?.error ??
-              "We couldn't load contests right now. Please retry in a moment.",
+              "We couldn't load battles right now. Please retry in a moment.",
           );
           return;
         }
@@ -97,7 +97,7 @@ export default function ContestsPage() {
         setHasLoadedContests(true);
       } catch {
         setError(
-          "Network issue while loading contests. Please check your connection and retry.",
+          "Network issue while loading battles. Please check your connection and retry.",
         );
       } finally {
         if (showLoader) {
@@ -178,12 +178,12 @@ export default function ContestsPage() {
         <Surface className="contest-lobby-hero" variant="raised">
           <div className="contest-lobby-hero-copy">
             <p className="contest-lobby-hero-kicker">Battle lobby</p>
-            <h1>CONTESTS</h1>
+            <h1>BATTLES</h1>
             <p className="contest-lobby-hero-description">
-              Pick a contest fast, lock in your lineup, and jump into the next
+              Pick a battle fast, lock in your lineup, and jump into the next
               match.
             </p>
-            <div className="contest-lobby-hero-stats" aria-label="Contest lobby summary">
+            <div className="contest-lobby-hero-stats" aria-label="Battle lobby summary">
               <div className="contest-lobby-hero-stat tone-live">
                 <span>Active</span>
                 <strong>{computed.active}</strong>
@@ -211,7 +211,7 @@ export default function ContestsPage() {
             aria-live="polite"
           >
             <EmptyState
-              title="Contest list may be out of date"
+              title="Battle list may be out of date"
               description={error}
             />
             <button
@@ -228,19 +228,19 @@ export default function ContestsPage() {
 
         {isRefreshing && contests.length > 0 ? (
           <div className="contest-hub-refresh-note" aria-live="polite">
-            Refreshing contests…
+            Refreshing battles…
           </div>
         ) : null}
 
         {showInitialSkeleton ? (
-          <section className="contest-lobby-grid" aria-label="Loading contests">
+          <section className="contest-lobby-grid" aria-label="Loading battles">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="contest-arena-skeleton-card" />
             ))}
           </section>
         ) : showBlockingError ? (
           <section className="contest-hub-error-state" role="alert">
-            <EmptyState title="Unable to load contests" description={error} />
+            <EmptyState title="Unable to load battles" description={error} />
             <button
               type="button"
               className="mcg-btn"
@@ -254,8 +254,8 @@ export default function ContestsPage() {
         ) : contests.length === 0 ? (
           <div className="contest-arena-empty-wrap">
             <EmptyState
-              title="No contests in the lobby"
-              description="New contests will appear here once the next schedule is published."
+              title="No battles in the lobby"
+              description="New battles will appear here once the next schedule is published."
             />
           </div>
         ) : (
@@ -267,21 +267,21 @@ export default function ContestsPage() {
               [
                 {
                   key: "active",
-                  title: "Active contests",
+                  title: "Active battles",
                   subtitle:
                     "The loudest rooms in the arena. Track live battles and locked entries already in motion.",
                   contests: groupedContests.active,
                 },
                 {
                   key: "upcoming",
-                  title: "Upcoming contests",
+                  title: "Upcoming battles",
                   subtitle:
                     "Plan ahead, tune your lineup, and grab your seat before team lock.",
                   contests: groupedContests.upcoming,
                 },
                 {
                   key: "completed",
-                  title: "Completed contests",
+                  title: "Completed battles",
                   subtitle:
                     "Review recent finishes, final placements, and the latest result boards.",
                   contests: groupedContests.completed,
@@ -313,7 +313,7 @@ export default function ContestsPage() {
                     </div>
                     <span className="contest-lobby-section-banner-badge">
                       {section.contests.length}{" "}
-                      {section.contests.length === 1 ? "contest" : "contests"}
+                      {section.contests.length === 1 ? "battle" : "battles"}
                     </span>
                   </div>
 
