@@ -1,4 +1,4 @@
-import { MvpCardTile } from "@/components/ui/MvpCardTile";
+import { MemedexCardSurface } from "@/components/ui/MemedexCardSurface";
 import type { MvpCardView } from "@/types/cards";
 
 type CardGridItem = {
@@ -33,10 +33,7 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
               onClick={() => onOpenCard(item.card, item.instanceCount)}
               title={`${item.card.displayName} · ×${item.instanceCount}`}
             >
-              <span className={`memedex-card-rarity-bar rarity-${item.card.rarity.toLowerCase()}`} aria-hidden="true" />
-              <div className="memedex-card-frame">
-                <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
-              </div>
+              <MemedexCardSurface card={item.card} quantity={item.instanceCount} />
             </button>
 
             <div className="collection-card-meta memedex-card-meta" aria-label={`Inventory details for ${item.card.displayName}`}>
