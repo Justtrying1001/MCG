@@ -21,6 +21,14 @@ type Props = {
   primaryAction?: ReactNode;
 };
 
+const heroStats = [
+  { label: "Total Points", tone: "tone-primary" },
+  { label: "Memedex %", tone: "tone-secondary" },
+  { label: "League", tone: "tone-tertiary" },
+  { label: "Rank", tone: "tone-neutral" },
+  { label: "Prestige", tone: "tone-primary profile-showcase-stat-pill--wide" },
+] as const;
+
 export function CollectorShowcase({
   displayName,
   title,
@@ -39,6 +47,7 @@ export function CollectorShowcase({
   primaryAction,
 }: Props) {
   const initial = displayName.slice(0, 1).toUpperCase();
+  const statValues = [totalPointsLabel, completionLabel, leagueLabel, rankLabel, prestigeLabel];
 
   return (
     <Surface className="profile-showcase stitch-panel-card" variant="raised">
@@ -53,49 +62,35 @@ export function CollectorShowcase({
             <div className="profile-showcase-visual-column" aria-hidden="true">
               <div className="profile-showcase-avatar-core">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt="" fill sizes="(max-width: 1024px) 100vw, 360px" className="profile-showcase-avatar-image" />
+                  <Image src={avatarUrl} alt="" fill sizes="(max-width: 1024px) 100vw, 420px" className="profile-showcase-avatar-image" />
                 ) : (
                   <>
                     <span>{initial}</span>
                     <small>Collector identity online</small>
                   </>
                 )}
+                <div className="profile-showcase-visual-topline">
+                  <span className="profile-showcase-card-tag">{title}</span>
+                  <span className="profile-showcase-card-id">ID · {trencherId}</span>
+                </div>
                 <strong className="profile-showcase-level-badge">LVL {level}</strong>
-              </div>
-              <div className="profile-showcase-visual-footer">
-                <span className="profile-showcase-card-tag">{title}</span>
-                <span className="profile-showcase-card-id">ID · {trencherId}</span>
               </div>
             </div>
 
             <div className="profile-showcase-primary-column">
               <div className="profile-showcase-identity-copy">
-                <h1 className="profile-showcase-name">{displayName}</h1>
                 <p className="profile-showcase-role">{title}</p>
+                <h1 className="profile-showcase-name">{displayName}</h1>
                 <p className="profile-showcase-subtitle">{tagline}</p>
               </div>
 
               <div className="profile-showcase-stat-grid" aria-label="Trencher card summary">
-                <article className="profile-showcase-stat-pill tone-primary">
-                  <span>Total points</span>
-                  <strong>{totalPointsLabel}</strong>
-                </article>
-                <article className="profile-showcase-stat-pill tone-secondary">
-                  <span>Memedex %</span>
-                  <strong>{completionLabel}</strong>
-                </article>
-                <article className="profile-showcase-stat-pill tone-tertiary">
-                  <span>League</span>
-                  <strong>{leagueLabel}</strong>
-                </article>
-                <article className="profile-showcase-stat-pill tone-neutral">
-                  <span>Rank</span>
-                  <strong>{rankLabel}</strong>
-                </article>
-                <article className="profile-showcase-stat-pill tone-neutral">
-                  <span>Prestige</span>
-                  <strong>{prestigeLabel}</strong>
-                </article>
+                {heroStats.map((stat, index) => (
+                  <article key={stat.label} className={`profile-showcase-stat-pill ${stat.tone}`}>
+                    <span>{stat.label}</span>
+                    <strong>{statValues[index]}</strong>
+                  </article>
+                ))}
               </div>
 
               <div className="profile-showcase-progress-block">

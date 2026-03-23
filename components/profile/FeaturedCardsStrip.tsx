@@ -15,10 +15,7 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
       <div className="profile-featured-cards-wrap">
         <div className="profile-featured-head">
           <div className="profile-section-heading">
-            <div>
-              <span className="profile-section-chip">Showcase</span>
-              <h2>Showcase</h2>
-            </div>
+            <span className="profile-section-chip">Showcase</span>
           </div>
           {action}
         </div>
