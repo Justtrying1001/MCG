@@ -29,7 +29,6 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
 
         return (
           <div key={item.templateId} className="collection-card-tile memedex-card-tile">
-            <div className="memedex-slot-tab" aria-hidden="true">Owned slot</div>
             <button
               type="button"
               className="collection-card-tile-trigger memedex-card-trigger"
@@ -59,7 +58,6 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
 
       {Array.from({ length: lockedPreviewCount }, (_, index) => (
         <div key={`locked-${index}`} className="collection-card-tile memedex-card-tile memedex-card-tile--locked" aria-label="Locked Memedex entry">
-          <div className="memedex-slot-tab memedex-slot-tab--locked" aria-hidden="true">Locked slot</div>
           <div className="memedex-card-trigger memedex-card-trigger--locked" aria-hidden="true">
             <span className="memedex-card-rarity-bar rarity-locked" />
             <div className="memedex-card-frame memedex-card-frame--locked">
@@ -70,12 +68,9 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
           <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
             <strong className="collection-card-meta-title">Undiscovered meme</strong>
             <div className="memedex-card-detail-line memedex-card-detail-line--muted">
-              <span>Locked</span>
-              <span aria-hidden="true">•</span>
-              <span>Finish hidden</span>
+              <span>Locked entry</span>
             </div>
             <div className="memedex-card-detail-line memedex-card-detail-line--footer">
-              <span className="memedex-card-index">Slot hidden</span>
               <span className="memedex-card-status memedex-card-status--locked">Open packs to reveal</span>
             </div>
           </div>
