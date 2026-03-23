@@ -9,10 +9,7 @@ import {
   buildContestBonusRewardSummary,
   parseContestBonusRewards,
 } from "@/components/contests/bonusRewards";
-import {
-  getContestStateMessaging,
-  getPhaseLabel,
-} from "@/components/contests/contestLifecycle";
+import { getPhaseLabel } from "@/components/contests/contestLifecycle";
 import {
   formatCountdown,
   formatDate,
@@ -96,10 +93,6 @@ function getTimingLabel(
   };
 }
 
-function getContestTypeLabel(contest: ContestListItem) {
-  return contest.seasonName ?? contest.code;
-}
-
 function getLeagueTierLabel(contest: ContestListItem) {
   return contest.leagueTierRequired ?? "OPEN";
 }
@@ -121,7 +114,6 @@ export function ContestCard({
   const rosterSize = rule?.maxRosterSize ?? 5;
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
   const timing = getTimingLabel(group, contest, nowTs);
-  const stateMessaging = getContestStateMessaging(contest.status);
   const bonusSummary = buildContestBonusRewardSummary(
     parseContestBonusRewards(rule?.config?.bonusRewards),
   );
@@ -134,8 +126,8 @@ export function ContestCard({
       label: "Players",
       value:
         contest._count.entries > 0
-          ? `${contest._count.entries.toLocaleString()} joined`
-          : "No entries yet",
+          ? `${contest._count.entries.toLocaleString()} players`
+          : "No players yet",
     },
   ];
 
@@ -167,25 +159,24 @@ export function ContestCard({
       </div>
 
       <div className="contest-lobby-card-body">
-        <div className="contest-lobby-card-topline">
-          <p className="contest-lobby-card-kicker">
-            {getContestTypeLabel(contest)}
-          </p>
+        <div className="contest-lobby-card-head">
+          <h3>{contest.title}</h3>
           <StatusBadge
             tone={toBadgeTone(contest.status)}
             label={getPhaseLabel(contest.status)}
           />
         </div>
 
-        <div className="contest-lobby-card-head">
-          <h3>{contest.title}</h3>
-        </div>
-
         <div className="contest-lobby-card-meta-list" aria-label="Battle quick details">
-          {detailItems.map((item) => (
+          {detailItems.map((item, index) => (
             <div key={item.label} className="contest-lobby-card-meta-item">
               <span>{item.label}</span>
               <strong>{item.value}</strong>
+              {index < detailItems.length - 1 ? (
+                <span className="contest-lobby-card-meta-divider" aria-hidden="true">
+                  •
+                </span>
+              ) : null}
             </div>
           ))}
         </div>
@@ -202,11 +193,6 @@ export function ContestCard({
           </div>
 
           <div className="contest-lobby-card-actions">
-            <div className="contest-lobby-card-status-copy">
-              <span>Status</span>
-              <strong>{stateMessaging.shortLabel}</strong>
-            </div>
-
             <Link
               href={`/contests/${contest.id}`}
               className="mcg-btn primary contest-lobby-card-cta"
