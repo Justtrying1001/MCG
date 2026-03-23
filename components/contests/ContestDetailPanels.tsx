@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
-import { LineupCardPicker } from "@/components/contests/LineupCardPicker";
+import { CardSelectorModal } from "@/components/contests/CardSelectorModal";
 import { toMvpCardView } from "@/components/contests/lineupCardMapper";
 import {
   ScoreBreakdownPanel,
@@ -672,6 +672,7 @@ export function LineupPanel({
   errorMessage,
   submitLabel,
 }: LineupPanelProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const slotCountClass =
     rosterSize >= 6 ? "dense" : rosterSize === 5 ? "balanced" : "wide";
   const hasLineup = slotCards.some(Boolean);
@@ -683,6 +684,20 @@ export function LineupPanel({
     : !readyToSubmit
       ? `Select ${rosterSize - selectedCount} more card${rosterSize - selectedCount === 1 ? "" : "s"} to finish your lineup.`
       : "Lineup valid and ready to submit.";
+
+  useEffect(() => {
+    if (!canEditInline) {
+      setPickerOpen(false);
+    }
+  }, [canEditInline]);
+
+  const openPickerForSlot = (slotIndex: number) => {
+    onOpenBuilder?.(slotIndex);
+    if (canEditInline) {
+      setPickerOpen(true);
+    }
+  };
+
   const content = (
     <>
       {embedded ? (
@@ -741,7 +756,7 @@ export function LineupPanel({
                 key={index}
                 type="button"
                 className={`contest-detail-lineup-slot empty ${actionable ? "actionable" : "static"} ${isActive ? "active" : ""}`}
-                onClick={() => actionable && onOpenBuilder(index)}
+                onClick={() => actionable && openPickerForSlot(index)}
                 disabled={!actionable}
                 aria-pressed={isActive}
               >
@@ -762,7 +777,7 @@ export function LineupPanel({
               key={index}
               type="button"
               className={`contest-detail-lineup-slot filled ${canInteract && isOpen ? "actionable" : "static"} ${isActive ? "active" : ""}`}
-              onClick={() => canInteract && isOpen && onOpenBuilder?.(index)}
+              onClick={() => canInteract && isOpen && openPickerForSlot(index)}
               disabled={!(canInteract && isOpen && onOpenBuilder)}
               aria-pressed={isActive}
             >
@@ -815,7 +830,7 @@ export function LineupPanel({
                 {activeSlotCard ? activeSlotCard.card.name : "Pick a card for this slot"}
               </strong>
               <p>
-                Click any card below to assign it to the active slot immediately.
+                Tap a lineup slot to open the card picker for that position.
               </p>
             </div>
             {activeSlotCard && onRemoveSlot ? (
@@ -828,16 +843,6 @@ export function LineupPanel({
               </button>
             ) : null}
           </div>
-
-          <LineupCardPicker
-            activeSlot={activeSlot}
-            canEdit={canEditInline}
-            lineupSlots={slotCards.map((slot) => slot?.card.instanceId ?? null)}
-            options={options}
-            rosterSize={rosterSize}
-            selectedLogicalTokenKeys={selectedLogicalTokenKeys}
-            onPick={(instanceId) => onSelectCard?.(instanceId, activeSlot)}
-          />
 
           <div className="contest-detail-inline-builder-footer">
             <div>
@@ -870,6 +875,26 @@ export function LineupPanel({
             </div>
           </div>
         </div>
+      ) : null}
+
+      {canEditInline ? (
+        <CardSelectorModal
+          open={pickerOpen}
+          options={options}
+          selectedIds={slotCards
+            .map((slot) => slot?.card.instanceId ?? null)
+            .filter((value): value is string => Boolean(value))}
+          lineupSlots={slotCards.map((slot) => slot?.card.instanceId ?? null)}
+          activeSlot={activeSlot}
+          rosterSize={rosterSize}
+          canManage={canEditInline}
+          selectedLogicalTokenKeys={selectedLogicalTokenKeys}
+          onSelect={(instanceId) => {
+            onSelectCard?.(instanceId, activeSlot);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
       ) : null}
     </>
   );
