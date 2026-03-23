@@ -3,6 +3,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
 
+type HeroStat = {
+  label: string;
+  value: string;
+  detail?: string;
+  tone: string;
+  wide?: boolean;
+};
+
 type Props = {
   displayName: string;
   title: string;
@@ -11,23 +19,17 @@ type Props = {
   avatarUrl?: string | null;
   totalPointsLabel: string;
   completionLabel: string;
-  rankLabel: string;
-  leagueLabel: string;
-  prestigeLabel: string;
+  cardsOwnedLabel: string;
+  collectionXpLabel: string;
+  milestonesUnlockedLabel: string;
+  battlesEnteredLabel: string;
+  bestBattleFinishLabel: string;
   xpLabel: string;
   progressPct: number;
   tagline: string;
   settingsAction?: ReactNode;
   primaryAction?: ReactNode;
 };
-
-const heroStats = [
-  { label: "Total Points", tone: "tone-primary" },
-  { label: "Memedex %", tone: "tone-secondary" },
-  { label: "League", tone: "tone-tertiary" },
-  { label: "Rank", tone: "tone-neutral" },
-  { label: "Prestige", tone: "tone-primary profile-showcase-stat-pill--wide" },
-] as const;
 
 export function CollectorShowcase({
   displayName,
@@ -37,9 +39,11 @@ export function CollectorShowcase({
   avatarUrl,
   totalPointsLabel,
   completionLabel,
-  rankLabel,
-  leagueLabel,
-  prestigeLabel,
+  cardsOwnedLabel,
+  collectionXpLabel,
+  milestonesUnlockedLabel,
+  battlesEnteredLabel,
+  bestBattleFinishLabel,
   xpLabel,
   progressPct,
   tagline,
@@ -47,7 +51,15 @@ export function CollectorShowcase({
   primaryAction,
 }: Props) {
   const initial = displayName.slice(0, 1).toUpperCase();
-  const statValues = [totalPointsLabel, completionLabel, leagueLabel, rankLabel, prestigeLabel];
+  const heroStats: HeroStat[] = [
+    { label: "Total Points", value: totalPointsLabel, detail: "Lifetime account score", tone: "tone-sun" },
+    { label: "Memedex Completion", value: completionLabel, detail: "Templates discovered", tone: "tone-sky" },
+    { label: "Cards Owned", value: cardsOwnedLabel, detail: "Total collection copies", tone: "tone-mint" },
+    { label: "Collection XP", value: collectionXpLabel, detail: "Collection-powered XP", tone: "tone-peach" },
+    { label: "Milestones Unlocked", value: milestonesUnlockedLabel, detail: "Completed collector milestones", tone: "tone-lilac" },
+    { label: "Battles Entered", value: battlesEnteredLabel, detail: battlesEnteredLabel === "No battle participation yet" ? "Enter a battle to start your combat history" : "Confirmed battle entries", tone: "tone-berry" },
+    { label: "Best Battle Finish", value: bestBattleFinishLabel, detail: bestBattleFinishLabel === "No battle result yet" ? "Settled battle results will land here" : "Best recorded battle placement", tone: "tone-sun", wide: true },
+  ];
 
   return (
     <Surface className="profile-showcase stitch-panel-card" variant="raised">
@@ -85,10 +97,11 @@ export function CollectorShowcase({
               </div>
 
               <div className="profile-showcase-stat-grid" aria-label="Trencher card summary">
-                {heroStats.map((stat, index) => (
-                  <article key={stat.label} className={`profile-showcase-stat-pill ${stat.tone}`}>
+                {heroStats.map((stat) => (
+                  <article key={stat.label} className={`profile-showcase-stat-pill ${stat.tone}${stat.wide ? " profile-showcase-stat-pill--wide" : ""}`}>
                     <span>{stat.label}</span>
-                    <strong>{statValues[index]}</strong>
+                    <strong>{stat.value}</strong>
+                    {stat.detail ? <small>{stat.detail}</small> : null}
                   </article>
                 ))}
               </div>

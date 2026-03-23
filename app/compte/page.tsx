@@ -140,9 +140,18 @@ export default function AccountPage() {
   );
 
   const completionPct = collection?.completionPct ?? null;
+  const collectionXp = account?.progressionBreakdown.collectionXp ?? null;
+  const battlesEnteredLabel =
+    competitive && competitive.contestsEntered > 0
+      ? competitive.contestsEntered.toLocaleString()
+      : "No battle participation yet";
+  const bestBattleFinishLabel =
+    competitive?.bestRank != null
+      ? `#${competitive.bestRank}`
+      : "No battle result yet";
   const tagline = me
-    ? completionPct
-      ? `${completionPct}% of the Memedex secured. ${competitive?.leagueTier ?? "Unranked"} league energy, collector mindset.`
+    ? completionPct !== null
+      ? `${completionPct}% of the Memedex secured with ${collection?.totalOwnedInstances?.toLocaleString() ?? "0"} cards owned and ${unlockedMilestones.length} milestones unlocked.`
       : "Rookie collector building an MCG identity one pull at a time."
     : "Connect to turn this trencher card into your public player identity.";
 
@@ -166,15 +175,11 @@ export default function AccountPage() {
             avatarUrl={me?.user.avatarUrl}
             totalPointsLabel={(me?.user.points ?? 0).toLocaleString()}
             completionLabel={completionPct === null ? "—" : `${completionPct}%`}
-            rankLabel={competitive?.bestRank ? `#${competitive.bestRank}` : "Unranked"}
-            leagueLabel={competitive?.leagueTier ?? "Open"}
-            prestigeLabel={
-              account?.level && account.level >= 25
-                ? "Tier III"
-                : account?.level && account.level >= 10
-                  ? "Tier II"
-                  : "Tier I"
-            }
+            cardsOwnedLabel={collection?.totalOwnedInstances?.toLocaleString() ?? "0"}
+            collectionXpLabel={collectionXp?.toLocaleString() ?? "0"}
+            milestonesUnlockedLabel={unlockedMilestones.length.toLocaleString()}
+            battlesEnteredLabel={battlesEnteredLabel}
+            bestBattleFinishLabel={bestBattleFinishLabel}
             xpLabel={`${account?.xp?.toLocaleString?.() ?? "0"} / ${account?.levelXpCeil?.toLocaleString?.() ?? "0"} XP`}
             progressPct={Math.max(8, Math.min(100, account?.progressPct ?? 8))}
             tagline={tagline}

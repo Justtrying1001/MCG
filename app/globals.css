@@ -4442,9 +4442,13 @@ a { color: inherit; text-decoration: none; }
 
 .profile-showcase-label,
 .profile-showcase-card-id,
-.profile-showcase-progress-copy span,
-.profile-showcase-stat-pill span {
+.profile-showcase-progress-copy span {
   color: rgba(230, 236, 244, 0.74);
+}
+
+.profile-showcase-stat-pill span,
+.profile-showcase-stat-pill small {
+  color: #4b5568;
 }
 
 .profile-showcase-label {
@@ -4556,13 +4560,14 @@ a { color: inherit; text-decoration: none; }
   font-size: clamp(2.1rem, 4vw, 3rem);
   line-height: 0.9;
   text-transform: uppercase;
-  color: #fff;
+  color: #fffdf5;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
   text-wrap: balance;
 }
 
 .profile-showcase-subtitle {
   font-size: 0.94rem;
-  color: rgba(228, 233, 241, 0.86);
+  color: #edf2ff;
   line-height: 1.5;
   max-width: 56ch;
 }
@@ -4572,7 +4577,7 @@ a { color: inherit; text-decoration: none; }
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #fff17a;
+  color: #fff0a6;
 }
 
 .profile-showcase-stat-grid {
@@ -4630,7 +4635,14 @@ a { color: inherit; text-decoration: none; }
 .profile-stat-bento__card strong {
   font-size: clamp(1.2rem, 3vw, 1.85rem);
   line-height: 0.95;
-  color: #f8fafc;
+  color: #111827;
+}
+
+.profile-showcase-stat-pill small {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .profile-showcase-progress-block {
@@ -4646,7 +4658,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-progress-copy strong {
-  color: white;
+  color: #fffdf5;
   font-size: 1.1rem;
 }
 
@@ -9492,11 +9504,35 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-stat-pill {
-  min-height: 108px;
+  min-height: 112px;
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: none;
-  background: linear-gradient(180deg, rgba(19, 24, 36, 0.92), rgba(12, 16, 25, 0.98));
+  border: 3px solid #000;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.18);
+  background: linear-gradient(180deg, #fffaf0 0%, #f6f1ff 100%);
+}
+
+.profile-showcase-stat-pill.tone-sun {
+  background: linear-gradient(180deg, #fff6ca 0%, #ffe8b8 100%);
+}
+
+.profile-showcase-stat-pill.tone-sky {
+  background: linear-gradient(180deg, #eaf4ff 0%, #d8e9ff 100%);
+}
+
+.profile-showcase-stat-pill.tone-mint {
+  background: linear-gradient(180deg, #ebfff6 0%, #d6f8ec 100%);
+}
+
+.profile-showcase-stat-pill.tone-peach {
+  background: linear-gradient(180deg, #fff1ea 0%, #ffdccc 100%);
+}
+
+.profile-showcase-stat-pill.tone-lilac {
+  background: linear-gradient(180deg, #f4edff 0%, #e5d8ff 100%);
+}
+
+.profile-showcase-stat-pill.tone-berry {
+  background: linear-gradient(180deg, #ffeaf1 0%, #ffd5e4 100%);
 }
 
 .profile-showcase-stat-pill--wide {
