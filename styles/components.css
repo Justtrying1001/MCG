@@ -10234,9 +10234,9 @@ button.mcg-chip:hover {
 
 .memedex-card-tile {
   display: grid;
-  grid-template-rows: minmax(0, auto) minmax(5.25rem, auto);
+  grid-template-rows: minmax(0, auto) minmax(5.1rem, auto);
   align-content: start;
-  gap: 8px;
+  gap: 0.65rem;
 }
 
 .memedex-card-trigger {
@@ -10246,6 +10246,7 @@ button.mcg-chip:hover {
   align-content: start;
   align-self: start;
   gap: 10px;
+  width: 100%;
   padding: 12px 12px 14px;
   border: 3px solid var(--color-ink);
   border-radius: 28px;
@@ -10305,9 +10306,9 @@ button.mcg-chip:hover {
   display: grid;
   align-self: start;
   grid-template-rows: auto auto auto;
-  padding: 0.35rem 0.85rem 0;
-  min-height: 5.25rem;
-  gap: 0.22rem;
+  padding: 0.55rem 0.8rem 0;
+  min-height: 5.1rem;
+  gap: 0.24rem;
 }
 
 .memedex-card-meta--locked {
@@ -10325,6 +10326,7 @@ button.mcg-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.35rem;
   font-size: 0.76rem;
   line-height: 1.3;
@@ -10344,6 +10346,7 @@ button.mcg-chip:hover {
   margin: 0;
   min-height: 1.95rem;
   padding-inline-start: 0.08rem;
+  max-width: 100%;
 }
 
 .memedex-card-detail-line--footer {
@@ -10351,6 +10354,7 @@ button.mcg-chip:hover {
   align-self: end;
   gap: 0.55rem;
   min-height: 1rem;
+  width: 100%;
 }
 
 .memedex-card-meta--locked .memedex-card-detail-line--footer {
@@ -10439,23 +10443,27 @@ button.mcg-chip:hover {
 
 .memedex-card-frame--locked {
   width: 100%;
-  aspect-ratio: 63 / 88;
 }
 
 .memedex-card-frame--locked .memedex-card-frame-shell {
-  place-items: center;
-  padding: 0.85rem;
+  min-height: var(--mvp-min-height, 320px);
+  aspect-ratio: 3 / 4;
+  place-items: stretch;
+  padding: 0.6rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(238, 242, 247, 0.98) 100%);
+  box-sizing: border-box;
 }
 
 .memedex-card-placeholder {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 0.8rem;
+  gap: 0.72rem;
   width: 100%;
   height: 100%;
-  padding: 1rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.9rem 0.8rem;
   border: 3px dashed var(--color-ink);
   border-radius: 16px;
   background: repeating-linear-gradient(
@@ -10468,8 +10476,8 @@ button.mcg-chip:hover {
 }
 
 .memedex-card-placeholder__mark {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -10484,8 +10492,9 @@ button.mcg-chip:hover {
 
 .memedex-card-placeholder__copy {
   display: grid;
-  gap: 0.18rem;
+  gap: 0.2rem;
   justify-items: center;
+  width: 100%;
 }
 
 .memedex-card-placeholder__copy span,
@@ -13263,7 +13272,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-memedex-screen .memedex-card-tile {
-  gap: 0.55rem;
+  gap: 0.6rem;
 }
 
 .stitch-memedex-screen .memedex-card-trigger {
@@ -13288,7 +13297,7 @@ button.mcg-chip:hover {
 }
 
 .stitch-memedex-screen .memedex-card-meta {
-  padding: 0.35rem 0.85rem 0;
+  padding: 0.55rem 0.8rem 0;
 }
 
 .stitch-memedex-screen .memedex-card-trigger,
