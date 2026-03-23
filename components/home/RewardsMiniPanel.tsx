@@ -14,10 +14,10 @@ export function RewardsMiniPanel() {
     <Surface>
       <div className="mcg-home-section">
         <SectionHeader
-          eyebrow="Rewards"
+          eyebrow="Quests"
           title="What to do now"
           subtitle="Quick wins to keep your loop running."
-          actions={<Link href="/rewards" className="mcg-btn ghost">View rewards</Link>}
+          actions={<Link href="/rewards" className="mcg-btn ghost">View quests</Link>}
         />
         <div className="mcg-rewards-list">
           {ITEMS.map((item) => (

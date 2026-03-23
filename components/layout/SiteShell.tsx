@@ -14,7 +14,7 @@ const navItems = [
   { href: "/packs", label: "Packs" },
   { href: "/collection", label: "Memedex" },
   { href: "/contests", label: "Battles" },
-  { href: "/rewards", label: "Rewards" },
+  { href: "/rewards", label: "Quests" },
   { href: "/compte", label: "Profile" },
 ];
 
