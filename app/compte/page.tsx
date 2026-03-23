@@ -177,14 +177,12 @@ export default function AccountPage() {
           />
 
           <div className="profile-account-sections">
-            <section className="profile-hero-side-stack">
+            <section className="profile-stats-grid-two">
               <section className="profile-stat-bento mcg-surface">
                 <div className="profile-section-heading profile-stat-bento__heading">
                   <div>
-                    <p className="mcg-eyebrow">Collection stats</p>
-                    <h2>Vault overview</h2>
+                    <h2>Collection Stats</h2>
                   </div>
-                  <p className="profile-section-caption">Compact collector snapshot inspired by Stitch, adapted to your real vault data.</p>
                 </div>
                 <div className="profile-stat-bento__grid">
                   <article className="profile-stat-bento__card tone-primary">
@@ -224,10 +222,8 @@ export default function AccountPage() {
             <section className="mcg-surface profile-milestones-panel">
               <div className="profile-section-heading">
                 <div>
-                  <p className="mcg-eyebrow">Unlocked milestones</p>
-                  <h2>Trophy cabinet</h2>
+                  <h2>Unlocked Milestones</h2>
                 </div>
-                <p className="profile-section-caption">Unlocked only, presented like collectibles instead of admin tiles.</p>
               </div>
               {milestoneBadges.length > 0 ? (
                 <div className="profile-milestone-row" aria-label="Unlocked milestones">

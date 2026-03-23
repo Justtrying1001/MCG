@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Surface } from "@/components/ui/Surface";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MvpCardTile } from "@/components/ui/MvpCardTile";
 import type { MvpCollectionItem } from "@/types/cards";
 
@@ -15,11 +14,11 @@ export function FeaturedCardsStrip({ cards, emptyState, action }: Props) {
     <Surface variant="raised" className="profile-featured-surface">
       <div className="profile-featured-cards-wrap">
         <div className="profile-featured-head">
-          <SectionHeader
-            eyebrow="Public display"
-            title="Showcase picks"
-            subtitle="Up to 5 cards only — your public highlights, not the full collection."
-          />
+          <div className="profile-section-heading">
+            <div>
+              <h2>Showcase</h2>
+            </div>
+          </div>
           {action}
         </div>
         {cards.length > 0 ? (

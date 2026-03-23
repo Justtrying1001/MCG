@@ -45,60 +45,62 @@ export function CollectorShowcase({
       <div className="profile-showcase-card-shell">
         <div className="profile-showcase-card-frame">
           <div className="profile-showcase-head">
-            <span className="profile-showcase-label">Hero identity</span>
+            <span className="profile-showcase-label">Trencher Card</span>
             <div className="profile-showcase-head-actions">{settingsAction}</div>
           </div>
 
-          <div className="profile-showcase-card-topline">
-            <span className="profile-showcase-card-tag">TRENCHER CARD</span>
-            <span className="profile-showcase-card-id">ID · {trencherId}</span>
-          </div>
-
-          <div className="profile-showcase-avatar" aria-hidden="true">
-            <div className="profile-showcase-avatar-core">
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt="" fill sizes="(max-width: 1024px) 100vw, 360px" className="profile-showcase-avatar-image" />
-              ) : (
-                <>
-                  <span>{initial}</span>
-                  <small>Collector identity online</small>
-                </>
-              )}
-              <strong className="profile-showcase-level-badge">LVL {level}</strong>
+          <div className="profile-showcase-main-grid">
+            <div className="profile-showcase-avatar" aria-hidden="true">
+              <div className="profile-showcase-avatar-core">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="" fill sizes="(max-width: 1024px) 100vw, 360px" className="profile-showcase-avatar-image" />
+                ) : (
+                  <>
+                    <span>{initial}</span>
+                    <small>Collector identity online</small>
+                  </>
+                )}
+                <strong className="profile-showcase-level-badge">LVL {level}</strong>
+              </div>
             </div>
-          </div>
 
-          <div className="profile-showcase-identity-copy">
-            <p className="profile-showcase-identity-kicker">Trencher Card</p>
-            <h1 className="profile-showcase-name">{displayName}</h1>
-            <p className="profile-showcase-title">{title}</p>
-            <p className="profile-showcase-subtitle">{tagline}</p>
-          </div>
+            <div className="profile-showcase-primary-column">
+              <div className="profile-showcase-card-topline">
+                <span className="profile-showcase-card-tag">{title}</span>
+                <span className="profile-showcase-card-id">ID · {trencherId}</span>
+              </div>
 
-          <div className="profile-showcase-prestige-row" aria-label="Trencher card summary">
-            <article className="profile-showcase-prestige-pill tone-primary">
-              <span>Total points</span>
-              <strong>{totalPointsLabel}</strong>
-            </article>
-            <article className="profile-showcase-prestige-pill tone-secondary">
-              <span>Memedex</span>
-              <strong>{completionLabel}</strong>
-            </article>
-            <article className="profile-showcase-prestige-pill tone-tertiary">
-              <span>League</span>
-              <strong>{leagueLabel}</strong>
-            </article>
-          </div>
+              <div className="profile-showcase-identity-copy">
+                <h1 className="profile-showcase-name">{displayName}</h1>
+                <p className="profile-showcase-subtitle">{tagline}</p>
+              </div>
 
-          <div className="profile-showcase-meta-row" aria-label="Profile rank and prestige">
-            <article className="profile-showcase-meta-pill tone-dark">
-              <span>Rank</span>
-              <strong>{rankLabel}</strong>
-            </article>
-            <article className="profile-showcase-meta-pill tone-dark">
-              <span>Prestige</span>
-              <strong>{prestigeLabel}</strong>
-            </article>
+              <div className="profile-showcase-prestige-row" aria-label="Trencher card summary">
+                <article className="profile-showcase-prestige-pill tone-primary">
+                  <span>Total points</span>
+                  <strong>{totalPointsLabel}</strong>
+                </article>
+                <article className="profile-showcase-prestige-pill tone-secondary">
+                  <span>Memedex</span>
+                  <strong>{completionLabel}</strong>
+                </article>
+                <article className="profile-showcase-prestige-pill tone-tertiary">
+                  <span>League</span>
+                  <strong>{leagueLabel}</strong>
+                </article>
+              </div>
+
+              <div className="profile-showcase-meta-row" aria-label="Profile rank and prestige">
+                <article className="profile-showcase-meta-pill tone-dark">
+                  <span>Rank</span>
+                  <strong>{rankLabel}</strong>
+                </article>
+                <article className="profile-showcase-meta-pill tone-dark">
+                  <span>Prestige</span>
+                  <strong>{prestigeLabel}</strong>
+                </article>
+              </div>
+            </div>
           </div>
 
           <div className="profile-showcase-progress-block">
