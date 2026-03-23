@@ -270,18 +270,6 @@ export default function CollectionPage() {
                 <option value="quantity">Quantity</option>
               </select>
             </label>
-
-            <label className="memedex-filter-field">
-              <span>Direction</span>
-              <select
-                className="collection-select"
-                value={sortDir}
-                onChange={(e) => setSortDir(e.target.value as "asc" | "desc")}
-              >
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-              </select>
-            </label>
           </div>
 
           {!me ? (
