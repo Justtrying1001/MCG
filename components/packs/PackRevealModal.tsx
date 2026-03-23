@@ -45,6 +45,8 @@ export function PackRevealModal({
       }
       open={open}
       onClose={onClose}
+      className="pack-reveal-modal"
+      contentClassName="pack-reveal-modal-content"
     >
       {isGuestPreview ? (
         <div className="packs-preview-banner">
