@@ -1325,9 +1325,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .pack-reveal-grid {
-  --reveal-grid-gap: clamp(10px, 1vw, 14px);
-  --reveal-base-width: 210px;
-  --reveal-base-height: 396px;
+  --reveal-grid-gap: 16px;
+  --reveal-card-width: min(210px, calc((100% - (var(--reveal-grid-gap) * 4)) / 5));
+  --reveal-card-height: 352px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -1342,15 +1342,13 @@ a { color: inherit; text-decoration: none; }
 }
 
 .reveal-slot {
-  --reveal-card-width: calc((100% - (var(--reveal-grid-gap) * 4)) / 5);
-  --reveal-card-scale: calc(var(--reveal-card-width) / var(--reveal-base-width));
-  --reveal-card-height: calc(var(--reveal-base-height) * var(--reveal-card-scale));
   border: 0;
   background: transparent;
   padding: 0;
   width: var(--reveal-card-width);
   min-width: var(--reveal-card-width);
   max-width: var(--reveal-card-width);
+  height: var(--reveal-card-height);
   flex: 0 0 var(--reveal-card-width);
   perspective: 1200px;
   cursor: pointer;
@@ -1363,7 +1361,8 @@ a { color: inherit; text-decoration: none; }
 
 .reveal-slot-inner {
   width: 100%;
-  min-height: var(--reveal-card-height);
+  height: 100%;
+  min-height: 0;
   position: relative;
   display: grid;
   transform-style: preserve-3d;
@@ -1594,12 +1593,20 @@ a { color: inherit; text-decoration: none; }
 }
 
 .reveal-slot-card-surface {
-  width: var(--reveal-base-width);
-  min-width: var(--reveal-base-width);
-  min-height: var(--reveal-base-height);
-  height: var(--reveal-base-height);
-  transform: scale(var(--reveal-card-scale));
-  transform-origin: top left;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reveal-slot-card-surface .memedex-card-frame {
+  min-height: 0;
+  height: calc(100% - 30px);
+}
+
+.reveal-slot-card-surface .mvp-premium-card {
+  height: 100%;
 }
 
 @keyframes reveal-ring-bloom {
@@ -8435,27 +8442,13 @@ a { color: inherit; text-decoration: none; }
   color: rgba(17, 17, 17, 0.76);
 }
 
-.home-lobby-battle-mark {
-  width: 92px;
-  height: 92px;
-  border-radius: 24px;
-  border: 4px solid #111111;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.5);
-  color: #111111;
-  font-size: 2.7rem;
-  box-shadow: 5px 5px 0 #111111;
-}
-
 .home-lobby-card-hero--split {
   align-items: center;
 }
 
 .home-lobby-battle-spotlight,
 .home-lobby-inline-note,
-.home-lobby-pack-stage,
-.home-lobby-memedex-single-card {
+.home-lobby-pack-stage {
   border: 3px solid #111111;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.72);
@@ -8467,17 +8460,50 @@ a { color: inherit; text-decoration: none; }
   padding: 1rem 1.05rem;
 }
 
+.home-lobby-battle-spotlight--card {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-lobby-battle-visual {
+  position: relative;
+  min-height: 190px;
+  background:
+    linear-gradient(180deg, rgba(12, 12, 20, 0.06), rgba(12, 12, 20, 0.82)),
+    #2a2546;
+}
+
+.home-lobby-battle-visual-image {
+  object-fit: cover;
+}
+
+.home-lobby-battle-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 12, 24, 0.02), rgba(10, 12, 24, 0.82));
+}
+
 .home-lobby-battle-spotlight-label {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  z-index: 1;
   font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(17, 17, 17, 0.66);
+  color: #ffffff;
+  background: rgba(17, 17, 17, 0.78);
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
 }
 
 .home-lobby-battle-spotlight strong,
 .home-lobby-inline-note strong,
-.home-lobby-memedex-single-card p,
 .home-lobby-pack-stage-label strong {
   color: #111111;
 }
@@ -8487,10 +8513,17 @@ a { color: inherit; text-decoration: none; }
   line-height: 1;
 }
 
+.home-lobby-battle-spotlight-copy {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  align-content: center;
+  background: rgba(255, 255, 255, 0.82);
+}
+
 .home-lobby-battle-spotlight p,
 .home-lobby-inline-note span,
 .home-lobby-inline-note strong,
-.home-lobby-memedex-single-card p,
 .home-lobby-pack-stage-label span,
 .home-lobby-pack-stage-label strong {
   margin: 0;
@@ -8500,8 +8533,7 @@ a { color: inherit; text-decoration: none; }
 
 .home-lobby-battle-spotlight p,
 .home-lobby-inline-note span,
-.home-lobby-pack-stage-label span,
-.home-lobby-memedex-single-card p {
+.home-lobby-pack-stage-label span {
   color: rgba(17, 17, 17, 0.72);
 }
 
@@ -8519,20 +8551,6 @@ a { color: inherit; text-decoration: none; }
 .home-lobby-shop-preview {
   display: grid;
   gap: 0.85rem;
-}
-
-.home-lobby-memedex-single-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
-  padding: 0.75rem 0.9rem;
-}
-
-.home-lobby-memedex-card--single {
-  width: 64px;
-  flex-shrink: 0;
-  transform: rotate(-4deg);
 }
 
 .home-lobby-shop-preview {
@@ -8555,6 +8573,43 @@ a { color: inherit; text-decoration: none; }
 .home-lobby-shop-copy {
   display: grid;
   gap: 0.85rem;
+}
+
+.home-lobby-memedex-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.home-lobby-memedex-breakdown-item,
+.home-lobby-battle-fact {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 3px solid #111111;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.home-lobby-memedex-breakdown-item span,
+.home-lobby-battle-fact span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.64);
+}
+
+.home-lobby-memedex-breakdown-item strong,
+.home-lobby-battle-fact strong {
+  font-size: 0.98rem;
+  line-height: 1.2;
+  color: #111111;
+}
+
+.home-lobby-battle-facts {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .home-lobby-stat-row--dense {
@@ -8655,13 +8710,14 @@ a { color: inherit; text-decoration: none; }
   .home-lobby-card-head,
   .home-lobby-card-hero,
   .home-lobby-stat-row,
-  .home-lobby-utility-head,
-  .home-lobby-memedex-single-card {
+  .home-lobby-utility-head {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .home-lobby-shop-preview {
+  .home-lobby-shop-preview,
+  .home-lobby-battle-spotlight--card,
+  .home-lobby-memedex-breakdown {
     grid-template-columns: 1fr;
   }
 
