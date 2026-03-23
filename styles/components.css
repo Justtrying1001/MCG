@@ -14159,3 +14159,381 @@ button.mcg-chip:hover {
     width: min(108px, 34%);
   }
 }
+
+/* ===== Battle detail readability + hierarchy refresh ===== */
+.stitch-contest-detail-screen {
+  gap: 1.25rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-shell-hero {
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.78fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-visual {
+  min-height: 280px;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-copy-panel {
+  max-width: 56ch;
+  padding: clamp(1.25rem, 2vw, 1.75rem);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.stitch-contest-detail-screen .contest-detail-shell-hero h1,
+.stitch-contest-detail-screen .contest-detail-hero-context-line,
+.stitch-contest-detail-screen .contest-detail-hero-info-line,
+.stitch-contest-detail-screen .contest-detail-hero-kicker,
+.stitch-contest-detail-screen .contest-detail-timing-label,
+.stitch-contest-detail-screen .contest-detail-timing-details span,
+.stitch-contest-detail-screen .contest-detail-timing-header p,
+.stitch-contest-detail-screen .contest-detail-panel-copy,
+.stitch-contest-detail-screen .contest-detail-empty-note,
+.stitch-contest-detail-screen .contest-detail-inline-note,
+.stitch-contest-detail-screen .contest-detail-reward-pool-card span,
+.stitch-contest-detail-screen .contest-detail-reward-tier-rank span,
+.stitch-contest-detail-screen .contest-detail-reward-tier-value span,
+.stitch-contest-detail-screen .contest-detail-fact-list dt,
+.stitch-contest-detail-screen .contest-detail-lineup-slot-label,
+.stitch-contest-detail-screen .contest-detail-slot-note,
+.stitch-contest-detail-screen .contest-detail-earned-rewards-head span,
+.stitch-contest-detail-screen .contest-detail-leaderboard-row {
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-context-line,
+.stitch-contest-detail-screen .contest-detail-hero-info-line,
+.stitch-contest-detail-screen .contest-detail-timing-header p,
+.stitch-contest-detail-screen .contest-detail-panel-copy,
+.stitch-contest-detail-screen .contest-detail-inline-note,
+.stitch-contest-detail-screen .contest-detail-slot-note,
+.stitch-contest-detail-screen .contest-detail-earned-rewards-head span {
+  color: rgba(17, 17, 17, 0.78);
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-panel {
+  border: 4px solid #111;
+  border-radius: 28px;
+  box-shadow: 8px 8px 0 #111;
+  background: linear-gradient(180deg, #111 0%, #1d2340 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-header strong,
+.stitch-contest-detail-screen .contest-detail-timing-details strong {
+  color: #fff;
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-label,
+.stitch-contest-detail-screen .contest-detail-timing-details span,
+.stitch-contest-detail-screen .contest-detail-timing-header p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.stitch-contest-detail-screen .contest-detail-timing-details div {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-action-panel--event {
+  padding: 0.9rem;
+  border: 4px solid #111;
+  border-radius: 28px;
+  box-shadow: 8px 8px 0 #111;
+  background: linear-gradient(180deg, #fff7bf 0%, #ffd8ea 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-hero-cta {
+  min-height: 62px;
+  font-size: 1rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-help-eyebrow,
+.stitch-contest-detail-screen .contest-detail-help-link {
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-main-layout {
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-priority-bar {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1.1rem;
+  border: 4px solid #111;
+  border-radius: 26px;
+  box-shadow: 7px 7px 0 #111;
+  background: linear-gradient(180deg, #fff7bf 0%, #ffe3a6 100%);
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-priority-bar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-priority-kicker {
+  display: inline-flex;
+  padding: 0.28rem 0.6rem;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-priority-bar strong {
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  text-transform: uppercase;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-priority-bar p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.78);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-embed {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 4px solid #111;
+  border-radius: 30px;
+  box-shadow: 9px 9px 0 #111;
+  background: linear-gradient(180deg, #fffef6 0%, #ffeef6 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-headline h3,
+.stitch-contest-detail-screen .contest-detail-lineup-progress strong,
+.stitch-contest-detail-screen .contest-detail-reward-pool-card strong,
+.stitch-contest-detail-screen .contest-detail-fact-list dd,
+.stitch-contest-detail-screen .contest-detail-reward-tier-rank strong,
+.stitch-contest-detail-screen .contest-detail-reward-tier-value strong {
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-progress-bar {
+  height: 12px;
+  background: rgba(17, 17, 17, 0.12);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-progress span {
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-grid,
+.stitch-contest-detail-screen .contest-detail-lineup-grid.dense,
+.stitch-contest-detail-screen .contest-detail-lineup-grid.wide {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot {
+  min-height: 320px;
+  padding: 0.75rem;
+  border: 4px solid #111;
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 #111;
+  background: linear-gradient(180deg, #fff 0%, #fff7dc 100%);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot.actionable:hover,
+.stitch-contest-detail-screen .contest-detail-lineup-slot.actionable:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 9px 9px 0 #111, 0 0 0 4px rgba(23, 231, 255, 0.28);
+  background: linear-gradient(180deg, #fffdf0 0%, #ffe4f0 100%);
+  opacity: 1;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot.empty {
+  justify-items: start;
+  align-content: end;
+  min-height: 260px;
+  border-style: solid;
+  background: linear-gradient(180deg, #fffdf4 0%, #fff2bd 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot.empty strong {
+  font-size: 1.22rem;
+  color: #111;
+}
+
+.stitch-contest-detail-screen .contest-detail-lineup-slot .mvp-premium-card {
+  --card-radius: 12px;
+  --card-header-height: 48px;
+  --card-textbox-height: 34px;
+  --card-footer-height: 28px;
+}
+
+.stitch-contest-detail-screen .contest-detail-support-zone {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.stitch-contest-detail-screen .rewards-panel,
+.stitch-contest-detail-screen .leaderboard-panel {
+  padding: 1rem 1rem 1.1rem;
+  background: linear-gradient(180deg, #fffdfa 0%, #eefcff 100%);
+}
+
+.stitch-contest-detail-screen .rewards-panel {
+  background: linear-gradient(180deg, #fff9e1 0%, #fff3fb 100%);
+}
+
+.stitch-contest-detail-screen .contest-detail-leaderboard-row.is-top,
+.stitch-contest-detail-screen .contest-detail-leaderboard-row.is-me {
+  color: #111;
+}
+
+@media (max-width: 980px) {
+  .stitch-contest-detail-screen .contest-detail-shell-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-contest-detail-screen .contest-detail-support-zone {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Lineup builder interaction clarity refresh ===== */
+.stitch-lineup-modal .bldr-head {
+  color: #111;
+}
+
+.stitch-lineup-modal .bldr-head-helper,
+.stitch-lineup-modal .bldr-head-kicker,
+.stitch-lineup-modal .bldr-section-kicker,
+.stitch-lineup-modal .bldr-active-slot-banner p,
+.stitch-lineup-modal .bldr-active-slot-label,
+.stitch-lineup-modal .bldr-empty-slot-copy,
+.stitch-lineup-modal .bldr-slot-footnote,
+.stitch-lineup-modal .bldr-card-meta p {
+  color: rgba(17, 17, 17, 0.8);
+}
+
+.stitch-lineup-modal .bldr-active-slot-banner {
+  border-width: 4px;
+  background: linear-gradient(180deg, #fffef6 0%, #ffe4f2 100%);
+}
+
+.stitch-lineup-modal .bldr-active-slot-banner strong {
+  font-size: 1.15rem;
+  color: #111;
+}
+
+.stitch-lineup-modal .bldr-selected-tray {
+  gap: 1rem;
+}
+
+.stitch-lineup-modal .bldr-tray-slot {
+  position: relative;
+  min-height: 320px;
+  padding: 0.8rem;
+  border: 4px solid #111;
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 #111;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.stitch-lineup-modal .bldr-tray-slot:hover,
+.stitch-lineup-modal .bldr-tray-slot:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 9px 9px 0 #111, 0 0 0 4px rgba(23, 231, 255, 0.24);
+}
+
+.stitch-lineup-modal .bldr-tray-slot.active {
+  transform: translate(-3px, -3px);
+  border-color: #6d73ff;
+  box-shadow: 10px 10px 0 #111, 0 0 0 6px rgba(109, 115, 255, 0.22);
+  background: linear-gradient(180deg, #fff8c5 0%, #ffd9f0 100%);
+}
+
+.stitch-lineup-modal .bldr-tray-slot.active::after {
+  content: "Active";
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.22rem 0.5rem;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #17e7ff;
+  color: #111;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stitch-lineup-modal .bldr-tray-slot.filled {
+  background: linear-gradient(180deg, #fff 0%, #e9fbff 100%);
+}
+
+.stitch-lineup-modal .bldr-tray-slot-label {
+  margin-bottom: 0.25rem;
+}
+
+.stitch-lineup-modal .bldr-empty-slot-copy strong,
+.stitch-lineup-modal .bldr-card-meta strong {
+  color: #111;
+}
+
+.stitch-lineup-modal .bldr-empty-slot-copy strong {
+  font-size: 1.18rem;
+}
+
+.stitch-lineup-modal .bldr-pool-stage {
+  gap: 1rem;
+}
+
+.stitch-lineup-modal .bldr-picker-summary .mcg-chip {
+  border: 2px solid #111;
+  background: #fff;
+  color: #111;
+}
+
+.stitch-lineup-modal .bldr-controls {
+  gap: 0.9rem;
+}
+
+.stitch-lineup-modal .bldr-search,
+.stitch-lineup-modal .bldr-select {
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: #fff;
+  color: #111;
+  box-shadow: 4px 4px 0 #111;
+}
+
+.stitch-lineup-modal .bldr-pool-scroll {
+  min-height: 440px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.stitch-lineup-modal .bldr-card-wrap {
+  border: 3px solid #111;
+  border-radius: 24px;
+  box-shadow: 5px 5px 0 #111;
+}
+
+.stitch-lineup-modal .bldr-card-wrap.selected {
+  border-color: #6d73ff;
+  box-shadow: 8px 8px 0 #111, 0 0 0 4px rgba(109, 115, 255, 0.18);
+}
+
+.stitch-lineup-modal .bldr-card-wrap.disabled {
+  opacity: 0.82;
+}
+
+.stitch-lineup-modal .bldr-pick-btn {
+  min-height: 48px;
+}
+
+@media (max-width: 720px) {
+  .stitch-lineup-modal .bldr-tray-slot {
+    min-height: 280px;
+  }
+}
