@@ -67,7 +67,13 @@ export function CardGrid({ items, onOpenCard, missingCount = 0, guestMode = fals
           <div className="collection-card-meta memedex-card-meta memedex-card-meta--locked">
             <strong className="collection-card-meta-title">Undiscovered meme</strong>
             <div className="memedex-card-detail-line memedex-card-detail-line--muted">
-              <span>Reveal to discover</span>
+              <span>Locked</span>
+              <span aria-hidden="true">•</span>
+              <span>Slot</span>
+            </div>
+            <div className="memedex-card-detail-line memedex-card-detail-line--footer">
+              <span className="collection-card-copies">Reveal to discover</span>
+              <span className="memedex-card-index">????</span>
             </div>
           </div>
         </div>
