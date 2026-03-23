@@ -20,6 +20,18 @@ const navItems = [
 
 const HANDLE_ONBOARDING_PATH = "/onboarding/profile";
 
+function AppBackground() {
+  return (
+    <div className="mcg-app-background" aria-hidden="true">
+      <div className="mcg-app-background__gradient" />
+      <div className="mcg-app-background__blob mcg-app-background__blob--violet" />
+      <div className="mcg-app-background__blob mcg-app-background__blob--cyan" />
+      <div className="mcg-app-background__blob mcg-app-background__blob--sun" />
+      <div className="mcg-app-background__noise" />
+    </div>
+  );
+}
+
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -32,6 +44,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     ready,
   } = usePrivyLogin();
   const [openMobile, setOpenMobile] = useState(false);
+  const showGlobalBackground = !pathname.startsWith("/admin");
 
   useEffect(() => {
     if (!me) return;
@@ -40,12 +53,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
       return;
     }
     if (!me.onboarding.needsHandle && pathname === HANDLE_ONBOARDING_PATH) {
-      router.replace('/compte');
+      router.replace("/compte");
     }
   }, [me, pathname, router]);
 
   return (
-    <div className="mcg-app">
+    <div className={`mcg-app${showGlobalBackground ? " mcg-app--user" : ""}`}>
+      {showGlobalBackground ? <AppBackground /> : null}
+
       <header className="mcg-topnav">
         <div className="mcg-container mcg-topnav-inner">
           <Link

@@ -1,12 +1,96 @@
 .mcg-app {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: transparent;
+}
+
+.mcg-app--user {
+  background: transparent;
+}
+
+.mcg-app-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #eef5ff 0%, #f7f8ff 42%, #f3f8ff 100%);
+}
+
+.mcg-app-background__gradient,
+.mcg-app-background__noise,
+.mcg-app-background__blob {
+  position: absolute;
+  inset: 0;
+}
+
+.mcg-app-background__gradient {
   background:
-    radial-gradient(900px 420px at 0% 0%, rgba(18, 241, 255, 0.16), transparent 60%),
-    radial-gradient(900px 520px at 100% 0%, rgba(255, 117, 160, 0.14), transparent 62%),
-    radial-gradient(980px 460px at 50% -12%, rgba(255, 239, 0, 0.2), transparent 58%),
-    var(--color-bg-page);
+    radial-gradient(circle at top left, rgba(14, 13, 254, 0.18), transparent 32%),
+    radial-gradient(circle at 82% 12%, rgba(18, 241, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 50% 100%, rgba(255, 117, 160, 0.12), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(237, 245, 255, 0.94) 40%, rgba(246, 245, 255, 0.96));
+}
+
+.mcg-app-background__blob {
+  filter: blur(80px);
+  opacity: 0.42;
+  transform: translate3d(0, 0, 0);
+}
+
+.mcg-app-background__blob--violet {
+  top: -12%;
+  left: -8%;
+  width: 42vw;
+  height: 42vw;
+  min-width: 280px;
+  min-height: 280px;
+  max-width: 640px;
+  max-height: 640px;
+  inset: auto;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(112, 92, 255, 0.28) 0%, rgba(112, 92, 255, 0.16) 42%, transparent 72%);
+}
+
+.mcg-app-background__blob--cyan {
+  right: -10%;
+  top: 18%;
+  width: 36vw;
+  height: 36vw;
+  min-width: 260px;
+  min-height: 260px;
+  max-width: 580px;
+  max-height: 580px;
+  inset: auto;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(18, 241, 255, 0.26) 0%, rgba(18, 241, 255, 0.14) 44%, transparent 74%);
+}
+
+.mcg-app-background__blob--sun {
+  left: 22%;
+  bottom: -18%;
+  width: 34vw;
+  height: 34vw;
+  min-width: 240px;
+  min-height: 240px;
+  max-width: 520px;
+  max-height: 520px;
+  inset: auto;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 239, 0, 0.16) 0%, rgba(255, 117, 160, 0.12) 45%, transparent 76%);
+}
+
+.mcg-app-background__noise {
+  opacity: 0.08;
+  background-image:
+    radial-gradient(rgba(17, 17, 17, 0.16) 0.6px, transparent 0.6px),
+    radial-gradient(rgba(255, 255, 255, 0.65) 0.6px, transparent 0.6px);
+  background-position: 0 0, 12px 12px;
+  background-size: 24px 24px;
+  mix-blend-mode: soft-light;
 }
 
 .mcg-container {
@@ -29,4 +113,35 @@
 @media (max-width: 860px) {
   .mcg-main { padding-top: calc(var(--nav-h) + var(--space-3)); }
   .mcg-container { width: min(var(--content-max), 100% - 2 * var(--space-2)); }
+}
+
+
+.mcg-topnav,
+.mcg-main,
+.mcg-app > footer {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 860px) {
+  .mcg-app-background__blob--violet {
+    top: -8%;
+    left: -22%;
+    width: 70vw;
+    height: 70vw;
+  }
+
+  .mcg-app-background__blob--cyan {
+    right: -24%;
+    top: 24%;
+    width: 62vw;
+    height: 62vw;
+  }
+
+  .mcg-app-background__blob--sun {
+    left: 0;
+    bottom: -12%;
+    width: 58vw;
+    height: 58vw;
+  }
 }
