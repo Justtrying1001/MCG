@@ -4230,20 +4230,26 @@ a { color: inherit; text-decoration: none; }
 .profile-account-layout {
   display: grid;
   gap: 1.5rem;
+  padding-inline: 1rem;
 }
 
 .profile-account-shell {
   width: min(100%, 1180px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
 }
 
 .profile-account-sections {
   display: grid;
-  gap: 1.15rem;
+  gap: 1rem;
+}
+
+.profile-hero-side-stack {
+  display: grid;
+  gap: 1rem;
 }
 
 .profile-section-heading {
@@ -4279,13 +4285,11 @@ a { color: inherit; text-decoration: none; }
 .profile-progression-surface,
 .profile-wallet-card,
 .profile-stat-bento {
-  border: 3px solid rgba(255, 255, 255, 0.15);
+  border: 3px solid #000;
   box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.28);
 }
 
 .profile-showcase {
-  position: sticky;
-  top: 6.5rem;
   overflow: hidden;
 }
 
@@ -4301,8 +4305,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-card-frame {
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.9rem;
+  padding: 0.95rem;
   border-radius: 28px;
   background:
     radial-gradient(circle at top left, rgba(18, 241, 255, 0.24), transparent 32%),
@@ -4392,7 +4396,7 @@ a { color: inherit; text-decoration: none; }
 
 .profile-showcase-avatar-core {
   position: relative;
-  min-height: 280px;
+  min-height: 210px;
   border: 3px solid #000;
   border-radius: 24px;
   overflow: hidden;
@@ -4484,8 +4488,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-name {
-  font-size: clamp(2.6rem, 6vw, 4rem);
-  line-height: 0.88;
+  font-size: clamp(2.2rem, 5vw, 3.25rem);
+  line-height: 0.9;
   text-transform: uppercase;
   color: #fff;
 }
@@ -4504,10 +4508,17 @@ a { color: inherit; text-decoration: none; }
 .profile-showcase-prestige-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.7rem;
+  gap: 0.65rem;
+}
+
+.profile-showcase-meta-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
 .profile-showcase-prestige-pill,
+.profile-showcase-meta-pill,
 .profile-showcase-metric,
 .profile-progression-group,
 .profile-milestone-badge,
@@ -4522,9 +4533,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-prestige-pill,
+.profile-showcase-meta-pill,
 .profile-progression-stat,
 .profile-stat-bento__card {
-  padding: 0.9rem 1rem;
+  padding: 0.8rem 0.95rem;
   display: grid;
   gap: 0.28rem;
 }
@@ -4533,7 +4545,12 @@ a { color: inherit; text-decoration: none; }
   background: rgba(9, 11, 25, 0.34);
 }
 
+.profile-showcase-meta-pill {
+  background: rgba(5, 8, 20, 0.54);
+}
+
 .profile-showcase-prestige-pill strong,
+.profile-showcase-meta-pill strong,
 .profile-progression-stat strong,
 .profile-stat-bento__card strong {
   font-size: clamp(1.3rem, 4vw, 2rem);
@@ -4584,7 +4601,7 @@ a { color: inherit; text-decoration: none; }
 .profile-featured-surface,
 .profile-milestones-panel,
 .profile-stat-bento {
-  padding: 1rem;
+  padding: 0.95rem;
 }
 
 .profile-stat-bento__grid,
@@ -4599,7 +4616,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-stat-bento__card {
-  min-height: 132px;
+  min-height: 116px;
   align-content: end;
 }
 
@@ -4629,7 +4646,7 @@ a { color: inherit; text-decoration: none; }
   color: #332300;
 }
 
-.profile-progression-stat-grid--compact {
+.profile-progression-stat-grid--battle {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -4659,21 +4676,22 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-milestone-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.8rem;
-  overflow-x: auto;
-  padding-bottom: 0.2rem;
 }
 
 .profile-milestone-badge {
-  min-width: 112px;
-  max-width: 132px;
-  padding: 0.75rem 0.6rem;
+  min-width: 0;
+  max-width: none;
+  padding: 0.8rem;
   display: grid;
-  gap: 0.38rem;
-  justify-items: center;
-  text-align: center;
-  background: linear-gradient(165deg, rgba(18, 22, 38, 0.94), rgba(10, 12, 18, 0.98));
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  text-align: left;
+  background: linear-gradient(180deg, #eafff8 0%, #fef0ff 100%);
+  color: #111;
 }
 
 .profile-milestone-badge strong,
@@ -4681,10 +4699,14 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.88rem;
 }
 
+.profile-milestone-badge small {
+  color: rgba(17, 17, 17, 0.7);
+}
+
 .profile-trophy-icon {
-  width: 62px;
-  height: 62px;
-  border-radius: 999px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
   border: 3px solid #000;
   display: grid;
   place-items: center;
@@ -4714,9 +4736,8 @@ a { color: inherit; text-decoration: none; }
 
 .profile-featured-cards-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.8rem;
-  max-width: 860px;
 }
 
 .profile-featured-card-item {
@@ -4857,24 +4878,25 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 
-  .profile-showcase {
-    position: relative;
-    top: 0;
+  .profile-featured-cards-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 720px) {
   .profile-stat-bento__grid,
-  .profile-progression-stat-grid--compact,
+  .profile-progression-stat-grid--battle,
   .profile-showcase-picker-grid,
   .profile-featured-cards-strip,
   .profile-identity-grid,
-  .profile-showcase-prestige-row {
+  .profile-showcase-prestige-row,
+  .profile-showcase-meta-row,
+  .profile-milestone-row {
     grid-template-columns: 1fr;
   }
 
   .profile-showcase-avatar-core {
-    min-height: 240px;
+    min-height: 220px;
   }
 
   .profile-featured-head,
