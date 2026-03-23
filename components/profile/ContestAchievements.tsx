@@ -35,7 +35,7 @@ export function ContestAchievements({
         <div className="profile-section-heading profile-progression-heading">
           <div>
             <p className="mcg-eyebrow">Battle stats</p>
-            <h2>Battle progression</h2>
+            <h2>Competitive snapshot</h2>
           </div>
           <p className="profile-progression-summary">
             Real battle momentum only — no duplicate identity stats.

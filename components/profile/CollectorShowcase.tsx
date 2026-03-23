@@ -45,7 +45,7 @@ export function CollectorShowcase({
       <div className="profile-showcase-card-shell">
         <div className="profile-showcase-card-frame">
           <div className="profile-showcase-head">
-            <span className="profile-showcase-label">Trencher card</span>
+            <span className="profile-showcase-label">Hero identity</span>
             <div className="profile-showcase-head-actions">{settingsAction}</div>
           </div>
 
@@ -69,7 +69,7 @@ export function CollectorShowcase({
           </div>
 
           <div className="profile-showcase-identity-copy">
-            <p className="profile-showcase-identity-kicker">Core identity</p>
+            <p className="profile-showcase-identity-kicker">Trencher Card</p>
             <h1 className="profile-showcase-name">{displayName}</h1>
             <p className="profile-showcase-title">{title}</p>
             <p className="profile-showcase-subtitle">{tagline}</p>

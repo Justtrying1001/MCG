@@ -177,12 +177,12 @@ export default function AccountPage() {
           />
 
           <div className="profile-account-sections">
-            <div className="profile-hero-side-stack">
+            <section className="profile-hero-side-stack">
               <section className="profile-stat-bento mcg-surface">
                 <div className="profile-section-heading profile-stat-bento__heading">
                   <div>
                     <p className="mcg-eyebrow">Collection stats</p>
-                    <h2>Collection stats</h2>
+                    <h2>Vault overview</h2>
                   </div>
                   <p className="profile-section-caption">Compact collector snapshot inspired by Stitch, adapted to your real vault data.</p>
                 </div>
@@ -219,13 +219,13 @@ export default function AccountPage() {
                 rating={competitive?.rating ?? null}
                 leagueTier={competitive?.leagueTier ?? null}
               />
-            </div>
+            </section>
 
             <section className="mcg-surface profile-milestones-panel">
               <div className="profile-section-heading">
                 <div>
                   <p className="mcg-eyebrow">Unlocked milestones</p>
-                  <h2>Unlocked milestones</h2>
+                  <h2>Trophy cabinet</h2>
                 </div>
                 <p className="profile-section-caption">Unlocked only, presented like collectibles instead of admin tiles.</p>
               </div>
