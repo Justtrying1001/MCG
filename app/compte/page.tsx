@@ -36,6 +36,7 @@ export default function AccountPage() {
   const [showcaseNameFilter, setShowcaseNameFilter] = useState("");
   const [showcaseRarityFilter, setShowcaseRarityFilter] = useState("ALL");
   const [showcaseOwnedFilter, setShowcaseOwnedFilter] = useState("ALL");
+  const [showcaseSortMode, setShowcaseSortMode] = useState("RARITY");
 
   useEffect(() => {
     if (me?.mode !== "user") return;
@@ -94,8 +95,14 @@ export default function AccountPage() {
 
   const filteredShowcaseCollection = useMemo(() => {
     const nameNeedle = showcaseNameFilter.trim().toLowerCase();
-
-    return sortedCollection.filter((item) => {
+    const rarityWeight = (value: string) => {
+      if (value === "LEGENDARY") return 5;
+      if (value === "EPIC") return 4;
+      if (value === "RARE") return 3;
+      if (value === "UNCOMMON") return 2;
+      return 1;
+    };
+    const filtered = sortedCollection.filter((item) => {
       const matchesName = !nameNeedle || item.card.displayName.toLowerCase().includes(nameNeedle);
       const matchesRarity = showcaseRarityFilter === "ALL" || item.card.rarity === showcaseRarityFilter;
       const matchesOwned =
@@ -107,7 +114,25 @@ export default function AccountPage() {
 
       return matchesName && matchesRarity && matchesOwned;
     });
-  }, [showcaseNameFilter, showcaseOwnedFilter, showcaseRarityFilter, sortedCollection]);
+    const sorted = [...filtered].sort((a, b) => {
+      if (showcaseSortMode === "NAME") {
+        return a.card.displayName.localeCompare(b.card.displayName);
+      }
+      if (showcaseSortMode === "NEWEST") {
+        return (b.card.editionNumber ?? b.card.issuedSupply ?? 0) - (a.card.editionNumber ?? a.card.issuedSupply ?? 0);
+      }
+      if (showcaseSortMode === "EDITION") {
+        const editionCompare = (a.card.edition ?? "").localeCompare(b.card.edition ?? "");
+        if (editionCompare !== 0) return editionCompare;
+        return a.card.displayName.localeCompare(b.card.displayName);
+      }
+      return (
+        rarityWeight(b.card.rarity) - rarityWeight(a.card.rarity) ||
+        a.card.displayName.localeCompare(b.card.displayName)
+      );
+    });
+    return sorted;
+  }, [showcaseNameFilter, showcaseOwnedFilter, showcaseRarityFilter, showcaseSortMode, sortedCollection]);
 
   const unlockedMilestones = useMemo(
     () =>
@@ -280,9 +305,8 @@ export default function AccountPage() {
           <div className="profile-showcase-editor">
             <div className="profile-showcase-editor-head">
               <div>
-                <p className="profile-showcase-editor-copy">
-                  Pick up to 5 real cards from your collection to feature on your profile.
-                </p>
+                <h3 className="profile-showcase-editor-title">Edit Showcase</h3>
+                <p className="profile-showcase-editor-copy">Tap cards to select or unselect instantly.</p>
                 <p className="profile-showcase-editor-status">
                   {selectedTemplateIds.length} / 5 selected
                 </p>
@@ -325,6 +349,19 @@ export default function AccountPage() {
                   <option value="SINGLE">1 copy</option>
                 </select>
               </label>
+
+              <label className="profile-showcase-filter-field">
+                <span>Sort</span>
+                <select
+                  value={showcaseSortMode}
+                  onChange={(event) => setShowcaseSortMode(event.target.value)}
+                >
+                  <option value="RARITY">Rarity</option>
+                  <option value="NAME">Name</option>
+                  <option value="NEWEST">Newest</option>
+                  <option value="EDITION">Edition</option>
+                </select>
+              </label>
             </div>
 
             <div className="profile-showcase-picker-grid" role="list" aria-label="Selectable showcase cards">
@@ -350,18 +387,18 @@ export default function AccountPage() {
                   >
                     <div className="profile-showcase-picker-frame">
                       <div className="profile-showcase-picker-media">
-                        <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" />
+                        <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" interactive={false} />
                       </div>
                       <div className="profile-showcase-picker-card">
                         <div>
                           <strong>{item.card.displayName}</strong>
-                          <span>{item.card.rarity}</span>
+                          <span>{item.card.rarity} · {item.card.edition}</span>
                         </div>
                         <small>{item.instanceCount} owned</small>
                       </div>
                     </div>
                     <span className="profile-showcase-picker-state">
-                      {selected ? "Selected" : disabled ? "Limit reached" : "Select card"}
+                      {selected ? "Selected" : disabled ? "Limit reached" : "Tap to select"}
                     </span>
                   </button>
                 );
