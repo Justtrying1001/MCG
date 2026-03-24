@@ -9732,14 +9732,21 @@ a { color: inherit; text-decoration: none; }
 .profile-showcase-editor-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.profile-showcase-editor-title {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .profile-showcase-editor-status {
-  margin-top: 0.3rem;
+  margin-top: 0.22rem;
   color: #fff17a;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -9747,8 +9754,8 @@ a { color: inherit; text-decoration: none; }
 
 .profile-showcase-filters {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(180px, 0.8fr));
-  gap: 0.75rem;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
 .profile-showcase-filter-field {
@@ -9767,58 +9774,75 @@ a { color: inherit; text-decoration: none; }
 .profile-showcase-filter-field input,
 .profile-showcase-filter-field select {
   width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(180deg, rgba(19, 24, 36, 0.92), rgba(12, 16, 25, 0.98));
-  color: #f8fafc;
-  padding: 0.82rem 0.9rem;
+  border-radius: 11px;
+  border: 2px solid rgba(17, 17, 17, 0.82);
+  background: linear-gradient(180deg, #ffffff 0%, #e8f4ff 100%);
+  color: #111111;
+  font-weight: 700;
+  padding: 0.62rem 0.75rem;
+  box-shadow: 3px 3px 0 #111;
 }
 
 .profile-showcase-modal-content {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
   max-height: min(84vh, 980px);
+  overflow: hidden;
 }
 
 .profile-showcase-picker-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.58rem;
   max-height: 58vh;
   overflow: auto;
-  padding-right: 0.25rem;
+  padding-right: 0.35rem;
   scroll-behavior: smooth;
+  align-content: start;
 }
 
 .profile-showcase-picker {
-  padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 22px;
-  box-shadow: none;
-  background: linear-gradient(155deg, rgba(29, 36, 52, 0.82), rgba(12, 16, 25, 0.98));
+  padding: 0.48rem;
+  border: 3px solid #111;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 #111;
+  background: linear-gradient(180deg, #ffffff 0%, #eefbff 100%);
+  display: grid;
+  gap: 0.36rem;
+  text-align: left;
+  transition: transform .16s ease, box-shadow .16s ease;
 }
 
 .profile-showcase-picker:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 241, 122, 0.28);
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #111;
+}
+
+.profile-showcase-picker:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .profile-showcase-picker-frame {
-  gap: 0.65rem;
+  display: grid;
+  gap: 0.4rem;
 }
 
 .profile-showcase-picker-media {
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 10px;
+  display: grid;
 }
 
 .profile-showcase-picker-media > * {
-  transform: scale(0.96);
-  transform-origin: top center;
+  max-width: 102px;
+  margin-inline: auto;
 }
 
 .profile-showcase-picker-card {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .profile-showcase-picker-card > div {
@@ -9827,27 +9851,36 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-picker-card strong {
-  color: #f8fafc;
-  font-size: 1rem;
+  color: #111;
+  font-size: 0.76rem;
+  line-height: 1.25;
 }
 
 .profile-showcase-picker-card span,
 .profile-showcase-picker-card small,
 .profile-showcase-picker-state {
-  color: rgba(224, 230, 239, 0.76);
+  color: rgba(17, 17, 17, 0.72);
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .profile-showcase-picker.is-selected {
-  border-color: rgba(255, 241, 122, 0.48);
+  border-color: #111;
   background:
-    radial-gradient(circle at top, rgba(255, 241, 122, 0.14), transparent 40%),
-    linear-gradient(155deg, rgba(32, 40, 56, 0.92), rgba(12, 16, 25, 0.99));
-  box-shadow: 0 0 0 1px rgba(255, 241, 122, 0.2);
+    radial-gradient(circle at top, rgba(255, 241, 122, 0.35), transparent 56%),
+    linear-gradient(180deg, #ffffff 0%, #fff7d1 100%);
+  box-shadow: 5px 5px 0 #111;
 }
 
 @media (max-width: 1024px) {
   .profile-showcase-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-showcase-filters > :first-child {
+    grid-column: 1 / -1;
   }
 }
 
