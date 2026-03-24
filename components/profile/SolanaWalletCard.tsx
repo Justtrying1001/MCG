@@ -203,54 +203,71 @@ export function SolanaWalletCard() {
 
       <div className="profile-settings-section">
         <div className="profile-settings-section__header">
-          <div>
+          <div className="profile-settings-section__heading">
             <p className="mcg-eyebrow">Connections</p>
-            <strong>Link missing providers whenever you want</strong>
+            <strong>Linked accounts</strong>
+            <p className="profile-settings-section__helper">Manage the accounts linked to your profile.</p>
           </div>
         </div>
 
         <div className="profile-identity-grid">
           <div className="profile-identity-item">
-            <div>
-              <p className="mcg-eyebrow">X connection</p>
+            <div className="profile-identity-item__content">
+              <div className="profile-identity-item__topline">
+                <p className="mcg-eyebrow">X connection</p>
+                <span className={`profile-status-pill ${hasTwitter ? "is-linked" : "is-missing"}`}>
+                  {hasTwitter ? "linked" : "unlinked"}
+                </span>
+              </div>
               <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}</strong>
               <span>
-                {hasTwitter ? "Connected to this MCG account." : "Link X later without changing your username."}
+                {hasTwitter
+                  ? "This X account is currently linked to your profile."
+                  : "Link an X account to connect your social identity."}
               </span>
             </div>
-            <Button
-              variant={hasTwitter ? "ghost" : "primary"}
-              className="btn-sm"
-              disabled={!ready || !authenticated || hasTwitter || isLinkingTwitter || isLinkingWallet}
-              onClick={handleLinkTwitter}
-            >
-              {isLinkingTwitter ? "Linking X…" : hasTwitter ? "X linked" : "Link X"}
-            </Button>
+            <div className="profile-identity-item__actions">
+              <Button
+                variant={hasTwitter ? "ghost" : "primary"}
+                className="btn-sm"
+                disabled={!ready || !authenticated || isLinkingTwitter || isLinkingWallet}
+                onClick={handleLinkTwitter}
+              >
+                {isLinkingTwitter ? "Linking X…" : hasTwitter ? "Change X account" : "Link X account"}
+              </Button>
+            </div>
           </div>
 
           <div className="profile-identity-item">
-            <div>
-              <p className="mcg-eyebrow">Wallet connection</p>
+            <div className="profile-identity-item__content">
+              <div className="profile-identity-item__topline">
+                <p className="mcg-eyebrow">Wallet connection</p>
+                <span className={`profile-status-pill ${hasWallet ? "is-linked" : "is-missing"}`}>
+                  {hasWallet ? "linked" : "unlinked"}
+                </span>
+              </div>
               {primaryWallet ? (
                 <>
                   <strong>{primaryWalletShort}</strong>
-                  <span>{primaryWallet.address}</span>
+                  <span>Connected wallet: {primaryWallet.address}</span>
                 </>
               ) : (
                 <>
                   <strong>Wallet not linked</strong>
-                  <span>Link a Solana wallet later without requiring X.</span>
+                  <span>Link a Solana wallet to complete your account setup.</span>
                 </>
               )}
             </div>
-            <Button
-              variant={hasWallet ? "ghost" : "primary"}
-              className="btn-sm"
-              disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
-              onClick={handleLinkWallet}
-            >
-              {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Link another wallet" : "Link wallet"}
-            </Button>
+            <div className="profile-identity-item__actions">
+              <Button
+                variant={hasWallet ? "ghost" : "primary"}
+                className="btn-sm"
+                disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
+                onClick={handleLinkWallet}
+              >
+                {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Change wallet" : "Link wallet"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
