@@ -8594,7 +8594,7 @@ a { color: inherit; text-decoration: none; }
   padding: 0.85rem 1rem;
   border-radius: 1rem;
   border: 1px solid rgba(242, 201, 76, 0.24);
-  background: linear-gradient(135deg, rgba(242, 201, 76, 0.16), rgba(255, 255, 255, 0.06));
+  background: linear-gradient(135deg, #fff4c2, #ffe8a6);
 }
 
 .contest-lobby-card-reward-label {
@@ -8608,7 +8608,20 @@ a { color: inherit; text-decoration: none; }
 
 .contest-lobby-card-reward strong {
   min-width: 0;
-  color: #f8fafc;
+  color: #111111;
+}
+
+.contest-lobby-card-reward-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.contest-lobby-card-reward-copy small {
+  color: rgba(17, 17, 17, 0.84);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .contest-lobby-card-status-copy {
@@ -8623,6 +8636,12 @@ a { color: inherit; text-decoration: none; }
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.contest-lobby-card-meta-secondary {
+  color: rgba(226, 232, 240, 0.88);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .contest-lobby-card-cta {

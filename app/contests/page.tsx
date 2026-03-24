@@ -306,7 +306,7 @@ export default function ContestsPage() {
                         {section.key === "active"
                           ? "Live now"
                           : section.key === "upcoming"
-                            ? "Opening soon"
+                            ? "Starting soon"
                             : "Past results"}
                       </span>
                       <strong>{section.title}</strong>

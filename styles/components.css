@@ -11150,12 +11150,39 @@ button.mcg-chip:hover {
 .stitch-contests-screen .contest-lobby-card-meta-item {
   display: grid;
   gap: 0.22rem;
+  padding: 0.72rem 0.78rem;
+  border: 2px solid #111;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 3px 3px 0 #111;
 }
 
 .stitch-contests-screen .contest-lobby-card-meta-item strong {
   color: #111;
   font-size: 0.96rem;
   line-height: 1.25;
+}
+
+.stitch-contests-screen .contest-lobby-card-meta-secondary,
+.stitch-contests-screen .contest-lobby-card-status-copy span {
+  color: rgba(17, 17, 17, 0.74);
+}
+
+.stitch-contests-screen .contest-lobby-card-status-copy strong {
+  color: #111;
+}
+
+.stitch-contests-screen .contest-lobby-card-reward {
+  border: 3px solid #111;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff4bb 0%, #ffe5a8 100%);
+  box-shadow: 4px 4px 0 #111;
+}
+
+.stitch-contests-screen .contest-lobby-card-reward-label,
+.stitch-contests-screen .contest-lobby-card-reward strong,
+.stitch-contests-screen .contest-lobby-card-reward-copy small {
+  color: #111;
 }
 
 .stitch-contests-screen .contest-lobby-card-panel {
