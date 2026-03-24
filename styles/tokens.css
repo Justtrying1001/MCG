@@ -13,15 +13,27 @@
 
   --color-ink: #111111;
   --color-ink-soft: #2c2f30;
-  --color-page: #f5f6f7;
-  --color-surface-2: #dadddf;
-  --color-surface-1: #eff1f2;
-  --color-surface-0: #ffffff;
-  --color-surface-raised: #e6e8ea;
 
-  --color-text-primary: #17191c;
-  --color-text-secondary: #595c5d;
-  --color-text-muted: #757778;
+  /* Shared page palette — aligned to logged-in Home visuals. */
+  --mcg-page-bg: #f5f6f7;
+  --mcg-panel-primary: #ffffff;
+  --mcg-panel-secondary: #dadee0;
+  --mcg-panel-muted: #eff1f2;
+  --mcg-panel-raised: #e6e8ea;
+  --mcg-pastel-pink: #ff8fae;
+  --mcg-pastel-cyan: #12f1ff;
+  --mcg-pastel-gold: #ffd33f;
+  --mcg-pastel-lilac: #9097ff;
+
+  --color-page: var(--mcg-page-bg);
+  --color-surface-2: var(--mcg-panel-secondary);
+  --color-surface-1: var(--mcg-panel-muted);
+  --color-surface-0: var(--mcg-panel-primary);
+  --color-surface-raised: var(--mcg-panel-raised);
+
+  --color-text-primary: #111111;
+  --color-text-secondary: rgba(17, 17, 17, 0.76);
+  --color-text-muted: rgba(17, 17, 17, 0.62);
   --color-text-inverse: #ffffff;
 
   --accent-primary: var(--color-brand-primary);
@@ -59,6 +71,9 @@
   --shadow-hard-sm: 3px 3px 0 0 rgba(0, 0, 0, 0.9);
   --shadow-hard: 4px 4px 0 0 rgba(0, 0, 0, 0.95);
   --shadow-hard-lg: 8px 8px 0 0 rgba(0, 0, 0, 0.95);
+  --shadow-sm: 4px 4px 0 rgba(17, 17, 17, 0.9);
+  --shadow-md: 6px 6px 0 rgba(17, 17, 17, 0.9);
+  --shadow-lg: 8px 8px 0 rgba(17, 17, 17, 0.95);
 
   --progress-thickness: 22px;
 
@@ -69,4 +84,14 @@
 
   --content-max: 1280px;
   --nav-h: 86px;
+
+  /* Typography scale tokens */
+  --type-h1-size: clamp(1.9rem, 3vw, 2.7rem);
+  --type-h2-size: clamp(1.35rem, 2.2vw, 1.95rem);
+  --type-h3-size: clamp(1.05rem, 1.8vw, 1.35rem);
+  --type-eyebrow-size: 0.72rem;
+  --type-body-size: 0.98rem;
+  --type-meta-size: 0.82rem;
+  --type-button-size: 0.82rem;
+  --type-chip-size: 0.76rem;
 }
