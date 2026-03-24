@@ -1009,6 +1009,14 @@
   box-shadow: 0 4px 20px rgba(196, 113, 90, 0.28);
 }
 
+.ps-btn-primary,
+.ps-btn-secondary,
+.ps-guest-connect-wrap .mcg-btn {
+  white-space: normal;
+  text-wrap: balance;
+  line-height: 1.25;
+}
+
 .ps-btn-primary:hover:not(:disabled) {
   background: #d4826a;
   transform: translateY(-1px);
@@ -1096,6 +1104,65 @@
     background: rgba(10, 14, 19, 0.96);
     border-top: 1px solid rgba(212, 168, 75, 0.16);
     z-index: 10;
+  }
+
+  .ps-slot-pill {
+    white-space: normal;
+    text-align: center;
+    min-height: 34px;
+  }
+}
+
+@media (max-width: 680px) {
+  .stitch-packs-screen,
+  .stitch-packs-screen .packs-main-section,
+  .stitch-packs-screen .packs-main-header,
+  .stitch-pack-stage,
+  .stitch-pack-stage .ps-layout,
+  .stitch-pack-stage .ps-hero,
+  .stitch-pack-stage .ps-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .packs-main-header {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .packs-main-intro {
+    justify-self: start;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .ps-cta-block {
+    position: static;
+    border-top: 0;
+    padding: 0.95rem 1rem 1.05rem;
+  }
+
+  .ps-hero-rays {
+    inset: 0;
+  }
+
+  .ps-section,
+  .ps-price-block {
+    padding: 0.95rem 1rem;
+  }
+
+  .ps-odds-grid {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .stitch-pack-stage .ps-pack-name,
+  .stitch-pack-stage .ps-supply-counter,
+  .stitch-pack-stage .ps-rarity-label {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
 
@@ -2508,6 +2575,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .stitch-profile-screen .profile-showcase-visual-column {
+    grid-template-rows: minmax(220px, auto);
+  }
+
   .stitch-profile-screen .profile-showcase-progress-copy,
   .stitch-profile-screen .profile-showcase-actions {
     flex-wrap: wrap;
@@ -2518,6 +2589,12 @@
   .stitch-profile-screen .profile-showcase-progress-copy strong {
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+
+  .stitch-profile-screen .profile-showcase-actions .mcg-btn,
+  .stitch-profile-screen .profile-showcase-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -8659,6 +8736,24 @@ button.mcg-chip:hover {
   .mcg-modal-content {
     padding: 16px;
   }
+
+  .stitch-lineup-modal.bldr-modal {
+    width: min(100%, calc(100vw - 10px));
+    max-height: calc(100dvh - var(--nav-h) - 8px);
+  }
+
+  .stitch-lineup-modal .bldr-head,
+  .stitch-lineup-modal .bldr-controls,
+  .stitch-lineup-modal .bldr-active-slot-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-lineup-modal .bldr-search,
+  .stitch-lineup-modal .bldr-select,
+  .stitch-lineup-modal .bldr-pick-btn {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .home-hero-landing {
@@ -10624,6 +10719,10 @@ button.mcg-chip:hover {
   display: grid;
   gap: 1.25rem;
   padding-block: 0.5rem 2rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stitch-screen
@@ -12748,6 +12847,10 @@ button.mcg-chip:hover {
 .stitch-packs-screen .packs-main-section {
   gap: 1.5rem;
   padding: clamp(1.35rem, 2.8vw, 2rem);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 5px solid #111;
   border-radius: 36px;
   background:
