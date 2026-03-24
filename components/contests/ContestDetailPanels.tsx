@@ -673,11 +673,15 @@ export function LineupPanel({
   submitLabel,
 }: LineupPanelProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [modalActiveSlot, setModalActiveSlot] = useState<number>(activeSlot);
   const slotCountClass =
     rosterSize >= 6 ? "dense" : rosterSize === 5 ? "balanced" : "wide";
   const hasLineup = slotCards.some(Boolean);
   const canEditInline = embedded && isOpen && canInteract;
   const readyToSubmit = selectedCount === rosterSize;
+  const lineupSlots = slotCards.map((slot) => slot?.card.instanceId ?? null);
+  const firstEmptySlot = lineupSlots.findIndex((slot) => slot === null);
+  const nextSuggestedSlot = firstEmptySlot >= 0 ? firstEmptySlot : rosterSize - 1;
   const validationText = !canEditInline
     ? "You can edit your lineup until team lock."
     : !readyToSubmit
@@ -690,8 +694,16 @@ export function LineupPanel({
     }
   }, [canEditInline]);
 
+  useEffect(() => {
+    if (!pickerOpen) {
+      return;
+    }
+    setModalActiveSlot(nextSuggestedSlot);
+  }, [nextSuggestedSlot, pickerOpen]);
+
   const openPickerForSlot = (slotIndex: number) => {
     onOpenBuilder?.(slotIndex);
+    setModalActiveSlot(slotIndex);
     if (canEditInline) {
       setPickerOpen(true);
     }
@@ -860,14 +872,13 @@ export function LineupPanel({
           selectedIds={slotCards
             .map((slot) => slot?.card.instanceId ?? null)
             .filter((value): value is string => Boolean(value))}
-          lineupSlots={slotCards.map((slot) => slot?.card.instanceId ?? null)}
-          activeSlot={activeSlot}
+          lineupSlots={lineupSlots}
+          activeSlot={modalActiveSlot}
           rosterSize={rosterSize}
           canManage={canEditInline}
           selectedLogicalTokenKeys={selectedLogicalTokenKeys}
           onSelect={(instanceId) => {
-            onSelectCard?.(instanceId, activeSlot);
-            setPickerOpen(false);
+            onSelectCard?.(instanceId, modalActiveSlot);
           }}
           onClose={() => setPickerOpen(false)}
         />

@@ -14453,8 +14453,32 @@ button.mcg-chip:hover {
 .stitch-contest-detail-screen .contest-detail-lineup-grid,
 .stitch-contest-detail-screen .contest-detail-lineup-grid.dense,
 .stitch-contest-detail-screen .contest-detail-lineup-grid.wide {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .stitch-contest-detail-screen .contest-detail-lineup-grid,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.dense,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .stitch-contest-detail-screen .contest-detail-lineup-grid,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.dense,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .stitch-contest-detail-screen .contest-detail-lineup-grid,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.dense,
+  .stitch-contest-detail-screen .contest-detail-lineup-grid.wide {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stitch-contest-detail-screen .contest-detail-lineup-slot {

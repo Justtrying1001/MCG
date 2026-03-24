@@ -69,6 +69,8 @@ export function CardSelectorModal({
 
     return rows;
   }, [options, query, rarity, edition, token, sortMode]);
+  const selectedCount = selectedIds.length;
+  const nextSlotLabel = activeSlot !== null ? `Slot ${activeSlot + 1}` : "Next available slot";
 
   if (!open) return null;
 
@@ -77,8 +79,9 @@ export function CardSelectorModal({
       <div className="contest-modal team-builder-modal" role="dialog" aria-modal="true" aria-label="Select cards" onClick={(event) => event.stopPropagation()}>
         <div className="contest-modal-head">
           <div>
-            <h4>{activeSlot !== null ? `Adding to Slot ${activeSlot + 1}` : "Choose lineup card"}</h4>
-            <p className="contest-inline-note">{selectedIds.length} selected · {filtered.length} available</p>
+            <h4>{activeSlot !== null ? `Adding to ${nextSlotLabel}` : "Choose lineup card"}</h4>
+            <p className="contest-inline-note">{selectedCount} / {rosterSize} selected · Next fill: {nextSlotLabel}</p>
+            <p className="contest-inline-note">Cards stay selected while this picker remains open.</p>
           </div>
           <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
         </div>
