@@ -60,7 +60,7 @@ export function ContestPremiumCard({ contest, nowTs }: { contest: ContestListIte
             <span><b>Participants</b>{contest._count.entries}</span>
             <span><b>Lineup</b>{rosterSize} cards</span>
             <span><b>Your status</b>{userState}</span>
-            <span><b>League</b>{contest.leagueTierRequired ?? "OPEN"}</span>
+            <span><b>League</b>{contest.leagueTierRequired ?? "Open to all"}</span>
           </div>
 
           <div className="contest-premium-footer">

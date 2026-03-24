@@ -89,7 +89,7 @@ function getGroupCta(group: ContestCardGroup, contest: ContestListItem) {
   }
 
   if (group === "upcoming") {
-    return contest.userEntry ? "Lineup" : "Register";
+    return contest.userEntry ? "Lineup" : "Enter battle";
   }
 
   return "Open";
@@ -126,7 +126,7 @@ function getTimingLabel(
 }
 
 function getLeagueTierLabel(contest: ContestListItem) {
-  return contest.leagueTierRequired ?? "OPEN";
+  return contest.leagueTierRequired ?? "Open to all";
 }
 
 function getContestImage(contest: ContestListItem) {

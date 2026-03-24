@@ -215,7 +215,7 @@ export default function CollectionPage() {
         <section className="memedex-gallery-stage">
           <div className="memedex-gallery-head">
             <div className="memedex-gallery-title-wrap">
-              <h2 className="memedex-gallery-title">Collectible Slots</h2>
+              <h2 className="memedex-gallery-title">Your Memedex</h2>
               <p className="memedex-gallery-copy">
                 Browse your Memedex like a collectible binder with compact tools
                 and the cards front and center.
@@ -225,7 +225,7 @@ export default function CollectionPage() {
               <span>Showing {shownCount}</span>
               <span>
                 {me
-                  ? `${Math.min(shownCount, ownedTemplates).toLocaleString()} preview cards`
+                  ? `${Math.min(shownCount, ownedTemplates).toLocaleString()} cards`
                   : `${guestUnique} preview cards`}
               </span>
             </div>
@@ -331,7 +331,7 @@ export default function CollectionPage() {
           ) : !useMvpCollection ? (
             <EmptyState
               title="Memedex data unavailable"
-              description="Refresh your session and verify the Memedex payload."
+              description="Try refreshing the page."
             />
           ) : visibleCards.length > 0 || ownershipFilter === "missing" ? (
             <CardGrid

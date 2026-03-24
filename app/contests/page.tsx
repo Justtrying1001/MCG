@@ -21,14 +21,14 @@ function getZoneTone(group: LobbyGroupKey) {
 function getSectionEmptyState(group: LobbyGroupKey) {
   if (group === "active") {
     return {
-      title: "No battles live right now",
-      description: "New tournaments are coming soon.",
+      title: "No battles in progress right now",
+      description: "New battles are coming soon.",
     };
   }
 
   if (group === "upcoming") {
     return {
-      title: "No upcoming battles right now",
+      title: "No open battles right now",
       description:
         "Fresh lobbies will appear here when the next battle wave opens.",
     };
@@ -189,7 +189,7 @@ export default function ContestsPage() {
                 <strong>{computed.active}</strong>
               </div>
               <div className="contest-lobby-hero-stat tone-open">
-                <span>Upcoming</span>
+                <span>Open now</span>
                 <strong>{computed.upcoming}</strong>
               </div>
               <div className="contest-lobby-hero-stat tone-completed">
@@ -267,16 +267,16 @@ export default function ContestsPage() {
               [
                 {
                   key: "active",
-                  title: "Active battles",
+                  title: "In progress",
                   subtitle:
                     "The loudest rooms in the arena. Track live battles and locked entries already in motion.",
                   contests: groupedContests.active,
                 },
                 {
                   key: "upcoming",
-                  title: "Upcoming battles",
+                  title: "Open now",
                   subtitle:
-                    "Plan ahead, tune your lineup, and grab your seat before team lock.",
+                    "Entries are open — build your lineup and lock in before the battle starts.",
                   contests: groupedContests.upcoming,
                 },
                 {
@@ -306,7 +306,7 @@ export default function ContestsPage() {
                         {section.key === "active"
                           ? "Live now"
                           : section.key === "upcoming"
-                            ? "Starting soon"
+                            ? "Enter now"
                             : "Past results"}
                       </span>
                       <strong>{section.title}</strong>

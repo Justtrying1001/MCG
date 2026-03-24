@@ -288,7 +288,7 @@ export function HeroPanel({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  How contests work →
+                  How battles work →
                 </a>
               </div>
             ) : null}
@@ -679,7 +679,7 @@ export function LineupPanel({
   const canEditInline = embedded && isOpen && canInteract;
   const readyToSubmit = selectedCount === rosterSize;
   const validationText = !canEditInline
-    ? "Lineup can only be edited while the battle is OPEN."
+    ? "You can edit your lineup until team lock."
     : !readyToSubmit
       ? `Select ${rosterSize - selectedCount} more card${rosterSize - selectedCount === 1 ? "" : "s"} to finish your lineup.`
       : "Lineup valid and ready to submit.";

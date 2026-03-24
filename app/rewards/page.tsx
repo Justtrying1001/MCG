@@ -10,6 +10,7 @@ import {
   getMilestoneObjectiveText,
   type MilestoneType,
 } from "@/lib/domain/quests/social";
+import { formatQuestAction } from "@/lib/utils/questLabels";
 
 import styles from "./rewards.module.css";
 
@@ -136,15 +137,7 @@ function getQuestTypeLabel(quest: QuestRow) {
   const raw =
     quest.configSummary.socialAction ??
     (quest.type === "SOCIAL_FOLLOW_X" ? "Follow" : "Social quest");
-
-  const upper = raw.toUpperCase();
-  if (upper.includes("COMMENT")) return "COMMENT";
-  if (upper.includes("LIKE")) return "LIKE";
-  if (upper.includes("RETWEET") || upper === "RT" || upper.includes("REPOST")) {
-    return "RT";
-  }
-  if (upper.includes("FOLLOW")) return "FOLLOW";
-  return upper;
+  return formatQuestAction(raw);
 }
 
 function getQuestFlavorText(quest: QuestRow) {
