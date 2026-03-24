@@ -13443,6 +13443,25 @@ button.mcg-chip:hover {
   box-shadow: var(--shadow-hard-sm);
 }
 
+.profile-settings-section__heading {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-settings-section__heading .mcg-eyebrow {
+  width: fit-content;
+  margin: 0;
+}
+
+.profile-settings-section__heading strong {
+  line-height: 1.1;
+}
+
+.profile-settings-section__helper {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
 .profile-handle-field {
   display: grid;
   gap: 8px;
@@ -13480,11 +13499,33 @@ button.mcg-chip:hover {
   border: 3px solid var(--color-ink);
   border-radius: 20px;
   background: white;
+  gap: 14px;
 }
 
-.profile-identity-item > div {
+.profile-identity-item__content {
+  min-width: 0;
   display: grid;
   gap: 6px;
+}
+
+.profile-identity-item__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-identity-item__topline .mcg-eyebrow {
+  margin: 0;
+  width: fit-content;
+}
+
+.profile-identity-item__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .profile-wallet-card__feedback {
@@ -13505,6 +13546,11 @@ button.mcg-chip:hover {
   .profile-settings-section__header,
   .profile-identity-item {
     flex-direction: column;
+  }
+
+  .profile-identity-item__actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
