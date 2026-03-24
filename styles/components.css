@@ -7917,7 +7917,8 @@ textarea:focus {
 }
 
 .mcg-brand {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 12px;
   color: var(--color-text-inverse);
@@ -7925,11 +7926,13 @@ textarea:focus {
 
 .mcg-brand-mark {
   min-width: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 44px;
-  padding: 0 12px;
+  padding: 4px 12px;
   border-radius: var(--radius-pill);
-  display: grid;
-  place-items: center;
   background: var(--color-brand-yellow);
   color: var(--color-ink);
   border: 3px solid var(--color-ink);
@@ -8588,7 +8591,7 @@ button.mcg-chip:hover {
   }
 
   .mcg-topnav-inner {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .mcg-auth {
