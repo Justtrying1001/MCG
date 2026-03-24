@@ -11,6 +11,7 @@ import {
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { hasDuplicateLogicalTokens } from "@/lib/domain/contests/lineup-token";
+import { grantXp } from "@/lib/domain/progression/xp-engine";
 
 const DEFAULT_LINEUP_SIZE = 5;
 const TEAM_SIZE_MODE_EXACT = "EXACT";
@@ -354,6 +355,7 @@ export async function enterContestMvp(params: {
 
     if (!existingEntry) {
       await applyContestEntryQuestProgressionTx(tx, params.userId);
+      await grantXp(tx, params.userId, "BATTLE_ENTERED");
     }
 
     return { contestId: params.contestId, entry };

@@ -14,6 +14,7 @@ import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { creditPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
 import type { MilestoneType } from "@/lib/domain/quests/social";
+import { grantXp } from "@/lib/domain/progression/xp-engine";
 
 export class QuestRuntimeError extends Error {
   status: number;
@@ -143,6 +144,14 @@ async function grantQuestRewardsTx(
     submissionId?: string;
   },
 ) {
+  await grantXp(
+    tx,
+    params.userId,
+    params.trigger.startsWith("milestone_")
+      ? "MILESTONE_COMPLETED"
+      : "QUEST_COMPLETED",
+  );
+
   if (params.rewardPoints > 0) {
     await creditPointsWithLedger(tx, {
       userId: params.userId,
@@ -617,6 +626,7 @@ async function applyAutoMilestoneQuestProgressionTx(
       },
     });
 
+    let justCompleted = false;
     if (!existing) {
       const status = reached
         ? UserQuestStatus.COMPLETED
@@ -636,6 +646,7 @@ async function applyAutoMilestoneQuestProgressionTx(
           claimedAt,
         },
       });
+      justCompleted = reached;
     } else {
       const nextProgress = Math.max(existing.progressValue, progressMetric);
 
@@ -656,6 +667,7 @@ async function applyAutoMilestoneQuestProgressionTx(
             claimedAt: existing.claimedAt ?? now,
           },
         });
+        justCompleted = true;
       } else {
         await tx.userQuestProgress.update({
           where: { id: existing.id },
@@ -670,7 +682,7 @@ async function applyAutoMilestoneQuestProgressionTx(
       }
     }
 
-    if (reached) {
+    if (reached && justCompleted) {
       await grantQuestRewardsTx(tx, {
         userId,
         questId: quest.id,

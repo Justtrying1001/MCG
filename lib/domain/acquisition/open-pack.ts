@@ -15,6 +15,7 @@ import { LedgerConventions } from "@/lib/domain/rewards/conventions";
 import { debitPointsWithLedger } from "@/lib/domain/rewards/ledger";
 import { applyContestEntryQuestProgressionTx } from "@/lib/domain/quests/runtime";
 import { assertPackPurchaseAllowed, getPackPurchaseLimitStatus, type PackPurchaseLimitStatus } from "@/lib/domain/acquisition/purchase-limit";
+import { grantXp } from "@/lib/domain/progression/xp-engine";
 
 const MAX_DRAW_ATTEMPTS_PER_CARD = 20;
 
@@ -379,6 +380,7 @@ async function openPackByCodeDbNative(params: {
     }
 
     await applyContestEntryQuestProgressionTx(tx, params.userId);
+    await grantXp(tx, params.userId, "PACK_OPENED");
 
     const purchaseLimit = pack.source === PackSource.SALE
       ? await getPackPurchaseLimitStatus({ userId: params.userId, tx })
@@ -491,6 +493,7 @@ export async function claimRewardPackGrantDbNative(params: {
     });
 
     await applyContestEntryQuestProgressionTx(tx, params.userId);
+    await grantXp(tx, params.userId, "PACK_OPENED");
 
     return {
       packCode: pack.code,

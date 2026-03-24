@@ -18,18 +18,11 @@ describe("profile progression model v2", () => {
 
   it("builds xp from weighted profile pillars", () => {
     const summary = buildAccountProgressionSummary({
+      xp: 1520,
+      level: 6,
       points: 1000,
-      ownedTemplateCount: 50,
-      settledEntries: 4,
-      contestsWon: 1,
-      bestRank: 2,
-      legacyXp: 200,
     });
 
-    expect(summary.progressionBreakdown.pointsXp).toBe(350);
-    expect(summary.progressionBreakdown.collectionXp).toBe(600);
-    expect(summary.progressionBreakdown.competitiveXp).toBe(370);
-    expect(summary.progressionBreakdown.legacyXp).toBe(200);
     expect(summary.xp).toBe(1520);
     expect(summary.level).toBe(levelFromXp(summary.xp));
     expect(summary.levelXpFloor).toBeLessThan(summary.xp);

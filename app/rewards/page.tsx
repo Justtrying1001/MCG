@@ -382,17 +382,14 @@ export default function RewardsPage() {
   const lastUnlockedMilestone = unlockedMilestones[0] ?? null;
   const secondaryMilestones = milestoneCards.filter(({ quest }) => quest.id !== lastUnlockedMilestone?.quest.id);
 
-  const pointsEarned = ledger
-    .filter((entry) => entry.entryType === "CREDIT")
-    .reduce((sum, entry) => sum + entry.amount, 0);
+  const accountProgression = me?.coexistence?.v2?.accountProgression;
   const currentPoints = me?.user.points ?? 0;
-  const currentLevel = Math.max(1, Math.floor(currentPoints / 500) + 1);
-  const currentLevelFloor = Math.floor(currentPoints / 500) * 500;
-  const nextLevelPoints = currentLevelFloor + 500;
-  const levelProgress = Math.max(
-    0,
-    Math.min(1, (currentPoints - currentLevelFloor) / 500),
-  );
+  const currentLevel = accountProgression?.level ?? 1;
+  const currentXp = accountProgression?.xp ?? 0;
+  const levelXpFloor = accountProgression?.levelXpFloor ?? 0;
+  const levelXpCeil = accountProgression?.levelXpCeil ?? 100;
+  const progressPct = accountProgression?.progressPct ?? 0;
+  const levelProgress = Math.max(0, Math.min(progressPct / 100, 1));
 
   const lastMilestoneReward = lastUnlockedMilestone ? formatReward(lastUnlockedMilestone.quest) : null;
 
@@ -436,7 +433,7 @@ export default function RewardsPage() {
                 </div>
                 <div className={styles.heroStats}>
                   <div className={styles.heroStatCard}>
-                    <span className={styles.statLabel}>Current XP</span>
+                    <span className={styles.statLabel}>Points balance</span>
                     <strong className={styles.statValue}>{currentPoints.toLocaleString()}</strong>
                   </div>
                   <div className={styles.heroStatCard}>
@@ -444,8 +441,8 @@ export default function RewardsPage() {
                     <strong className={styles.statValue}>{currentLevel}</strong>
                   </div>
                   <div className={styles.heroStatCard}>
-                    <span className={styles.statLabel}>Total earned</span>
-                    <strong className={styles.statValue}>{pointsEarned.toLocaleString()}</strong>
+                    <span className={styles.statLabel}>Total XP</span>
+                    <strong className={styles.statValue}>{currentXp.toLocaleString()}</strong>
                   </div>
                 </div>
               </div>
@@ -454,7 +451,7 @@ export default function RewardsPage() {
                 <div>
                   <p className={styles.levelLabel}>XP progress</p>
                   <p className={styles.levelMeta}>
-                    {Math.max(nextLevelPoints - currentPoints, 0).toLocaleString()} XP to Level {currentLevel + 1}
+                    {Math.max(levelXpCeil - currentXp, 0).toLocaleString()} XP to Level {currentLevel + 1}
                   </p>
                 </div>
                 <div className={styles.heroTrackWrap}>
@@ -465,8 +462,8 @@ export default function RewardsPage() {
                     />
                   </div>
                   <div className={styles.heroProgressTicks}>
-                    <span>{currentLevelFloor.toLocaleString()} XP</span>
-                    <span>{nextLevelPoints.toLocaleString()} XP</span>
+                    <span>{levelXpFloor.toLocaleString()} XP</span>
+                    <span>{levelXpCeil.toLocaleString()} XP</span>
                   </div>
                 </div>
               </div>
