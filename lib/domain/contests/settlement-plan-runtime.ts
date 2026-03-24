@@ -6,6 +6,7 @@ import type { ContestRewardConfig } from "@/lib/domain/contests/reward-distribut
 import { buildContestRewardPlanItems, type RewardPlanBundleLike, type RewardPlanRuleLike, type ResolvedRewardComponent } from "@/lib/domain/contests/reward-plan";
 import { prisma } from "@/lib/prisma";
 import { grantRewardPackByDefinitionTx } from "@/lib/domain/acquisition/open-pack";
+import { grantXp } from "@/lib/domain/progression/xp-engine";
 
 const SETTLEMENT_PLAN_STATUS = {
   DRAFT: "DRAFT",
@@ -311,6 +312,30 @@ export async function executeSettlementPlan(planId: string, options?: ExecuteSet
       await tx.contest.update({ where: { id: plan.contestId }, data: { status: ContestStatus.SETTLED } });
     }
     await tx.contestEntry.updateMany({ where: { contestId: plan.contestId }, data: { status: ContestEntryStatus.SETTLED } });
+
+    const [settledParticipants, rankings] = await Promise.all([
+      tx.contestEntry.findMany({
+        where: { contestId: plan.contestId },
+        select: { userId: true },
+        distinct: ["userId"],
+      }),
+      tx.contestRanking.findMany({
+        where: { contestId: plan.contestId },
+        select: { userId: true, rank: true },
+      }),
+    ]);
+    const rankByUserId = new Map(rankings.map((row) => [row.userId, row.rank]));
+
+    for (const participant of settledParticipants) {
+      await grantXp(tx, participant.userId, "BATTLE_SETTLED");
+      const rank = rankByUserId.get(participant.userId);
+      if (rank === 1) {
+        await grantXp(tx, participant.userId, "BATTLE_WON");
+      }
+      if (typeof rank === "number" && rank <= 3) {
+        await grantXp(tx, participant.userId, "BATTLE_PODIUM");
+      }
+    }
 
     await tx.contestSettlementPlan.update({
       where: { id: plan.id },

@@ -47,6 +47,7 @@ type InMemoryState = {
   ledgerEntries: Array<{ id: string; userId: string; entryType: string; amount: number; reasonType: string; idempotencyKey: string | null }>
   rewardSupply: { id: string; totalSupply: number; distributed: number; lastUpdatedAt: Date } | null;
   runtimeConfig: { key: string; value: { enabled: boolean; maxPurchasesPer24h: number } } | null;
+  userProgression: { userId: string; xp: number; level: number } | null;
 };
 
 function createTx(state: InMemoryState) {
@@ -170,6 +171,24 @@ function createTx(state: InMemoryState) {
         state.ownedInstances.push({ id: `oci_${state.ownedInstances.length + 1}`, ...data });
       }),
     },
+    userProgression: {
+      upsert: vi.fn(async ({ where, create, update, select }: any) => {
+        if (!state.userProgression || state.userProgression.userId !== where.userId) {
+          state.userProgression = { ...create };
+        } else if (update?.xp?.increment) {
+          state.userProgression.xp += update.xp.increment;
+        }
+        if (select?.xp) return { xp: state.userProgression.xp };
+        return state.userProgression;
+      }),
+      update: vi.fn(async ({ where, data }: any) => {
+        if (!state.userProgression || state.userProgression.userId !== where.userId) {
+          throw new Error("User progression not found");
+        }
+        state.userProgression.level = data.level;
+        return state.userProgression;
+      }),
+    },
   };
 }
 
@@ -188,6 +207,7 @@ function createState(overrides?: Partial<InMemoryState>): InMemoryState {
     ledgerEntries: [],
     rewardSupply: null,
     runtimeConfig: { key: "pack_purchase_limit", value: { enabled: true, maxPurchasesPer24h: 5 } },
+    userProgression: null,
     ...overrides,
   };
 }
@@ -277,12 +297,13 @@ describe("openSalePackMvpDbNative", () => {
   });
 
   it("blocks sale purchase once the rolling 24h limit is reached", async () => {
+    const now = new Date();
     const state = createState({
       openingEvents: new Array(5).fill(null).map((_, index) => ({
         id: `evt_seed_${index + 1}`,
         userId: "u1",
         packDefinitionId: "p1",
-        openedAt: new Date(`2026-03-19T0${index}:00:00.000Z`),
+        openedAt: new Date(now.getTime() - (index + 1) * 60 * 60 * 1000),
       })),
     });
     prismaTransactionMock.mockImplementation(async (fn: any) => fn(createTx(state), {}));
