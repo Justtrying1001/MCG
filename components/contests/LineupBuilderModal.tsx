@@ -55,7 +55,6 @@ export function LineupBuilderModal({
   onClose,
   onSelectCard,
   onSelectSlot,
-  onRemoveSlot,
   onSaveDraft,
   onSubmit,
   flashMessage,
@@ -73,10 +72,6 @@ export function LineupBuilderModal({
     () => new Map(options.map((item) => [item.instanceId, item])),
     [options],
   );
-  const activeCard = lineupSlots[activeSlot]
-    ? optionById.get(lineupSlots[activeSlot] as string) ?? null
-    : null;
-
   useEffect(() => {
     if (!open) return;
     const firstEmpty = lineupSlots.findIndex((slot) => slot === null);
@@ -108,7 +103,7 @@ export function LineupBuilderModal({
           if (nextEmpty >= 0) {
             setActiveSlot(nextEmpty);
             onSelectSlot(nextEmpty);
-            setPickerOpen(true);
+            setPickerOpen(false);
           } else {
             setActiveSlot(i);
             onSelectSlot(i);
@@ -185,42 +180,6 @@ export function LineupBuilderModal({
               </div>
             </div>
 
-            <div className="bldr-active-slot-banner" aria-live="polite">
-              <div>
-                <span className="bldr-active-slot-label">
-                  Active slot {activeSlot + 1}
-                </span>
-                <strong>
-                  {activeCard ? `Active: ${activeCard.name}` : "Active slot ready for a card"}
-                </strong>
-                <p>
-                  {canEdit
-                    ? "Choose any available card below to fill this slot now."
-                    : "Lineup editing is unavailable once the contest is no longer OPEN."}
-                </p>
-              </div>
-              {canEdit ? (
-                <div className="bldr-active-slot-actions">
-                  <button
-                    type="button"
-                    className="mcg-btn ghost"
-                    onClick={() => setPickerOpen((prev) => !prev)}
-                  >
-                    {pickerOpen ? "Hide picker" : activeCard ? "Replace card" : "Browse cards"}
-                  </button>
-                  {activeCard ? (
-                    <button
-                      type="button"
-                      className="mcg-btn ghost"
-                      onClick={() => onRemoveSlot(activeSlot)}
-                    >
-                      Remove card
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-
             <div className="bldr-selected-tray">
               {Array.from({ length: rosterSize }).map((_, index) => {
                 const instanceId = lineupSlots[index];
@@ -276,7 +235,10 @@ export function LineupBuilderModal({
               options={options}
               rosterSize={rosterSize}
               selectedLogicalTokenKeys={selectedLogicalTokenKeys}
-              onPick={(instanceId) => onSelectCard(instanceId, activeSlot)}
+              onPick={(instanceId) => {
+                onSelectCard(instanceId, activeSlot);
+                setPickerOpen(false);
+              }}
             />
           ) : null}
         </div>

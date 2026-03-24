@@ -152,19 +152,7 @@ export function LineupCardPicker({
                   <span className="bldr-chip selected">
                     Selected · Slot {slotIndex + 1}
                   </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="mcg-btn primary bldr-pick-btn"
-                    disabled={isUnavailable}
-                    onClick={() => {
-                      if (isUnavailable) return;
-                      onPick(item.instanceId);
-                    }}
-                  >
-                    Add to slot {activeSlot + 1}
-                  </button>
-                )}
+                ) : null}
                 {item.isLockedByActiveContest ? (
                   <span className="bldr-chip warn">
                     Unavailable: locked in active contest

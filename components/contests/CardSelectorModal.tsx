@@ -73,7 +73,7 @@ export function CardSelectorModal({
   if (!open) return null;
 
   return (
-    <div className="contest-modal-overlay" role="presentation" onClick={onClose}>
+    <div className="contest-modal-overlay team-builder-overlay" role="presentation" onClick={onClose}>
       <div className="contest-modal team-builder-modal" role="dialog" aria-modal="true" aria-label="Select cards" onClick={(event) => event.stopPropagation()}>
         <div className="contest-modal-head">
           <div>
@@ -141,13 +141,6 @@ export function CardSelectorModal({
                     ) : isLocked ? (
                       <span className="contest-inline-note">Locked in another active contest</span>
                     ) : null}
-                    <Button
-                      type="button"
-                      onClick={() => onSelect(item.instanceId)}
-                      disabled={disabled}
-                    >
-                      {activeSlot !== null ? `Add to slot ${activeSlot + 1}` : "Add to lineup"}
-                    </Button>
                   </div>
                 </div>
               );

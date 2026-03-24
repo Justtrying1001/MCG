@@ -676,7 +676,6 @@ export function LineupPanel({
   const slotCountClass =
     rosterSize >= 6 ? "dense" : rosterSize === 5 ? "balanced" : "wide";
   const hasLineup = slotCards.some(Boolean);
-  const activeSlotCard = slotCards[activeSlot] ?? null;
   const canEditInline = embedded && isOpen && canInteract;
   const readyToSubmit = selectedCount === rosterSize;
   const validationText = !canEditInline
@@ -821,29 +820,6 @@ export function LineupPanel({
 
       {canEditInline ? (
         <div className="contest-detail-inline-builder">
-          <div className="contest-detail-inline-builder-banner" aria-live="polite">
-            <div>
-              <span className="contest-detail-inline-builder-label">
-                Active slot {activeSlot + 1}
-              </span>
-              <strong>
-                {activeSlotCard ? activeSlotCard.card.name : "Pick a card for this slot"}
-              </strong>
-              <p>
-                Tap a lineup slot to open the card picker for that position.
-              </p>
-            </div>
-            {activeSlotCard && onRemoveSlot ? (
-              <button
-                type="button"
-                className="mcg-btn ghost"
-                onClick={() => onRemoveSlot(activeSlot)}
-              >
-                Remove card
-              </button>
-            ) : null}
-          </div>
-
           <div className="contest-detail-inline-builder-footer">
             <div>
               <strong>
