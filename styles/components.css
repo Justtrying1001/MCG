@@ -8497,9 +8497,9 @@ button.mcg-chip:hover {
 .modal-head h3,
 .mcg-modal-title {
   font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-size: var(--type-h3-size);
+  font-weight: 800;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   color: var(--color-ink);
 }
@@ -10892,10 +10892,15 @@ button.mcg-chip:hover {
   background:
     radial-gradient(
       circle at top right,
-      rgba(255, 239, 85, 0.28),
-      transparent 30%
+      color-mix(in srgb, var(--mcg-pastel-gold) 42%, transparent),
+      transparent 34%
     ),
-    linear-gradient(135deg, #17e7ff 0%, #5e61ff 38%, #ff72b4 100%);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--mcg-pastel-cyan) 50%, var(--mcg-panel-primary)),
+      color-mix(in srgb, var(--mcg-pastel-lilac) 48%, var(--mcg-panel-primary)) 44%,
+      color-mix(in srgb, var(--mcg-pastel-pink) 44%, var(--mcg-panel-primary)) 100%
+    );
 }
 
 .stitch-contests-screen .contest-lobby-hero-copy {
@@ -10908,22 +10913,23 @@ button.mcg-chip:hover {
   width: fit-content;
   margin: 0;
   padding: 0.38rem 0.8rem;
-  border: 3px solid #111;
+  border: 3px solid var(--color-ink);
   border-radius: 999px;
-  background: #ffef55;
-  color: #111;
-  font-size: 0.76rem;
-  font-weight: 900;
+  background: var(--mcg-pastel-gold);
+  color: var(--color-ink);
+  font-family: var(--font-label);
+  font-size: var(--type-eyebrow-size);
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: 4px 4px 0 #111;
+  box-shadow: 4px 4px 0 var(--color-ink);
   transform: rotate(-2deg);
 }
 
 .stitch-contests-screen .contest-lobby-hero-description {
   max-width: 34rem;
-  color: rgba(17, 17, 17, 0.88);
-  font-size: 1rem;
+  color: var(--color-text-secondary);
+  font-size: var(--type-body-size);
   line-height: 1.45;
 }
 
@@ -10934,43 +10940,44 @@ button.mcg-chip:hover {
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat {
-  border: 3px solid #111;
+  border: 3px solid var(--color-ink);
   border-radius: 22px;
   padding: 0.95rem 1rem;
-  box-shadow: 6px 6px 0 #111;
-  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 6px 6px 0 var(--color-ink);
+  background: var(--mcg-panel-primary);
   display: grid;
   gap: 0.3rem;
-  color: #111;
+  color: var(--color-text-primary);
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat span,
 .stitch-contests-screen .contest-lobby-section-banner-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-size: 0.72rem;
-  font-weight: 900;
+  font-family: var(--font-label);
+  font-size: var(--type-eyebrow-size);
+  font-weight: 800;
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat strong {
-  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  font-size: var(--type-h3-size);
   line-height: 1;
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat.tone-live {
-  background: linear-gradient(180deg, #fff5c3 0%, #ffdca2 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-gold) 48%, var(--mcg-panel-primary));
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat.tone-open {
-  background: linear-gradient(180deg, #ffffff 0%, #d8fdff 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-cyan) 34%, var(--mcg-panel-primary));
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat.tone-completed {
-  background: linear-gradient(180deg, #fff7fc 0%, #ffdcec 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-pink) 34%, var(--mcg-panel-primary));
 }
 
 .stitch-contests-screen .contest-lobby-hero-stat.tone-players {
-  background: linear-gradient(180deg, #eef1ff 0%, #dfe6ff 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-lilac) 36%, var(--mcg-panel-primary));
 }
 
 .stitch-contests-screen .contest-lobby-map-sections {
@@ -10983,21 +10990,21 @@ button.mcg-chip:hover {
   display: grid;
   gap: 0.95rem;
   padding: 1.35rem;
-  border: 4px solid #111;
+  border: 4px solid var(--color-ink);
   border-radius: 32px;
-  box-shadow: 9px 9px 0 #111;
+  box-shadow: 9px 9px 0 var(--color-ink);
 }
 
 .stitch-contests-screen .contest-lobby-section.zone-active {
-  background: linear-gradient(180deg, #fff6cf 0%, #ffe3b0 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-gold) 28%, var(--mcg-panel-muted));
 }
 
 .stitch-contests-screen .contest-lobby-section.zone-upcoming {
-  background: linear-gradient(180deg, #f7feff 0%, #dff9ff 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-cyan) 24%, var(--mcg-panel-muted));
 }
 
 .stitch-contests-screen .contest-lobby-section.zone-completed {
-  background: linear-gradient(180deg, #fff7fc 0%, #ffdcec 100%);
+  background: color-mix(in srgb, var(--mcg-pastel-pink) 24%, var(--mcg-panel-muted));
 }
 
 .stitch-contests-screen .contest-lobby-section-banner {
@@ -11014,21 +11021,23 @@ button.mcg-chip:hover {
 }
 
 .stitch-contests-screen .contest-lobby-section-banner-copy strong {
-  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-family: var(--font-display);
+  font-size: var(--type-h2-size);
   line-height: 1;
   text-transform: uppercase;
-  color: #111;
+  color: var(--color-text-primary);
 }
 
 .stitch-contests-screen .contest-lobby-section-banner-badge {
-  border: 3px solid #111;
+  border: 3px solid var(--color-ink);
   border-radius: 999px;
-  background: #fff;
-  color: #111;
+  background: var(--mcg-panel-primary);
+  color: var(--color-ink);
   padding: 0.45rem 0.85rem;
-  box-shadow: 4px 4px 0 #111;
-  font-size: 0.76rem;
-  font-weight: 900;
+  box-shadow: 4px 4px 0 var(--color-ink);
+  font-family: var(--font-label);
+  font-size: var(--type-chip-size);
+  font-weight: 800;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -11063,10 +11072,10 @@ button.mcg-chip:hover {
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   gap: 1.1rem;
   padding: 1.1rem;
-  border: 4px solid #111;
+  border: 4px solid var(--color-ink);
   border-radius: 28px;
-  box-shadow: 8px 8px 0 #111;
-  background: linear-gradient(180deg, #fff 0%, #eef3ff 100%);
+  box-shadow: 8px 8px 0 var(--color-ink);
+  background: linear-gradient(180deg, var(--mcg-panel-primary) 0%, var(--mcg-panel-muted) 100%);
 }
 
 .stitch-contests-screen .contest-lobby-card-media {
@@ -11079,10 +11088,10 @@ button.mcg-chip:hover {
   min-height: 220px;
   object-fit: cover;
   display: block;
-  border: 4px solid #111;
+  border: 4px solid var(--color-ink);
   border-radius: 22px;
-  box-shadow: 6px 6px 0 #111;
-  background: #cdd5ff;
+  box-shadow: 6px 6px 0 var(--color-ink);
+  background: color-mix(in srgb, var(--mcg-pastel-lilac) 42%, var(--mcg-panel-secondary));
 }
 
 .stitch-contests-screen .contest-lobby-card-image-fallback {
@@ -11116,10 +11125,11 @@ button.mcg-chip:hover {
 }
 
 .stitch-contests-screen .contest-lobby-card h3 {
-  font-size: 1.45rem;
-  line-height: 1;
+  font-family: var(--font-display);
+  font-size: var(--type-h3-size);
+  line-height: 1.05;
   text-transform: uppercase;
-  color: #111;
+  color: var(--color-text-primary);
 }
 
 .stitch-contests-screen .contest-lobby-card-copy,
@@ -11151,15 +11161,15 @@ button.mcg-chip:hover {
   display: grid;
   gap: 0.22rem;
   padding: 0.72rem 0.78rem;
-  border: 2px solid #111;
+  border: 2px solid var(--color-ink);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 3px 3px 0 #111;
+  background: var(--mcg-panel-primary);
+  box-shadow: 3px 3px 0 var(--color-ink);
 }
 
 .stitch-contests-screen .contest-lobby-card-meta-item strong {
-  color: #111;
-  font-size: 0.96rem;
+  color: var(--color-text-primary);
+  font-size: var(--type-body-size);
   line-height: 1.25;
 }
 
@@ -11169,41 +11179,48 @@ button.mcg-chip:hover {
 }
 
 .stitch-contests-screen .contest-lobby-card-status-copy strong {
-  color: #111;
+  color: var(--color-text-primary);
 }
 
 .stitch-contests-screen .contest-lobby-card-reward {
-  border: 3px solid #111;
+  border: 3px solid var(--color-ink);
   border-radius: 18px;
-  background: linear-gradient(180deg, #fff4bb 0%, #ffe5a8 100%);
-  box-shadow: 4px 4px 0 #111;
+  background: color-mix(in srgb, var(--mcg-pastel-gold) 44%, var(--mcg-panel-primary));
+  box-shadow: 4px 4px 0 var(--color-ink);
 }
 
 .stitch-contests-screen .contest-lobby-card-reward-label,
 .stitch-contests-screen .contest-lobby-card-reward strong,
 .stitch-contests-screen .contest-lobby-card-reward-copy small {
-  color: #111;
+  color: var(--color-text-primary);
 }
 
 .stitch-contests-screen .contest-lobby-card-panel {
-  border: 3px solid #111;
+  border: 3px solid var(--color-ink);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 4px 4px 0 #111;
+  background: var(--mcg-panel-primary);
+  box-shadow: 4px 4px 0 var(--color-ink);
   padding: 0.8rem 0.85rem;
 }
 
 .stitch-contests-screen .contest-lobby-card-panel-highlight {
-  background: linear-gradient(180deg, #fff3b5 0%, #ffdfe8 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mcg-pastel-gold) 38%, var(--mcg-panel-primary)) 0%,
+    color-mix(in srgb, var(--mcg-pastel-pink) 30%, var(--mcg-panel-primary)) 100%
+  );
 }
 
 .stitch-contests-screen .contest-lobby-card-cta {
   min-width: 132px;
   justify-content: center;
-  border: 3px solid #111;
-  box-shadow: 4px 4px 0 #111;
-  background: #111;
-  color: #fff;
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  background: var(--mcg-pastel-lilac);
+  color: var(--color-text-primary);
+  font-family: var(--font-label);
+  font-size: var(--type-button-size);
+  font-weight: 800;
 }
 
 @media (max-width: 980px) {
@@ -13414,7 +13431,7 @@ button.mcg-chip:hover {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: white;
+  background: var(--mcg-panel-primary);
 }
 
 .profile-wallet-badge.is-linked,
@@ -13439,7 +13456,7 @@ button.mcg-chip:hover {
   padding: 18px;
   border: 3px solid var(--color-ink);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--color-surface-0) 92%, white);
+  background: var(--mcg-panel-primary);
   box-shadow: var(--shadow-hard-sm);
 }
 
@@ -13454,12 +13471,16 @@ button.mcg-chip:hover {
 }
 
 .profile-settings-section__heading strong {
+  font-family: var(--font-display);
+  font-size: var(--type-h3-size);
+  font-weight: 700;
   line-height: 1.1;
 }
 
 .profile-settings-section__helper {
   margin: 0;
   color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
 }
 
 .profile-handle-field {
@@ -13469,8 +13490,8 @@ button.mcg-chip:hover {
 
 .profile-handle-field span {
   font-family: var(--font-label);
-  font-size: 0.75rem;
-  font-weight: 900;
+  font-size: var(--type-eyebrow-size);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -13481,7 +13502,8 @@ button.mcg-chip:hover {
   border-radius: 16px;
   padding: 12px 14px;
   font: inherit;
-  background: white;
+  background: var(--mcg-panel-muted);
+  color: var(--color-text-primary);
 }
 
 .profile-settings-actions {
@@ -13498,7 +13520,7 @@ button.mcg-chip:hover {
   padding: 16px 18px;
   border: 3px solid var(--color-ink);
   border-radius: 20px;
-  background: white;
+  background: var(--mcg-panel-muted);
   gap: 14px;
 }
 
@@ -13531,6 +13553,7 @@ button.mcg-chip:hover {
 .profile-wallet-card__feedback {
   margin: 0;
   font-weight: 700;
+  font-size: var(--type-meta-size);
 }
 
 .profile-wallet-card__feedback.is-success {
