@@ -144,11 +144,11 @@ export default function AccountPage() {
   const battlesEnteredLabel =
     competitive && competitive.contestsEntered > 0
       ? competitive.contestsEntered.toLocaleString()
-      : "No battle participation yet";
+      : "—";
   const bestBattleFinishLabel =
     competitive?.bestRank != null
       ? `#${competitive.bestRank}`
-      : "No battle result yet";
+      : "—";
   const tagline = me
     ? completionPct !== null
       ? `${completionPct}% of the Memedex secured with ${collection?.totalOwnedInstances?.toLocaleString() ?? "0"} cards owned and ${unlockedMilestones.length} milestones unlocked.`
