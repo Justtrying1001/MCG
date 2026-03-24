@@ -160,18 +160,13 @@ export function LineupCardPicker({
                   }}
                 />
                 {isSelected ? (
-                  <span className="bldr-card-state-badge success">
-                    IN LINEUP · Slot {slotIndex + 1}
+                  <span className="bldr-card-state-badge slot">
+                    IN SLOT {slotIndex + 1}
                   </span>
                 ) : null}
                 {tokenAlreadyUsed ? (
-                  <span className="bldr-card-state-badge muted">
-                    Already used in this lineup
-                  </span>
-                ) : null}
-                {item.isLockedByActiveContest ? (
-                  <span className="bldr-card-state-badge muted">
-                    Locked in active contest
+                  <span className="bldr-card-state-badge used">
+                    ALREADY USED
                   </span>
                 ) : null}
               </article>
