@@ -10368,6 +10368,26 @@ button,
 }
 
 @media (max-width: 520px) {
+  .stitch-profile-screen.profile-account-layout {
+    width: 100%;
+    max-width: 100%;
+    padding-inline: 0.75rem;
+    overflow-x: clip;
+  }
+
+  .stitch-profile-screen .profile-account-shell,
+  .stitch-profile-screen .profile-account-sections,
+  .stitch-profile-screen .profile-showcase,
+  .stitch-profile-screen .profile-showcase-card-shell,
+  .stitch-profile-screen .profile-showcase-card-frame,
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-primary-column {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .memedex-filter-pills {
     grid-template-columns: 1fr;
   }
@@ -10414,6 +10434,13 @@ button,
   .profile-showcase-subtitle {
     line-height: 1.5;
     font-size: 0.86rem;
+    overflow-wrap: anywhere;
+  }
+
+  .profile-showcase-name,
+  .profile-showcase-progress-copy strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .profile-showcase-stat-grid {
