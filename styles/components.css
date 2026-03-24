@@ -13404,6 +13404,25 @@ button.mcg-chip:hover {
   gap: 16px;
 }
 
+.profile-header-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.profile-header-stack__top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-wallet-card__header h3 {
+  margin: 0;
+}
+
 .profile-wallet-badge,
 .profile-status-pill {
   border: 3px solid var(--color-ink);
@@ -13500,6 +13519,7 @@ button.mcg-chip:hover {
   border-radius: 20px;
   background: white;
   gap: 14px;
+  display: block;
 }
 
 .profile-identity-item__content {
@@ -13510,7 +13530,7 @@ button.mcg-chip:hover {
 
 .profile-identity-item__topline {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
@@ -13525,6 +13545,7 @@ button.mcg-chip:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -13543,8 +13564,7 @@ button.mcg-chip:hover {
 
 @media (max-width: 900px) {
   .profile-wallet-card__header,
-  .profile-settings-section__header,
-  .profile-identity-item {
+  .profile-settings-section__header {
     flex-direction: column;
   }
 
