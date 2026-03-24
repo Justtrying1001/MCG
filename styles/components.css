@@ -15230,6 +15230,19 @@ button.mcg-chip:hover {
     max-width: 100%;
   }
 
+  .stitch-landing-screen .home-hero-landing {
+    padding: 1rem;
+  }
+
+  .stitch-landing-screen .home-hero-content,
+  .stitch-landing-screen .home-hero-copy,
+  .stitch-landing-screen .home-hero-headline,
+  .stitch-landing-screen .home-hero-stage,
+  .stitch-landing-screen .home-hero-stage-frame {
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+
   .mcg-topnav {
     min-height: var(--nav-h);
   }
