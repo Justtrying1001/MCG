@@ -2553,8 +2553,12 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    inline-size: 100%;
   }
 
+  .stitch-profile-screen .profile-account-hero-grid,
+  .stitch-profile-screen .profile-account-main-grid,
   .stitch-profile-screen .profile-account-shell,
   .stitch-profile-screen .profile-showcase,
   .stitch-profile-screen .profile-showcase-card-shell,
@@ -2572,11 +2576,22 @@
 
   .stitch-profile-screen .profile-showcase-main-grid,
   .stitch-profile-screen .profile-showcase-stat-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .stitch-profile-screen .profile-showcase-visual-column {
     grid-template-rows: minmax(220px, auto);
+  }
+
+  .stitch-profile-screen .profile-showcase-primary-column {
+    padding-inline: 0;
+    overflow: hidden;
+  }
+
+  .stitch-profile-screen .profile-showcase-identity-copy {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .stitch-profile-screen .profile-showcase-progress-copy,
