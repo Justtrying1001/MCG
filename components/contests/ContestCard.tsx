@@ -12,7 +12,6 @@ import {
 import { getPhaseLabel } from "@/components/contests/contestLifecycle";
 import {
   formatCountdown,
-  formatDate,
   getTargetDate,
 } from "@/components/contests/contestUtils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -46,6 +45,33 @@ function getRewardHighlight(contest: ContestListItem, rosterSize: number) {
   );
 }
 
+function formatUtcTimestamp(value: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const formatted = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(date);
+  return `${formatted} UTC`;
+}
+
+function formatCountdownShort(targetDate: string | null, nowTs: number) {
+  if (!targetDate) return "Starts soon";
+  const diffMs = new Date(targetDate).getTime() - nowTs;
+  if (diffMs <= 0) return "Starting now";
+  const totalMinutes = Math.floor(diffMs / 60_000);
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `Starts in ${days}d ${hours}h`;
+  return `Starts in ${hours}h ${minutes}m`;
+}
+
 function toBadgeTone(status: ContestStatus) {
   if (status === "OPEN") return "open";
   if (status === "LIVE") return "live";
@@ -75,16 +101,18 @@ function getTimingLabel(
   nowTs: number,
 ) {
   if (group === "upcoming") {
+    const startsAt = contest.liveAt ?? contest.lockAt;
     return {
-      label: "Starts",
-      value: formatDate(contest.liveAt ?? contest.lockAt),
+      label: "Start",
+      value: formatCountdownShort(startsAt, nowTs),
+      secondary: formatUtcTimestamp(startsAt),
     };
   }
 
   if (group === "completed") {
     return {
       label: "Ended",
-      value: formatDate(contest.endsAt),
+      value: formatUtcTimestamp(contest.endsAt),
     };
   }
 
@@ -117,15 +145,21 @@ export function ContestCard({
   const rule = contest.rules[0];
   const rosterSize = rule?.maxRosterSize ?? 5;
   const rewardHighlight = getRewardHighlight(contest, rosterSize);
-  const timing = getTimingLabel(group, contest, nowTs);
   const bonusSummary = buildContestBonusRewardSummary(
     parseContestBonusRewards(rule?.config?.bonusRewards),
   );
+  const rewardMain = rewardHighlight.includes("·")
+    ? rewardHighlight.split("·")[1]?.trim() ?? rewardHighlight
+    : rewardHighlight;
+  const rewardSecondary = rewardHighlight.includes("·")
+    ? rewardHighlight.split("·")[0]?.trim() ?? null
+    : bonusSummary ?? `Top rewards for ${rosterSize}-card lineups`;
+  const timing = getTimingLabel(group, contest, nowTs);
   const ctaLabel = getGroupCta(group, contest);
   const contestImage = getContestImage(contest);
   const phaseLabel = getPhaseLabel(contest.status);
   const detailItems = [
-    { label: timing.label, value: timing.value },
+    { label: timing.label, value: timing.value, secondary: timing.secondary },
     { label: "Entry", value: getEntryLabel(rule) },
     {
       label: "Players",
@@ -176,6 +210,11 @@ export function ContestCard({
             <div key={item.label} className="contest-lobby-card-meta-item">
               <span>{item.label}</span>
               <strong>{item.value}</strong>
+              {item.secondary ? (
+                <small className="contest-lobby-card-meta-secondary">
+                  {item.secondary}
+                </small>
+              ) : null}
             </div>
           ))}
         </div>
@@ -185,7 +224,10 @@ export function ContestCard({
           aria-label={`Reward summary for ${contest.title}`}
         >
           <span className="contest-lobby-card-reward-label">Reward</span>
-          <strong>{rewardHighlight}</strong>
+          <div className="contest-lobby-card-reward-copy">
+            <strong>{rewardMain}</strong>
+            <small>{rewardSecondary}</small>
+          </div>
         </div>
 
         <div className="contest-lobby-card-footer">
