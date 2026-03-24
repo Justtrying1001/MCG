@@ -13510,7 +13510,8 @@ button.mcg-chip:hover {
 
 .profile-identity-grid {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .profile-identity-item {
@@ -13518,21 +13519,25 @@ button.mcg-chip:hover {
   border: 3px solid var(--color-ink);
   border-radius: 20px;
   background: white;
-  gap: 14px;
-  display: block;
+  min-height: 190px;
 }
 
 .profile-identity-item__content {
   min-width: 0;
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.profile-identity-item__row {
+  min-width: 0;
 }
 
 .profile-identity-item__topline {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -13545,8 +13550,47 @@ button.mcg-chip:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-left: auto;
-  flex-shrink: 0;
+  min-width: 0;
+}
+
+.profile-identity-item__actions .btn-sm {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.profile-identity-item .profile-status-pill {
+  width: fit-content;
+  justify-self: flex-start;
+  align-self: flex-start;
+  padding: 4px 10px;
+  font-size: 0.64rem;
+  line-height: 1;
+}
+
+.profile-identity-item__main-value {
+  margin: 0;
+  min-width: 0;
+  font-size: clamp(1rem, 1.2vw, 1.12rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-identity-item__helper {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.profile-identity-item__helper--wallet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .profile-wallet-card__feedback {
@@ -13568,9 +13612,12 @@ button.mcg-chip:hover {
     flex-direction: column;
   }
 
+  .profile-identity-grid {
+    grid-template-columns: 1fr;
+  }
+
   .profile-identity-item__actions {
-    width: 100%;
-    justify-content: flex-start;
+    justify-content: flex-end;
   }
 }
 

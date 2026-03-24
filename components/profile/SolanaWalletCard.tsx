@@ -213,7 +213,7 @@ export function SolanaWalletCard() {
         <div className="profile-identity-grid">
           <div className="profile-identity-item">
             <div className="profile-identity-item__content">
-              <div className="profile-identity-item__topline">
+              <div className="profile-identity-item__row profile-identity-item__topline">
                 <p className="mcg-eyebrow">X connection</p>
                 <div className="profile-identity-item__actions">
                   <Button
@@ -222,15 +222,17 @@ export function SolanaWalletCard() {
                     disabled={!ready || !authenticated || isLinkingTwitter || isLinkingWallet}
                     onClick={handleLinkTwitter}
                   >
-                    {isLinkingTwitter ? "Linking X…" : hasTwitter ? "Change X account" : "Link X account"}
+                    {isLinkingTwitter ? "LINKING X…" : hasTwitter ? "CHANGE X ACCOUNT" : "LINK X ACCOUNT"}
                   </Button>
                 </div>
               </div>
-              <span className={`profile-status-pill ${hasTwitter ? "is-linked" : "is-missing"}`}>
-                {hasTwitter ? "linked" : "unlinked"}
+              <span className={`profile-status-pill profile-identity-item__row ${hasTwitter ? "is-linked" : "is-missing"}`}>
+                {hasTwitter ? "LINKED" : "UNLINKED"}
               </span>
-              <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}</strong>
-              <span>
+              <strong className="profile-identity-item__main-value">
+                {hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}
+              </strong>
+              <span className="profile-identity-item__helper">
                 {hasTwitter
                   ? "This X account is currently linked to your profile."
                   : "Link an X account to connect your social identity."}
@@ -240,7 +242,7 @@ export function SolanaWalletCard() {
 
           <div className="profile-identity-item">
             <div className="profile-identity-item__content">
-              <div className="profile-identity-item__topline">
+              <div className="profile-identity-item__row profile-identity-item__topline">
                 <p className="mcg-eyebrow">Wallet connection</p>
                 <div className="profile-identity-item__actions">
                   <Button
@@ -249,22 +251,24 @@ export function SolanaWalletCard() {
                     disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
                     onClick={handleLinkWallet}
                   >
-                    {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Change wallet" : "Link wallet"}
+                    {isLinkingWallet ? "LINKING WALLET…" : hasWallet ? "CHANGE WALLET" : "LINK WALLET"}
                   </Button>
                 </div>
               </div>
-              <span className={`profile-status-pill ${hasWallet ? "is-linked" : "is-missing"}`}>
-                {hasWallet ? "linked" : "unlinked"}
+              <span className={`profile-status-pill profile-identity-item__row ${hasWallet ? "is-linked" : "is-missing"}`}>
+                {hasWallet ? "LINKED" : "UNLINKED"}
               </span>
               {primaryWallet ? (
                 <>
-                  <strong>{primaryWalletShort}</strong>
-                  <span>Connected wallet: {primaryWallet.address}</span>
+                  <strong className="profile-identity-item__main-value">{primaryWalletShort}</strong>
+                  <span className="profile-identity-item__helper profile-identity-item__helper--wallet">
+                    Connected wallet: {primaryWallet.address}
+                  </span>
                 </>
               ) : (
                 <>
-                  <strong>Wallet not linked</strong>
-                  <span>Link a Solana wallet to complete your account setup.</span>
+                  <strong className="profile-identity-item__main-value">Wallet not linked</strong>
+                  <span className="profile-identity-item__helper">Link a Solana wallet to complete your account setup.</span>
                 </>
               )}
             </div>
