@@ -238,7 +238,7 @@ export default function HomePage() {
           <section className="home-lobby-main-grid" aria-label="Main actions">
             <div className="home-lobby-card home-lobby-card--battle">
               <div className="home-lobby-card-head">
-                <span className="home-lobby-card-kicker">Primary mode</span>
+                <span className="home-lobby-card-kicker">Battle mode</span>
                 <span className="home-lobby-status-badge">{battleContest ? getBattleStatusLabel(battleContest.status) : "Ready"}</span>
               </div>
               <div className="home-lobby-card-hero home-lobby-card-hero--battle">
@@ -254,7 +254,7 @@ export default function HomePage() {
               <div className="home-lobby-battle-status-row">
                 <div className="home-lobby-battle-status-chip">
                   <span>Season</span>
-                  <strong>{battleContest?.seasonName ?? "Active rotation"}</strong>
+                  <strong>{battleContest?.seasonName ?? "Genesis"}</strong>
                 </div>
                 <div className="home-lobby-battle-status-chip">
                   <span>Status</span>
