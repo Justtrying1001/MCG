@@ -2481,6 +2481,46 @@
   }
 }
 
+@media (max-width: 540px) {
+  .stitch-profile-screen.profile-account-layout {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .stitch-profile-screen .profile-account-shell,
+  .stitch-profile-screen .profile-showcase,
+  .stitch-profile-screen .profile-showcase-card-shell,
+  .stitch-profile-screen .profile-showcase-card-frame,
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-primary-column,
+  .stitch-profile-screen .profile-showcase-identity-copy,
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    flex-wrap: wrap;
+  }
+
+  .stitch-profile-screen .profile-showcase-name,
+  .stitch-profile-screen .profile-showcase-subtitle,
+  .stitch-profile-screen .profile-showcase-progress-copy strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 /* ===== Admin Console v2 ===== */
 .admin-v2-shell {
   min-height: 100vh;
