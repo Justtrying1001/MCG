@@ -15275,4 +15275,44 @@ button.mcg-chip:hover {
     display: grid;
     grid-template-columns: 1fr;
   }
+
+  .stitch-packs-screen,
+  .stitch-packs-screen .packs-main-section,
+  .stitch-packs-screen .stitch-pack-stage-shell,
+  .stitch-packs-screen .stitch-pack-stage,
+  .stitch-packs-screen .ps-layout,
+  .stitch-packs-screen .ps-hero,
+  .stitch-packs-screen .packs-main-header,
+  .stitch-packs-screen .packs-shop-marquee {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+  }
+
+  .stitch-profile-screen.profile-account-layout,
+  .stitch-profile-screen .profile-account-shell,
+  .stitch-profile-screen .profile-showcase,
+  .stitch-profile-screen .profile-showcase-card-shell,
+  .stitch-profile-screen .profile-showcase-card-frame,
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-primary-column,
+  .stitch-profile-screen .profile-showcase-identity-copy,
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+  }
+
+  .stitch-profile-screen .profile-showcase-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-profile-screen .profile-showcase-head,
+  .stitch-profile-screen .profile-showcase-head-actions {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
 }

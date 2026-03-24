@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
 
-const BASE_URL = process.env.MCG_BASE_URL ?? 'http://127.0.0.1:3000';
+const BASE_URL = process.env.MCG_BASE_URL ?? 'https://memecardgame.com';
 const OUT_DIR = process.env.MCG_VERIFY_OUT_DIR ?? '/tmp/mcg-phase1-sweep';
 
 const VIEWPORTS = [
@@ -23,6 +23,24 @@ const PAGE_MATRIX = [
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+function buildAuthCookies() {
+  const host = new URL(BASE_URL).hostname;
+  const secureUrl = BASE_URL.startsWith('http') ? BASE_URL : `https://${host}`;
+  const list = [];
+  if (process.env.MCG_SESSION_COOKIE) {
+    list.push({ name: 'mcg_session', value: process.env.MCG_SESSION_COOKIE, url: secureUrl });
+    list.push({ name: 'mcg_has_session', value: '1', url: secureUrl });
+  }
+  if (process.env.PRIVY_TOKEN_COOKIE) {
+    list.push({ name: 'privy-token', value: process.env.PRIVY_TOKEN_COOKIE, url: secureUrl });
+    list.push({ name: 'privy-session', value: 't', url: secureUrl });
+  }
+  if (process.env.MCG_ADMIN_SESSION_COOKIE) {
+    list.push({ name: '__Host-mcg_admin_session', value: process.env.MCG_ADMIN_SESSION_COOKIE, url: secureUrl });
+  }
+  return list;
 }
 
 async function getLayoutMetrics(page) {
@@ -135,7 +153,14 @@ async function verifyModal(page, key, openActions, modalSelector, report) {
 
 async function main() {
   ensureDir(OUT_DIR);
-  const report = { baseUrl: BASE_URL, generatedAt: new Date().toISOString(), pages: {}, modals: {} };
+  const authCookies = buildAuthCookies();
+  const report = {
+    baseUrl: BASE_URL,
+    generatedAt: new Date().toISOString(),
+    authCookiesApplied: authCookies.map((c) => c.name),
+    pages: {},
+    modals: {},
+  };
 
   const browser = await chromium.launch({ headless: true });
   try {
@@ -143,6 +168,9 @@ async function main() {
 
     for (const vp of VIEWPORTS) {
       const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, ignoreHTTPSErrors: true });
+      if (authCookies.length) {
+        await context.addCookies(authCookies);
+      }
       const page = await context.newPage();
 
       await gotoStable(page, `${BASE_URL}/contests`);
@@ -174,6 +202,9 @@ async function main() {
 
     // Mobile modal sweep
     const context = await browser.newContext({ viewport: { width: 375, height: 812 }, ignoreHTTPSErrors: true });
+    if (authCookies.length) {
+      await context.addCookies(authCookies);
+    }
     const page = await context.newPage();
 
     await gotoStable(page, `${BASE_URL}/packs`);
