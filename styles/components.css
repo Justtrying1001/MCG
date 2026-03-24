@@ -8533,6 +8533,32 @@ button.mcg-chip:hover {
   align-items: center;
 }
 
+.connect-x-inline-callout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.connect-x-inline-btn {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
+.connect-x-inline-btn .btn-label {
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 681px) {
+  .connect-x-inline-btn {
+    width: auto;
+  }
+}
+
 .progress-wrap {
   display: grid;
   gap: 8px;
