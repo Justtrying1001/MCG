@@ -305,7 +305,6 @@ export default function AccountPage() {
           <div className="profile-showcase-editor">
             <div className="profile-showcase-editor-head">
               <div>
-                <h3 className="profile-showcase-editor-title">Edit Showcase</h3>
                 <p className="profile-showcase-editor-copy">Tap cards to select or unselect instantly.</p>
                 <p className="profile-showcase-editor-status">
                   {selectedTemplateIds.length} / 5 selected
@@ -386,6 +385,12 @@ export default function AccountPage() {
                     disabled={disabled}
                   >
                     <div className="profile-showcase-picker-frame">
+                      {selected ? (
+                        <span className="profile-showcase-picker-badge is-selected">Selected</span>
+                      ) : null}
+                      {disabled ? (
+                        <span className="profile-showcase-picker-badge is-disabled">Unavailable</span>
+                      ) : null}
                       <div className="profile-showcase-picker-media">
                         <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" interactive={false} />
                       </div>
@@ -397,9 +402,6 @@ export default function AccountPage() {
                         <small>{item.instanceCount} owned</small>
                       </div>
                     </div>
-                    <span className="profile-showcase-picker-state">
-                      {selected ? "Selected" : disabled ? "Limit reached" : "Tap to select"}
-                    </span>
                   </button>
                 );
               })}

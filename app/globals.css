@@ -9666,7 +9666,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-showcase-editor {
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .profile-showcase-primary-column {
@@ -9733,20 +9733,22 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 0.45rem;
+  gap: 0.25rem;
 }
 
-.profile-showcase-editor-title {
+.profile-showcase-editor-copy {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.74rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: rgba(224, 230, 239, 0.84);
+  font-weight: 700;
 }
 
 .profile-showcase-editor-status {
-  margin-top: 0.22rem;
+  margin-top: 0.15rem;
   color: #fff17a;
-  font-size: 0.74rem;
+  font-size: 0.67rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -9755,123 +9757,155 @@ a { color: inherit; text-decoration: none; }
 .profile-showcase-filters {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 0.42rem;
 }
 
 .profile-showcase-filter-field {
   display: grid;
-  gap: 0.38rem;
+  gap: 0.2rem;
 }
 
 .profile-showcase-filter-field span {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(224, 230, 239, 0.72);
+  letter-spacing: 0.08em;
+  color: rgba(224, 230, 239, 0.6);
   font-weight: 800;
 }
 
 .profile-showcase-filter-field input,
 .profile-showcase-filter-field select {
   width: 100%;
-  border-radius: 11px;
+  border-radius: 10px;
   border: 2px solid rgba(17, 17, 17, 0.82);
   background: linear-gradient(180deg, #ffffff 0%, #e8f4ff 100%);
   color: #111111;
   font-weight: 700;
-  padding: 0.62rem 0.75rem;
-  box-shadow: 3px 3px 0 #111;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  padding: 0.46rem 0.6rem;
+  box-shadow: 2px 2px 0 #111;
 }
 
 .profile-showcase-modal-content {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.58rem;
   max-height: min(84vh, 980px);
   overflow: hidden;
 }
 
 .profile-showcase-picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.58rem;
+  grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+  gap: 0.44rem;
   max-height: 58vh;
   overflow: auto;
-  padding-right: 0.35rem;
+  padding-right: 0.25rem;
   scroll-behavior: smooth;
   align-content: start;
 }
 
 .profile-showcase-picker {
-  padding: 0.48rem;
-  border: 3px solid #111;
-  border-radius: 14px;
-  box-shadow: 4px 4px 0 #111;
+  padding: 0.36rem;
+  border: 2px solid #111;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 #111;
   background: linear-gradient(180deg, #ffffff 0%, #eefbff 100%);
   display: grid;
-  gap: 0.36rem;
+  gap: 0.24rem;
   text-align: left;
-  transition: transform .16s ease, box-shadow .16s ease;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, filter .16s ease;
 }
 
 .profile-showcase-picker:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 #111;
+  box-shadow: 4px 4px 0 #111;
 }
 
 .profile-showcase-picker:disabled {
-  opacity: 0.7;
+  opacity: 0.82;
+  filter: saturate(0.8);
   cursor: not-allowed;
 }
 
 .profile-showcase-picker-frame {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.28rem;
+  position: relative;
 }
 
 .profile-showcase-picker-media {
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 9px;
   display: grid;
 }
 
 .profile-showcase-picker-media > * {
-  max-width: 102px;
+  max-width: 90px;
   margin-inline: auto;
 }
 
 .profile-showcase-picker-card {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  gap: 0.5rem;
+  gap: 0.36rem;
 }
 
 .profile-showcase-picker-card > div {
   display: grid;
-  gap: 0.18rem;
+  gap: 0.12rem;
 }
 
 .profile-showcase-picker-card strong {
   color: #111;
-  font-size: 0.76rem;
-  line-height: 1.25;
+  font-size: 0.71rem;
+  line-height: 1.15;
 }
 
 .profile-showcase-picker-card span,
-.profile-showcase-picker-card small,
-.profile-showcase-picker-state {
+.profile-showcase-picker-card small {
   color: rgba(17, 17, 17, 0.72);
-  font-size: 0.64rem;
+  font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
 }
 
 .profile-showcase-picker.is-selected {
-  border-color: #111;
+  border-color: #ffd400;
   background:
-    radial-gradient(circle at top, rgba(255, 241, 122, 0.35), transparent 56%),
+    radial-gradient(circle at top, rgba(255, 241, 122, 0.28), transparent 54%),
     linear-gradient(180deg, #ffffff 0%, #fff7d1 100%);
-  box-shadow: 5px 5px 0 #111;
+  box-shadow: 0 0 0 1px #111, 3px 3px 0 #111;
+}
+
+.profile-showcase-picker-badge {
+  position: absolute;
+  top: 0.28rem;
+  right: 0.28rem;
+  z-index: 1;
+  border: 1.5px solid #111;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: rgba(17, 17, 17, 0.76);
+  font-size: 0.54rem;
+  line-height: 1;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.18rem 0.36rem;
+  box-shadow: 1px 1px 0 #111;
+}
+
+.profile-showcase-picker-badge.is-selected {
+  background: #fff17a;
+  color: #111;
+}
+
+.profile-showcase-picker-badge.is-disabled {
+  background: #e5e7eb;
 }
 
 @media (max-width: 1024px) {
