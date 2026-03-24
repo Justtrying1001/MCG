@@ -149,25 +149,25 @@ export function SolanaWalletCard() {
 
   return (
     <section className="mcg-surface profile-wallet-card profile-account-settings-card">
-      <div className="profile-wallet-card__header">
-        <div>
+      <div className="profile-wallet-card__header profile-header-stack">
+        <div className="profile-header-stack__top-row">
           <p className="mcg-eyebrow">Account settings</p>
-          <h3>Username & connections</h3>
+          <span className={`profile-wallet-badge ${hasWallet && hasTwitter ? "is-linked" : "is-empty"}`}>
+            {hasWallet && hasTwitter ? "fully linked" : "setup available"}
+          </span>
         </div>
-        <span className={`profile-wallet-badge ${hasWallet && hasTwitter ? "is-linked" : "is-empty"}`}>
-          {hasWallet && hasTwitter ? "fully linked" : "setup available"}
-        </span>
+        <h3>Username & connections</h3>
       </div>
 
       <div className="profile-settings-section">
-        <div className="profile-settings-section__header">
-          <div>
+        <div className="profile-settings-section__header profile-header-stack">
+          <div className="profile-header-stack__top-row">
             <p className="mcg-eyebrow">App username</p>
-            <strong>{currentHandle ? `@${currentHandle}` : "Username required"}</strong>
+            <span className={`profile-status-pill ${currentHandle ? "is-linked" : "is-missing"}`}>
+              {currentHandle ? "set" : "choose one"}
+            </span>
           </div>
-          <span className={`profile-status-pill ${currentHandle ? "is-linked" : "is-missing"}`}>
-            {currentHandle ? "set" : "choose one"}
-          </span>
+          <strong>{currentHandle ? `@${currentHandle}` : "Username required"}</strong>
         </div>
 
         <label className="profile-handle-field">
@@ -202,71 +202,75 @@ export function SolanaWalletCard() {
       </div>
 
       <div className="profile-settings-section">
-        <div className="profile-settings-section__header">
-          <div className="profile-settings-section__heading">
+        <div className="profile-settings-section__header profile-header-stack profile-settings-section__heading">
+          <div className="profile-header-stack__top-row">
             <p className="mcg-eyebrow">Connections</p>
-            <strong>Linked accounts</strong>
-            <p className="profile-settings-section__helper">Manage the accounts linked to your profile.</p>
           </div>
+          <strong>Linked accounts</strong>
+          <p className="profile-settings-section__helper">Manage the accounts linked to your profile.</p>
         </div>
 
         <div className="profile-identity-grid">
           <div className="profile-identity-item">
             <div className="profile-identity-item__content">
-              <div className="profile-identity-item__topline">
+              <div className="profile-identity-item__row profile-identity-item__topline">
                 <p className="mcg-eyebrow">X connection</p>
-                <span className={`profile-status-pill ${hasTwitter ? "is-linked" : "is-missing"}`}>
-                  {hasTwitter ? "linked" : "unlinked"}
-                </span>
+                <div className="profile-identity-item__actions">
+                  <Button
+                    variant={hasTwitter ? "ghost" : "primary"}
+                    className="btn-sm"
+                    disabled={!ready || !authenticated || isLinkingTwitter || isLinkingWallet}
+                    onClick={handleLinkTwitter}
+                  >
+                    {isLinkingTwitter ? "LINKING X…" : hasTwitter ? "CHANGE X ACCOUNT" : "LINK X ACCOUNT"}
+                  </Button>
+                </div>
               </div>
-              <strong>{hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}</strong>
-              <span>
+              <span className={`profile-status-pill profile-identity-item__row ${hasTwitter ? "is-linked" : "is-missing"}`}>
+                {hasTwitter ? "LINKED" : "UNLINKED"}
+              </span>
+              <strong className="profile-identity-item__main-value">
+                {hasTwitter ? `@${linkedTwitter?.username || linkedTwitter?.providerUserId}` : "X not linked"}
+              </strong>
+              <span className="profile-identity-item__helper">
                 {hasTwitter
                   ? "This X account is currently linked to your profile."
                   : "Link an X account to connect your social identity."}
               </span>
             </div>
-            <div className="profile-identity-item__actions">
-              <Button
-                variant={hasTwitter ? "ghost" : "primary"}
-                className="btn-sm"
-                disabled={!ready || !authenticated || isLinkingTwitter || isLinkingWallet}
-                onClick={handleLinkTwitter}
-              >
-                {isLinkingTwitter ? "Linking X…" : hasTwitter ? "Change X account" : "Link X account"}
-              </Button>
-            </div>
           </div>
 
           <div className="profile-identity-item">
             <div className="profile-identity-item__content">
-              <div className="profile-identity-item__topline">
+              <div className="profile-identity-item__row profile-identity-item__topline">
                 <p className="mcg-eyebrow">Wallet connection</p>
-                <span className={`profile-status-pill ${hasWallet ? "is-linked" : "is-missing"}`}>
-                  {hasWallet ? "linked" : "unlinked"}
-                </span>
+                <div className="profile-identity-item__actions">
+                  <Button
+                    variant={hasWallet ? "ghost" : "primary"}
+                    className="btn-sm"
+                    disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
+                    onClick={handleLinkWallet}
+                  >
+                    {isLinkingWallet ? "LINKING WALLET…" : hasWallet ? "CHANGE WALLET" : "LINK WALLET"}
+                  </Button>
+                </div>
               </div>
+              <span className={`profile-status-pill profile-identity-item__row ${hasWallet ? "is-linked" : "is-missing"}`}>
+                {hasWallet ? "LINKED" : "UNLINKED"}
+              </span>
               {primaryWallet ? (
                 <>
-                  <strong>{primaryWalletShort}</strong>
-                  <span>Connected wallet: {primaryWallet.address}</span>
+                  <strong className="profile-identity-item__main-value">{primaryWalletShort}</strong>
+                  <span className="profile-identity-item__helper profile-identity-item__helper--wallet">
+                    Connected wallet: {primaryWallet.address}
+                  </span>
                 </>
               ) : (
                 <>
-                  <strong>Wallet not linked</strong>
-                  <span>Link a Solana wallet to complete your account setup.</span>
+                  <strong className="profile-identity-item__main-value">Wallet not linked</strong>
+                  <span className="profile-identity-item__helper">Link a Solana wallet to complete your account setup.</span>
                 </>
               )}
-            </div>
-            <div className="profile-identity-item__actions">
-              <Button
-                variant={hasWallet ? "ghost" : "primary"}
-                className="btn-sm"
-                disabled={!ready || !authenticated || isLinkingWallet || isLinkingTwitter}
-                onClick={handleLinkWallet}
-              >
-                {isLinkingWallet ? "Linking wallet…" : hasWallet ? "Change wallet" : "Link wallet"}
-              </Button>
             </div>
           </div>
         </div>
