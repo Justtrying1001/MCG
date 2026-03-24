@@ -1009,6 +1009,14 @@
   box-shadow: 0 4px 20px rgba(196, 113, 90, 0.28);
 }
 
+.ps-btn-primary,
+.ps-btn-secondary,
+.ps-guest-connect-wrap .mcg-btn {
+  white-space: normal;
+  text-wrap: balance;
+  line-height: 1.25;
+}
+
 .ps-btn-primary:hover:not(:disabled) {
   background: #d4826a;
   transform: translateY(-1px);
@@ -1096,6 +1104,65 @@
     background: rgba(10, 14, 19, 0.96);
     border-top: 1px solid rgba(212, 168, 75, 0.16);
     z-index: 10;
+  }
+
+  .ps-slot-pill {
+    white-space: normal;
+    text-align: center;
+    min-height: 34px;
+  }
+}
+
+@media (max-width: 680px) {
+  .stitch-packs-screen,
+  .stitch-packs-screen .packs-main-section,
+  .stitch-packs-screen .packs-main-header,
+  .stitch-pack-stage,
+  .stitch-pack-stage .ps-layout,
+  .stitch-pack-stage .ps-hero,
+  .stitch-pack-stage .ps-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .packs-main-header {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .packs-main-intro {
+    justify-self: start;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .ps-cta-block {
+    position: static;
+    border-top: 0;
+    padding: 0.95rem 1rem 1.05rem;
+  }
+
+  .ps-hero-rays {
+    inset: 0;
+  }
+
+  .ps-section,
+  .ps-price-block {
+    padding: 0.95rem 1rem;
+  }
+
+  .ps-odds-grid {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .stitch-pack-stage .ps-pack-name,
+  .stitch-pack-stage .ps-supply-counter,
+  .stitch-pack-stage .ps-rarity-label {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
 
@@ -2478,6 +2545,71 @@
   .profile-showcase-actions {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 540px) {
+  .stitch-profile-screen.profile-account-layout {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    inline-size: 100%;
+  }
+
+  .stitch-profile-screen .profile-account-hero-grid,
+  .stitch-profile-screen .profile-account-main-grid,
+  .stitch-profile-screen .profile-account-shell,
+  .stitch-profile-screen .profile-showcase,
+  .stitch-profile-screen .profile-showcase-card-shell,
+  .stitch-profile-screen .profile-showcase-card-frame,
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-primary-column,
+  .stitch-profile-screen .profile-showcase-identity-copy,
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-stat-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .stitch-profile-screen .profile-showcase-visual-column {
+    grid-template-rows: minmax(220px, auto);
+  }
+
+  .stitch-profile-screen .profile-showcase-primary-column {
+    padding-inline: 0;
+    overflow: hidden;
+  }
+
+  .stitch-profile-screen .profile-showcase-identity-copy {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    flex-wrap: wrap;
+  }
+
+  .stitch-profile-screen .profile-showcase-name,
+  .stitch-profile-screen .profile-showcase-subtitle,
+  .stitch-profile-screen .profile-showcase-progress-copy strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .stitch-profile-screen .profile-showcase-actions .mcg-btn,
+  .stitch-profile-screen .profile-showcase-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -8416,6 +8548,32 @@ button.mcg-chip:hover {
   align-items: center;
 }
 
+.connect-x-inline-callout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.connect-x-inline-btn {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
+.connect-x-inline-btn .btn-label {
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 681px) {
+  .connect-x-inline-btn {
+    width: auto;
+  }
+}
+
 .progress-wrap {
   display: grid;
   gap: 8px;
@@ -8618,6 +8776,24 @@ button.mcg-chip:hover {
   .modal-content,
   .mcg-modal-content {
     padding: 16px;
+  }
+
+  .stitch-lineup-modal.bldr-modal {
+    width: min(100%, calc(100vw - 10px));
+    max-height: calc(100dvh - var(--nav-h) - 8px);
+  }
+
+  .stitch-lineup-modal .bldr-head,
+  .stitch-lineup-modal .bldr-controls,
+  .stitch-lineup-modal .bldr-active-slot-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-lineup-modal .bldr-search,
+  .stitch-lineup-modal .bldr-select,
+  .stitch-lineup-modal .bldr-pick-btn {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -10584,6 +10760,10 @@ button.mcg-chip:hover {
   display: grid;
   gap: 1.25rem;
   padding-block: 0.5rem 2rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stitch-screen
@@ -12708,6 +12888,10 @@ button.mcg-chip:hover {
 .stitch-packs-screen .packs-main-section {
   gap: 1.5rem;
   padding: clamp(1.35rem, 2.8vw, 2rem);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 5px solid #111;
   border-radius: 36px;
   background:
@@ -13120,6 +13304,88 @@ button.mcg-chip:hover {
   .stitch-packs-screen .packs-shop-grid,
   .stitch-packs-screen .reward-pack-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stitch-pack-stage,
+  .stitch-pack-stage .ps-layout,
+  .stitch-pack-stage .ps-panel {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .stitch-pack-stage .ps-panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .stitch-pack-stage .ps-hero-inner,
+  .stitch-pack-stage .ps-hero-image-wrap,
+  .stitch-pack-stage .ps-hero-pack-frame,
+  .stitch-pack-stage .ps-hero-meta {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .stitch-pack-stage .ps-hero-pack-frame {
+    width: min(280px, 100%);
+    margin-inline: auto;
+    padding: 0.8rem;
+  }
+
+  .stitch-pack-stage .ps-hero-image {
+    width: min(220px, 100%);
+  }
+
+  .stitch-pack-stage .ps-price-block,
+  .stitch-pack-stage .ps-section,
+  .stitch-pack-stage .ps-cta-block {
+    inline-size: auto;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    padding: 0.9rem;
+  }
+
+  .stitch-pack-stage .ps-price-block > *,
+  .stitch-pack-stage .ps-section > *,
+  .stitch-pack-stage .ps-cta-block > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .stitch-pack-stage .ps-guest-copy-block,
+  .stitch-pack-stage .ps-guest-copy,
+  .stitch-pack-stage .ps-guest-headline,
+  .stitch-pack-stage .ps-guest-connect-wrap,
+  .stitch-pack-stage .ps-guest-connect-wrap .mcg-btn,
+  .stitch-pack-stage .ps-guest-connect-wrap .btn,
+  .stitch-pack-stage .ps-guest-connect-wrap .btn-label {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .stitch-pack-stage .ps-guest-connect-wrap .mcg-btn,
+  .stitch-pack-stage .ps-guest-connect-wrap .btn {
+    justify-content: center;
+    align-items: center;
+  }
+
+  .stitch-pack-stage .ps-guest-connect-wrap .btn-label {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .stitch-pack-stage .ps-price-label,
+  .stitch-pack-stage .ps-price-value,
+  .stitch-pack-stage .ps-cards-count,
+  .stitch-pack-stage .ps-section-title,
+  .stitch-pack-stage .ps-odds-col-title,
+  .stitch-pack-stage .ps-rarity-label,
+  .stitch-pack-stage .ps-rarity-pct {
+    width: auto;
   }
 }
 
@@ -14836,5 +15102,245 @@ button.mcg-chip:hover {
 @media (max-width: 720px) {
   .stitch-lineup-modal .bldr-tray-slot {
     min-height: 280px;
+  }
+}
+
+/* Phase 1 final responsive guardrails */
+.stitch-screen,
+.stitch-screen * {
+  box-sizing: border-box;
+}
+
+.stitch-screen img,
+.stitch-screen video,
+.stitch-screen canvas,
+.stitch-screen svg {
+  max-width: 100%;
+}
+
+.mcg-topnav-inner,
+.mcg-topnav-inner > * {
+  min-width: 0;
+}
+
+.mcg-user-pill {
+  min-width: 0;
+  max-width: min(100%, 360px);
+}
+
+.mcg-user-pill strong,
+.mcg-user-pill span,
+.mcg-user-pill .mono {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contest-detail-main-layout,
+.contest-detail-primary-zone,
+.contest-detail-support-zone,
+.contest-detail-shell-hero,
+.contest-detail-hero-copy,
+.contest-detail-hero-side {
+  min-width: 0;
+}
+
+.contest-detail-hero-meta-list,
+.contest-detail-hero-copy-panel,
+.contest-detail-hero-action-panel,
+.contest-detail-timing-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.contest-detail-hero-meta-pill,
+.contest-detail-inline-note,
+.contest-detail-panel-copy,
+.contest-detail-help-panel {
+  overflow-wrap: anywhere;
+}
+
+.contest-modal.team-builder-modal,
+.stitch-lineup-modal.bldr-modal,
+.profile-settings-modal,
+.profile-showcase-modal,
+.contest-modal {
+  max-width: min(100%, 1480px);
+}
+
+.contest-modal-filters.team-builder-filters > *,
+.contest-detail-inline-builder-actions > *,
+.contest-detail-hero-action-panel .mcg-btn,
+.connect-x-inline-btn {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .contest-detail-main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .contest-detail-hero-action-panel--event {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .mcg-topnav-inner {
+    gap: 0.5rem;
+  }
+
+  .mcg-user-pill {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .connect-x-inline-callout,
+  .ps-guest-connect-wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .connect-x-inline-btn,
+  .ps-guest-connect-wrap .mcg-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .contest-detail-lineup-grid,
+  .contest-detail-lineup-grid.dense,
+  .contest-detail-lineup-grid.wide {
+    grid-template-columns: 1fr;
+  }
+
+  .contest-detail-lineup-headline {
+    gap: 0.6rem;
+  }
+
+  .contest-modal.team-builder-modal,
+  .stitch-lineup-modal.bldr-modal,
+  .profile-settings-modal,
+  .profile-showcase-modal {
+    width: min(100%, calc(100vw - 16px));
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+@media (max-width: 480px) {
+  .stitch-screen {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  .stitch-landing-screen .home-hero-content,
+  .stitch-landing-screen .home-hero-headline,
+  .stitch-landing-screen .home-hero-copy,
+  .stitch-landing-screen .home-hero-cta-stack,
+  .stitch-landing-screen .home-hero-ctas,
+  .stitch-landing-screen .home-hero-stage {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .stitch-landing-screen .home-hero-landing {
+    padding: 1rem;
+  }
+
+  .stitch-landing-screen .home-hero-content,
+  .stitch-landing-screen .home-hero-copy,
+  .stitch-landing-screen .home-hero-headline,
+  .stitch-landing-screen .home-hero-stage,
+  .stitch-landing-screen .home-hero-stage-frame {
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+
+  .mcg-topnav {
+    min-height: var(--nav-h);
+  }
+
+  .mcg-topnav-inner {
+    flex-wrap: wrap;
+    row-gap: 0.45rem;
+  }
+
+  .mcg-mobile-menu-btn {
+    align-self: center;
+  }
+
+  .contest-modal-overlay,
+  .contest-modal-overlay.team-builder-overlay {
+    padding: 0.4rem;
+  }
+
+  .contest-modal.team-builder-modal,
+  .contest-modal {
+    border-radius: 14px;
+    box-shadow: 3px 3px 0 #111;
+  }
+
+  .contest-modal.team-builder-modal .contest-modal-head,
+  .contest-modal.team-builder-modal .contest-modal-filters,
+  .contest-modal-grid.visual {
+    padding-inline: 0.65rem;
+  }
+
+  .contest-modal-filters.team-builder-filters {
+    gap: 0.5rem;
+  }
+
+  .contest-detail-inline-builder-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .contest-detail-inline-builder-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-packs-screen,
+  .stitch-packs-screen .packs-main-section,
+  .stitch-packs-screen .stitch-pack-stage-shell,
+  .stitch-packs-screen .stitch-pack-stage,
+  .stitch-packs-screen .ps-layout,
+  .stitch-packs-screen .ps-hero,
+  .stitch-packs-screen .packs-main-header,
+  .stitch-packs-screen .packs-shop-marquee {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+  }
+
+  .stitch-profile-screen.profile-account-layout,
+  .stitch-profile-screen .profile-account-shell,
+  .stitch-profile-screen .profile-showcase,
+  .stitch-profile-screen .profile-showcase-card-shell,
+  .stitch-profile-screen .profile-showcase-card-frame,
+  .stitch-profile-screen .profile-showcase-main-grid,
+  .stitch-profile-screen .profile-showcase-primary-column,
+  .stitch-profile-screen .profile-showcase-identity-copy,
+  .stitch-profile-screen .profile-showcase-progress-copy,
+  .stitch-profile-screen .profile-showcase-actions {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+  }
+
+  .stitch-profile-screen .profile-showcase-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-profile-screen .profile-showcase-head,
+  .stitch-profile-screen .profile-showcase-head-actions {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 }

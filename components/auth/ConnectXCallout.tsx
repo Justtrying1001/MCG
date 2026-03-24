@@ -25,6 +25,9 @@ export function ConnectXCallout({
       flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "space-between",
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: 0,
       gap: "0.85rem",
       padding: "0.95rem 1rem",
       borderRadius: 12,
@@ -33,7 +36,7 @@ export function ConnectXCallout({
     };
 
     return (
-      <div style={shellStyle}>
+      <div className="connect-x-inline-callout" style={shellStyle}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <strong style={{ display: "block", marginBottom: "0.2rem" }}>
             {title}
@@ -49,6 +52,7 @@ export function ConnectXCallout({
           </p>
         </div>
         <Button
+          className="connect-x-inline-btn"
           type="button"
           variant="primary"
           disabled={!ready || isStartingLogin}

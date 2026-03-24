@@ -25,7 +25,9 @@
     "audit:milestone:rewards": "node prisma/audit-milestone-rewards.mjs",
     "build:token-master-25": "node scripts/build-token-master-25.mjs",
     "build:mcg-cards-master": "node scripts/build-mcg-cards-master.mjs",
-    "check:language": "node scripts/check-language.mjs"
+    "check:language": "node scripts/check-language.mjs",
+    "verify:phase1:final": "node scripts/phase1-final-verify.mjs",
+    "verify:phase1:sweep": "node scripts/phase1-full-sweep-verify.mjs"
   },
   "dependencies": {
     "@farcaster/mini-app-solana": "1.0.0",
@@ -50,6 +52,7 @@
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.33",
+    "playwright": "^1.58.2",
     "prisma": "^5.22.0",
     "typescript": "^5.5.4",
     "vitest": "^4.0.18"
