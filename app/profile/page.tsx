@@ -386,20 +386,16 @@ export default function AccountPage() {
                   >
                     <div className="profile-showcase-picker-frame">
                       {selected ? (
-                        <span className="profile-showcase-picker-badge is-selected">Selected</span>
+                        <span className="profile-showcase-picker-badge is-selected">ALREADY USED</span>
                       ) : null}
                       {disabled ? (
-                        <span className="profile-showcase-picker-badge is-disabled">Unavailable</span>
+                        <span className="profile-showcase-picker-badge is-disabled">ALREADY USED</span>
                       ) : null}
                       <div className="profile-showcase-picker-media">
                         <MvpCardTile card={item.card} quantity={item.instanceCount} variant="canonical" interactive={false} />
                       </div>
                       <div className="profile-showcase-picker-card">
-                        <div>
-                          <strong>{item.card.displayName}</strong>
-                          <span>{item.card.rarity} · {item.card.edition}</span>
-                        </div>
-                        <small>{item.instanceCount} owned</small>
+                        <strong>{item.card.displayName}</strong>
                       </div>
                     </div>
                   </button>

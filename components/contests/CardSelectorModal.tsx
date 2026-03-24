@@ -133,13 +133,11 @@ export function CardSelectorModal({
                   />
                   <div className="contest-modal-card-option-meta">
                     {isSelected ? (
-                      <span className="contest-inline-note">
-                        Already selected{slotIndex >= 0 ? ` · Slot ${slotIndex + 1}` : ""}
+                      <span className="bldr-card-state-badge slot">
+                        IN SLOT {slotIndex + 1}
                       </span>
                     ) : tokenConflict ? (
-                      <span className="contest-inline-note">Already used in this lineup</span>
-                    ) : isLocked ? (
-                      <span className="contest-inline-note">Locked in another active contest</span>
+                      <span className="bldr-card-state-badge used">ALREADY USED</span>
                     ) : null}
                   </div>
                 </div>

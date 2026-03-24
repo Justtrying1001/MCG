@@ -34,7 +34,6 @@ export function LineupCardTile({
       </div>
       <div className="lineup-card-tile-footer">
         <strong>{option.name}</strong>
-        <span>{option.rarityCode} · {option.editionCode} · {option.cardSetCode}</span>
       </div>
     </button>
   );
