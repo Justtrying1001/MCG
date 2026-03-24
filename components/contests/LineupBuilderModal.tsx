@@ -180,50 +180,57 @@ export function LineupBuilderModal({
               </div>
             </div>
 
-            <div className="bldr-selected-tray">
-              {Array.from({ length: rosterSize }).map((_, index) => {
-                const instanceId = lineupSlots[index];
-                const card = instanceId ? optionById.get(instanceId) : null;
-                const isActive = index === activeSlot;
-                const cardView = card ? toMvpCardView(card) : null;
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    className={`bldr-tray-slot ${isActive ? "active" : ""} ${card ? "filled" : ""}`}
-                    onClick={() => {
-                      setActiveSlot(index);
-                      setPickerOpen(canEdit);
-                      onSelectSlot(index);
-                    }}
-                  >
-                    <span className="bldr-tray-slot-label">
-                      Slot {index + 1}
-                    </span>
-                    {card ? (
-                      cardView ? (
-                        <MvpCardTile
-                          card={cardView}
-                          variant="canonical"
-                          interactive={false}
-                        />
-                      ) : (
-                        <strong>Card unavailable</strong>
-                      )
-                    ) : (
-                      <div className="bldr-empty-slot-copy">
-                        <strong>Add card</strong>
-                        <span>Click to browse your collection</span>
-                      </div>
-                    )}
-                    {card && canEdit ? (
-                      <span className="bldr-slot-footnote">
-                        Click to replace or remove
+            <div className="bldr-selected-tray-scroll">
+              <div
+                className="bldr-selected-tray"
+                style={{
+                  gridTemplateColumns: `repeat(${rosterSize}, minmax(150px, 1fr))`,
+                }}
+              >
+                {Array.from({ length: rosterSize }).map((_, index) => {
+                  const instanceId = lineupSlots[index];
+                  const card = instanceId ? optionById.get(instanceId) : null;
+                  const isActive = index === activeSlot;
+                  const cardView = card ? toMvpCardView(card) : null;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      className={`bldr-tray-slot ${isActive ? "active" : ""} ${card ? "filled" : ""}`}
+                      onClick={() => {
+                        setActiveSlot(index);
+                        setPickerOpen(canEdit);
+                        onSelectSlot(index);
+                      }}
+                    >
+                      <span className="bldr-tray-slot-label">
+                        Slot {index + 1}
                       </span>
-                    ) : null}
-                  </button>
-                );
-              })}
+                      {card ? (
+                        cardView ? (
+                          <MvpCardTile
+                            card={cardView}
+                            variant="canonical"
+                            interactive={false}
+                          />
+                        ) : (
+                          <strong>Card unavailable</strong>
+                        )
+                      ) : (
+                        <div className="bldr-empty-slot-copy">
+                          <strong>Add card</strong>
+                          <span>Click to browse your collection</span>
+                        </div>
+                      )}
+                      {card && canEdit ? (
+                        <span className="bldr-slot-footnote">
+                          Click to replace or remove
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </section>
 

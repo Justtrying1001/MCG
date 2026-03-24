@@ -89,6 +89,10 @@ export function LineupCardPicker({
         <span className="mcg-chip">Slot {activeSlot + 1}</span>
         <span className="mcg-chip">{selectedCount}/{rosterSize} selected</span>
       </div>
+      <div className="bldr-rule-callout" role="note" aria-label="Lineup assignment rules">
+        <p>Each card can only be used once per lineup.</p>
+        <p>Click a card to assign it to the active slot.</p>
+      </div>
 
       <div className="bldr-controls bldr-controls-slim">
         <input
@@ -133,11 +137,18 @@ export function LineupCardPicker({
             const tokenConflict = selectedLogicalTokenKeys.has(tokenKey) && !isSelected;
             const tokenAlreadyUsed = tokenConflict;
             const isUnavailable = !canEdit || atCapacity || item.isLockedByActiveContest || tokenAlreadyUsed;
+            const cardStateClass = isSelected
+              ? "in-lineup"
+              : tokenAlreadyUsed
+                ? "duplicate-blocked"
+                : isUnavailable
+                  ? "disabled"
+                  : "available";
 
             return (
               <article
                 key={item.instanceId}
-                className={`bldr-card-wrap ${isSelected ? "selected" : ""} ${isUnavailable ? "disabled" : ""}`}
+                className={`bldr-card-wrap ${cardStateClass}`}
               >
                 <LineupCardTile
                   option={item}
@@ -149,18 +160,18 @@ export function LineupCardPicker({
                   }}
                 />
                 {isSelected ? (
-                  <span className="bldr-chip selected">
-                    Selected · Slot {slotIndex + 1}
-                  </span>
-                ) : null}
-                {item.isLockedByActiveContest ? (
-                  <span className="bldr-chip warn">
-                    Unavailable: locked in active contest
+                  <span className="bldr-card-state-badge success">
+                    IN LINEUP · Slot {slotIndex + 1}
                   </span>
                 ) : null}
                 {tokenAlreadyUsed ? (
-                  <span className="bldr-chip warn">
+                  <span className="bldr-card-state-badge muted">
                     Already used in this lineup
+                  </span>
+                ) : null}
+                {item.isLockedByActiveContest ? (
+                  <span className="bldr-card-state-badge muted">
+                    Locked in active contest
                   </span>
                 ) : null}
               </article>
