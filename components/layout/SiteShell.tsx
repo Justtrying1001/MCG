@@ -15,7 +15,7 @@ const navItems = [
   { href: "/collection", label: "Memedex" },
   { href: "/contests", label: "Battles" },
   { href: "/rewards", label: "Quests" },
-  { href: "/compte", label: "Profile" },
+  { href: "/profile", label: "Profile" },
 ];
 
 const HANDLE_ONBOARDING_PATH = "/onboarding/profile";
@@ -40,7 +40,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       return;
     }
     if (!me.onboarding.needsHandle && pathname === HANDLE_ONBOARDING_PATH) {
-      router.replace('/compte');
+      router.replace('/profile');
     }
   }, [me, pathname, router]);
 

@@ -35,7 +35,7 @@ export function HandleOnboardingForm() {
         return;
       }
       await refresh();
-      router.replace('/compte');
+      router.replace('/profile');
     } finally {
       setIsSaving(false);
     }

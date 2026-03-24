@@ -1,33 +1,36 @@
 :root {
-  --color-bg-page: var(--color-page);
-  --color-surface-1: var(--color-surface-1);
-  --color-surface-2: var(--color-surface-2);
-  --color-border-subtle: rgba(17, 17, 17, 0.35);
-  --color-border-strong: rgba(17, 17, 17, 0.8);
+  --color-bg-page: var(--mcg-page-bg);
+  --color-surface-primary: var(--mcg-panel-primary);
+  --color-surface-secondary: var(--mcg-panel-secondary);
+  --color-surface-tertiary: var(--mcg-panel-muted);
+  --color-surface-pastel: var(--mcg-pastel-lilac);
+
+  --color-border-subtle: rgba(17, 17, 17, 0.34);
+  --color-border-strong: rgba(17, 17, 17, 0.78);
   --color-accent-primary: var(--color-brand-primary);
   --color-accent-secondary: var(--color-brand-cyan);
 
-  --gradient-hero: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-primary) 18%, white), color-mix(in srgb, var(--color-brand-cyan) 20%, white) 50%, color-mix(in srgb, var(--color-brand-yellow) 30%, white));
+  --gradient-hero: linear-gradient(135deg, color-mix(in srgb, var(--mcg-pastel-lilac) 68%, white), color-mix(in srgb, var(--mcg-pastel-cyan) 48%, white) 50%, color-mix(in srgb, var(--mcg-pastel-gold) 42%, white));
   --gradient-card: linear-gradient(180deg, var(--color-surface-0), var(--color-surface-raised));
   --gradient-cta: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-cyan));
   --gradient-strip: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-pink), var(--color-brand-yellow));
 
-  /* Legacy alias to avoid breaking untouched pages */
-  --ink-deep: var(--color-page);
-  --ink-mid: var(--color-surface-1);
-  --ink-light: var(--color-surface-2);
-  --bg-base: var(--color-page);
-  --bg-1: var(--color-surface-1);
-  --bg-2: var(--color-surface-2);
-  --surface: var(--color-surface-1);
-  --surface-hi: var(--color-surface-0);
+  /* Legacy aliases so older selectors inherit the normalized palette. */
+  --ink-deep: var(--mcg-page-bg);
+  --ink-mid: var(--mcg-panel-muted);
+  --ink-light: var(--mcg-panel-secondary);
+  --bg-base: var(--mcg-page-bg);
+  --bg-1: var(--mcg-panel-muted);
+  --bg-2: var(--mcg-panel-secondary);
+  --surface: var(--mcg-panel-muted);
+  --surface-hi: var(--mcg-panel-primary);
   --border: var(--color-border-subtle);
   --border-hi: var(--color-border-strong);
   --text: var(--color-text-primary);
   --text-2: var(--color-text-secondary);
   --text-3: var(--color-text-muted);
   --red: var(--color-brand-primary);
-  --gold: var(--color-brand-yellow);
+  --gold: var(--mcg-pastel-gold);
   --emerald: var(--color-brand-green);
   --arc-blue: var(--color-brand-cyan);
   --amber: var(--color-brand-yellow);

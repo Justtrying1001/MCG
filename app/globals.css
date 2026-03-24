@@ -9991,3 +9991,144 @@ a { color: inherit; text-decoration: none; }
     min-height: 300px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   CROSS-APP CONSISTENCY OVERRIDES (home-aligned palette + typography)
+   -------------------------------------------------------------------------- */
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) {
+  color: var(--color-text-primary);
+}
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) :where(h1, h2, h3) {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+}
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) h1 {
+  font-size: var(--type-h1-size);
+  line-height: 0.98;
+  font-weight: 800;
+}
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) h2 {
+  font-size: var(--type-h2-size);
+  line-height: 1.05;
+  font-weight: 800;
+}
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) h3 {
+  font-size: var(--type-h3-size);
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.mcg-eyebrow,
+.profile-section-chip,
+.home-lobby-eyebrow,
+.home-lobby-card-kicker,
+.home-lobby-utility-label,
+.home-lobby-progress-head span,
+.home-lobby-battle-status-chip span,
+.home-lobby-stat-row span,
+.home-lobby-meter span {
+  font-family: var(--font-label);
+  font-size: var(--type-eyebrow-size);
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.mcg-page-flow :where(.stitch-screen, .home-lobby-shell, .profile-account-layout) :where(p, li, input, textarea, select) {
+  font-size: var(--type-body-size);
+}
+
+.mcg-btn,
+button,
+[role="button"] {
+  font-family: var(--font-label);
+  font-size: var(--type-button-size);
+  font-weight: 800;
+}
+
+.mcg-chip,
+.profile-section-chip,
+.home-lobby-rank-pill,
+.home-lobby-level-pill,
+.home-lobby-status-badge,
+.home-lobby-mini-pill,
+.home-lobby-points-inline {
+  font-size: var(--type-chip-size);
+  font-family: var(--font-label);
+}
+
+/* Profile normalization — remove darker page-specific drift and inherit app palette. */
+.profile-account-layout,
+.profile-account-shell {
+  background: transparent;
+}
+
+.profile-showcase,
+.profile-milestones-panel,
+.profile-featured-surface,
+.profile-progression-surface,
+.profile-wallet-card,
+.profile-stat-bento {
+  background: var(--mcg-panel-primary);
+  border-color: rgba(17, 17, 17, 0.9);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
+}
+
+.profile-showcase-card-frame,
+.profile-stat-bento,
+.profile-progression-surface,
+.profile-featured-surface,
+.profile-milestones-panel,
+.profile-featured-card-item,
+.profile-showcase-stat-pill,
+.profile-progression-stat,
+.profile-stat-bento__card,
+.profile-identity-item,
+.profile-settings-section,
+.profile-showcase-picker {
+  background: var(--mcg-panel-secondary);
+  border-color: rgba(17, 17, 17, 0.24);
+}
+
+.profile-showcase-name,
+.profile-showcase-subtitle,
+.profile-showcase-role,
+.profile-showcase-progress-copy strong,
+.profile-showcase-card-id,
+.profile-showcase-card-tag,
+.profile-showcase-label,
+.profile-stat-bento__card span,
+.profile-stat-bento__card small,
+.profile-progression-stat span,
+.profile-showcase-stat-pill span,
+.profile-showcase-stat-pill strong,
+.profile-progression-stat strong,
+.profile-stat-bento__card strong,
+.profile-wallet-card,
+.profile-identity-item,
+.profile-settings-section,
+.profile-handle-preview {
+  color: var(--color-text-primary);
+}
+
+.profile-showcase-progress-bar,
+.profile-progress-bar,
+.profile-handle-field input,
+.profile-showcase-filter-field input,
+.profile-showcase-filter-field select {
+  background: var(--mcg-panel-primary);
+  border-color: rgba(17, 17, 17, 0.44);
+  color: var(--color-text-primary);
+}
+
+.profile-showcase-progress-fill,
+.profile-progress-bar span {
+  background: linear-gradient(90deg, var(--mcg-pastel-lilac), var(--mcg-pastel-cyan));
+}
