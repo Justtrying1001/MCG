@@ -92,7 +92,7 @@ export function HomeHeroLanding() {
                   </svg>
                 }
               >
-                Start adventure
+                Open your first pack
               </Button>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function HomeHeroLanding() {
 
         <div className="home-hero-stage" aria-hidden="true">
           <div className="home-hero-stage-frame">
-            <div className="home-hero-stage-badge">Pack-ready roster</div>
+            <div className="home-hero-stage-badge">Your starting lineup</div>
             <div className="home-hero-cards-float">
               {HERO_CARDS.map((card) => (
                 <article

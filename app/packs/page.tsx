@@ -245,9 +245,13 @@ export default function PacksPage() {
         setSaleNotice({
           tone: "danger",
           title: "Daily purchase cap reached",
-          detail: payload.error.purchaseLimit.resetAt
-            ? `Try again when the cooldown expires.`
-            : (payload.error.message ?? "Purchase limit reached."),
+          detail: (() => {
+            const cs = payload.error.purchaseLimit.cooldownSeconds ?? 0;
+            if (cs <= 0) return payload.error.message ?? "Check back later.";
+            const h = Math.floor(cs / 3600);
+            const m = Math.floor((cs % 3600) / 60);
+            return h > 0 ? `Come back in ${h}h ${m}m.` : `Come back in ${m}m.`;
+          })(),
         });
       } else {
         const fallbackMessage =
@@ -291,7 +295,7 @@ export default function PacksPage() {
     setSaleNotice({
       tone: "success",
       title: "Pack purchased successfully",
-      detail: "Your purchase count has been updated below.",
+      detail: "Check your new cards below.",
     });
     startReveal(pulledMvp, "real");
     trackEvent("packs_real_open_success", {
@@ -541,14 +545,16 @@ export default function PacksPage() {
                   ? `${packPlanned.toLocaleString()} planned`
                   : "Supply pending"}
             </span>
-            <span>•</span>
-            <span>
-              {purchaseLimit?.enabled
-                ? purchaseLimit.isBlocked
-                  ? "Cooldown active"
-                  : `${purchaseLimit.remainingPurchases ?? 0} purchases left`
-                : "Cap off"}
-            </span>
+            {purchaseLimit?.enabled ? (
+              <>
+                <span>•</span>
+                <span>
+                  {purchaseLimit.isBlocked
+                    ? "Cooldown active"
+                    : `${purchaseLimit.remainingPurchases ?? 0} purchases left`}
+                </span>
+              </>
+            ) : null}
           </div>
 
           <FeaturedPackStage

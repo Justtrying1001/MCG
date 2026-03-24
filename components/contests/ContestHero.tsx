@@ -42,7 +42,7 @@ export function ContestHero({
       <div className={`contest-hero-banner contest-banner-${status.toLowerCase()}`} aria-hidden />
       <div>
         <SectionHeader
-          eyebrow={`Contest ${code}`}
+          eyebrow={`Battle ${code}`}
           title={title}
           subtitle={actionability.message}
           actions={<span className={`contest-phase-pill phase-${status.toLowerCase()}`}>{getPhaseLabel(status)}</span>}
@@ -54,7 +54,7 @@ export function ContestHero({
           <span className="mcg-chip">Team size {rosterSize}</span>
           <span className="mcg-chip">Set {restrictedSet ? "Restricted" : "Any"}</span>
           <span className="mcg-chip">Season {seasonName ?? "Unassigned"}</span>
-          <span className="mcg-chip">League {leagueTierRequired ?? "OPEN"}</span>
+          <span className="mcg-chip">League {leagueTierRequired ?? "Open to all"}</span>
         </div>
 
         <div className="contest-hero-meta-row">

@@ -183,7 +183,6 @@ export default function HomePage() {
               <div className="home-lobby-player-copy">
                 <div className="home-lobby-name-row">
                   <div>
-                    <p className="home-lobby-eyebrow">Main lobby</p>
                     <h1>{userInfo.displayName}</h1>
                   </div>
                   <div className="home-lobby-level-cluster">
@@ -391,7 +390,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="home-lobby-inline-note">
-                      <span>Shop signal</span>
+                      <span>Latest community pull</span>
                       <strong>
                         {featuredPull
                           ? `${featuredPull.card.displayName} · ${formatRelativeTime(featuredPull.openedAt)}`

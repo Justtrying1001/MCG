@@ -37,8 +37,8 @@ function getFallbackToken(contest: ContestListItem) {
 }
 
 function getHeroEyebrow(contest: ContestListItem) {
-  if (contest.status === "OPEN") return contest.seasonName ?? "Open contest";
-  if (contest.status === "LOCKED" || contest.status === "LIVE") return "Contest in progress";
+  if (contest.status === "OPEN") return contest.seasonName ?? "Open battle";
+  if (contest.status === "LOCKED" || contest.status === "LIVE") return "Battle in progress";
   if (contest.status === "SETTLED") return "Final results";
   return contest.seasonName ?? "Meme Card Game";
 }
@@ -83,7 +83,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
           <p className="contest-inline-note" style={{ marginTop: "0.45rem" }}>{stateMessaging.longLabel}</p>
         </div>
 
-        <div className="contest-grid-card-meta" aria-label="Contest quick facts">
+        <div className="contest-grid-card-meta" aria-label="Battle quick facts">
           <ContestCountdown status={contest.status} lockAt={contest.lockAt} endsAt={contest.endsAt} />
           <span>👥 {contest._count.entries}</span>
           <span>🎟 {entryFee}</span>
@@ -97,7 +97,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
 
         <div
           className="contest-grid-card-reward"
-          aria-label="Contest state summary"
+          aria-label="Battle state summary"
           style={{
             background: contest.status === "OPEN"
               ? "rgba(74, 170, 107, 0.1)"
@@ -121,7 +121,7 @@ function ContestTileComponent({ contest }: { contest: ContestListItem }) {
         </div>
 
         <div className="contest-grid-card-footer">
-          <Link href={`/contests/${contest.id}`} className="mcg-btn primary contest-grid-card-cta" aria-label={`Open contest ${contest.title}`}>
+          <Link href={`/contests/${contest.id}`} className="mcg-btn primary contest-grid-card-cta" aria-label={`Open battle ${contest.title}`}>
             {getPrimaryCtaLabel(contest.status)}
           </Link>
         </div>

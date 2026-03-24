@@ -8,7 +8,7 @@ import { getContestStateMessaging, getPhaseLabel, getPrimaryCtaLabel } from "@/c
 function getFeaturedSubtitle(status: ContestListItem["status"]) {
   if (status === "OPEN") return "Entries are open now. Build your lineup before team lock.";
   if (status === "LOCKED") return "Entry is closed. Review your locked lineup and wait for live scoring.";
-  if (status === "LIVE") return "Contest is running. Track your position and upcoming result phase.";
+  if (status === "LIVE") return "Battle is running. Track your position and upcoming result phase.";
   if (status === "SETTLED") return "Results are published. Check ranking, rewards, and next actions.";
   return "Draft your best lineup, adapt before lock, then watch the race unfold.";
 }
@@ -18,8 +18,8 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
     return (
       <Surface className="contest-hub-hero premium">
         <SectionHeader
-          eyebrow="Contests"
-          title="Contest Arena"
+          eyebrow="Battles"
+          title="Battle Arena"
           subtitle="Draft your best lineup, adapt before lock, then watch the race unfold."
           actions={<Link href="/collection" className="mcg-btn ghost">Build from Memedex</Link>}
         />
@@ -38,7 +38,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
       <div className={`contest-hero-banner contest-banner-${contest.status.toLowerCase()}`} aria-hidden />
       <div className="contest-hub-hero-content">
         <SectionHeader
-          eyebrow="Featured contest"
+          eyebrow="Featured battle"
           title={contest.title}
           subtitle={getFeaturedSubtitle(contest.status)}
           actions={<span className={`contest-phase-pill phase-${contest.status.toLowerCase()}`}>{getPhaseLabel(contest.status)}</span>}
@@ -50,7 +50,7 @@ export function ContestHubHero({ contest, nowTs }: { contest: ContestListItem | 
           <span className="mcg-chip">Participants {contest._count.entries}</span>
           <span className="mcg-chip">Team size {rosterSize}</span>
           <span className="mcg-chip">Season {contest.seasonName ?? "Unassigned"}</span>
-          <span className="mcg-chip">League {contest.leagueTierRequired ?? "OPEN"}</span>
+          <span className="mcg-chip">League {contest.leagueTierRequired ?? "Open to all"}</span>
           <span className="mcg-chip">Code {contest.code}</span>
         </div>
       </div>
