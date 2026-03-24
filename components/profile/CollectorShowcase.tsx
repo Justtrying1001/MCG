@@ -57,8 +57,8 @@ export function CollectorShowcase({
     { label: "Cards Owned", value: cardsOwnedLabel, detail: "Total collection copies", tone: "tone-mint" },
     { label: "Collection XP", value: collectionXpLabel, detail: "Collection-powered XP", tone: "tone-peach" },
     { label: "Milestones Unlocked", value: milestonesUnlockedLabel, detail: "Completed collector milestones", tone: "tone-lilac" },
-    { label: "Battles Entered", value: battlesEnteredLabel, detail: battlesEnteredLabel === "No battle participation yet" ? "Enter a battle to start your combat history" : "Confirmed battle entries", tone: "tone-berry" },
-    { label: "Best Battle Finish", value: bestBattleFinishLabel, detail: bestBattleFinishLabel === "No battle result yet" ? "Settled battle results will land here" : "Best recorded battle placement", tone: "tone-sun", wide: true },
+    { label: "Battles Entered", value: battlesEnteredLabel, detail: battlesEnteredLabel === "—" ? "No participation yet" : "Confirmed battle entries", tone: "tone-berry" },
+    { label: "Best Battle Finish", value: bestBattleFinishLabel, detail: bestBattleFinishLabel === "—" ? "No finish recorded" : "Best recorded placement", tone: "tone-sun", wide: true },
   ];
 
   return (
