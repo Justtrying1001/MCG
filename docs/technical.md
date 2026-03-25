@@ -90,8 +90,9 @@ Les migrations sont versionnées dans `prisma/migrations/*` et appliquées via P
 
 ## 7) Authentification
 
-- Le frontend initialise Privy via `components/providers/RootProviders.tsx`.
-- Le login web déclenche Privy côté client avec `loginMethods: ["wallet", "twitter"]` (wallet prioritaire en modal).
+- Le frontend initialise Privy via `components/providers/RootProviders.tsx` avec `appId` (React SDK) et sans `clientId` sur le path web.
+- Configuration web Privy: `loginMethods: ["wallet", "twitter"]`, `showWalletLoginFirst: true`, `walletChainType: "solana-only"`, `walletList: ["phantom", "solflare", "backpack", "wallet_connect"]`.
+- Les wallets embedded sont explicitement désactivés (`createOnLogin: "off"` pour Ethereum et Solana).
 - Une fois Privy authentifié, le frontend échange le `accessToken` via `POST /api/auth/privy/exchange`.
 - Le backend crée ensuite la session applicative `mcg_session`, lue par `GET /api/me`.
 - Le logout applicatif passe par `POST /api/auth/logout`.
