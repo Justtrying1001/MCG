@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { SessionProvider } from "@/components/session/SessionProvider";
@@ -14,12 +14,28 @@ import {
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+const disablePrivyClientIdForDebug =
+  process.env.NEXT_PUBLIC_PRIVY_DISABLE_CLIENT_ID === "true";
 const solanaConnectors = toSolanaWalletConnectors();
 
 export function RootProviders({ children }: { children: ReactNode }) {
-  const hasPrivyConfig = Boolean(privyAppId && privyClientId);
+  const shouldPassClientId = Boolean(privyClientId) && !disablePrivyClientIdForDebug;
+  const hasPrivyConfig = Boolean(privyAppId && (privyClientId || disablePrivyClientIdForDebug));
   const resolvedPrivyAppId = privyAppId ?? "";
   const resolvedPrivyClientId = privyClientId ?? "";
+
+  useEffect(() => {
+    if (!hasPrivyConfig) {
+      return;
+    }
+
+    console.info("[Privy Debug] Provider runtime config", {
+      clientIdPassed: shouldPassClientId,
+      showWalletLoginFirst: true,
+      walletList: [...PRIVY_SOLANA_WALLET_LIST],
+      walletConnectCloudProjectIdPresent: Boolean(walletConnectProjectId),
+    });
+  }, [hasPrivyConfig, shouldPassClientId]);
 
   if (
     process.env.NODE_ENV !== "production" &&
@@ -34,7 +50,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
   const content = hasPrivyConfig ? (
     <PrivyProvider
       appId={resolvedPrivyAppId}
-      clientId={resolvedPrivyClientId}
+      {...(shouldPassClientId ? { clientId: resolvedPrivyClientId } : {})}
       config={{
         appearance: {
           accentColor: "#c89b3c",
