@@ -8780,7 +8780,7 @@ button.mcg-chip:hover {
   }
 
   .stitch-lineup-modal.bldr-modal {
-    width: min(100%, calc(100vw - 10px));
+    width: min(100%, calc(100% - 10px));
     max-height: calc(100dvh - var(--nav-h) - 8px);
   }
 
@@ -10353,8 +10353,12 @@ button.mcg-chip:hover {
 
 .memedex-filter-pills {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.memedex-filter-pills > * {
+  min-width: 0;
 }
 
 .memedex-filter-pill {
@@ -15223,7 +15227,7 @@ button.mcg-chip:hover {
   .stitch-lineup-modal.bldr-modal,
   .profile-settings-modal,
   .profile-showcase-modal {
-    width: min(100%, calc(100vw - 16px));
+    width: min(100%, calc(100% - 16px));
     max-height: calc(100dvh - 16px);
   }
 }
