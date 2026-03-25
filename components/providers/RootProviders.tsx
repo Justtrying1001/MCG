@@ -8,7 +8,6 @@ import { InternalAnalyticsTracker } from "@/components/analytics/InternalAnalyti
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 const solanaConnectors = toSolanaWalletConnectors();
 
 export function RootProviders({ children }: { children: ReactNode }) {
@@ -26,10 +25,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
           theme: "dark",
           showWalletLoginFirst: false,
           walletChainType: "solana-only",
-          walletList: ["phantom", "solflare", "backpack", "wallet_connect"],
+          walletList: ["phantom", "solflare", "backpack"],
         },
         loginMethods: ["twitter", "wallet"],
-        walletConnectCloudProjectId: walletConnectProjectId,
         externalWallets: {
           solana: {
             connectors: solanaConnectors,

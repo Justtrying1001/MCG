@@ -107,7 +107,7 @@ export function SolanaWalletCard() {
     setIsLinkingWallet(true);
     linkWallet({
       walletChainType: "solana-only",
-      walletList: ["phantom", "solflare", "backpack", "wallet_connect"],
+      walletList: ["phantom", "solflare", "backpack"],
       description: "Link a Solana wallet to your MCG account.",
     });
   }, [authenticated, isLinkingTwitter, isLinkingWallet, linkWallet, ready]);
