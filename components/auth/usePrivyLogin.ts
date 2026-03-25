@@ -111,7 +111,11 @@ export function usePrivyLogin() {
       }
 
       writePendingLoginRequest(true);
-      login({ loginMethods: ["wallet", "twitter"] });
+      login({
+        loginMethods: ["wallet", "twitter"],
+        walletChainType: "solana-only",
+        walletList: ["wallet_connect", "phantom", "solflare", "backpack"],
+      });
       return true;
     } finally {
       loginAttemptInFlightRef.current = false;
