@@ -32,15 +32,6 @@ declare module "@privy-io/react-auth" {
     getAccessToken: () => Promise<string | null>;
   };
 
-  export function useConnectWallet(): {
-    connectWallet: (options?: Record<string, unknown>) => Promise<unknown>;
-  };
-
-  export function useLoginWithSiws(): {
-    generateSiwsMessage: (options: { address: string }) => Promise<string>;
-    loginWithSiws: (options: { message: string; signature: string }) => Promise<unknown>;
-  };
-
   export function useLinkAccount(callbacks?: {
     onSuccess?: () => void;
     onError?: (error: unknown) => void;
@@ -51,16 +42,7 @@ declare module "@privy-io/react-auth" {
 }
 
 declare module "@privy-io/react-auth/solana" {
-  export type SolanaConnectedWallet = {
-    address: string;
-    signMessage: (input: { message: Uint8Array }) => Promise<{ signature: Uint8Array }>;
-  };
-
   export function toSolanaWalletConnectors(options?: { shouldAutoConnect?: boolean }): unknown;
-  export function useWallets(): {
-    wallets: SolanaConnectedWallet[];
-    ready: boolean;
-  };
 }
 
 declare module "@privy-io/server-auth" {
