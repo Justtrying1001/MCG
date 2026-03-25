@@ -1339,14 +1339,13 @@ a { color: inherit; text-decoration: none; }
 
 .pack-reveal-grid {
   --reveal-grid-gap: clamp(12px, 0.95vw, 18px);
-  --reveal-card-width: clamp(180px, calc((100vw - 176px) / 5), 248px);
+  --reveal-card-width: clamp(128px, 18vw, 220px);
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, var(--reveal-card-width)));
+  grid-template-columns: repeat(auto-fit, minmax(var(--reveal-card-width), 1fr));
   justify-content: center;
   align-items: center;
   gap: var(--reveal-grid-gap);
-  width: fit-content;
-  max-width: 100%;
+  width: min(100%, 1200px);
   margin-inline: auto;
   overflow: visible;
   padding: 0.2rem 0.1rem 0.35rem;

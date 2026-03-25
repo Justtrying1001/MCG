@@ -8749,6 +8749,7 @@ button.mcg-chip:hover {
   }
 
   .mcg-topnav-inner {
+    flex-wrap: wrap;
     align-items: center;
   }
 
