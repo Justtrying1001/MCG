@@ -6,7 +6,7 @@ Getting into MCG takes less than five minutes. Here's how.
 
 ## Step 1 — Sign in
 
-Visit MCG and sign in with your **Twitter (X)** account. No wallet required — authentication is handled via Twitter OAuth.
+Visit MCG and sign in via Privy. The web modal prioritizes **Solana wallet** login, with **Twitter (X)** also available. On mobile browser, wallet auth is supported through wallet app deep-linking and WalletConnect fallback.
 
 ---
 

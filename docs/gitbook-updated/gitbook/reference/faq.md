@@ -5,7 +5,7 @@ Answers to common questions about MCG.
 ---
 
 **Do I need a wallet to play?**  
-No. MCG uses Twitter (X) OAuth for authentication via Privy. No wallet connection is required to collect cards, enter contests, or earn rewards.
+MCG uses Privy web authentication with two methods: Solana wallet and Twitter (X). Wallet login is shown first, and on mobile browser the fallback uses WalletConnect (`wallet_connect`).
 
 ---
 

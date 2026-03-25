@@ -5,8 +5,8 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
 import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
 import {
+  PRIVY_LOGIN_METHODS,
   PRIVY_SOLANA_WALLET_LIST,
-  PRIVY_TRIGGER_LOGIN_METHODS,
   PRIVY_WALLET_CHAIN_TYPE,
 } from "@/lib/privy-config";
 
@@ -117,7 +117,7 @@ export function usePrivyLogin() {
 
       writePendingLoginRequest(true);
       login({
-        loginMethods: [...PRIVY_TRIGGER_LOGIN_METHODS],
+        loginMethods: [...PRIVY_LOGIN_METHODS],
         walletChainType: PRIVY_WALLET_CHAIN_TYPE,
         walletList: [...PRIVY_SOLANA_WALLET_LIST],
       });

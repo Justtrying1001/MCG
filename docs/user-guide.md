@@ -28,7 +28,7 @@ MCG (Meme Card Game) est un jeu de cartes à collectionner orienté crypto-memes
 ## 3) Parcours utilisateur
 
 ### 3.1 Connexion
-- Connectez-vous via le flux auth (X/Twitter).
+- Connectez-vous via le flux auth Privy web (wallet Solana prioritaire + X/Twitter).
 - Une fois connecté, votre profil et votre solde points deviennent accessibles.
 
 ### 3.2 Ouvrir des packs

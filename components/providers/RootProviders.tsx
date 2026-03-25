@@ -1,56 +1,26 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
-import { SessionProvider } from "@/components/session/SessionProvider";
 import { InternalAnalyticsTracker } from "@/components/analytics/InternalAnalyticsTracker";
+import { SessionProvider } from "@/components/session/SessionProvider";
 import {
-  PRIVY_PROVIDER_LOGIN_METHODS,
+  PRIVY_LOGIN_METHODS,
   PRIVY_SOLANA_WALLET_LIST,
   PRIVY_WALLET_CHAIN_TYPE,
 } from "@/lib/privy-config";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-const privyClientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID;
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
-const disablePrivyClientIdForDebug =
-  process.env.NEXT_PUBLIC_PRIVY_DISABLE_CLIENT_ID === "true";
 const solanaConnectors = toSolanaWalletConnectors();
 
 export function RootProviders({ children }: { children: ReactNode }) {
-  const shouldPassClientId = Boolean(privyClientId) && !disablePrivyClientIdForDebug;
-  const hasPrivyConfig = Boolean(privyAppId && (privyClientId || disablePrivyClientIdForDebug));
-  const resolvedPrivyAppId = privyAppId ?? "";
-  const resolvedPrivyClientId = privyClientId ?? "";
-
-  useEffect(() => {
-    if (!hasPrivyConfig) {
-      return;
-    }
-
-    console.info("[Privy Debug] Provider runtime config", {
-      clientIdPassed: shouldPassClientId,
-      showWalletLoginFirst: true,
-      walletList: [...PRIVY_SOLANA_WALLET_LIST],
-      walletConnectCloudProjectIdPresent: Boolean(walletConnectProjectId),
-    });
-  }, [hasPrivyConfig, shouldPassClientId]);
-
-  if (
-    process.env.NODE_ENV !== "production" &&
-    hasPrivyConfig &&
-    !walletConnectProjectId
-  ) {
-    console.warn(
-      "[Privy] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is missing. Mobile wallet fallback may not work.",
-    );
-  }
+  const hasPrivyConfig = Boolean(privyAppId);
 
   const content = hasPrivyConfig ? (
     <PrivyProvider
-      appId={resolvedPrivyAppId}
-      {...(shouldPassClientId ? { clientId: resolvedPrivyClientId } : {})}
+      appId={privyAppId ?? ""}
       config={{
         appearance: {
           accentColor: "#c89b3c",
@@ -60,7 +30,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
           walletList: [...PRIVY_SOLANA_WALLET_LIST],
         },
         walletConnectCloudProjectId: walletConnectProjectId,
-        loginMethods: [...PRIVY_PROVIDER_LOGIN_METHODS],
+        loginMethods: [...PRIVY_LOGIN_METHODS],
         externalWallets: {
           solana: {
             connectors: solanaConnectors,
