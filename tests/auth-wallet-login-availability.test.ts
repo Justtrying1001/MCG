@@ -24,6 +24,8 @@ describe("auth wallet login availability", () => {
     expect(source).toContain('loginMethods: [...PRIVY_PROVIDER_LOGIN_METHODS]');
     expect(source).toContain('connectors: solanaConnectors');
     expect(source).toContain('createOnLogin: "off"');
+    expect(source).toContain("walletConnectCloudProjectId");
+    expect(source).toMatch(/NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID/);
     expect(source).not.toContain('loginMethods: ["email"]');
   });
 
