@@ -95,6 +95,10 @@ export function HomeHeroLanding() {
                 Open your first pack
               </Button>
             </div>
+            <p className="mobile-wallet-hint">
+              On mobile? Open this app inside your{" "}
+              <strong>Phantom</strong> wallet browser to use wallet login.
+            </p>
           </div>
         </div>
 
