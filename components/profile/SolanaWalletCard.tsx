@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLinkAccount, usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/useSession";
+import { PRIVY_SOLANA_WALLET_LIST, PRIVY_WALLET_CHAIN_TYPE } from "@/lib/privy-config";
 
 type LinkState = {
   kind: "idle" | "success" | "error";
@@ -106,8 +107,8 @@ export function SolanaWalletCard() {
     pendingLinkTypeRef.current = "wallet";
     setIsLinkingWallet(true);
     linkWallet({
-      walletChainType: "solana-only",
-      walletList: ["phantom", "solflare", "backpack"],
+      walletChainType: PRIVY_WALLET_CHAIN_TYPE,
+      walletList: [...PRIVY_SOLANA_WALLET_LIST],
       description: "Link a Solana wallet to your MCG account.",
     });
   }, [authenticated, isLinkingTwitter, isLinkingWallet, linkWallet, ready]);

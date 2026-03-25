@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useSession } from "@/components/useSession";
 import { getAnalyticsRequestHeaders } from "@/lib/analytics/visitor-id";
+import {
+  PRIVY_SOLANA_WALLET_LIST,
+  PRIVY_TRIGGER_LOGIN_METHODS,
+  PRIVY_WALLET_CHAIN_TYPE,
+} from "@/lib/privy-config";
 
 const LOGIN_REQUESTED_STORAGE_KEY = "mcg_privy_login_requested";
 const PRIVY_READY_WAIT_TIMEOUT_MS = 3000;
@@ -112,9 +117,9 @@ export function usePrivyLogin() {
 
       writePendingLoginRequest(true);
       login({
-        loginMethods: ["wallet", "twitter"],
-        walletChainType: "solana-only",
-        walletList: ["wallet_connect", "phantom", "solflare", "backpack"],
+        loginMethods: [...PRIVY_TRIGGER_LOGIN_METHODS],
+        walletChainType: PRIVY_WALLET_CHAIN_TYPE,
+        walletList: [...PRIVY_SOLANA_WALLET_LIST],
       });
       return true;
     } finally {
