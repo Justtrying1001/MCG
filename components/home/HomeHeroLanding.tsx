@@ -96,8 +96,7 @@ export function HomeHeroLanding() {
               </Button>
             </div>
             <p className="mobile-wallet-hint">
-              On mobile? Open this app inside your{" "}
-              <strong>Phantom</strong> wallet browser to use wallet login.
+              On mobile browser, Wallet login works via wallet app or WalletConnect fallback.
             </p>
           </div>
         </div>

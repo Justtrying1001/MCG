@@ -61,7 +61,7 @@ export function ConnectXCallout({
           {ctaLabel}
         </Button>
         <p className="mobile-wallet-hint" style={{ width: "100%", margin: 0 }}>
-          On mobile? Open this app inside your <strong>Phantom</strong> wallet browser to use wallet login.
+          On mobile browser, Wallet login works via wallet app or WalletConnect fallback.
         </p>
       </div>
     );
@@ -82,7 +82,7 @@ export function ConnectXCallout({
         </Button>
       </div>
       <p className="mobile-wallet-hint">
-        On mobile? Open this app inside your <strong>Phantom</strong> wallet browser to use wallet login.
+        On mobile browser, Wallet login works via wallet app or WalletConnect fallback.
       </p>
     </div>
   );
