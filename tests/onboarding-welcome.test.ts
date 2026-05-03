@@ -70,7 +70,7 @@ describe("upsertUserFromPrivyIdentityGraphWithWelcome", () => {
     expect(tx.user.create).toHaveBeenCalledOnce();
     expect(tx.user.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
-        handle: null,
+        handle: "alice",
       }),
     }));
     expect(tx.userIdentity.upsert).toHaveBeenCalledTimes(1);

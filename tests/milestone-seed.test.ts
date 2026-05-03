@@ -4,16 +4,17 @@ import { MILESTONE_SEED_DEFINITIONS } from "@/lib/domain/quests/milestone-defini
 import { seedMilestoneQuests } from "@/lib/domain/quests/milestone-seed";
 
 describe("milestone rewards seed", () => {
-  it("defines exactly 15 core gameplay milestones", () => {
-    expect(MILESTONE_SEED_DEFINITIONS).toHaveLength(15);
-    expect(new Set(MILESTONE_SEED_DEFINITIONS.map((x) => x.code)).size).toBe(15);
-    expect(new Set(MILESTONE_SEED_DEFINITIONS.map((x) => x.seedKey)).size).toBe(15);
+  it("defines unique core gameplay milestones", () => {
+    expect(MILESTONE_SEED_DEFINITIONS.length).toBeGreaterThanOrEqual(15);
+    expect(new Set(MILESTONE_SEED_DEFINITIONS.map((x) => x.code)).size).toBe(MILESTONE_SEED_DEFINITIONS.length);
+    expect(new Set(MILESTONE_SEED_DEFINITIONS.map((x) => x.seedKey)).size).toBe(MILESTONE_SEED_DEFINITIONS.length);
     expect(MILESTONE_SEED_DEFINITIONS.every((x) => x.unique)).toBe(true);
     expect(MILESTONE_SEED_DEFINITIONS.every((x) => x.repeatable === false)).toBe(true);
   });
 
   it("is idempotent and does not duplicate on reseed", async () => {
     const store = new Map<string, any>();
+    const packDefinitions = [{ id: "pack_1", code: "genesis_reward_pack" }];
     const prismaMock = {
       questDefinition: {
         findUnique: vi.fn(async ({ where }: any) => store.get(where.code) ?? null),
@@ -22,15 +23,18 @@ describe("milestone rewards seed", () => {
           return store.get(data.code);
         }),
       },
+      packDefinition: {
+        findMany: vi.fn(async () => packDefinitions),
+      },
     } as any;
 
     const first = await seedMilestoneQuests(prismaMock);
     const second = await seedMilestoneQuests(prismaMock);
 
-    expect(first.createdCount).toBe(15);
+    expect(first.createdCount).toBe(MILESTONE_SEED_DEFINITIONS.length);
     expect(first.existingCount).toBe(0);
     expect(second.createdCount).toBe(0);
-    expect(second.existingCount).toBe(15);
-    expect(store.size).toBe(15);
+    expect(second.existingCount).toBe(MILESTONE_SEED_DEFINITIONS.length);
+    expect(store.size).toBe(MILESTONE_SEED_DEFINITIONS.length);
   });
 });

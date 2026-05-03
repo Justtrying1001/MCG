@@ -14,7 +14,7 @@ export default function TwitterRedirectPage() {
       <head>
         {/* meta refresh fallback */}
         <meta httpEquiv="refresh" content={`0; url=${TWITTER_URL}`} />
-        <title>MCG on X</title>
+        <title>Mememon TCG on X</title>
       </head>
       <body
         style={{
@@ -39,10 +39,10 @@ export default function TwitterRedirectPage() {
             color: "#C4715A",
           }}
         >
-          MCG
+          MEMEMON
         </div>
         <p style={{ color: "#8fa1b3", fontSize: "0.9rem", margin: 0 }}>
-          Redirecting to MCG on X…
+          Redirecting to Mememon TCG on X…
         </p>
         <p style={{ color: "#263240", fontSize: "0.75rem", margin: 0 }}>
           If you are not redirected,{" "}

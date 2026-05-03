@@ -14,7 +14,7 @@ export default function DocsRedirectPage() {
       <head>
         {/* meta refresh as a fallback if JS is slow */}
         <meta httpEquiv="refresh" content={`0; url=${DOCS_URL}`} />
-        <title>MCG Docs</title>
+        <title>Mememon TCG Docs</title>
       </head>
       <body
         style={{
@@ -39,7 +39,7 @@ export default function DocsRedirectPage() {
             color: "#C4715A",
           }}
         >
-          MCG
+          MEMEMON
         </div>
         <p style={{ color: "#8fa1b3", fontSize: "0.9rem", margin: 0 }}>
           Loading docs…

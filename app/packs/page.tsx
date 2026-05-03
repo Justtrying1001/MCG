@@ -636,7 +636,7 @@ export default function PacksPage() {
                         name={group.displayName}
                         description={
                           group.description ??
-                          "Special pack awarded for your progress in MCG."
+                          "Special pack awarded for your progress in Mememon TCG."
                         }
                         priceLabel="Reward pack"
                         infoLabel={`${quantity} ready to open`}

@@ -59,7 +59,7 @@ export function PlayerDashboardHeader({
               </p>
               <p className="player-dash-copy">
                 Your handheld hub for contest runs, collection goals, quests,
-                and the loudest moves happening across MCG.
+                and the loudest moves happening across Mememon TCG.
               </p>
             </div>
           </div>
