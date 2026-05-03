@@ -178,8 +178,10 @@ function createTx(state: InMemoryState) {
         } else if (update?.xp?.increment) {
           state.userProgression.xp += update.xp.increment;
         }
-        if (select?.xp) return { xp: state.userProgression.xp };
-        return state.userProgression;
+        const progression = state.userProgression;
+        if (!progression) throw new Error("User progression initialization failed");
+        if (select?.xp) return { xp: progression.xp };
+        return progression;
       }),
       update: vi.fn(async ({ where, data }: any) => {
         if (!state.userProgression || state.userProgression.userId !== where.userId) {

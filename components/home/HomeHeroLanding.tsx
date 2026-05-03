@@ -36,13 +36,21 @@ const HERO_CARDS = [
 
 const HERO_COPY = [
   "Our favorite memecoins deserve better than just living on a chart.",
-  "MCG turns them into real collectible cards you can actually play with.",
+  "Mememon TCG turns them into real collectible cards you can actually play with.",
   "Collectors, traders, trenchers, gamers — this is for you.",
   "Build your team.\nEnter tournaments.\nIf your coins perform, you get rewarded. Simple.",
 ];
 
 export function HomeHeroLanding() {
   const { isStartingLogin, loginWithPrivy, ready } = usePrivyLogin();
+  const demoModeEnabled = process.env.NEXT_PUBLIC_MEMEMON_DEMO_MODE === "true";
+
+  const enterDemoMode = async () => {
+    const response = await fetch("/api/auth/demo/enter", { method: "POST" });
+    if (response.ok) {
+      window.location.href = "/";
+    }
+  };
 
   return (
     <section className="home-hero-landing stitch-hero-card">
@@ -56,7 +64,7 @@ export function HomeHeroLanding() {
             <p className="home-hero-kicker">Join the fun</p>
           </div>
           <h1 className="home-hero-headline">
-            MCG — THE <span>MEME</span>
+            MEMEMON — THE <span>MEME</span>
             <br />
             CARD GAME
           </h1>
@@ -94,6 +102,15 @@ export function HomeHeroLanding() {
               >
                 Open your first pack
               </Button>
+              {demoModeEnabled ? (
+                <Button
+                  className="btn-lg home-hero-cta-secondary"
+                  variant="ghost"
+                  onClick={() => void enterDemoMode()}
+                >
+                  Enter Demo (No Wallet)
+                </Button>
+              ) : null}
             </div>
             <p className="mobile-wallet-hint">
               On mobile browser, Wallet login works via wallet app or WalletConnect fallback.

@@ -53,9 +53,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
             className="mcg-brand"
             onClick={() => setOpenMobile(false)}
           >
-            <span className="mcg-brand-mark">MCG</span>
+            <span className="mcg-brand-mark">MEMEMON</span>
             <span>
-              <strong className="mcg-brand-name">Meme Card Game</strong>
+              <strong className="mcg-brand-name">Mememon TCG</strong>
               <span className="mcg-brand-sub">Collect • Compete • Repeat</span>
             </span>
           </Link>

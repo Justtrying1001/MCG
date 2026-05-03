@@ -43,6 +43,7 @@ type Progress = {
 
 type State = {
   user: { id: string; points: number };
+  userProgression: { userId: string; xp: number; level: number } | null;
   quest: {
     id: string;
     code: string;
@@ -65,6 +66,7 @@ type State = {
 function createState(): State {
   return {
     user: { id: "u1", points: 0 },
+    userProgression: null,
     quest: {
       id: "q_social",
       code: "follow_x_campaign",
@@ -164,6 +166,21 @@ function createTx(state: State) {
         if (where.id !== state.user.id) throw new Error("user not found");
         state.user.points += data.points.increment;
         return state.user;
+      }),
+    },
+    userProgression: {
+      upsert: vi.fn(async ({ where, create, update }: any) => {
+        if (!state.userProgression || state.userProgression.userId !== where.userId) {
+          state.userProgression = { ...create };
+        } else if (update?.xp?.increment) {
+          state.userProgression.xp += update.xp.increment;
+        }
+        return state.userProgression;
+      }),
+      update: vi.fn(async ({ where, data }: any) => {
+        if (!state.userProgression || state.userProgression.userId !== where.userId) throw new Error("progression not found");
+        state.userProgression.level = data.level;
+        return state.userProgression;
       }),
     },
   };

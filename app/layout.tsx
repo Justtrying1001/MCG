@@ -13,22 +13,22 @@ import "../styles/components.css";
 
 export const metadata: Metadata = {
   metadataBase: getCanonicalSiteUrl(),
-  title: "MCG · Meme Card Game",
-  description: "Premium dark-modern TCG collectible. Open packs, build your roster, dominate the ladder.",
+  title: "Mememon TCG",
+  description: "Mememon TCG demo build. Open packs, collect cards, build lineups, and compete in meme-token contests.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "MCG · Meme Card Game",
-    title: "MCG · Meme Card Game",
-    description: "Premium dark-modern TCG collectible. Open packs, build your roster, dominate the ladder.",
+    siteName: "Mememon TCG",
+    title: "Mememon TCG",
+    description: "Mememon TCG demo build. Open packs, collect cards, build lineups, and compete in meme-token contests.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MCG · Meme Card Game",
-    description: "Premium dark-modern TCG collectible. Open packs, build your roster, dominate the ladder.",
+    title: "Mememon TCG",
+    description: "Mememon TCG demo build. Open packs, collect cards, build lineups, and compete in meme-token contests.",
   },
 };
 

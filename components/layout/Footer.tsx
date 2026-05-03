@@ -6,9 +6,9 @@ export function Footer() {
       <div className="mcg-container mcg-footer-v2-inner">
         {/* Left: Brand */}
         <div className="mcg-footer-brand">
-          <div className="mcg-footer-brand-mark">MCG</div>
+          <div className="mcg-footer-brand-mark">MEMEMON</div>
           <div>
-            <div className="mcg-footer-brand-name">Meme Card Game</div>
+            <div className="mcg-footer-brand-name">Mememon TCG</div>
             <div className="mcg-footer-brand-sub">Set 1 — GENESIS</div>
           </div>
         </div>
@@ -41,7 +41,7 @@ export function Footer() {
 
         {/* Right: Legal */}
         <div className="mcg-footer-legal">
-          <span>© 2025 MCG. All rights reserved.</span>
+          <span>© 2026 Mememon TCG. All rights reserved.</span>
           <span className="mcg-footer-mvp">MVP — subject to change</span>
         </div>
       </div>

@@ -9,7 +9,7 @@ export function HeroDrop() {
         <p className="mcg-eyebrow">Season 01 · Genesis Drop</p>
         <h2>Open. Reveal. Collect.</h2>
         <p>
-          MCG brings back the thrill of the pull: hero illustrations first, rarity chase second, data last.
+          Mememon TCG brings back the thrill of the pull: hero illustrations first, rarity chase second, data last.
           Every pack you open expands your personal collectible gallery.
         </p>
         <div className="mcg-home-hero-actions">
